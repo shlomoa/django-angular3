@@ -4,28 +4,14 @@ import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from .config import ProjectConfig, load_project_config
+from .settings import AngularSettings, load_angular_settings
 
 
 class AngularCommandError(RuntimeError):
     """Raised when an Angular command cannot be planned or executed."""
-
-
-@dataclass(frozen=True)
-class AngularSettings:
-    """Configuration values used to plan and run Angular-related commands."""
-
-    config_path: str = "django-angular3.json"
-    node_executable: str = "node"
-    npm_executable: str = "npm"
-    npx_executable: str = "npx"
-    ng_executable: str = "ng"
-    package_manager: str = "npm"
-    build_configuration: str = "production"
-    style: str = "scss"
-    routing: bool = True
 
 
 @dataclass(frozen=True)
@@ -37,13 +23,6 @@ class AngularInvocation:
 
     def to_dict(self) -> dict[str, object]:
         return {"argv": list(self.argv), "cwd": str(self.cwd)}
-
-
-def load_angular_settings(overrides: Mapping[str, Any] | None = None) -> AngularSettings:
-    data = dict(_load_django_settings())
-    if overrides:
-        data.update(overrides)
-    return AngularSettings(**data)
 
 
 def plan_angular_command(
@@ -176,30 +155,6 @@ def build_ng_openapi_gen_invocations(
             cwd=config.angular_output,
         )
     ]
-
-
-def _load_django_settings() -> Mapping[str, Any]:
-    try:
-        from django.conf import settings as django_settings
-        from django.core.exceptions import ImproperlyConfigured
-    except ImportError:
-        return {}
-
-    try:
-        if not getattr(django_settings, "configured", False):
-            return {}
-
-        value = getattr(django_settings, "DJANGO_ANGULAR3", {})
-    except ImproperlyConfigured:
-        return {}
-
-    if not isinstance(value, Mapping):
-        raise AngularCommandError(
-            f"DJANGO_ANGULAR3 must be a dictionary-like mapping, got {type(value).__name__}."
-        )
-    return value
-
-
 _COMMAND_BUILDERS = {
     "ng_new": build_ng_new_invocations,
     "ng_config": build_ng_config_invocations,

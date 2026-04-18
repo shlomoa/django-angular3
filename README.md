@@ -63,7 +63,9 @@ python -m django_angular3.cli ng_new django-angular3.json --dry-run
 ```
 
 If you install `django-angular3` into a Django project, add the app to
-`INSTALLED_APPS` and use the management commands:
+`INSTALLED_APPS`. The specialized Node/NPM/Angular package settings live in
+`django_angular3/settings.py` and are configured through `DJANGO_ANGULAR3` in
+your Django project's `settings.py`:
 
 ```python
 INSTALLED_APPS = [

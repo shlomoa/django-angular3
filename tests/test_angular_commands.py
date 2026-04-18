@@ -5,6 +5,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from django_angular3.cli import main
+from django_angular3.settings import AngularSettings, load_angular_settings
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,6 +20,13 @@ else:
 
 
 class AngularCliCommandTests(unittest.TestCase):
+    def test_settings_module_exposes_angular_toolchain_defaults(self) -> None:
+        self.assertEqual(load_angular_settings(), AngularSettings())
+        self.assertEqual(
+            load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "pnpm"}),
+            AngularSettings(ng_executable="ng.cmd", package_manager="pnpm"),
+        )
+
     def run_cli(self, *args: str) -> tuple[int, str, str]:
         stdout = io.StringIO()
         stderr = io.StringIO()
