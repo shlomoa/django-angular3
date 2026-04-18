@@ -25,11 +25,10 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(
             load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "pnpm"}),
             AngularSettings(
-                **{
-                    **DEFAULT_ANGULAR_SETTINGS,
-                    "ng_executable": "ng.cmd",
-                    "package_manager": "pnpm",
-                }
+                **(
+                    DEFAULT_ANGULAR_SETTINGS
+                    | {"ng_executable": "ng.cmd", "package_manager": "pnpm"}
+                )
             ),
         )
 

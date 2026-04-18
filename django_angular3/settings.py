@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from types import SimpleNamespace
 
 
@@ -45,7 +46,7 @@ def _load_django_settings():
     except ImproperlyConfigured:
         return {}
 
-    if not hasattr(value, "items"):
+    if not isinstance(value, Mapping):
         raise AngularCommandError(
             f"DJANGO_ANGULAR3 must be a dictionary-like mapping, got {type(value).__name__}."
         )
