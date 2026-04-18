@@ -53,8 +53,8 @@ If you want YAML support for OpenAPI or UI definition files:
 python -m pip install -e .[yaml]
 ```
 
-The current scaffold is Python-only. Run the CLI directly for the example
-project:
+The current scaffold is Python-only. Run the CLI directly for the bundled
+project config:
 
 ```bash
 python -m django_angular3.cli validate-project django-angular3.json
@@ -70,12 +70,12 @@ Start by creating a DRF-backed project in the usual way:
 
 ```bash
 pip install djangorestframework
-django-admin startproject example .
+django-admin startproject mysite .
 ./manage.py migrate
 ./manage.py createsuperuser
 ```
 
-Now edit the `example/urls.py` module in your project:
+Now edit your project's `urls.py` module:
 
 ```python
 from django.contrib.auth.models import User
@@ -182,7 +182,7 @@ Or write a deterministic build plan to disk:
 python -m django_angular3.cli build django-angular3.json --output build
 ```
 
-The example project config targets generated Angular artifacts under
+The bundled project config targets generated Angular artifacts under
 `build/angular/` by default. No checked-in Angular package is required.
 
 ## Documentation
@@ -196,7 +196,7 @@ Current project documents:
 
 ## Status
 
-This project now includes a first scaffolded Python package, example specs, an
-example DRF starter project, and validation/build-plan commands. The current
-repository does not include a frontend workspace or build setup. Actual code
-generation and Angular assembly are still pending.
+This project now includes a first scaffolded Python package, example specs, and
+validation/build-plan commands. The current repository does not include a
+frontend workspace or build setup. Actual code generation and Angular assembly
+are still pending.

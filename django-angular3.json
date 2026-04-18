@@ -1,6 +1,6 @@
 {
   "project": {
-    "name": "django-angular3-example"
+    "name": "django-angular3-scaffold"
   },
   "openapi": {
     "source": "spec/openapi/source/example.openapi.json",
