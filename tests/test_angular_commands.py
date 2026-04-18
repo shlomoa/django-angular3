@@ -12,8 +12,10 @@ CONFIG_PATH = ROOT / "django-angular3.json"
 
 try:
     import django
-except ImportError:  # pragma: no cover - exercised when Django is installed
-    django = None
+except ImportError:  # pragma: no cover - exercised when Django is not installed
+    DJANGO_AVAILABLE = False
+else:
+    DJANGO_AVAILABLE = True
 
 
 class AngularCliCommandTests(unittest.TestCase):
@@ -30,9 +32,20 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
-        self.assertEqual(plan[0]["argv"][:5], ["ng", "new", "django-angular3-scaffold", "--defaults", "--skip-git"])
-        self.assertIn("--no-create-application", plan[0]["argv"])
-        self.assertIn(f"--directory={ROOT / 'build' / 'angular'}", plan[0]["argv"])
+        self.assertEqual(
+            plan[0]["argv"],
+            [
+                "ng",
+                "new",
+                "django-angular3-scaffold",
+                "--defaults",
+                "--skip-git",
+                "--skip-install",
+                "--no-create-application",
+                "--package-manager=npm",
+                f"--directory={ROOT / 'build' / 'angular'}",
+            ],
+        )
 
     def test_ng_config_dry_run_prints_workspace_configuration_commands(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_config", str(CONFIG_PATH), "--dry-run")
@@ -92,7 +105,7 @@ class AngularCliCommandTests(unittest.TestCase):
         )
 
 
-@unittest.skipUnless(django is not None, "Django is required for management command tests.")
+@unittest.skipUnless(DJANGO_AVAILABLE, "Django is required for management command tests.")
 class AngularManagementCommandTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:

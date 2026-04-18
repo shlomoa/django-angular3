@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import argparse
+
 from django.core.management.base import BaseCommand, CommandError
 
 from ...angular import AngularCommandError, execute_invocations, format_invocations, plan_angular_command
@@ -7,9 +9,11 @@ from ...config import ConfigError
 
 
 class AngularBaseCommand(BaseCommand):
+    """Base class for django-angular3 management commands that wrap Angular tooling."""
+
     angular_command_name = ""
 
-    def add_arguments(self, parser) -> None:
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("path", nargs="?", default=None, help="Path to the project config.")
         parser.add_argument(
             "--dry-run",

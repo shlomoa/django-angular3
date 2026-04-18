@@ -15,6 +15,8 @@ class AngularCommandError(RuntimeError):
 
 @dataclass(frozen=True)
 class AngularSettings:
+    """Configuration values used to plan and run Angular-related commands."""
+
     config_path: str = "django-angular3.json"
     node_executable: str = "node"
     npm_executable: str = "npm"
@@ -28,6 +30,8 @@ class AngularSettings:
 
 @dataclass(frozen=True)
 class AngularInvocation:
+    """A single Angular CLI invocation and the directory it should run from."""
+
     argv: tuple[str, ...]
     cwd: Path
 
@@ -95,7 +99,6 @@ def build_ng_new_invocations(
 def build_ng_config_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
-    routing_value = "true" if settings.routing else "false"
     return [
         AngularInvocation(
             argv=(
@@ -120,7 +123,7 @@ def build_ng_config_invocations(
                 settings.ng_executable,
                 "config",
                 "schematics.@schematics/angular:application.routing",
-                routing_value,
+                _stringify_bool(settings.routing),
             ),
             cwd=config.angular_output,
         ),
@@ -178,15 +181,22 @@ def build_ng_openapi_gen_invocations(
 def _load_django_settings() -> Mapping[str, Any]:
     try:
         from django.conf import settings as django_settings
-    except Exception:
+        from django.core.exceptions import ImproperlyConfigured
+    except ImportError:
         return {}
 
-    if not getattr(django_settings, "configured", False):
+    try:
+        if not getattr(django_settings, "configured", False):
+            return {}
+
+        value = getattr(django_settings, "DJANGO_ANGULAR3", {})
+    except ImproperlyConfigured:
         return {}
 
-    value = getattr(django_settings, "DJANGO_ANGULAR3", {})
     if not isinstance(value, Mapping):
-        raise AngularCommandError("DJANGO_ANGULAR3 must be a mapping if configured.")
+        raise AngularCommandError(
+            f"DJANGO_ANGULAR3 must be a dictionary-like mapping, got {type(value).__name__}."
+        )
     return value
 
 
@@ -197,3 +207,7 @@ _COMMAND_BUILDERS = {
     "ng_gen_app": build_ng_gen_app_invocations,
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
 }
+
+
+def _stringify_bool(value: bool) -> str:
+    return "true" if value else "false"

@@ -1,3 +1,5 @@
+import argparse
+
 from ._base import AngularBaseCommand
 
 
@@ -5,7 +7,7 @@ class Command(AngularBaseCommand):
     angular_command_name = "ng_gen_app"
     help = "Generate an Angular application inside the configured workspace."
 
-    def add_arguments(self, parser) -> None:
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         super().add_arguments(parser)
         parser.add_argument(
             "--app-name",

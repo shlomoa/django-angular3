@@ -46,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ng_new = subparsers.add_parser("ng_new", help="Create an empty Angular workspace.")
     ng_new.add_argument(
-        "path", nargs="?", default="django-angular3.json", help="Path to the project config."
+        "path", nargs="?", default=None, help="Path to the project config."
     )
     ng_new.add_argument(
         "--dry-run",
@@ -56,7 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ng_config = subparsers.add_parser("ng_config", help="Configure Angular workspace defaults.")
     ng_config.add_argument(
-        "path", nargs="?", default="django-angular3.json", help="Path to the project config."
+        "path", nargs="?", default=None, help="Path to the project config."
     )
     ng_config.add_argument(
         "--dry-run",
@@ -66,7 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ng_build = subparsers.add_parser("ng_build", help="Build the configured Angular application.")
     ng_build.add_argument(
-        "path", nargs="?", default="django-angular3.json", help="Path to the project config."
+        "path", nargs="?", default=None, help="Path to the project config."
     )
     ng_build.add_argument(
         "--dry-run",
@@ -78,7 +78,7 @@ def build_parser() -> argparse.ArgumentParser:
         "ng_gen_app", help="Generate an Angular application in the configured workspace."
     )
     ng_gen_app.add_argument(
-        "path", nargs="?", default="django-angular3.json", help="Path to the project config."
+        "path", nargs="?", default=None, help="Path to the project config."
     )
     ng_gen_app.add_argument("--app-name", default=None, help="Optional Angular application name.")
     ng_gen_app.add_argument(
@@ -91,7 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
         "ng_openapi_gen", help="Run ng-openapi-gen for the configured OpenAPI source."
     )
     ng_openapi_gen.add_argument(
-        "path", nargs="?", default="django-angular3.json", help="Path to the project config."
+        "path", nargs="?", default=None, help="Path to the project config."
     )
     ng_openapi_gen.add_argument(
         "--dry-run",
@@ -169,7 +169,7 @@ def _run_angular_command(
     try:
         invocations = plan_angular_command(command_name, config_path, **options)
     except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
-        print(f"Angular command error: {exc}", file=sys.stderr)
+        print(exc, file=sys.stderr)
         return 1
 
     if dry_run:
@@ -179,7 +179,7 @@ def _run_angular_command(
     try:
         execute_invocations(invocations)
     except AngularCommandError as exc:
-        print(f"Angular command error: {exc}", file=sys.stderr)
+        print(exc, file=sys.stderr)
         return 1
 
     print(f"Executed {len(invocations)} command(s).")
