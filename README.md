@@ -53,12 +53,42 @@ If you want YAML support for OpenAPI or UI definition files:
 python -m pip install -e .[yaml]
 ```
 
-The current scaffold is Python-only. Run the CLI directly for the bundled
-project config:
+The current scaffold includes a Django app-style package surface and a direct
+CLI. Run the CLI directly for the bundled project config:
 
 ```bash
 python -m django_angular3.cli validate-project django-angular3.json
 python -m django_angular3.cli build django-angular3.json --output build
+python -m django_angular3.cli ng_new django-angular3.json --dry-run
+```
+
+If you install `django-angular3` into a Django project, add the app to
+`INSTALLED_APPS` and use the management commands:
+
+```python
+INSTALLED_APPS = [
+    # ...
+    "django_angular3",
+]
+
+DJANGO_ANGULAR3 = {
+    "ng_executable": "ng",
+    "npx_executable": "npx",
+    "npm_executable": "npm",
+    "node_executable": "node",
+    "package_manager": "npm",
+    "build_configuration": "production",
+    "style": "scss",
+    "routing": True,
+}
+```
+
+```bash
+./manage.py ng_new django-angular3.json --dry-run
+./manage.py ng_config django-angular3.json --dry-run
+./manage.py ng_gen_app django-angular3.json --dry-run
+./manage.py ng_openapi_gen django-angular3.json --dry-run
+./manage.py ng_build django-angular3.json --dry-run
 ```
 
 ## Example
