@@ -20,7 +20,7 @@ else:
 
 
 class AngularCliCommandTests(unittest.TestCase):
-    def test_settings_module_exposes_angular_toolchain_defaults(self) -> None:
+    def test_load_angular_settings_with_and_without_overrides(self) -> None:
         self.assertEqual(load_angular_settings(), AngularSettings())
         self.assertEqual(
             load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "pnpm"}),
