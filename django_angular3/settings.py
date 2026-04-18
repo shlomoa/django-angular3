@@ -20,7 +20,19 @@ DEFAULT_ANGULAR_SETTINGS = {
 
 
 class AngularSettings(SimpleNamespace):
-    """Configuration values used to plan and run Angular-related commands."""
+    """Configuration values used to plan and run Angular-related commands.
+
+    Attributes:
+        config_path (str): Default project config path.
+        node_executable (str): Node executable name or path.
+        npm_executable (str): npm executable name or path.
+        npx_executable (str): npx executable name or path.
+        ng_executable (str): Angular CLI executable name or path.
+        package_manager (str): Angular package manager setting.
+        build_configuration (str): Angular build configuration name.
+        style (str): Default Angular stylesheet format.
+        routing (bool): Whether generated applications enable routing.
+    """
 
 
 def load_angular_settings(overrides: Mapping[str, object] | None = None) -> AngularSettings:

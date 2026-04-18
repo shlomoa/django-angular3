@@ -21,16 +21,15 @@ else:
 
 class AngularCliCommandTests(unittest.TestCase):
     def test_load_angular_settings_with_and_without_overrides(self) -> None:
+        overridden_settings = DEFAULT_ANGULAR_SETTINGS | {
+            "ng_executable": "ng.cmd",
+            "package_manager": "pnpm",
+        }
+
         self.assertEqual(load_angular_settings(), AngularSettings(**DEFAULT_ANGULAR_SETTINGS))
         self.assertEqual(
             load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "pnpm"}),
-            AngularSettings(
-                **{
-                    **DEFAULT_ANGULAR_SETTINGS,
-                    "ng_executable": "ng.cmd",
-                    "package_manager": "pnpm",
-                }
-            ),
+            AngularSettings(**overridden_settings),
         )
 
     def run_cli(self, *args: str) -> tuple[int, str, str]:
