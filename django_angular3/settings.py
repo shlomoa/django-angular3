@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 
+class AngularCommandError(RuntimeError):
+    """Raised when an Angular command cannot be planned or executed."""
+
+
 @dataclass(frozen=True)
 class AngularSettings:
     """Configuration values used to plan and run Angular-related commands."""
@@ -42,7 +46,7 @@ def _load_django_settings() -> Mapping[str, Any]:
         return {}
 
     if not isinstance(value, Mapping):
-        raise ValueError(
+        raise AngularCommandError(
             f"DJANGO_ANGULAR3 must be a dictionary-like mapping, got {type(value).__name__}."
         )
     return value

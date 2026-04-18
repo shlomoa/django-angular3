@@ -7,11 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import ProjectConfig, load_project_config
-from .settings import AngularSettings, load_angular_settings
-
-
-class AngularCommandError(RuntimeError):
-    """Raised when an Angular command cannot be planned or executed."""
+from .settings import AngularCommandError, AngularSettings, load_angular_settings
 
 
 @dataclass(frozen=True)
