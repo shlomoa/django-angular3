@@ -5,7 +5,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from django_angular3.cli import main
-from django_angular3.settings import DEFAULT_ANGULAR_SETTINGS, load_angular_settings
+from django_angular3.settings import AngularSettings, DEFAULT_ANGULAR_SETTINGS, load_angular_settings
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -21,10 +21,16 @@ else:
 
 class AngularCliCommandTests(unittest.TestCase):
     def test_load_angular_settings_with_and_without_overrides(self) -> None:
-        self.assertEqual(vars(load_angular_settings()), DEFAULT_ANGULAR_SETTINGS)
+        self.assertEqual(load_angular_settings(), AngularSettings(**DEFAULT_ANGULAR_SETTINGS))
         self.assertEqual(
-            vars(load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "pnpm"})),
-            {**DEFAULT_ANGULAR_SETTINGS, "ng_executable": "ng.cmd", "package_manager": "pnpm"},
+            load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "pnpm"}),
+            AngularSettings(
+                **{
+                    **DEFAULT_ANGULAR_SETTINGS,
+                    "ng_executable": "ng.cmd",
+                    "package_manager": "pnpm",
+                }
+            ),
         )
 
     def run_cli(self, *args: str) -> tuple[int, str, str]:

@@ -41,10 +41,13 @@ def _load_django_settings():
         if not getattr(django_settings, "configured", False):
             return {}
 
-        return dict(getattr(django_settings, "DJANGO_ANGULAR3", {}))
+        value = getattr(django_settings, "DJANGO_ANGULAR3", {})
     except ImproperlyConfigured:
         return {}
-    except (TypeError, ValueError) as exc:
+
+    if not hasattr(value, "items"):
         raise AngularCommandError(
-            "DJANGO_ANGULAR3 must be a dictionary-like mapping."
-        ) from exc
+            f"DJANGO_ANGULAR3 must be a dictionary-like mapping, got {type(value).__name__}."
+        )
+
+    return dict(value)
