@@ -23,7 +23,7 @@ class AngularSettings(SimpleNamespace):
     """Configuration values used to plan and run Angular-related commands."""
 
 
-def load_angular_settings(overrides=None):
+def load_angular_settings(overrides: Mapping[str, object] | None = None) -> AngularSettings:
     data = DEFAULT_ANGULAR_SETTINGS.copy()
     data.update(_load_django_settings())
     if overrides:
@@ -31,7 +31,7 @@ def load_angular_settings(overrides=None):
     return AngularSettings(**data)
 
 
-def _load_django_settings():
+def _load_django_settings() -> dict[str, object]:
     try:
         from django.conf import settings as django_settings
         from django.core.exceptions import ImproperlyConfigured
