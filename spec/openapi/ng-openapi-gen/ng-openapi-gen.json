@@ -1,0 +1,7 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/master/ng-openapi-gen-schema.json",
+  "input": "../source/example.openapi.json",
+  "output": "../../../build/angular/generated/ng-openapi-gen",
+  "serviceSuffix": "Api",
+  "modelIndex": true
+}

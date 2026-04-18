@@ -35,24 +35,155 @@ To use this package as intended, your application should have:
 - an OpenAPI specification exported from that backend
 - an Angular Material frontend for the user-facing product
 - a separate input source for non-CRM UI definitions
+- a routing model where Angular owns the user-facing route tree
+- a deployment model where Django serves backend services and Angular serves the
+  user-facing SPA
 
 ## Installation
 
-Installation instructions are not available yet because the runnable package
-implementation has not been scaffolded or published.
+Install from source:
+
+```bash
+python -m pip install -e .
+```
+
+If you want YAML support for OpenAPI or UI definition files:
+
+```bash
+python -m pip install -e .[yaml]
+```
+
+The current scaffold is Python-only. Run the CLI directly for the example
+project:
+
+```bash
+python -m django_angular3.cli validate-project django-angular3.json
+python -m django_angular3.cli build django-angular3.json --output build
+```
 
 ## Example
 
-A typical usage flow looks like this:
+Let's take a look at a simple example of starting from Django REST framework and
+then layering Angular Material integration on top.
 
-1. Start with a Django REST framework application.
-2. Expose or export the OpenAPI specification from the DRF backend.
-3. Use `django-angular3` to support Angular-side integration for CRM-facing
-   functionality.
-4. Add non-CRM pages, forms, and bespoke workflows through a separate input
-   source.
-5. Run the application with Django serving API, authentication, and data
-   administration services, and Angular serving the user-facing SPA.
+Start by creating a DRF-backed project in the usual way:
+
+```bash
+pip install djangorestframework
+django-admin startproject example .
+./manage.py migrate
+./manage.py createsuperuser
+```
+
+Now edit the `example/urls.py` module in your project:
+
+```python
+from django.contrib.auth.models import User
+from django.urls import include, path
+from rest_framework import routers, serializers, viewsets
+
+
+# Serializers define the API representation.
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = User
+        fields = ["url", "username", "email", "is_staff"]
+
+
+# ViewSets define the view behavior.
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+# Routers provide a way of automatically determining the URL conf.
+router = routers.DefaultRouter()
+router.register(r"users", UserViewSet)
+
+
+# Django serves API and authentication routes.
+urlpatterns = [
+    path("api/", include(router.urls)),
+    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+]
+```
+
+Add the following to your `settings.py` module:
+
+```python
+INSTALLED_APPS = [
+    # ...
+    "rest_framework",
+]
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",
+    ]
+}
+```
+
+At this point, Django + DRF own the backend data and authentication services.
+
+The next step is to export the OpenAPI contract from that backend and use it as
+the source for Angular-side CRM-facing integration.
+
+A simplified schema fragment might look like this:
+
+```yaml
+paths:
+  /api/users/:
+    get:
+      operationId: listUsers
+    post:
+      operationId: createUser
+  /api/users/{id}/:
+    get:
+      operationId: retrieveUser
+    patch:
+      operationId: updateUser
+```
+
+Non-CRM pages and bespoke workflows are then supplied separately.
+
+For example:
+
+```yaml
+pages:
+  - route: /dashboard
+    kind: dashboard
+
+forms:
+  - id: invite-user
+    mode: reactive
+    submit:
+      action: createUser
+```
+
+In that model:
+
+- Django + DRF continue to serve the API, authentication, and data
+  administration services
+- Angular Material renders the user-facing SPA
+- Angular owns routes such as `/dashboard` and other end-user pages
+- backend-owned routes remain under Django control
+
+The scaffolded first version in this repository already includes example inputs,
+so you can validate the project shape immediately:
+
+```bash
+python -m django_angular3.cli validate-project django-angular3.json
+python -m django_angular3.cli build django-angular3.json --dry-run
+```
+
+Or write a deterministic build plan to disk:
+
+```bash
+python -m django_angular3.cli build django-angular3.json --output build
+```
+
+The example project config targets generated Angular artifacts under
+`build/angular/` by default. No checked-in Angular package is required.
 
 ## Documentation
 
@@ -65,6 +196,7 @@ Current project documents:
 
 ## Status
 
-This project is still in the design and architecture phase. The repository does
-not yet contain the runnable package implementation, published artifacts, or
-execution scripts.
+This project now includes a first scaffolded Python package, example specs, an
+example DRF starter project, and validation/build-plan commands. The current
+repository does not include a frontend workspace or build setup. Actual code
+generation and Angular assembly are still pending.

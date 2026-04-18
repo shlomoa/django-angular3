@@ -1,0 +1,25 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "django-angular3 Example API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/users/": {
+      "get": {
+        "operationId": "listUsers"
+      },
+      "post": {
+        "operationId": "createUser"
+      }
+    },
+    "/api/users/{id}/": {
+      "get": {
+        "operationId": "retrieveUser"
+      },
+      "patch": {
+        "operationId": "updateUser"
+      }
+    }
+  }
+}

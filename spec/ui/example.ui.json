@@ -1,0 +1,21 @@
+{
+  "pages": [
+    {
+      "route": "/dashboard",
+      "kind": "dashboard"
+    },
+    {
+      "route": "/users/invite",
+      "kind": "workflow"
+    }
+  ],
+  "forms": [
+    {
+      "id": "invite-user",
+      "mode": "reactive",
+      "submit": {
+        "action": "createUser"
+      }
+    }
+  ]
+}

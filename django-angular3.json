@@ -1,0 +1,15 @@
+{
+  "project": {
+    "name": "django-angular3-example"
+  },
+  "openapi": {
+    "source": "spec/openapi/source/example.openapi.json",
+    "openapiGeneratorConfig": "spec/openapi/openapi-generator/typescript-angular.json"
+  },
+  "ui": {
+    "source": "spec/ui/example.ui.json"
+  },
+  "angular": {
+    "output": "build/angular"
+  }
+}

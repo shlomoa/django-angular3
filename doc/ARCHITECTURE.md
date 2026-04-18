@@ -21,13 +21,13 @@ production operations.
 
 The system consists of:
 
-- A Django application for configuration, authentication, admin tooling, and
+- A Django application for configuration, authentication, admin tooling, and 
   core business logic
 - A DRF API layer exposed under a versioned namespace
 - A versioned OpenAPI contract exported from the DRF layer
-- An Angular single-page application for user workflows
-- A separate npm package named `angular-django2` for Angular/Django integration
-  concerns
+  Or a DRF layer built from an OpenAPI contract, if the project prefers a contract-first approach
+- An Angular Material application for user workflows
+- A generated Angular integration layer for typed clients and shared adapters
 - A structured UI definition source for non-CRM pages and reactive forms
 - PostgreSQL for primary persistence
 - Optional Redis-backed background processing for asynchronous workloads
@@ -72,7 +72,7 @@ Angular Material is responsible for:
 
 Use a same-origin deployment:
 
-- Angular is built into static assets
+- Angular Material App is built into static assets
 - Django serves the API under `/api/`
 - Django serves authentication and administration endpoints under backend-owned
   routes
@@ -110,7 +110,7 @@ Django Application
 PostgreSQL
 
 OpenAPI Contract
-  -> angular-django2 package
+  -> generated Angular integration artifacts
   -> CRM-oriented generated clients and UI metadata
 
 UI Definition Source
@@ -132,13 +132,13 @@ Recommended stages:
    the business contract and emit an OpenAPI artifact
 2. Contract normalization stage: the OpenAPI artifact is validated, versioned,
    and prepared for CRM-facing generation
-3. Angular integration package stage: `angular-django2` consumes the OpenAPI
-   contract and produces typed clients, resource adapters, and reusable
-   Angular Material-oriented integration helpers
+3. Angular integration generation stage: the OpenAPI contract produces typed
+   clients, resource adapters, and reusable Angular Material-oriented
+   integration helpers
 4. Non-CRM content stage: a separate structured input source provides bespoke
    reactive forms, standalone pages, and workflow definitions
 5. Application assembly stage: the Angular app composes CRM-derived outputs from
-   `angular-django2` with the non-CRM content stream
+   generated integration artifacts with the non-CRM content stream
 6. Verification stage: generated artifacts, contracts, and app integration are
    validated through automated tests and review
 
@@ -275,8 +275,8 @@ Example patterns:
   framework for contract-driven artifacts
 - For Angular client output, support both:
   - OpenAPI Generator's `typescript-angular` generator
-  - `ng-openapi-gen` when its Angular-native output is a better fit for
-    `angular-django2`
+  - `ng-openapi-gen` when its Angular-native output is a better fit for the
+    consuming Angular application
 - As of April 16, 2026, the official OpenAPI Generator published generator list
   includes `typescript-angular` but does not list a Django server generator
 - Therefore, Django backend code should remain authored in DRF, while OpenAPI
@@ -381,10 +381,9 @@ The frontend should be an Angular SPA with:
 - No dependency on Django template rendering or DRF UI facilities for the main
   product experience
 
-### `angular-django2` Package
+### Angular Integration Layer
 
-`angular-django2` is the Angular integration package, not the whole frontend
-application.
+The Angular integration layer is not the whole frontend application.
 
 Its responsibilities should include:
 
@@ -408,7 +407,6 @@ It should not own:
 
 ```text
 frontend/
-  package.json
   src/
     app/
       core/
@@ -426,8 +424,7 @@ frontend/
         admin/
         <domain_feature_1>/
         <domain_feature_2>/
-packages/
-  angular-django2/
+  generated/
 ```
 
 ### Frontend Responsibilities
@@ -472,7 +469,7 @@ packages/
 The application has two distinct input sources:
 
 - CRM content source: the OpenAPI contract exported by Django and consumed by
-  `angular-django2`
+  the generated Angular integration layer
 - Non-CRM content source: a separate structured definition set for reactive
   forms, standalone pages, and bespoke workflows
 
@@ -581,14 +578,14 @@ doc/
   ARCHITECTURE.md
 backend/
 frontend/
-packages/
-  angular-django2/
 spec/
   openapi/
     source/
     openapi-generator/
     ng-openapi-gen/
   ui/
+build/
+  angular/
 infra/
 ```
 
@@ -597,7 +594,6 @@ Where:
 - `doc/` holds product and engineering design docs
 - `backend/` holds the Django project
 - `frontend/` holds the Angular application
-- `packages/angular-django2/` holds the reusable Angular integration package
 - `spec/openapi/` holds exported or versioned OpenAPI artifacts
 - `spec/openapi/source/` holds the dumped source OAS documents from Swagger
   Studio / SwaggerHub
@@ -606,6 +602,8 @@ Where:
 - `spec/openapi/ng-openapi-gen/` holds Angular-specific generator configs when
   that path is used
 - `spec/ui/` holds structured non-CRM page and reactive-form definitions
+- `build/angular/` holds generated Angular integration artifacts in the current
+  scaffold
 - `infra/` holds deployment artifacts such as container, proxy, and CI files
 
 ## Decisions Captured Here
@@ -620,7 +618,8 @@ Where:
 - OpenAPI is the source of truth for CRM-facing contracts
 - `openapitools/openapi-generator` is the baseline code-generation framework
 - `ng-openapi-gen` is an approved Angular-focused generator option
-- `angular-django2` is the boundary for reusable Angular/Django integration code
+- Generated Angular integration artifacts are the boundary for reusable
+  Angular/Django integration code in the current scaffold
 - Non-CRM content is supplied by a separate structured input source
 - Modular backend apps and frontend feature areas are the scaling strategy
 
@@ -629,13 +628,13 @@ Where:
 After this architecture is accepted, implementation should proceed in this
 order:
 
-1. Scaffold repository structure for `backend/`, `frontend/`, `packages/`, and
-   `spec/`
+1. Scaffold repository structure for `backend/`, `frontend/`, `spec/`, and
+   supporting build-output paths
 2. Set up Django, DRF, and PostgreSQL configuration
 3. Export and version the initial OpenAPI contract
 4. Commit baseline generator configuration for `openapitools/openapi-generator`
    and, if chosen, `ng-openapi-gen`
-5. Create the `angular-django2` package and wire it to generated OpenAPI
+5. Create the Angular integration layer and wire it to generated OpenAPI
    artifacts
 6. Define the structured non-CRM input source for reactive forms and pages
 7. Set up Angular and Angular Material with a shared shell that consumes both

@@ -20,7 +20,7 @@ Build a production-ready business application with:
 - Angular as the single-page application frontend
 - Angular Material as the design system and component library
 - OpenAPI as the contract source of truth for CRM-facing functionality
-- A reusable Angular integration package named `angular-django2`
+- Reusable Angular integration artifacts generated from the OpenAPI contract
 - A separate structured input source for non-CRM pages and reactive forms
 - Tight frontend/backend integration for local development and production
 
@@ -183,8 +183,8 @@ Build a production-ready business application with:
   with `openapitools/openapi-generator` as the baseline generator framework
 - CRM list, detail, and standard form experiences should be derived from the
   OpenAPI contract where practical instead of being duplicated by hand
-- Angular-related integration functionality shared across modules must live in a
-  separate npm package named `angular-django2`
+- Angular-related integration functionality shared across modules must be
+  generated or maintained as reusable Angular integration artifacts
 - Angular client generation may use `ng-openapi-gen` when its Angular-native
   output is a better fit than the baseline generator path
 - The delivery process must support an agent chain with defined handoff
@@ -257,7 +257,8 @@ The first implementation should include:
 
 - Backend project setup with Django and DRF
 - Angular frontend setup with Angular Material
-- `angular-django2` package setup for shared Angular/Django integration logic
+- Generated Angular integration artifacts for shared Angular/Django integration
+  logic
 - Authentication and role-based authorization
 - User profile and user administration
 - OpenAPI export and consumption flow for CRM-facing features

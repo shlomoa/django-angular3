@@ -1,0 +1,9 @@
+{
+  "generatorName": "typescript-angular",
+  "inputSpec": "../../source/example.openapi.json",
+  "outputDir": "../../../build/angular/generated/openapi-generator",
+  "additionalProperties": {
+    "withInterfaces": true,
+    "providedInRoot": true
+  }
+}
