@@ -66,6 +66,10 @@ python -m django_angular3.cli build django-angular3.json --output build
 python -m django_angular3.cli ng_new django-angular3.json --dry-run
 ```
 
+The standalone CLI keeps the existing validation/build subcommands in
+kebab-case and uses the same `ng_` snake_case names as the Django management
+commands for the Angular wrappers.
+
 ## Django app integration
 
 If you install `django-angular3` into a Django project, add the app to
@@ -98,7 +102,8 @@ DJANGO_ANGULAR3 = {
 
 The current settings surface and defaults are:
 
-- `config_path`: `"django-angular3.json"`
+- `config_path`: `"django-angular3.json"` - default project config path used
+  when a CLI or management command path is omitted
 - `node_executable`: `"node"`
 - `npm_executable`: `"npm"`
 - `npx_executable`: `"npx"`
