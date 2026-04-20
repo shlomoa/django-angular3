@@ -57,23 +57,34 @@ The current scaffold includes a Django app-style package surface and a direct
 CLI. Run the CLI directly for the bundled project config:
 
 ```bash
+django-angular3 validate-project django-angular3.json
+django-angular3 build django-angular3.json --output build
+django-angular3 ng_new django-angular3.json --dry-run
+
 python -m django_angular3.cli validate-project django-angular3.json
 python -m django_angular3.cli build django-angular3.json --output build
 python -m django_angular3.cli ng_new django-angular3.json --dry-run
 ```
 
+## Django app integration
+
 If you install `django-angular3` into a Django project, add the app to
-`INSTALLED_APPS`. The specialized Node/NPM/Angular package settings live in
-`django_angular3/settings.py` and are configured through `DJANGO_ANGULAR3` in
-your Django project's `settings.py`:
+`INSTALLED_APPS` to enable the bundled `ng_` management commands.
 
 ```python
 INSTALLED_APPS = [
     # ...
     "django_angular3",
 ]
+```
 
+The specialized Node/NPM/Angular settings live in
+`django_angular3/settings.py` and are configured through `DJANGO_ANGULAR3` in
+your Django project's `settings.py`:
+
+```python
 DJANGO_ANGULAR3 = {
+    "config_path": "django-angular3.json",
     "ng_executable": "ng",
     "npx_executable": "npx",
     "npm_executable": "npm",
@@ -85,6 +96,21 @@ DJANGO_ANGULAR3 = {
 }
 ```
 
+The current settings surface and defaults are:
+
+- `config_path`: `"django-angular3.json"`
+- `node_executable`: `"node"`
+- `npm_executable`: `"npm"`
+- `npx_executable`: `"npx"`
+- `ng_executable`: `"ng"`
+- `package_manager`: `"npm"`
+- `build_configuration`: `"production"`
+- `style`: `"scss"`
+- `routing`: `True`
+
+Once installed, Django and the standalone CLI expose the same Angular command
+planning flow:
+
 ```bash
 ./manage.py ng_new django-angular3.json --dry-run
 ./manage.py ng_config django-angular3.json --dry-run
@@ -92,6 +118,15 @@ DJANGO_ANGULAR3 = {
 ./manage.py ng_openapi_gen django-angular3.json --dry-run
 ./manage.py ng_build django-angular3.json --dry-run
 ```
+
+- `ng_new` creates an empty Angular workspace
+- `ng_config` applies workspace defaults such as package manager, style, and routing
+- `ng_gen_app` generates an Angular application inside the configured workspace
+- `ng_openapi_gen` runs `ng-openapi-gen` for the configured OpenAPI source
+- `ng_build` builds the configured Angular application
+
+Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
+application name.
 
 ## Example
 
