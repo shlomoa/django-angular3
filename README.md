@@ -83,6 +83,15 @@ INSTALLED_APPS = [
 ]
 ```
 
+Or use the explicit app config path:
+
+```python
+INSTALLED_APPS = [
+    # ...
+    "django_angular3.apps.DjangoAngular3Config",
+]
+```
+
 The specialized Node/NPM/Angular settings live in
 `django_angular3/settings.py` and are configured through `DJANGO_ANGULAR3` in
 your Django project's `settings.py`. Only set the values you want to override;
@@ -135,6 +144,11 @@ planning flow:
 
 Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
 application name.
+
+At the moment this reusable Django app contributes configuration helpers and
+management commands; it does not yet ship models, URLs, templates, static
+assets, or migrations, so there is no extra URL inclusion or migration step for
+the package itself.
 
 ## Example
 
