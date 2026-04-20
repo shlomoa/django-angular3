@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
@@ -17,6 +18,8 @@ except ImportError:  # pragma: no cover - exercised when Django is not installed
     DJANGO_AVAILABLE = False
 else:
     DJANGO_AVAILABLE = True
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
+    django.setup()
 
 
 class AngularCliCommandTests(unittest.TestCase):
@@ -120,20 +123,6 @@ class AngularCliCommandTests(unittest.TestCase):
 
 @unittest.skipUnless(DJANGO_AVAILABLE, "Django is required for management command tests.")
 class AngularManagementCommandTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
-        from django.conf import settings
-
-        if not settings.configured:
-            settings.configure(
-                SECRET_KEY="test-key",
-                USE_TZ=True,
-                DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
-                INSTALLED_APPS=["django_angular3"],
-            )
-        django.setup()
-
     def test_management_commands_support_dry_run(self) -> None:
         cases = (
             ("ng_new", {}),

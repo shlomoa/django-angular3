@@ -53,6 +53,13 @@ If you want YAML support for OpenAPI or UI definition files:
 python -m pip install -e .[yaml]
 ```
 
+For reusable-app style test runs, use either:
+
+```bash
+python runtests.py
+python -m django test tests --settings=tests.test_settings
+```
+
 The current scaffold includes a Django app-style package surface and a direct
 CLI. Run the CLI directly for the bundled project config:
 
