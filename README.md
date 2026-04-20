@@ -68,7 +68,8 @@ python -m django_angular3.cli ng_new django-angular3.json --dry-run
 
 The standalone CLI keeps the existing validation/build subcommands in
 kebab-case and uses the same `ng_` snake_case names as the Django management
-commands for the Angular wrappers.
+commands for the Angular wrappers. The examples above show the supported
+subcommand names as they exist today.
 
 ## Django app integration
 
@@ -84,7 +85,9 @@ INSTALLED_APPS = [
 
 The specialized Node/NPM/Angular settings live in
 `django_angular3/settings.py` and are configured through `DJANGO_ANGULAR3` in
-your Django project's `settings.py`:
+your Django project's `settings.py`. Only set the values you want to override;
+the example below shows the full supported settings surface, including an
+optional `config_path` override:
 
 ```python
 DJANGO_ANGULAR3 = {
