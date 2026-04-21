@@ -53,14 +53,6 @@ If you want YAML support for OpenAPI or UI definition files:
 python -m pip install -e .[yaml]
 ```
 
-The current scaffold is Python-only. Run the CLI directly for the bundled
-project config:
-
-```bash
-python -m django_angular3.cli validate-project django-angular3.json
-python -m django_angular3.cli build django-angular3.json --output build
-```
-
 ## Example
 
 Let's take a look at a simple example of starting from Django REST framework and
@@ -168,22 +160,9 @@ In that model:
 - Angular owns routes such as `/dashboard` and other end-user pages
 - backend-owned routes remain under Django control
 
-The scaffolded first version in this repository already includes example inputs,
-so you can validate the project shape immediately:
-
-```bash
-python -m django_angular3.cli validate-project django-angular3.json
-python -m django_angular3.cli build django-angular3.json --dry-run
-```
-
-Or write a deterministic build plan to disk:
-
-```bash
-python -m django_angular3.cli build django-angular3.json --output build
-```
-
-The bundled project config targets generated Angular artifacts under
-`build/angular/` by default. No checked-in Angular package is required.
+The scaffolded first version in this repository already includes example inputs.
+For the contributor workflow around local validation and build-plan generation,
+see [Contributing](CONTRIBUTING.md).
 
 ## Documentation
 
@@ -191,12 +170,13 @@ Public usage documentation is not available yet.
 
 Current project documents:
 
+- [Contributing](CONTRIBUTING.md)
 - [Requirements](doc/REQUIREMENTS.md)
 - [Architecture](doc/ARCHITECTURE.md)
 
 ## Status
 
 This project now includes a first scaffolded Python package, example specs, and
-validation/build-plan commands. The current repository does not include a
-frontend workspace or build setup. Actual code generation and Angular assembly
-are still pending.
+the current contributor workflow. The repository does not yet include a
+frontend workspace. Actual code generation and Angular assembly are still
+pending.
