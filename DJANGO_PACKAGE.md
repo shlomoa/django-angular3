@@ -288,11 +288,11 @@ Then grow it only as needed.
 
 If you want, I can generate for you a **complete starter skeleton** for a reusable Django package with `pyproject.toml`, sample app files, and test setup.
 
-[1]: https://docs.djangoproject.com/en/6.0/intro/reusable-apps/?utm_source=chatgpt.com "Advanced tutorial: How to write reusable apps"
-[2]: https://docs.djangoproject.com/en/6.0/ref/applications/?utm_source=chatgpt.com "Applications"
-[3]: https://docs.djangoproject.com/en/6.0/intro/tutorial07/?utm_source=chatgpt.com "Writing your first Django app, part 7"
-[4]: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/?utm_source=chatgpt.com "Writing your pyproject.toml"
-[5]: https://packaging.python.org/tutorials/packaging-projects/?utm_source=chatgpt.com "Packaging Python Projects"
-[6]: https://docs.djangoproject.com/en/6.0/releases/1.1/?utm_source=chatgpt.com "Django 1.1 release notes"
-[7]: https://docs.djangoproject.com/en/6.0/topics/testing/advanced/?utm_source=chatgpt.com "Advanced testing topics"
-[8]: https://docs.djangoproject.com/en/6.0/topics/testing/overview/?utm_source=chatgpt.com "Writing and running tests"
+[1]: https://docs.djangoproject.com/en/6.0/intro/reusable-apps/ "Advanced tutorial: How to write reusable apps"
+[2]: https://docs.djangoproject.com/en/6.0/ref/applications/ "Applications"
+[3]: https://docs.djangoproject.com/en/6.0/intro/tutorial07/ "Writing your first Django app, part 7"
+[4]: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/ "Writing your pyproject.toml"
+[5]: https://packaging.python.org/tutorials/packaging-projects/ "Packaging Python Projects"
+[6]: https://docs.djangoproject.com/en/6.0/releases/1.1/ "Django 1.1 release notes"
+[7]: https://docs.djangoproject.com/en/6.0/topics/testing/advanced/ "Advanced testing topics"
+[8]: https://docs.djangoproject.com/en/6.0/topics/testing/overview/ "Writing and running tests"
