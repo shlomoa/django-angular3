@@ -164,10 +164,10 @@ def _run_validation(errors: list[str], label: str) -> int:
 
 
 def _run_angular_command(
-    command_name: str, config_path: str, *, dry_run: bool, **options: str | None
+    command_name: str, path: str | Path | None, *, dry_run: bool, **options: str | None
 ) -> int:
     try:
-        invocations = plan_angular_command(command_name, config_path, **options)
+        invocations = plan_angular_command(command_name, path, **options)
     except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
