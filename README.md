@@ -1,31 +1,12 @@
 # django-angular3
 
-Angular Material integration for Django REST framework.
+`django-angular3` is a contract-first integration package for teams building Angular Material frontends on top of Django REST framework (DRF) backends.
 
-The starting point for this project is Django REST framework. `django-angular3`
-is intended for applications where:
-
-- Django + DRF own data, authentication, APIs, and data administration services
-- Angular Material owns the user-facing application and client-side routing
-- OpenAPI is the source of truth for CRM-facing functionality
-- non-CRM pages, reactive forms, and bespoke workflows come from a separate
-  structured input source
-
-* * *
-
-## Overview
-
-`django-angular3` is a contract-first integration package for teams building
-Angular Material frontends on top of Django REST framework backends.
-
-Some reasons you might want to use it:
-
-- Start from a DRF backend instead of inventing a parallel backend model.
-- Keep Django responsible for data, authentication, and data administration.
-- Keep Angular responsible for the end-user application and route tree.
-- Use OpenAPI to drive CRM-facing client-side integration.
-- Support non-CRM pages and workflows without forcing them into the OpenAPI
-  path.
+It allows you to:
+- Keep Django responsible for data, authentication, and administration.
+- Keep Angular responsible for the end-user application and client-side route tree.
+- Use OpenAPI as the source of truth for CRM-facing functionality.
+- Support bespoke non-CRM pages, reactive forms, and workflows via a separate structured input source.
 
 ## Requirements
 
@@ -256,30 +237,9 @@ forms:
       action: createUser
 ```
 
-In that model:
-
-- Django + DRF continue to serve the API, authentication, and data
-  administration services
-- Angular Material renders the user-facing SPA
-- Angular owns routes such as `/dashboard` and other end-user pages
-- backend-owned routes remain under Django control
-
-The scaffolded first version in this repository already includes example inputs,
-so you can validate the project shape immediately:
-
-```bash
-python -m django_angular3.cli validate-project django-angular3.json
-python -m django_angular3.cli build django-angular3.json --dry-run
-```
-
-Or write a deterministic build plan to disk:
-
-```bash
-python -m django_angular3.cli build django-angular3.json --output build
-```
-
-The bundled project config targets generated Angular artifacts under
-`build/angular/` by default. No checked-in Angular package is required.
+The scaffolded first version in this repository already includes example inputs.
+For the contributor workflow around local validation and build-plan generation,
+see [Contributing](CONTRIBUTING.md).
 
 ## Documentation
 
@@ -287,12 +247,13 @@ Public usage documentation is not available yet.
 
 Current project documents:
 
+- [Contributing](CONTRIBUTING.md)
 - [Requirements](doc/REQUIREMENTS.md)
 - [Architecture](doc/ARCHITECTURE.md)
 
 ## Status
 
 This project now includes a first scaffolded Python package, example specs, and
-validation/build-plan commands. The current repository does not include a
-frontend workspace or build setup. Actual code generation and Angular assembly
-are still pending.
+the current contributor workflow. The repository does not yet include a
+frontend workspace. Actual code generation and Angular assembly are still
+pending.
