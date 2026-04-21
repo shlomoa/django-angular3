@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from .angular import AngularCommandError, execute_invocations, format_invocations, plan_angular_command
 from .build import create_build_plan, write_build_plan
 from .config import ConfigError, load_project_config
 from .validation import validate_openapi_file, validate_project_config, validate_ui_file
@@ -41,6 +42,61 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help="Print the build plan instead of writing it to disk.",
+    )
+
+    ng_new = subparsers.add_parser("ng_new", help="Create an empty Angular workspace.")
+    ng_new.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
+    ng_new.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the Angular command plan instead of invoking Angular tooling.",
+    )
+
+    ng_config = subparsers.add_parser("ng_config", help="Configure Angular workspace defaults.")
+    ng_config.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
+    ng_config.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the Angular command plan instead of invoking Angular tooling.",
+    )
+
+    ng_build = subparsers.add_parser("ng_build", help="Build the configured Angular application.")
+    ng_build.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
+    ng_build.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the Angular command plan instead of invoking Angular tooling.",
+    )
+
+    ng_gen_app = subparsers.add_parser(
+        "ng_gen_app", help="Generate an Angular application in the configured workspace."
+    )
+    ng_gen_app.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
+    ng_gen_app.add_argument("--app-name", default=None, help="Optional Angular application name.")
+    ng_gen_app.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the Angular command plan instead of invoking Angular tooling.",
+    )
+
+    ng_openapi_gen = subparsers.add_parser(
+        "ng_openapi_gen", help="Run ng-openapi-gen for the configured OpenAPI source."
+    )
+    ng_openapi_gen.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
+    ng_openapi_gen.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the Angular command plan instead of invoking Angular tooling.",
     )
 
     return parser
@@ -86,6 +142,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote build plan to {plan_path}")
         return 0
 
+    if args.command in {"ng_new", "ng_config", "ng_build", "ng_gen_app", "ng_openapi_gen"}:
+        plan_options = {}
+        if args.command == "ng_gen_app":
+            plan_options["app_name"] = args.app_name
+        return _run_angular_command(args.command, args.path, dry_run=args.dry_run, **plan_options)
+
     parser.error("Unknown command")
     return 2
 
@@ -99,3 +161,30 @@ def _run_validation(errors: list[str], label: str) -> int:
 
     print(f"{label} is valid.")
     return 0
+
+
+def _run_angular_command(
+    command_name: str, path: str | Path | None, *, dry_run: bool, **options: str | None
+) -> int:
+    try:
+        invocations = plan_angular_command(command_name, path, **options)
+    except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+
+    if dry_run:
+        print(format_invocations(invocations))
+        return 0
+
+    try:
+        execute_invocations(invocations)
+    except AngularCommandError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+
+    print(f"Executed {len(invocations)} command(s).")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
