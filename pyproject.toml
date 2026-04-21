@@ -37,4 +37,6 @@ yaml = ["PyYAML>=6.0"]
 django-angular3 = "django_angular3.cli:main"
 
 [tool.setuptools]
-packages = ["django_angular3"]
+
+[tool.setuptools.packages.find]
+include = ["django_angular3*"]
