@@ -34,6 +34,35 @@ def plan_angular_command(
     return builder(config, settings, **options)
 
 
+def plan_angular_init(
+    project_name: str, *, folder: str | None = None, package_manager: str | None = None
+) -> list[AngularInvocation]:
+    settings = load_angular_settings()
+    target_folder = folder or project_name
+    workspace_dir = _resolve_workspace_dir(target_folder)
+    workspace_package_manager = package_manager or "pnpm"
+
+    return [
+        AngularInvocation(
+            argv=(
+                settings.ng_executable,
+                "new",
+                project_name,
+                "--defaults",
+                "--skip-git",
+                "--skip-install",
+                "--no-create-application",
+                f"--package-manager={workspace_package_manager}",
+                f"--directory={target_folder}",
+            ),
+            cwd=Path.cwd(),
+        ),
+        *_build_workspace_configuration_invocations(
+            workspace_dir, settings, package_manager=workspace_package_manager
+        ),
+    ]
+
+
 def format_invocations(invocations: list[AngularInvocation]) -> str:
     return json.dumps([invocation.to_dict() for invocation in invocations], indent=2)
 
@@ -74,15 +103,23 @@ def build_ng_new_invocations(
 def build_ng_config_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
+    return _build_workspace_configuration_invocations(
+        config.angular_output, settings, package_manager=settings.package_manager
+    )
+
+
+def _build_workspace_configuration_invocations(
+    workspace_dir: Path, settings: AngularSettings, *, package_manager: str
+) -> list[AngularInvocation]:
     return [
         AngularInvocation(
             argv=(
                 settings.ng_executable,
                 "config",
                 "cli.packageManager",
-                settings.package_manager,
+                package_manager,
             ),
-            cwd=config.angular_output,
+            cwd=workspace_dir,
         ),
         AngularInvocation(
             argv=(
@@ -91,7 +128,7 @@ def build_ng_config_invocations(
                 "schematics.@schematics/angular:application.style",
                 settings.style,
             ),
-            cwd=config.angular_output,
+            cwd=workspace_dir,
         ),
         AngularInvocation(
             argv=(
@@ -100,7 +137,7 @@ def build_ng_config_invocations(
                 "schematics.@schematics/angular:application.routing",
                 _stringify_bool(settings.routing),
             ),
-            cwd=config.angular_output,
+            cwd=workspace_dir,
         ),
     ]
 
@@ -162,3 +199,10 @@ _COMMAND_BUILDERS = {
 
 def _stringify_bool(value: bool) -> str:
     return "true" if value else "false"
+
+
+def _resolve_workspace_dir(folder: str) -> Path:
+    workspace_dir = Path(folder)
+    if workspace_dir.is_absolute():
+        return workspace_dir.resolve()
+    return (Path.cwd() / workspace_dir).resolve()

@@ -63,6 +63,54 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
 
+    def test_ng_init_dry_run_defaults_to_project_folder_and_pnpm(self) -> None:
+        exit_code, stdout, stderr = self.run_cli("ng_init", "portal", "--dry-run")
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan[0]["argv"],
+            [
+                "ng",
+                "new",
+                "portal",
+                "--defaults",
+                "--skip-git",
+                "--skip-install",
+                "--no-create-application",
+                "--package-manager=pnpm",
+                "--directory=portal",
+            ],
+        )
+        self.assertEqual(plan[1]["argv"], ["ng", "config", "cli.packageManager", "pnpm"])
+        self.assertEqual(plan[1]["cwd"], str(ROOT / "portal"))
+
+    def test_ng_init_dry_run_supports_folder_and_package_overrides(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_init", "portal", "--folder", "frontend", "--package", "npm", "--dry-run"
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan[0]["argv"],
+            [
+                "ng",
+                "new",
+                "portal",
+                "--defaults",
+                "--skip-git",
+                "--skip-install",
+                "--no-create-application",
+                "--package-manager=npm",
+                "--directory=frontend",
+            ],
+        )
+        self.assertEqual(plan[1]["argv"], ["ng", "config", "cli.packageManager", "npm"])
+        self.assertEqual(plan[1]["cwd"], str(ROOT / "frontend"))
+
     def test_ng_config_dry_run_prints_workspace_configuration_commands(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_config", str(CONFIG_PATH), "--dry-run")
 
@@ -125,17 +173,18 @@ class AngularCliCommandTests(unittest.TestCase):
 class AngularManagementCommandTests(unittest.TestCase):
     def test_management_commands_support_dry_run(self) -> None:
         cases = (
-            ("ng_new", {}),
-            ("ng_config", {}),
-            ("ng_build", {}),
-            ("ng_gen_app", {"app_name": "portal"}),
-            ("ng_openapi_gen", {}),
+            ("ng_new", [str(CONFIG_PATH)], {}),
+            ("ng_init", ["portal"], {}),
+            ("ng_config", [str(CONFIG_PATH)], {}),
+            ("ng_build", [str(CONFIG_PATH)], {}),
+            ("ng_gen_app", [str(CONFIG_PATH)], {"app_name": "portal"}),
+            ("ng_openapi_gen", [str(CONFIG_PATH)], {}),
         )
 
-        for command_name, options in cases:
+        for command_name, command_args, options in cases:
             with self.subTest(command_name=command_name):
                 from django.core.management import call_command
 
                 stdout = io.StringIO()
-                call_command(command_name, str(CONFIG_PATH), dry_run=True, stdout=stdout, **options)
+                call_command(command_name, *command_args, dry_run=True, stdout=stdout, **options)
                 self.assertIn('"argv"', stdout.getvalue())

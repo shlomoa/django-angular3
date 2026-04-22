@@ -6,7 +6,13 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from .angular import AngularCommandError, execute_invocations, format_invocations, plan_angular_command
+from .angular import (
+    AngularCommandError,
+    execute_invocations,
+    format_invocations,
+    plan_angular_command,
+    plan_angular_init,
+)
 from .build import create_build_plan, write_build_plan
 from .config import ConfigError, load_project_config
 from .validation import validate_openapi_file, validate_project_config, validate_ui_file
@@ -49,6 +55,26 @@ def build_parser() -> argparse.ArgumentParser:
         "path", nargs="?", default=None, help="Path to the project config."
     )
     ng_new.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the Angular command plan instead of invoking Angular tooling.",
+    )
+
+    ng_init = subparsers.add_parser(
+        "ng_init", help="Initialize an Angular workspace using pnpm by default."
+    )
+    ng_init.add_argument("project_name", help="Angular workspace project name.")
+    ng_init.add_argument(
+        "--folder",
+        default=None,
+        help="Workspace directory. Defaults to the project name.",
+    )
+    ng_init.add_argument(
+        "--package",
+        default="pnpm",
+        help="Angular workspace package manager. Defaults to pnpm.",
+    )
+    ng_init.add_argument(
         "--dry-run",
         action="store_true",
         help="Print the Angular command plan instead of invoking Angular tooling.",
@@ -142,6 +168,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote build plan to {plan_path}")
         return 0
 
+    if args.command == "ng_init":
+        return _run_angular_init(
+            args.project_name,
+            folder=args.folder,
+            package_manager=args.package,
+            dry_run=args.dry_run,
+        )
+
     if args.command in {"ng_new", "ng_config", "ng_build", "ng_gen_app", "ng_openapi_gen"}:
         plan_options = {}
         if args.command == "ng_gen_app":
@@ -169,6 +203,35 @@ def _run_angular_command(
     try:
         invocations = plan_angular_command(command_name, path, **options)
     except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
+        print(exc, file=sys.stderr)
+        return 1
+
+    if dry_run:
+        print(format_invocations(invocations))
+        return 0
+
+    try:
+        execute_invocations(invocations)
+    except AngularCommandError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+
+    print(f"Executed {len(invocations)} command(s).")
+    return 0
+
+
+def _run_angular_init(
+    project_name: str,
+    *,
+    folder: str | None,
+    package_manager: str | None,
+    dry_run: bool,
+) -> int:
+    try:
+        invocations = plan_angular_init(
+            project_name, folder=folder, package_manager=package_manager
+        )
+    except (AngularCommandError, TypeError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
 

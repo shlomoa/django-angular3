@@ -48,10 +48,12 @@ CLI. Run the CLI directly for the bundled project config:
 django-angular3 validate-project django-angular3.json
 django-angular3 build django-angular3.json --output build
 django-angular3 ng_new django-angular3.json --dry-run
+django-angular3 ng_init my-workspace --dry-run
 
 python -m django_angular3.cli validate-project django-angular3.json
 python -m django_angular3.cli build django-angular3.json --output build
 python -m django_angular3.cli ng_new django-angular3.json --dry-run
+python -m django_angular3.cli ng_init my-workspace --dry-run
 ```
 
 The standalone CLI keeps the existing validation/build subcommands in
@@ -118,12 +120,14 @@ planning flow:
 
 ```bash
 ./manage.py ng_new django-angular3.json --dry-run
+./manage.py ng_init my-workspace --dry-run
 ./manage.py ng_config django-angular3.json --dry-run
 ./manage.py ng_gen_app django-angular3.json --dry-run
 ./manage.py ng_openapi_gen django-angular3.json --dry-run
 ./manage.py ng_build django-angular3.json --dry-run
 ```
 
+- `ng_init` initializes a new Angular workspace and configures it to use `pnpm` by default
 - `ng_new` creates an empty Angular workspace
 - `ng_config` applies workspace defaults such as package manager, style, and routing
 - `ng_gen_app` generates an Angular application inside the configured workspace
@@ -132,6 +136,10 @@ planning flow:
 
 Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
 application name.
+
+Use `--folder <path>` with `ng_init` to choose a workspace directory other than
+the project name, and `--package <manager>` to override the default `pnpm`
+package manager.
 
 At the moment this reusable Django app contributes configuration helpers and
 management commands; it does not yet ship models, URLs, templates, static
