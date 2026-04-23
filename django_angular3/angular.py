@@ -14,6 +14,7 @@ from .settings import AngularCommandError, AngularSettings, load_angular_setting
 class AngularInvocation:
     """A single Angular CLI invocation and the directory it should run from."""
 
+    command_name: str
     argv: tuple[str, ...]
     cwd: Path
 
@@ -38,8 +39,12 @@ def format_invocations(invocations: list[AngularInvocation]) -> str:
     return json.dumps([invocation.to_dict() for invocation in invocations], indent=2)
 
 
-def execute_invocations(invocations: list[AngularInvocation]) -> None:
+def execute_invocations(
+    invocations: list[AngularInvocation], settings: AngularSettings | None = None
+) -> None:
+    active_settings = settings or load_angular_settings()
     for invocation in invocations:
+        _ensure_command_is_allowed(invocation.command_name, active_settings)
         try:
             subprocess.run(invocation.argv, cwd=invocation.cwd, check=True)
         except FileNotFoundError as exc:
@@ -55,6 +60,7 @@ def build_ng_new_invocations(
 ) -> list[AngularInvocation]:
     return [
         AngularInvocation(
+            command_name="ng_new",
             argv=(
                 settings.ng_executable,
                 "new",
@@ -76,6 +82,7 @@ def build_ng_config_invocations(
 ) -> list[AngularInvocation]:
     return [
         AngularInvocation(
+            command_name="ng_config",
             argv=(
                 settings.ng_executable,
                 "config",
@@ -85,6 +92,7 @@ def build_ng_config_invocations(
             cwd=config.angular_output,
         ),
         AngularInvocation(
+            command_name="ng_config",
             argv=(
                 settings.ng_executable,
                 "config",
@@ -94,6 +102,7 @@ def build_ng_config_invocations(
             cwd=config.angular_output,
         ),
         AngularInvocation(
+            command_name="ng_config",
             argv=(
                 settings.ng_executable,
                 "config",
@@ -110,6 +119,7 @@ def build_ng_build_invocations(
 ) -> list[AngularInvocation]:
     return [
         AngularInvocation(
+            command_name="ng_build",
             argv=(
                 settings.ng_executable,
                 "build",
@@ -127,6 +137,7 @@ def build_ng_gen_app_invocations(
     target_app = app_name or config.project_name
     return [
         AngularInvocation(
+            command_name="ng_gen_app",
             argv=(
                 settings.ng_executable,
                 "generate",
@@ -147,7 +158,14 @@ def build_ng_openapi_gen_invocations(
     source_flag = "-c" if config.ng_openapi_gen_config else "-i"
     return [
         AngularInvocation(
-            argv=(settings.npx_executable, "ng-openapi-gen", source_flag, str(source)),
+            command_name="ng_openapi_gen",
+            argv=(
+                settings.pnpm_executable,
+                "exec",
+                "ng-openapi-gen",
+                source_flag,
+                str(source),
+            ),
             cwd=config.angular_output,
         )
     ]
@@ -162,3 +180,14 @@ _COMMAND_BUILDERS = {
 
 def _stringify_bool(value: bool) -> str:
     return "true" if value else "false"
+
+
+def _ensure_command_is_allowed(command_name: str, settings: AngularSettings) -> None:
+    normalized_command_name = command_name.strip().lower()
+    if normalized_command_name in settings.command_allowlist:
+        return
+
+    allowed_commands = ", ".join(settings.command_allowlist) or "<none>"
+    raise AngularCommandError(
+        f"Command '{command_name}' is not allowed. Allowed commands: {allowed_commands}."
+    )
