@@ -4,7 +4,9 @@ import os
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
+from django_angular3.angular import AngularInvocation, AngularCommandError, execute_invocations
 from django_angular3.cli import main
 from django_angular3.settings import AngularSettings, DEFAULT_ANGULAR_SETTINGS, load_angular_settings
 
@@ -26,14 +28,34 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_load_angular_settings_with_and_without_overrides(self) -> None:
         overridden_settings = DEFAULT_ANGULAR_SETTINGS | {
             "ng_executable": "ng.cmd",
-            "package_manager": "pnpm",
+            "package_manager": "npm",
         }
 
         self.assertEqual(load_angular_settings(), AngularSettings(**DEFAULT_ANGULAR_SETTINGS))
         self.assertEqual(
-            load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "pnpm"}),
+            load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "npm"}),
             AngularSettings(**overridden_settings),
         )
+
+    def test_load_angular_settings_supports_legacy_package_executable_aliases(self) -> None:
+        with_npx_alias = DEFAULT_ANGULAR_SETTINGS | {"pnpm_executable": "corepack-pnpm"}
+        with_npm_alias = DEFAULT_ANGULAR_SETTINGS | {"pnpm_executable": "pnpm.cmd"}
+
+        self.assertEqual(
+            load_angular_settings({"npx_executable": "corepack-pnpm"}),
+            AngularSettings(**with_npx_alias),
+        )
+        self.assertEqual(
+            load_angular_settings({"npm_executable": "pnpm.cmd"}),
+            AngularSettings(**with_npm_alias),
+        )
+
+    def test_load_angular_settings_normalizes_command_allowlist(self) -> None:
+        settings = load_angular_settings(
+            {"command_allowlist": ["NG_OPENAPI_GEN", " ng_openapi_gen "]}
+        )
+
+        self.assertEqual(settings.command_allowlist, ("ng_openapi_gen",))
 
     def run_cli(self, *args: str) -> tuple[int, str, str]:
         stdout = io.StringIO()
@@ -58,7 +80,7 @@ class AngularCliCommandTests(unittest.TestCase):
                 "--skip-git",
                 "--skip-install",
                 "--no-create-application",
-                "--package-manager=npm",
+                "--package-manager=pnpm",
                 f"--directory={ROOT / 'build' / 'angular'}",
             ],
         )
@@ -70,7 +92,7 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(len(plan), 3)
-        self.assertEqual(plan[0]["argv"], ["ng", "config", "cli.packageManager", "npm"])
+        self.assertEqual(plan[0]["argv"], ["ng", "config", "cli.packageManager", "pnpm"])
         self.assertEqual(
             plan[1]["argv"],
             ["ng", "config", "schematics.@schematics/angular:application.style", "scss"],
@@ -113,12 +135,43 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(
             plan[0]["argv"],
             [
-                "npx",
+                "pnpm",
+                "exec",
                 "ng-openapi-gen",
                 "-i",
                 str(ROOT / "spec" / "openapi" / "source" / "example.openapi.json"),
             ],
         )
+
+    def test_execute_invocations_rejects_commands_outside_allowlist(self) -> None:
+        settings = load_angular_settings()
+        invocation = AngularInvocation(
+            command_name="ng_build",
+            argv=("pnpm", "exec", "ng-openapi-gen"),
+            cwd=ROOT,
+        )
+
+        with patch("django_angular3.angular.subprocess.run") as run:
+            with self.assertRaisesRegex(
+                AngularCommandError,
+                r"Command 'ng_build' is not allowed\. Allowed commands: ng_openapi_gen\.",
+            ):
+                execute_invocations([invocation], settings)
+
+        run.assert_not_called()
+
+    def test_execute_invocations_allows_whitelisted_commands(self) -> None:
+        settings = load_angular_settings({"command_allowlist": ["ng_openapi_gen"]})
+        invocation = AngularInvocation(
+            command_name="ng_openapi_gen",
+            argv=("pnpm", "exec", "ng-openapi-gen"),
+            cwd=ROOT,
+        )
+
+        with patch("django_angular3.angular.subprocess.run") as run:
+            execute_invocations([invocation], settings)
+
+        run.assert_called_once_with(invocation.argv, cwd=invocation.cwd, check=True)
 
 
 @unittest.skipUnless(DJANGO_AVAILABLE, "Django is required for management command tests.")

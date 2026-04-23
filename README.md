@@ -80,7 +80,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-The specialized Node/NPM/Angular settings live in
+The specialized Node/Angular tool settings live in
 `django_angular3/settings.py` and are configured through `DJANGO_ANGULAR3` in
 your Django project's `settings.py`. Only set the values you want to override;
 the example below shows the full supported settings surface, including an
@@ -90,10 +90,10 @@ optional `config_path` override:
 DJANGO_ANGULAR3 = {
     "config_path": "django-angular3.json",
     "ng_executable": "ng",
-    "npx_executable": "npx",
-    "npm_executable": "npm",
+    "pnpm_executable": "pnpm",
     "node_executable": "node",
-    "package_manager": "npm",
+    "command_allowlist": ["ng_openapi_gen"],
+    "package_manager": "pnpm",
     "build_configuration": "production",
     "style": "scss",
     "routing": True,
@@ -105,13 +105,18 @@ The current settings surface and defaults are:
 - `config_path`: `"django-angular3.json"` - default project config path used
   when a CLI or management command path is omitted
 - `node_executable`: `"node"`
-- `npm_executable`: `"npm"`
-- `npx_executable`: `"npx"`
+- `pnpm_executable`: `"pnpm"`
 - `ng_executable`: `"ng"`
-- `package_manager`: `"npm"`
+- `command_allowlist`: `("ng_openapi_gen",)`
+- `package_manager`: `"pnpm"`
 - `build_configuration`: `"production"`
 - `style`: `"scss"`
 - `routing`: `True`
+
+Legacy `npm_executable` and `npx_executable` overrides are still accepted and
+mapped to `pnpm_executable` for compatibility with older settings modules.
+Commands are only executed when the planned django-angular3 command name is in
+`command_allowlist`. The default allowlist only permits `ng_openapi_gen`.
 
 Once installed, Django and the standalone CLI expose the same Angular command
 planning flow:
@@ -127,8 +132,15 @@ planning flow:
 - `ng_new` creates an empty Angular workspace
 - `ng_config` applies workspace defaults such as package manager, style, and routing
 - `ng_gen_app` generates an Angular application inside the configured workspace
-- `ng_openapi_gen` runs `ng-openapi-gen` for the configured OpenAPI source
+- `ng_openapi_gen` runs a locally installed `ng-openapi-gen` for the configured OpenAPI source
+
+`ng_openapi_gen` is planned with `pnpm exec`, so it only uses dependencies that
+are already installed in the Angular workspace. It does not download and
+execute packages at runtime.
 - `ng_build` builds the configured Angular application
+
+If you want these commands to execute instead of only dry-run, configure the
+command allowlist to include the django-angular3 commands you want to permit.
 
 Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
 application name.
