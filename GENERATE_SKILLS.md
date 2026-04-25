@@ -1934,7 +1934,7 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
 - `output_path` (string, optional): Target directory for generated files. Defaults to `src/app/api/` as configured in ng-openapi-gen config
 
 **Process**:
-1. **Pre-flight validation**:
+1. **Preflight validation**:
    - Verify OpenAPI source file exists at `openapi_source_path`
    - Validate OpenAPI spec is well-formed JSON or YAML
    - Check ng-openapi-gen is installed in workspace (`npm list ng-openapi-gen`)
@@ -2209,7 +2209,7 @@ Generate a new Angular data service and unit spec when a resource already has ge
    - Add one wrapper method per generated API method
    - Preserve typed `Observable<>` return values for every wrapper
    - Wrap each API call with `catchError(...)` and route user-facing failures through `MatSnackBar`
-   - Add success notifications only where the underlying operation changes state and the project conventions call for it
+   - Add success notifications only where the underlying operation changes state; default to the shared snackbar pattern from Angular Material guidance unless the workspace already defines a different convention
 4. **Add focused tests**:
    - Create `<resource>.service.spec.ts` beside the service
    - Configure `TestBed` with `HttpClientTestingModule`
@@ -2262,7 +2262,7 @@ Remove a handwritten Angular data service and its associated unit spec.
 1. Locate the target `<resource>.service.ts` in `features/<resource>/services/` or `core/services/`
 2. Verify the paired `<resource>.service.spec.ts` file exists if tests were generated
 3. Remove both files
-4. Check for any now-stale barrel exports or imports and report them for cleanup if needed
+4. Check for any now-stale barrel exports (`index.ts` re-export files) or imports and report them for cleanup if needed
 
 **Output**:
 - Removed `<resource>.service.ts`
