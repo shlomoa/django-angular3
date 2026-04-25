@@ -5605,14 +5605,16 @@ Remove a page and clean up routing and navigation references.
 ### Context Files
 
 {{context:../../shared/angular-material-patterns.md}}
-- Context references follow the same relative skill-path convention used by the other sections in this document
+- Context references follow the same relative skill-path convention used by the other sections in this document and are resolved from the shared skill/context root
 
 ### Supporting Files
 
 - `templates/list-page.ts.tpl` — Standalone Angular Material list-page TypeScript scaffold
 - `templates/list-page.html.tpl` — Angular Material list-page template with table and loading state
 - `context/angular-material-patterns.md` — Shared Material layout, navigation, and standalone component conventions
-- List-page templates act as the canonical scaffold for page generation; detail, dashboard, and workflow pages are fully supported by the mode definitions above and reuse the documented layout rules even when dedicated template files are not listed separately
+- List-page templates act as the canonical scaffold for page generation
+- Detail, dashboard, and workflow pages are fully supported by the mode definitions above
+- These page types reuse the documented layout rules even when dedicated template files are not listed separately
 
 ### Validation
 
