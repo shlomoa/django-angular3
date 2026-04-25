@@ -42,3 +42,9 @@ django-angular3 = "django_angular3.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["django_angular3*"]
+
+[tool.setuptools.package-data]
+django_angular3 = [
+    "templates/django_angular3/**/*",
+    "static/django_angular3/**/*",
+]
