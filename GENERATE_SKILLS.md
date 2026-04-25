@@ -3736,7 +3736,7 @@ The `ng-complex-component` skill manages Angular Material components that go bey
 ### Inputs
 
 **From invocation context**:
-- **`componentName`** (string, required): Component name in kebab-case (for example `user-menu`, `filter-builder`)
+- **`componentName`** (string, required): Component name in kebab-case (e.g., `user-menu`, `filter-builder`)
 - **`targetPath`** (string, required): Relative path from app source directory where the component directory will be created
 - **`workspacePath`** (string, required): Absolute path to the Angular workspace root
 - **`appName`** (string, optional): Angular application name, required for multi-app workspaces
@@ -3791,8 +3791,12 @@ Before creating the component, verify:
    - Create `_<componentName>-theme.scss` in the component directory
    - Define a named mixin for the component theme contract, for example:
      ```scss
+     @use '@angular/material' as mat;
+
      @mixin <componentName>-theme($theme) {
-       // component theme rules
+       .app-<componentName> {
+         color: mat.get-theme-color($theme, primary, 500);
+       }
      }
      ```
    - Update the application theme entrypoint (`styles.scss`) to import and include the mixin
@@ -3800,7 +3804,7 @@ Before creating the component, verify:
 
 4. **Apply feature: `nested`**:
    - Generate child components inside `<targetPath>/<componentName>/`
-   - Use focused names for child components such as `header`, `content`, `actions`, or feature-specific names
+   - Use focused names for child components such as `header`, `content`, `actions`, or domain-specific names like `filter-panel` and `result-summary`
    - Import the generated child components into the parent component `imports` array
    - Keep the parent component responsible for composition and high-level orchestration only
 
@@ -3957,7 +3961,7 @@ Steps to validate successful execution of the skill:
 
 Common errors and their resolution strategies:
 
-**Error**: `Unsupported complex component feature: <feature>`
+**Error**: `Unsupported complex component feature: <feature>. Supported features are: mixins, nested, projection, cdk-overlay`
 - **Cause**: The `features` list contains an unknown value
 - **Resolution**: Restrict the feature list to `mixins`, `nested`, `projection`, and `cdk-overlay`
 
