@@ -5611,6 +5611,7 @@ Remove a page and clean up routing and navigation references.
 - `templates/list-page.ts.tpl` — Standalone Angular Material list-page TypeScript scaffold
 - `templates/list-page.html.tpl` — Angular Material list-page template with table and loading state
 - `context/angular-material-patterns.md` — Shared Material layout, navigation, and standalone component conventions
+- List-page templates act as the canonical scaffold for page generation; detail, dashboard, and workflow variants extend the documented layout rules in this section until dedicated templates are introduced
 
 ### Validation
 
@@ -5637,7 +5638,7 @@ Remove a page and clean up routing and navigation references.
    - Resolution: import and register the correct `CanActivate` guard in the route entry
 
 3. **Workflow page missing reactive form dependencies**:
-   - Resolution: run `ng-reactive-form` first for the required step forms, then retry page generation
+   - Resolution: run the `ng-reactive-form` skill first for the required step forms (see Dependencies below), then retry page generation
 
 ### Dependencies
 
