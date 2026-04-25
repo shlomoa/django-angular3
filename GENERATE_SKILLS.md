@@ -4744,11 +4744,15 @@ Remove a complex component and its advanced integrations completely.
 - CDK providers and imports cleaned up
 - Remaining manual cleanup locations reported if unrelated templates still reference the deleted selectors
 
-### Supporting Files
+### Context Files
 
-{{context:context/angular-conventions.md}}
+{{context:../../shared/angular-conventions.md}}
 
-{{context:context/angular-material-patterns.md}}
+{{context:../../shared/angular-material-patterns.md}}
+
+### Templates
+
+None
 
 ### Validation
 
@@ -4776,7 +4780,7 @@ Steps to validate successful execution of the skill:
 
 4. **Projection slot verification**:
    ```bash
-   grep -n "<ng-content select=" <targetPath>/<componentName>/<componentName>.component.html
+   grep -n '<ng-content select="' <targetPath>/<componentName>/<componentName>.component.html
    ```
    - Should show explicit projection slots when `projection` is enabled
 
