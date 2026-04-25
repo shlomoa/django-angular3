@@ -5465,6 +5465,7 @@ The `ng-page` skill manages top-level Angular Material pages inside an existing 
 - **`routePath`** (string, required): Route path segment to register in the feature route file (for example `users`, `orders/:id`, `dashboard`)
 - **`pageType`** (enum, required): Page type (`list` | `detail` | `dashboard` | `workflow`)
 - **`featureName`** (string, required): Feature area that owns the route and page files (for example `users`, `orders`, `admin`)
+- **`appName`** (string, optional): Angular application name used when the workspace contains more than one application and for compile validation commands
 
 ### Modes
 
@@ -5605,7 +5606,8 @@ Remove a page and clean up routing and navigation references.
 ### Context Files
 
 {{context:../../shared/angular-material-patterns.md}}
-- Context references follow the same relative skill-path convention used by the other sections in this document and are resolved from the shared skill/context root
+- Context references follow the same relative skill-path convention used by the other sections in this document
+- Example: `../../shared/angular-material-patterns.md` resolves to the shared `angular-material-patterns.md` context file in the sibling `shared/` skill context area
 
 ### Supporting Files
 
@@ -5614,7 +5616,7 @@ Remove a page and clean up routing and navigation references.
 - `context/angular-material-patterns.md` — Shared Material layout, navigation, and standalone component conventions
 - List-page templates act as the canonical scaffold for page generation
 - Detail, dashboard, and workflow pages are fully supported by the mode definitions above
-- These page types reuse the documented layout rules even when dedicated template files are not listed separately
+- These non-list page types are generated from the documented mode rules and shared context above, even when dedicated template files are not listed separately in this section
 
 ### Validation
 
