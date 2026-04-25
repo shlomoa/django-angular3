@@ -10,7 +10,7 @@ permissions:
 jobs:
   pypi-publish:
     name: Build and publish to PyPI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       id-token: write  # required for trusted publishing
       contents: read
