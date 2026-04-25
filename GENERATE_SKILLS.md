@@ -832,7 +832,7 @@ export class AppComponent {
 
 ## Template 6: Service + `catchError` + `MatSnackBar`
 
-**File**: `service.ts.tpl`
+**File**: `service.ts.tpl` (intended resource path for the `ng-data-service` skill template)
 
 **Used by**:
 - Angular data model Service (skill 4)
@@ -2209,7 +2209,7 @@ Generate a new Angular data service and unit spec when a resource already has ge
    - Add one wrapper method per generated API method
    - Preserve typed `Observable<>` return values for every wrapper
    - Wrap each API call with `catchError(...)` and route user-facing failures through `MatSnackBar`
-   - Add success notifications by default for state-changing wrappers such as create/update/delete operations; skip read-only list/get methods unless the workspace already defines a different snackbar convention
+   - Add success notifications for state-changing wrappers such as create, update, patch, and delete operations; do not add them for read-only list, get, or search methods
 4. **Add focused tests**:
    - Create `<resource>.service.spec.ts` beside the service
    - Configure `TestBed` with `HttpClientTestingModule`
@@ -2262,7 +2262,7 @@ Remove a handwritten Angular data service and its associated unit spec.
 1. Locate the target `<resource>.service.ts` in `features/<resource>/services/` or `core/services/`
 2. Verify the paired `<resource>.service.spec.ts` file exists if tests were generated
 3. Remove both files
-4. Check for any now-stale barrel exports (`index.ts` re-export files) or imports; remove them automatically when the cleanup is unambiguous, otherwise report the required manual follow-up
+4. Check for any now-stale barrel exports (`index.ts` re-export files) or imports; remove them automatically when the deleted service is the only matching export or when a grep check confirms there are no remaining imports, otherwise report the required manual follow-up
 
 **Output**:
 - Removed `<resource>.service.ts`
