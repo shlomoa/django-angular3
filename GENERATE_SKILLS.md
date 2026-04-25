@@ -1447,6 +1447,7 @@ Manage an Angular Material app
 
 ## Angular API generation
 
+```yaml
 ---
 name: ng-api
 description: Generate Angular API clients from OpenAPI specifications using ng-openapi-gen. Auto-invoked when the outer agent detects a need to generate or regenerate API service layer code from an OpenAPI schema.
@@ -1459,6 +1460,7 @@ allowed-tools:
   - Grep
   - Glob
 ---
+```
 
 ### Purpose
 
