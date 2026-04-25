@@ -204,6 +204,78 @@ Brief examples demonstrating typical usage patterns.
 
 This canonical structure ensures consistency across all 11 skills and provides clear guidance for both outer agent invocation and skill implementation.
 
+# Shared Context Files
+
+Shared context files are reference documents stored in `.claude/skills/shared/` that multiple skills load on-demand at the instructions level. They eliminate duplication by centralising conventions, patterns, and integration rules that apply across many skills.
+
+Each file is injected into a skill using the standard context reference syntax:
+
+```markdown
+{{context:../../shared/<filename>}}
+```
+
+## `angular-conventions.md`
+
+**Path**: `.claude/skills/shared/angular-conventions.md`
+
+**Contents**:
+
+- **Standalone components**: All components use `standalone: true`; no NgModules are generated. Imports are declared directly in the component decorator.
+- **Signals**: State management uses Angular signals (`signal()`, `computed()`, `effect()`). Avoid `BehaviorSubject` and `Observable`-based state where signals suffice.
+- **SCSS & Material theming**: Component stylesheets use `.scss`. Global theme tokens (palette, typography, density) are defined once in the workspace theme file and consumed via `mat.get-theme-color()` / `mat.get-theme-typography()` mixins.
+- **Naming conventions**: Files follow `<name>.<type>.ts` (e.g., `user-list.component.ts`). Classes follow PascalCase (e.g., `UserListComponent`). Selectors follow `app-<name>` (e.g., `app-user-list`).
+- **Imports**: Use Angular's `inject()` function for dependency injection. Barrel files (`index.ts`) are generated for each feature directory.
+- **Testing patterns**: Unit tests use Jest with Angular Testing Library. Each component test file follows `<name>.component.spec.ts`. Services use `TestBed` with `HttpClientTestingModule` for HTTP dependencies.
+
+**Referenced by**:
+- Angular Material app boiler plate
+- Angular Material small field level component generation
+- Angular Material form field generation
+- Angular component generation
+- Angular Material complex component generation
+- Angular Material reactive form generation
+- Angular Material page generation
+- Angular Material site generation
+
+## `angular-material-patterns.md`
+
+**Path**: `.claude/skills/shared/angular-material-patterns.md`
+
+**Contents**:
+
+- **MatTable page**: Standard data-table layout using `<mat-table>`, `MatPaginatorModule`, `MatSortModule`, and a `MatProgressSpinnerModule` loading overlay. Data source is a `MatTableDataSource` bound to a signal-based service.
+- **MatCard form**: Form contained within a `<mat-card>` with `<mat-card-header>`, `<mat-card-content>`, and `<mat-card-actions>`. Uses `ReactiveFormsModule` with `FormBuilder`.
+- **MatSidenav shell**: Application shell with `<mat-sidenav-container>`, a collapsible `<mat-sidenav>` for navigation, and `<mat-sidenav-content>` for the router outlet.
+- **Dialog pattern**: Dialogs are opened via `MatDialog.open()`, receive data through `MAT_DIALOG_DATA`, and return results via `MatDialogRef.close()`.
+- **Snackbar pattern**: User feedback is delivered through `MatSnackBar.open()` with a duration of 3000 ms and a dismiss action.
+
+**Referenced by**:
+- Angular Material app boiler plate
+- Angular Material small field level component generation
+- Angular Material form field generation
+- Angular Material complex component generation
+- Angular Material reactive form generation
+- Angular Material page generation
+- Angular Material site generation
+
+## `openapi-integration.md`
+
+**Path**: `.claude/skills/shared/openapi-integration.md`
+
+**Contents**:
+
+- **ng-openapi-gen output paths**: Generated files are placed in `src/app/api/` by default. The output directory is configured in `ng-openapi-gen.json` at the workspace root.
+- **Service naming**: Each OpenAPI tag produces one Angular service named `<Tag>ApiService` (e.g., tag `Users` → `UsersApiService`). Import from `src/app/api/services/<tag>-api.service.ts`.
+- **Import patterns**: Models are imported from `src/app/api/models/<model-name>.ts`. The barrel export at `src/app/api/models.ts` re-exports all models.
+- **Do-not-edit rule**: All files inside `src/app/api/` are auto-generated and **must not be edited manually**. Re-run `ng-openapi-gen` to regenerate after schema changes.
+
+**Referenced by**:
+- Angular API generation
+- Angular data model Service
+- Angular Material complex component generation
+- Angular Material page generation
+- Angular Material site generation
+
 # Skills
 
 Section will break down the "skills" requirement into the different skills.
