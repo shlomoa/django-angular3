@@ -5726,7 +5726,7 @@ The `ng-site` skill coordinates complete Angular Material site generation for an
 - **`workspacePath`** (string, required): Absolute path to the Angular workspace root
 - **`appName`** (string, optional): Angular application name when the workspace contains more than one app and for validation commands
 - **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/ui/`, used to discover pages, navigation structure, and forms
-- **`openapiSourcePath`** (string, optional): Path to the OpenAPI source used by `ng-api` for client generation
+- **`openapi_source_path`** (string, optional): Path to the OpenAPI source used by `ng-api` for client generation
 - **`defaults`** (object, optional): Fallback definitions to use when no UI spec is provided, such as default pages, route prefixes, or auth requirements
 
 ### Modes
@@ -5741,7 +5741,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 - `workspacePath` must point to an existing Angular workspace
 - `appName` is required when the workspace contains multiple applications
 - `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/ui/`
-- `openapiSourcePath` is optional; when provided it should resolve to a valid OpenAPI document
+- `openapi_source_path` is optional; when provided it should resolve to a valid OpenAPI document
 
 **Process (Create Mode)**:
 
@@ -5765,7 +5765,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - Ensure the shell exposes a stable place for feature navigation and authenticated child routes
 
 4. **Invoke `ng-api` when an OpenAPI source is available**
-   - If `openapiSourcePath` is present, run the `ng-api` skill to generate or refresh Angular API clients before page or form generation
+   - If `openapi_source_path` is present, pass it through to `ng-api` as `openapi_source_path` and generate or refresh Angular API clients before page or form generation
    - Reuse the generated models and services as the typed foundation for resource-backed pages and forms
 
 5. **Invoke `ng-page` for each site page**
@@ -5799,7 +5799,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 **Output**:
 - Site-level `app.component.ts` shell with `MatSidenav` layout
 - Root route configuration wired for generated pages and auth protection
-- Generated OpenAPI clients when `openapiSourcePath` is provided
+- Generated OpenAPI clients when `openapi_source_path` is provided
 - Generated Angular Material pages for each discovered or default page
 - Generated reactive forms for each discovered form definition
 - Global Material theme in `styles.scss`
@@ -5911,7 +5911,7 @@ Remove the Angular application that owns the generated site from the workspace.
 
 **Orchestrated Skills**:
 
-- **ng-api** — Generates OpenAPI clients when `openapiSourcePath` is provided
+- **ng-api** — Generates OpenAPI clients when `openapi_source_path` is provided
 - **ng-page** — Generates each page discovered from the UI spec or defaults
 - **ng-reactive-form** — Generates each form discovered from the UI spec
 
@@ -5928,7 +5928,7 @@ Remove the Angular application that owns the generated site from the workspace.
   "workspacePath": "/workspace/admin-portal",
   "appName": "admin-portal",
   "uiSpecPath": "spec/ui/",
-  "openapiSourcePath": "spec/openapi.yaml"
+  "openapi_source_path": "spec/openapi.yaml"
 }
 ```
 
