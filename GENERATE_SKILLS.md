@@ -5761,7 +5761,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 3. **Create the application shell**
    - Create or update `app.component.ts` as the Material site shell
    - Use `MatSidenav`, `MatToolbar`, `MatNavList`, and `RouterOutlet` for the top-level layout
-   - Create or update the root route configuration in `app.routes.ts` (or `app-routing.ts` when that naming convention is already established in the target app)
+   - Create or update the root route configuration in `app.routes.ts`
    - Ensure the shell exposes a stable place for feature navigation and authenticated child routes
 
 4. **Invoke `ng-api` when an OpenAPI source is available**
