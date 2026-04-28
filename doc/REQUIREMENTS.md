@@ -175,6 +175,11 @@ Build a production-ready business application with:
 - API errors must return a predictable structure usable by the Angular client
 - The backend must expose a stable OpenAPI schema for downstream tooling and
   generated CRM-facing content
+- `oasdiff` must be used as the OpenAPI schema diff and change detection tool
+- `oasdiff` must run as part of the contract normalization stage to detect
+  breaking and non-breaking changes between schema versions
+- Breaking changes detected by `oasdiff` must block downstream generation and
+  generation tooling until explicitly acknowledged or resolved
 - API schema generation and browsable documentation should be available in
   non-production environments
 
@@ -185,7 +190,8 @@ Build a production-ready business application with:
 - OpenAPI must be the source of truth for CRM-facing content, contracts, and
   generated Angular integration artifacts
 - The project must use a reproducible OpenAPI-based code generation toolchain,
-  with `ng-openapi-gen` as the Angular client generator
+  with `oasdiff` for schema diff and change detection and `ng-openapi-gen` as
+  the Angular client generator
 - CRM list, detail, and standard form experiences should be derived from the
   OpenAPI contract where practical instead of being duplicated by hand
 - Angular-related integration functionality shared across modules must be
@@ -193,8 +199,8 @@ Build a production-ready business application with:
 - Angular client generation may use `ng-openapi-gen` when its Angular-native
   output is a better fit than the baseline generator path
 - The delivery process must support an agent chain with defined handoff
-  artifacts between schema generation, client generation, UI assembly, and app
-  integration
+  artifacts between schema generation, `oasdiff` change detection, client
+  generation, UI assembly, and app integration
 - Non-CRM content such as bespoke reactive forms, standalone pages, and custom
   workflows must come from a separate structured input source
 - The non-CRM input source must be versioned, validated, and able to reference

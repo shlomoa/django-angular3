@@ -135,8 +135,9 @@ Recommended stages:
 
 1. Backend contract stage: Django models, serializers, and DRF endpoints define
    the business contract and emit an OpenAPI artifact
-2. Contract normalization stage: the OpenAPI artifact is validated, versioned,
-   and prepared for CRM-facing generation
+2. Contract normalization stage: the OpenAPI artifact is validated, diffed
+   against the previous version using `oasdiff` to detect breaking and
+   non-breaking changes, versioned, and prepared for CRM-facing generation
 3. Angular integration generation stage: the OpenAPI contract produces typed
    clients, resource adapters, and reusable Angular Material-oriented
    integration helpers
@@ -272,10 +273,18 @@ Example patterns:
   for CRM-facing functionality
 - The exported schema should be stored as a durable build artifact so downstream
   agent-chain stages can consume it deterministically
-- Contract changes should be reviewed as part of normal API change management
+- Use `oasdiff` as the OpenAPI schema diff and change detection tool
+- `oasdiff` must be run as part of the contract normalization stage to detect
+  breaking changes between the current and previous schema versions
+- Breaking changes detected by `oasdiff` must block downstream generation until
+  explicitly acknowledged or resolved
+- Contract changes should be reviewed as part of normal API change management,
+  with `oasdiff` output included in the review artifact
 
 ### Generation Toolchain
 
+- Use `oasdiff` as the schema diff and change detection tool; run it before
+  any generation step to surface breaking changes early
 - Use `ng-openapi-gen` as the Angular client generation tool for contract-driven
   artifacts
 - Django backend code should remain authored in DRF; OpenAPI generation on the
@@ -297,7 +306,10 @@ Example patterns:
 
 - Start with URL-based versioning using `/api/v1/`
 - Keep changes backward-compatible within a version where possible
-- Introduce `/api/v2/` only for meaningful contract changes
+- Use `oasdiff` to determine whether a contract change is breaking before
+  deciding to introduce a new version namespace
+- Introduce `/api/v2/` only for meaningful contract changes confirmed by
+  `oasdiff` as breaking
 
 ## Authentication and Authorization
 
@@ -611,6 +623,7 @@ Where:
 - Django + DRF own backend data, administration, and packaging concerns
 - Angular Material owns the user-facing application experience
 - OpenAPI is the source of truth for CRM-facing contracts
+- `oasdiff` is the OpenAPI schema diff and change detection tool
 - `ng-openapi-gen` is the Angular client code-generation tool
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold

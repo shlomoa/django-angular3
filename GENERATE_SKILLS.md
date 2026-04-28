@@ -264,6 +264,7 @@ Each file is injected into a skill using the standard context reference syntax:
 
 **Contents**:
 
+- **oasdiff — schema diff and change detection**: Run `oasdiff` against the previous and current OpenAPI schema before any generation step. Breaking changes reported by `oasdiff` must be acknowledged or resolved before generation proceeds.
 - **ng-openapi-gen output paths**: Generated files are placed in `src/app/api/` by default. The output directory is configured in `ng-openapi-gen.json` at the workspace root.
 - **Service naming**: Each OpenAPI tag produces one Angular service named `<Tag>ApiService` (e.g., tag `Users` → `UsersApiService`). Import from `src/app/api/services/<tag>-api.service.ts`.
 - **Import patterns**: Models are imported from `src/app/api/models/<model-name>.ts`. The barrel export at `src/app/api/models.ts` re-exports all models.
@@ -987,6 +988,8 @@ Each script will have the following modes:
 - Create: from zero, the object didn't exist before.
 - Modify: Modify a given object
 - Delete: Delete the object
+
+The mode to apply to each object is determined by running `oasdiff` against the previous and current OpenAPI schema. `oasdiff` output identifies which API resources, operations, and models were added (→ Create), changed (→ Modify), or removed (→ Delete), driving the correct skill mode for each affected object.
 
 ## Angular Material workspace boiler plate
 
@@ -1937,9 +1940,15 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
 1. **Preflight validation**:
    - Verify OpenAPI source file exists at `openapi_source_path`
    - Validate OpenAPI spec is well-formed JSON or YAML
+   - Check `oasdiff` is installed (`oasdiff --version`)
    - Check ng-openapi-gen is installed in workspace (`npm list ng-openapi-gen`)
    - If config file path provided, verify it exists; otherwise check for default `ng-openapi-gen.json`
-2. **Configuration setup** (if config doesn't exist):
+2. **Schema diff with oasdiff** (if a previous schema version exists):
+   - Run: `oasdiff breaking <previous_schema> <openapi_source_path>`
+   - If breaking changes are reported, halt and surface the `oasdiff` output to the caller
+   - For non-breaking changes, log the summary and continue
+   - If no previous schema exists, skip this step and proceed
+3. **Configuration setup** (if config doesn't exist):
    - Create `ng-openapi-gen.json` at workspace root with:
      ```json
      {
@@ -1980,9 +1989,13 @@ Regenerate API client code after OpenAPI specification changes.
 1. **Verify existing generation**:
    - Confirm `ng-openapi-gen.json` config exists
    - Confirm output directory exists with previous generation
-2. **Clean previous generation** (optional, based on ng-openapi-gen behavior):
+2. **Schema diff with oasdiff**:
+   - Run: `oasdiff breaking <previous_schema> <openapi_source_path>`
+   - If breaking changes are reported, halt and surface the `oasdiff` output to the caller before regenerating
+   - Run: `oasdiff summary <previous_schema> <openapi_source_path>` and include in the change report
+3. **Clean previous generation** (optional, based on ng-openapi-gen behavior):
    - ng-openapi-gen handles incremental updates, but note that removed endpoints/models may leave orphaned files
-3. **Re-run generation**:
+4. **Re-run generation**:
    - Execute: `npx ng-openapi-gen --config <ng_openapi_gen_config_path>`
 4. **Diff analysis**:
    - Identify new services (new OpenAPI tags)
@@ -1990,6 +2003,7 @@ Regenerate API client code after OpenAPI specification changes.
    - Identify new models
    - Identify modified models (schema changes)
 5. **Report changes**:
+   - Include the `oasdiff summary` output in the change report
    - List added services and models
    - List modified services and models
    - Warn about any orphaned files if manual cleanup needed
@@ -2094,6 +2108,7 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 - Angular Material workspace boilerplate must exist (workspace with `package.json` and Angular CLI)
 
 **Required Tools**:
+- `oasdiff` CLI installed (download the prebuilt binary from https://github.com/oasdiff/oasdiff/releases)
 - `ng-openapi-gen` npm package installed in workspace
 - Angular workspace with TypeScript configuration
 
