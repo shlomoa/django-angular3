@@ -5960,15 +5960,29 @@ Remove the Angular application that owns the generated site from the workspace.
 
 # Skill building
 
-Each skill building will include the following steps:
-1. Define the skill and its purpose.
-2. Identify the necessary inputs and outputs for the skill.
-3. Develop the building script(s) for the skill, ensuring they can handle the create, modify, and delete modes effectively.
-4. Create reusable templates that can be used by the building scripts to generate the necessary code or configurations for the skill.
-5. Test the skill to ensure it works as expected in all modes (create, modify, delete).
+To create a skill from scratch with the skill-creator, I need roughly four things from you. Only the first two are required upfront; the rest can be built together.
 
-## 1. Define the skill and its purpose
-## 2. Identify the necessary inputs and outputs for the skill
-## 3. Develop the building script(s) for the skill
-## 4. Create reusable templates that can be used by the building scripts to generate the necessary code or configurations for the skill
-## 5. Test the skill to ensure it works as expected in all modes (create, modify, delete)
+**1. Intent — required, conversational**
+
+Three short answers:
+- What should the skill enable Claude to do? (the capability)
+- When should it trigger? (user phrases, file types, contexts — this becomes the `description` field, which is what actually decides whether the skill fires)
+- What's the expected output? (a file, a code change, a report, etc.)
+
+Free-form prose is fine; I'll ask follow-ups to fill the gaps.
+
+**2. Domain detail — required, format flexible**
+
+Whatever a competent practitioner would need to do the task by hand. Concretely: the input shape (file paths, schemas, structured data, free text), the output shape (exact format, extensions, naming, directory layout), conventions or style rules the output must follow, edge cases (missing input, conflicts, partial state), and dependencies on other skills or artifacts.
+
+The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `GENERATE_SKILLS.md` is exactly this kind of input — a structured spec.
+
+**3. Bundled resources — optional**
+
+Anything that should live inside the skill folder so the skill doesn't reinvent it on every run: scripts in `scripts/` for deterministic steps, long reference docs in `references/` loaded on demand, and assets in `assets/` (templates, fixtures, icons). If you don't have these, I draft them as part of skill creation.
+
+**4. Evaluation setup — optional but recommended when outputs are verifiable**
+
+Two or three realistic test prompts (what a real user would actually type), any input files those prompts need, and a rough sense of what "right" looks like — I turn that into assertions. For subjective outputs (writing style, design feel) we skip assertions and rely on your review of the rendered results.
+
+---
