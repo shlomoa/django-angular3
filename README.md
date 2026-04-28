@@ -1,12 +1,13 @@
 # django-angular3
 
-`django-angular3` is a contract-first integration package for teams building Angular Material frontends on top of Django REST framework (DRF) backends.
+`django-angular3` enables seamless integration of Django, Django REST Framework (DRF), and Angular — giving teams a contract-first, automation-ready bridge between a DRF backend and an Angular Material frontend.
 
 It allows you to:
 - Keep Django responsible for data, authentication, and administration.
 - Keep Angular responsible for the end-user application and client-side route tree.
 - Use OpenAPI as the source of truth for CRM-facing functionality.
 - Support bespoke non-CRM pages, reactive forms, and workflows via a separate structured input source.
+- Automate the handoff from backend API contract to Angular integration artifacts through a deterministic, repeatable pipeline.
 
 ## Requirements
 

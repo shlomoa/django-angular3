@@ -2,9 +2,14 @@
 
 ## Purpose
 
-This document defines the baseline requirements for a greenfield full-stack web
-application built with Django, Django REST Framework (DRF), and an Angular
-frontend using Angular Material.
+`django-angular3` enables seamless integration of Django, Django REST Framework
+(DRF), and Angular Material. This document defines the baseline requirements
+for the full-stack application platform that integration targets.
+
+The package bridges the DRF backend and the Angular frontend through a
+contract-first pipeline: it validates OpenAPI artifacts exported from Django,
+plans Angular workspace setup and client code-generation commands, and produces
+deterministic build artifacts that connect both stacks without manual glue work.
 
 Because the business domain is not yet specified, these requirements describe a
 reusable application platform that supports authentication, administration,

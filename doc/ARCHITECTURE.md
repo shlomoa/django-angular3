@@ -2,10 +2,15 @@
 
 ## Purpose
 
-This document describes the target architecture for a full-stack application
-built with Django, DRF, and Angular Material. It is written for a greenfield
-project and favors tight integration, clear module boundaries, and simple
-production operations.
+`django-angular3` exists to enable seamless integration of Django, DRF, and
+Angular. This document describes the target architecture for a full-stack
+application built on that integration — a greenfield project that favors tight
+integration, clear module boundaries, and simple production operations.
+
+The package automates the contract handoff between the DRF backend and the
+Angular Material frontend: validating the OpenAPI contract, planning Angular
+workspace and client generation commands, and emitting deterministic build
+artifacts that bridge the two technology stacks.
 
 ## Architectural Principles
 
