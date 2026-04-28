@@ -271,18 +271,11 @@ Example patterns:
 
 ### Generation Toolchain
 
-- Standardize on `openapitools/openapi-generator` as the baseline generation
-  framework for contract-driven artifacts
-- For Angular client output, support both:
-  - OpenAPI Generator's `typescript-angular` generator
-  - `ng-openapi-gen` when its Angular-native output is a better fit for the
-    consuming Angular application
-- As of April 16, 2026, the official OpenAPI Generator published generator list
-  includes `typescript-angular` but does not list a Django server generator
-- Therefore, Django backend code should remain authored in DRF, while OpenAPI
-  generation on the backend side is limited to supporting artifacts, custom
-  templates, or project-specific scaffolding unless the project adds its own
-  generator extension
+- Use `ng-openapi-gen` as the Angular client generation tool for contract-driven
+  artifacts
+- Django backend code should remain authored in DRF; OpenAPI generation on the
+  backend side is limited to supporting artifacts, custom templates, or
+  project-specific scaffolding
 - Generator configuration files must be version-controlled and executable in CI
 - Generated output must be deterministic enough to review in pull requests or
   re-create reliably in build pipelines
@@ -488,8 +481,8 @@ does not get mixed with manually-authored UI definitions.
   coded in the client
 - CRM-facing Angular content should be generated or configured from OpenAPI
   wherever practical
-- The preferred generation path is `openapitools/openapi-generator`, with
-  `ng-openapi-gen` allowed when Angular ergonomics or output shape are superior
+- The preferred generation path is `ng-openapi-gen` for its Angular-native
+  output and ergonomics
 - Non-CRM content definitions should be version-controlled and validated
   separately from the OpenAPI contract
 - The user-facing product UI remains frontend-owned, while backend data
@@ -581,7 +574,6 @@ frontend/
 spec/
   openapi/
     source/
-    openapi-generator/
     ng-openapi-gen/
   ui/
 build/
@@ -597,10 +589,8 @@ Where:
 - `spec/openapi/` holds exported or versioned OpenAPI artifacts
 - `spec/openapi/source/` holds the dumped source OAS documents from Swagger
   Studio / SwaggerHub
-- `spec/openapi/openapi-generator/` holds baseline generator configs and
+- `spec/openapi/ng-openapi-gen/` holds Angular client generator configs and
   templates
-- `spec/openapi/ng-openapi-gen/` holds Angular-specific generator configs when
-  that path is used
 - `spec/ui/` holds structured non-CRM page and reactive-form definitions
 - `build/angular/` holds generated Angular integration artifacts in the current
   scaffold
@@ -616,8 +606,7 @@ Where:
 - Django + DRF own backend data, administration, and packaging concerns
 - Angular Material owns the user-facing application experience
 - OpenAPI is the source of truth for CRM-facing contracts
-- `openapitools/openapi-generator` is the baseline code-generation framework
-- `ng-openapi-gen` is an approved Angular-focused generator option
+- `ng-openapi-gen` is the Angular client code-generation tool
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold
 - Non-CRM content is supplied by a separate structured input source
@@ -632,8 +621,7 @@ order:
    supporting build-output paths
 2. Set up Django, DRF, and PostgreSQL configuration
 3. Export and version the initial OpenAPI contract
-4. Commit baseline generator configuration for `openapitools/openapi-generator`
-   and, if chosen, `ng-openapi-gen`
+4. Commit baseline generator configuration for `ng-openapi-gen`
 5. Create the Angular integration layer and wire it to generated OpenAPI
    artifacts
 6. Define the structured non-CRM input source for reactive forms and pages

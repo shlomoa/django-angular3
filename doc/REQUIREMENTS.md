@@ -180,7 +180,7 @@ Build a production-ready business application with:
 - OpenAPI must be the source of truth for CRM-facing content, contracts, and
   generated Angular integration artifacts
 - The project must use a reproducible OpenAPI-based code generation toolchain,
-  with `openapitools/openapi-generator` as the baseline generator framework
+  with `ng-openapi-gen` as the Angular client generator
 - CRM list, detail, and standard form experiences should be derived from the
   OpenAPI contract where practical instead of being duplicated by hand
 - Angular-related integration functionality shared across modules must be
