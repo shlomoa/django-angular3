@@ -86,16 +86,28 @@ package is self-contained.
 
 ## Tooling boundary
 
-`ng-openapi-gen` is the chosen Angular client generator for the target
-architecture, consistent with `README.md`, `doc/ARCHITECTURE.md`, and
-`doc/REQUIREMENTS.md`. No alternative Angular client generator is in scope.
+The integration toolchain for the generated project, per `README.md`,
+`doc/ARCHITECTURE.md`, and `doc/REQUIREMENTS.md`, is `drf-spectacular` for
+OpenAPI schema export from the consuming Django project, `oasdiff` for schema
+diff and change detection (breaking changes block downstream generation until
+acknowledged), and `ng-openapi-gen` for Angular client generation. No
+alternative Angular client generator is in scope, and no alternative OpenAPI
+diff tool is in scope.
 
-Skills do not call Angular CLI or `ng-openapi-gen` directly. They invoke this
-repository's Python wrappers (`ng_new`, `ng_config`, `ng_openapi_gen`,
-`ng_build`, and so on), which honor the operating principle that Angular
-tooling must not download packages at runtime and that workspace dependencies
-are used locally via `pnpm exec`. Each skill bundles the wrappers it needs in
-its `scripts/` directory.
+Skills do not call Angular CLI, `ng-openapi-gen`, or `oasdiff` directly. They
+invoke this repository's Python wrappers (`ng_new`, `ng_config`,
+`ng_openapi_gen`, `ng_build`, and so on), which honor the operating principle
+that Angular tooling must not download packages at runtime and that workspace
+dependencies are used locally via `pnpm exec`. Each skill bundles the
+wrappers it needs in its `scripts/` directory.
+
+The default settings surface for this repository (per `README.md`) is `pnpm`
+as the package manager, `scss` as the stylesheet format, routing enabled,
+`build_configuration` of `production`, and a command allowlist that defaults
+to only `ng_openapi_gen` — meaning wrappers plan dry-runs by default and only
+`ng_openapi_gen` actually executes unless the user explicitly broadens the
+allowlist. Skills must respect this surface and not assume executability of
+other planned commands.
 
 ## Per-skill cadence
 

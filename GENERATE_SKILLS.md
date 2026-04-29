@@ -1021,7 +1021,7 @@ The `ng-workspace` skill manages the creation, modification, and deletion of Ang
 
 **From project configuration**:
 - **`workspacePath`** (string, required): Absolute path where the workspace will be created (e.g., `/home/user/projects/my-angular-app`)
-- **`packageManager`** (enum, optional): Package manager to use (`npm` | `yarn` | `pnpm`). Defaults to `npm`
+- **`packageManager`** (enum, optional): Package manager to use (`npm` | `yarn` | `pnpm`). Defaults to `pnpm` unless project configuration says otherwise
 - **`style`** (enum, optional): Stylesheet format (`css` | `scss` | `sass` | `less`). Defaults to `scss`
 - **`routing`** (boolean, optional): Whether to include routing in the default application. Defaults to `true`
 - **`workspaceName`** (string, optional): Name of the workspace. Defaults to directory name from `workspacePath`
@@ -1383,7 +1383,7 @@ After modifying a workspace, verify:
 {
   "mode": "create",
   "workspacePath": "/home/user/projects/my-shop",
-  "packageManager": "npm",
+  "packageManager": "pnpm",
   "style": "scss",
   "routing": true,
   "workspaceName": "my-shop"
@@ -1391,7 +1391,7 @@ After modifying a workspace, verify:
 ```
 
 **Execution**:
-1. Run `npx @angular/cli new my-shop --directory=/home/user/projects/my-shop --package-manager=npm --style=scss --routing=true --standalone=true`
+1. Run `npx @angular/cli new my-shop --directory=/home/user/projects/my-shop --package-manager=pnpm --style=scss --routing=true --standalone=true`
 2. Install Material with `ng add @angular/material`
 3. Configure custom SCSS theme
 4. Install ESLint

@@ -417,25 +417,36 @@ It should not own:
 
 ```text
 frontend/
-  src/
-    app/
-      core/
-        auth/
-        guards/
-        interceptors/
-        layout/
-        services/
-      shared/
-        components/
-        pipes/
-        utils/
-      features/
-        accounts/
-        admin/
-        <domain_feature_1>/
-        <domain_feature_2>/
-  generated/
+  angular.json
+  package.json
+  pnpm-lock.yaml
+  projects/
+    <appName>/
+      src/
+        app/
+          core/
+            auth/
+            guards/
+            interceptors/
+            layout/
+            services/
+          shared/
+            components/
+            pipes/
+            utils/
+          features/
+            accounts/
+            admin/
+            <domain_feature_1>/
+            <domain_feature_2>/
+        generated/
 ```
+
+The Angular frontend uses a multi-project Angular workspace. User-facing
+applications live under `projects/<appName>/src/app/...`, and generated
+integration artifacts for that application live under
+`projects/<appName>/src/generated/` unless a project configuration explicitly
+sets a different generated-output path.
 
 ### Frontend Responsibilities
 
