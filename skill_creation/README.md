@@ -1,0 +1,43 @@
+# Skill Creation Working Set
+
+This folder splits `GENERATE_SKILLS.md` into smaller working files for the
+skill authoring cadence described in `doc/SKILL_AUTHORING_PLAN.md`.
+
+`GENERATE_SKILLS.md` remains the original design specification. These files are
+the operational source for planning, implementing, and verifying one skill at a
+time. If a split file appears incomplete or inconsistent with
+`GENERATE_SKILLS.md`, resolve the discrepancy against `GENERATE_SKILLS.md` and
+then update the split file.
+
+## Layout
+
+```text
+skill_creation/
+  README.md
+  skill-building.md
+  shared/
+    skill-architecture.md
+    angular-conventions.md
+    angular-material-patterns.md
+    openapi-integration.md
+    templates.md
+  skills/
+    01-ng-workspace.md
+    02-ng-app.md
+    03-ng-api.md
+    04-ng-data-service.md
+    05-ng-small-field.md
+    06-ng-form-field.md
+    07-ng-component.md
+    08-ng-complex-component.md
+    09-ng-reactive-form.md
+    10-ng-page.md
+    11-ng-site.md
+```
+
+## Use
+
+For each skill phase, read the matching file from `skills/` plus only the
+shared files that the skill references or needs. Keep authored skills in
+`.claude/skills/<skill-name>/`; this folder is planning and source material,
+not the installed skill output.

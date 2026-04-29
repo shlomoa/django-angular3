@@ -164,6 +164,13 @@ The skills are authored in the dependency order suggested by
 `GENERATE_SKILLS.md` so that earlier skills' outputs are available as ground
 truth when test cases for later skills are exercised.
 
+`GENERATE_SKILLS.md` has been split into smaller working files under
+`skill_creation/` to keep each phase focused. During authoring, read the
+matching `skill_creation/skills/<number>-<skill-name>.md` file plus only the
+needed files from `skill_creation/shared/`. `GENERATE_SKILLS.md` remains the
+original design specification; if the split copy is incomplete or inconsistent,
+resolve against `GENERATE_SKILLS.md` and update the split file.
+
 1. `ng-workspace` — Angular Material workspace boilerplate (foundation;
    depends on nothing).
 2. `ng-app` — Angular Material application inside a workspace (depends on 1).
