@@ -1,0 +1,4 @@
+Django>=5.1
+djangorestframework
+django-filter
+drf-spectacular

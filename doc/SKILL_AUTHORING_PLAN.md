@@ -128,6 +128,9 @@ Implementation including test generation. Write the SKILL.md body, create
 `scripts/`, `references/`, and `assets/` as needed, and author the test
 prompts and assertions agreed in Plan.
 
+App builder procedure integration. Once the skill is created, add a procedure
+that uses it in the app builder program.
+
 Verification. Run the tests (with-skill versus baseline), grade them, render
 the result for review, and incorporate feedback. Once Verification is
 approved, the skill is packaged into a `.skill` archive and installed into the

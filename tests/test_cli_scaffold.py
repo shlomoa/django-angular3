@@ -46,6 +46,35 @@ class ScaffoldTests(unittest.TestCase):
             if output_dir.exists():
                 shutil.rmtree(output_dir)
 
+    def test_requirements_file_exists_with_runtime_dependencies(self) -> None:
+        requirements_path = ROOT / "requirements.txt"
+        self.assertTrue(requirements_path.is_file())
+
+        requirements_lines = [
+            line.strip()
+            for line in requirements_path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+
+        expected_runtime_dependencies = {
+            "Django>=5.1",
+            "djangorestframework",
+            "django-filter",
+            "drf-spectacular",
+        }
+        self.assertEqual(set(requirements_lines), expected_runtime_dependencies)
+
+    def test_manifest_includes_requirements_file(self) -> None:
+        manifest_path = ROOT / "MANIFEST.in"
+        self.assertTrue(manifest_path.is_file())
+
+        manifest_lines = {
+            line.strip()
+            for line in manifest_path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        }
+        self.assertIn("include requirements.txt", manifest_lines)
+
 
 if __name__ == "__main__":
     unittest.main()
