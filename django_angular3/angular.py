@@ -58,6 +58,8 @@ def execute_invocations(
 def build_ng_new_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
+    # Ensure the parent directory exists before calling subprocess.run
+    config.angular_output.parent.mkdir(parents=True, exist_ok=True)
     return [
         AngularInvocation(
             command_name="ng_new",
@@ -70,7 +72,7 @@ def build_ng_new_invocations(
                 "--skip-install",
                 "--no-create-application",
                 f"--package-manager={settings.package_manager}",
-                f"--directory={config.angular_output}",
+                f"--directory={config.angular_output.name}",
             ),
             cwd=config.angular_output.parent,
         )
@@ -172,18 +174,44 @@ def build_ng_openapi_gen_invocations(
 
 
 def build_ng_add_invocations(
-    config: ProjectConfig, settings: AngularSettings, *, package: str = "angular-django2", **_: Any
+    config: ProjectConfig, settings: AngularSettings, *, package: str | None = None, **_: Any
 ) -> list[AngularInvocation]:
+    target_package = package or settings.ng_add_package
     return [
         AngularInvocation(
             command_name="ng_add",
             argv=(
                 settings.ng_executable,
                 "add",
-                package,
+                target_package,
                 "--skip-confirmation",
             ),
             cwd=config.angular_output,
+        )
+    ]
+
+
+def build_ng_workspace_modify_invocations(
+    config: ProjectConfig, settings: AngularSettings, **_: Any
+) -> list[AngularInvocation]:
+    """Updates config and reapplies the schematic package safely."""
+    invocations = build_ng_config_invocations(config, settings)
+    invocations.extend(build_ng_add_invocations(config, settings))
+    return invocations
+
+
+def build_ng_workspace_delete_invocations(
+    config: ProjectConfig, settings: AngularSettings, **_: Any
+) -> list[AngularInvocation]:
+    """Deletes the entire workspace folder using Python's native cross-platform shutil."""
+    import sys
+    py_code = f"import shutil; shutil.rmtree(r'{config.angular_output}', ignore_errors=True)"
+    
+    return [
+        AngularInvocation(
+            command_name="ng_rmdir",
+            argv=(sys.executable, "-c", py_code),
+            cwd=config.angular_output.parent,
         )
     ]
 
@@ -195,7 +223,35 @@ _COMMAND_BUILDERS = {
     "ng_gen_app": build_ng_gen_app_invocations,
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
     "ng_add": build_ng_add_invocations,
+    "ng_workspace_modify": build_ng_workspace_modify_invocations,
+    "ng_workspace_delete": build_ng_workspace_delete_invocations,
 }
+
+
+def build_ng_workspace_modify_invocations(
+    config: ProjectConfig, settings: AngularSettings, **_: Any
+) -> list[AngularInvocation]:
+    """Updates config and reapplies the schematic package safely."""
+    invocations = build_ng_config_invocations(config, settings)
+    # the skip_confirmation flag protects against double-installs or prompts
+    invocations.extend(build_ng_add_invocations(config, settings))
+    return invocations
+
+
+def build_ng_workspace_delete_invocations(
+    config: ProjectConfig, settings: AngularSettings, **_: Any
+) -> list[AngularInvocation]:
+    """Deletes the entire workspace folder using Python's native cross-platform shutil."""
+    import sys
+    py_code = f"import shutil; shutil.rmtree(r'{config.angular_output}', ignore_errors=True)"
+    
+    return [
+        AngularInvocation(
+            command_name="ng_rmdir",
+            argv=(sys.executable, "-c", py_code),
+            cwd=config.angular_output.parent,
+        )
+    ]
 
 
 def _stringify_bool(value: bool) -> str:

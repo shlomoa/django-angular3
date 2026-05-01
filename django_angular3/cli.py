@@ -103,8 +103,8 @@ def build_parser() -> argparse.ArgumentParser:
     ng_add.add_argument("path", nargs="?", default=None, help="Path to the project config.")
     ng_add.add_argument(
         "--package",
-        default="angular-django2",
-        help="Package to add (default: angular-django2).",
+        default=None,
+        help="Package to add (defaults to setting: ng_add_package).",
     )
     ng_add.add_argument(
         "--dry-run",

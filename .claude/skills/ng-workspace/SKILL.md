@@ -48,6 +48,13 @@ when it is. A missing `angular.workspace` block is not an error.
 
 **Pre-flight checks**
 
+Run the bundled pre-flight script before issuing any commands:
+
+```bash
+python scripts/preflight.py <path-to-django-angular3.json>
+```
+
+All checks must PASS before proceeding:
 1. `angular.output` does not exist or is an empty directory.
 2. `django-angular3.json` is present and parseable.
 3. Confirm `django-admin ng_new --help` succeeds (djng reachable).
@@ -164,11 +171,17 @@ Workspace directory removed. Report the deleted path.
 
 ## Validation
 
-After **Create**:
+After **Create**, run the bundled verification script:
 
+```bash
+python scripts/verify_workspace.py <path-to-django-angular3.json>
+```
+
+All checks must PASS:
 1. `<angular.output>/angular.json` exists.
 2. `angular.json` contains `angular-django2` in `cli.schematicCollections`.
 3. `<angular.output>/node_modules` exists (packages installed).
+4. `package.json` and `tsconfig.json` present.
 
 After **Modify**:
 
@@ -232,3 +245,16 @@ django-admin ng_add /projects/crm-app/django-angular3.json \
 django-admin ng_add /projects/crm-app/django-angular3.json \
   --package @angular/material
 ```
+
+## Test Prompts
+
+Use these prompts to iteratively verify the `ng-workspace` skill functionality. Execute them from the repository root. Ensure you have activated `wenv` first.
+
+1. **Verify Create Mode**:
+   > Use the ng-workspace skill to create the workspace for `spec/examples/01_simple_crm/django-angular3.json`. Verify using the scripts.
+
+2. **Verify Modify Mode** (Requires Create Mode to have succeeded):
+   > Use the ng-workspace skill to add `@angular/material` to the workspace defined in `spec/examples/01_simple_crm/django-angular3.json`.
+
+3. **Verify Delete Mode** (Requires Create Mode to have succeeded):
+   > Use the ng-workspace skill to delete the workspace defined in `spec/examples/01_simple_crm/django-angular3.json`. Please force deletion if required.

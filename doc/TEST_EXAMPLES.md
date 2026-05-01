@@ -45,103 +45,291 @@ detail) and a site with top-level navigation.
 ### Input: `schema.yaml`
 
 ```yaml
-openapi: "3.0.3"
+openapi: 3.0.3
 info:
   title: Simple CRM API
-  version: "1.0.0"
+  version: 1.0.0
 paths:
   /api/v1/customers/:
     get:
-      operationId: customer_list
-      tags: [customers]
+      operationId: customers_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - customers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Customer"
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
     post:
-      operationId: customer_create
-      tags: [customers]
+      operationId: customers_create
+      tags:
+      - customers
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
       responses:
-        "201":
+        '201':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
+                $ref: '#/components/schemas/Customer'
+          description: ''
   /api/v1/customers/{id}/:
     get:
-      operationId: customer_retrieve
-      tags: [customers]
+      operationId: customers_retrieve
       parameters:
-        - { name: id, in: path, required: true, schema: { type: integer } }
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - customers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
+                $ref: '#/components/schemas/Customer'
+          description: ''
     patch:
-      operationId: customer_partial_update
-      tags: [customers]
+      operationId: customers_partial_update
       parameters:
-        - { name: id, in: path, required: true, schema: { type: integer } }
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - customers
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/PatchedCustomer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
+                $ref: '#/components/schemas/Customer'
+          description: ''
     delete:
-      operationId: customer_destroy
-      tags: [customers]
+      operationId: customers_destroy
       parameters:
-        - { name: id, in: path, required: true, schema: { type: integer } }
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - customers
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
       responses:
-        "204": {}
+        '204':
+          description: No response body
   /api/v1/products/:
     get:
-      operationId: product_list
-      tags: [products]
+      operationId: products_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - products
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
       responses:
-        "200":
+        '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Product"
+                $ref: '#/components/schemas/PaginatedProductList'
+          description: ''
 components:
   schemas:
     Customer:
       type: object
-      required: [id, name, email]
       properties:
-        id:   { type: integer, readOnly: true }
-        name: { type: string, maxLength: 120 }
-        email: { type: string, format: email }
-        phone: { type: string }
-        active: { type: boolean, default: true }
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 120
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          maxLength: 50
+        active:
+          type: boolean
+      required:
+      - email
+      - id
+      - name
+    PaginatedCustomerList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+    PaginatedProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+    PatchedCustomer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 120
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          maxLength: 50
+        active:
+          type: boolean
     Product:
       type: object
-      required: [id, name, price]
       properties:
-        id:    { type: integer, readOnly: true }
-        name:  { type: string, maxLength: 200 }
-        price: { type: number, format: float }
-        sku:   { type: string }
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        price:
+          type: number
+          format: double
+        sku:
+          type: string
+          maxLength: 100
+      required:
+      - id
+      - name
+      - price
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+```
+
+### Input: `ui.json`
+
+```json
+{
+  "pages": [
+    { "name": "customer-list",   "resource": "Customer", "type": "list" },
+    { "name": "customer-detail", "resource": "Customer", "type": "detail" },
+    { "name": "product-list",    "resource": "Product",  "type": "list" }
+  ],
+  "site": {
+    "nav": [
+      { "label": "Customers", "route": "/customers" },
+      { "label": "Products",  "route": "/products" }
+    ]
+  }
+}
 ```
 
 ### Input: `django-angular3.json`
@@ -151,22 +339,10 @@ components:
   "project": { "name": "simple_crm" },
   "app": { "name": "shop" },
   "openapi": { "source": "spec/examples/01_simple_crm/schema.yaml" },
+  "ui": { "source": "spec/examples/01_simple_crm/ui.json" },
   "angular": {
     "output": "build/examples/01_simple_crm",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
-  },
-  "ui": {
-    "pages": [
-      { "name": "customer-list",   "resource": "Customer", "type": "list" },
-      { "name": "customer-detail", "resource": "Customer", "type": "detail" },
-      { "name": "product-list",    "resource": "Product",  "type": "list" }
-    ],
-    "site": {
-      "nav": [
-        { "label": "Customers", "route": "/customers" },
-        { "label": "Products",  "route": "/products" }
-      ]
-    }
   }
 }
 ```

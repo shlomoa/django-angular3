@@ -35,7 +35,13 @@ __pycache__/
 .mypy_cache/
 .venv/
 venv/
+wenv/
+db.sqlite3
 
 # Local build output
-/build/
-/dist/
+build/
+dist/
+.bin/
+tmparea/
+schema.yaml
+schema.yml

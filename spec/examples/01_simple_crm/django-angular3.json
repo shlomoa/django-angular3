@@ -2,21 +2,9 @@
   "project": { "name": "simple_crm" },
   "app": { "name": "shop" },
   "openapi": { "source": "schema.yaml" },
+  "ui": { "source": "ui.json" },
   "angular": {
     "output": "build/examples/01_simple_crm",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
-  },
-  "ui": {
-    "pages": [
-      { "name": "customer-list",   "resource": "Customer", "type": "list" },
-      { "name": "customer-detail", "resource": "Customer", "type": "detail" },
-      { "name": "product-list",    "resource": "Product",  "type": "list" }
-    ],
-    "site": {
-      "nav": [
-        { "label": "Customers", "route": "/customers" },
-        { "label": "Products",  "route": "/products" }
-      ]
-    }
   }
 }

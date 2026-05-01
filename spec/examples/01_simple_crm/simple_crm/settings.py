@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'drf_spectacular',
+    'django_angular3',
     'shop',
 ]
 
@@ -130,3 +131,9 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+DJANGO_ANGULAR3 = {
+    'command_allowlist': ('ng_new', 'ng_add', 'ng_config', 'ng_gen_app', 'ng_openapi_gen', 'ng_build', 'ng_workspace_modify', 'ng_workspace_delete', 'ng_rmdir'),
+}
+
+DJANGO_ANGULAR3['ng_add_package'] = 'angular-django2@0.1.2'

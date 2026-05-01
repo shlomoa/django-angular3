@@ -1,3 +1,4 @@
+import os
 from collections.abc import Mapping, Sequence
 from types import SimpleNamespace
 
@@ -6,16 +7,19 @@ class AngularCommandError(RuntimeError):
     """Raised when an Angular command cannot be planned or executed."""
 
 
+_is_win = os.name == "nt"
+
 DEFAULT_ANGULAR_SETTINGS = {
     "config_path": "django-angular3.json",
-    "node_executable": "node",
-    "pnpm_executable": "pnpm",
-    "ng_executable": "ng",
+    "node_executable": "node.exe" if _is_win else "node",
+    "pnpm_executable": "pnpm.cmd" if _is_win else "pnpm",
+    "ng_executable": "ng.cmd" if _is_win else "ng",
     "command_allowlist": ("ng_openapi_gen",),
     "package_manager": "pnpm",
     "build_configuration": "production",
     "style": "scss",
     "routing": True,
+    "ng_add_package": "angular-django2",
 }
 
 
@@ -32,6 +36,7 @@ class AngularSettings(SimpleNamespace):
         build_configuration (str): Angular build configuration name.
         style (str): Default Angular stylesheet format.
         routing (bool): Whether generated applications enable routing.
+        ng_add_package (str): The default package name or path to install for ng_add.
     """
 
 

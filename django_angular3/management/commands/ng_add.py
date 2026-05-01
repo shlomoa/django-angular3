@@ -11,9 +11,9 @@ class Command(AngularBaseCommand):
         super().add_arguments(parser)
         parser.add_argument(
             "--package",
-            default="angular-django2",
-            help="Package to add (default: angular-django2).",
+            default=None,
+            help="Package to add (defaults to setting: ng_add_package).",
         )
 
     def get_plan_options(self, options: dict[str, object]) -> dict[str, object]:
-        return {"package": options.get("package", "angular-django2")}
+        return {"package": options.get("package")}
