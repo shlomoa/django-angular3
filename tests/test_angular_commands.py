@@ -143,6 +143,30 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
 
+    def test_ng_add_dry_run_defaults_to_angular_django2(self) -> None:
+        exit_code, stdout, stderr = self.run_cli("ng_add", str(CONFIG_PATH), "--dry-run")
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan[0]["argv"],
+            ["ng", "add", "angular-django2", "--skip-confirmation"],
+        )
+
+    def test_ng_add_dry_run_accepts_custom_package(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_add", str(CONFIG_PATH), "--package", "@angular/material", "--dry-run"
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan[0]["argv"],
+            ["ng", "add", "@angular/material", "--skip-confirmation"],
+        )
+
     def test_execute_invocations_rejects_commands_outside_allowlist(self) -> None:
         settings = load_angular_settings()
         invocation = AngularInvocation(
@@ -183,6 +207,7 @@ class AngularManagementCommandTests(unittest.TestCase):
             ("ng_build", {}),
             ("ng_gen_app", {"app_name": "portal"}),
             ("ng_openapi_gen", {}),
+            ("ng_add", {}),
         )
 
         for command_name, options in cases:

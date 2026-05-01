@@ -20,20 +20,22 @@ workspace; it produces project instances that combine Django REST Framework on
 the backend with Angular Material on the frontend, generated against a
 contract-first OpenAPI specification.
 
-There are therefore two distinct configuration files in play, and they must
-not be conflated.
+There are therefore two distinct configuration files in play by path, but
+they share the same filename and schema pattern — and they must not be
+conflated.
 
-`django-angular3.json` configures this repository — the meta-tool. It tells
-the tool how to behave: where to look for OpenAPI input, where to write build
-plans, which package manager to use, and so on.
+`django-angular3.json` at the root of this repository configures the
+meta-tool (djng). It tells the tool how to behave: where to look for OpenAPI
+input, where to write build plans, which package manager to use, and so on.
 
-`django_project.json` is a configuration file carried by each generated
-project. It supplies project-specific inputs (workspace name, application
-name, route prefixes, theming choices, OpenAPI source paths for that project,
-UI specification paths, and so on). The eleven skills authored from
-`GENERATE_SKILLS.md` operate on a generated project, so the bulk of their
-run-time input is sourced from `django_project.json` and from files it points
-to.
+`django-angular3.json` at the root of a generated app carries that app's
+project-specific inputs (workspace name, application name, route prefixes,
+theming choices, OpenAPI source paths for that project, UI specification
+paths, and so on). Both files use the same hierarchical settings schema —
+the generated-app file adds an `angular.workspace` block and any other
+app-specific sections. The eleven skills authored from `GENERATE_SKILLS.md`
+operate on a generated app, so the bulk of their run-time input is sourced
+from the generated app's `django-angular3.json` and from files it points to.
 
 Either file may legitimately contain pointers to other files that are not yet
 present. A pointer to a missing-but-promised file is a valid pipeline state,
@@ -54,13 +56,15 @@ not an instance.
 
 Run-time input is the concrete values an end user (or, more typically, an
 orchestrator) provides when invoking the skill. For these eleven skills,
-run-time input is sourced from `django_project.json` and from files it points
-to, never from prompts typed in chat by a human end user.
+run-time input is sourced from the generated app's `django-angular3.json`
+and from files it points to, never from prompts typed in chat by a human end
+user.
 
 Each skill's `Inputs` section in `GENERATE_SKILLS.md` is best understood as a
-schema describing both layers: which keys are read directly from
-`django_project.json`, and which are paths the skill must dereference and
-parse. The authored SKILL.md will be explicit about the layer for every input.
+schema describing both layers: which keys are read directly from the generated
+app's `django-angular3.json`, and which are paths the skill must dereference
+and parse. The authored SKILL.md will be explicit about the layer for every
+input.
 
 ## Skill format and output location
 

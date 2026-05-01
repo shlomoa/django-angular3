@@ -1,5 +1,24 @@
 # Architecture
 
+## Tooling Layer
+
+This document describes the target architecture of a **generated application**
+produced by the djng/ngdj toolchain. It does not describe the toolchain itself.
+
+The toolchain consists of two complementary packages:
+
+- **djng** (`django-angular3`): Python CLI, Angular command wrappers,
+  validation, build-plan generation, and Claude skills. Manages the Python/Django
+  side of integration and orchestrates Angular workspace setup through ngdj.
+- **ngdj** (`angular-django2`): Angular schematics collection installed into a
+  generated workspace via `ng add angular-django2`. Provides opinionated
+  schematics for application, component, service, and related Angular artifacts.
+
+Requirements for ngdj are derived from djng development and skill authoring.
+Neither package's implementation should be assumed complete at any given point.
+
+---
+
 ## Purpose
 
 `django-angular3` exists to enable seamless integration of Django, DRF, and
@@ -21,6 +40,24 @@ artifacts that bridge the two technology stacks.
 - Make security, testing, and observability part of the default design
 - Keep the first version simple; add complexity only when a real feature
   requires it
+
+## Django Project vs Django App
+
+A **Django project** is the root configuration container: it holds `settings.py`,
+the root `urls.py`, `wsgi.py`/`asgi.py`, and `manage.py`. There is exactly one
+project per deployed application.
+
+A **Django app** is a self-contained domain module within a project. It owns its
+own models, views, serializers, admin registrations, and migrations. A project
+contains one or more apps. App names are domain-driven (e.g. `shop`, `accounts`,
+`inventory`) and must be distinct from the project name.
+
+In `django-angular3.json`:
+- `project.name` — names the Django project and the Angular workspace.
+- `app.name` — names the primary Django app **and** the Angular application
+  generated inside that workspace. Both share this name by convention.
+
+---
 
 ## High-Level Design
 

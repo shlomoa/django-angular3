@@ -20,9 +20,9 @@ The current scaffold is Python-only. Use the bundled project config to validate
 the example inputs and generate a build plan locally:
 
 ```bash
-python -m django_angular3.cli validate-project django-angular3.json
-python -m django_angular3.cli build django-angular3.json --dry-run
-python -m django_angular3.cli build django-angular3.json --output build
+django-admin validate-project django-angular3.json
+django-admin build django-angular3.json --dry-run
+django-admin build django-angular3.json --output build
 ```
 
 The bundled project config targets generated Angular artifacts under

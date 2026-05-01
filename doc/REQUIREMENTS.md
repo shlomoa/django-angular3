@@ -1,5 +1,18 @@
 # Requirements
 
+## Tooling
+
+These requirements describe the platform that the djng/ngdj toolchain
+produces. The toolchain is split across two packages:
+
+- **djng** (`django-angular3`): Python CLI, validation, and skills.
+- **ngdj** (`angular-django2`): Angular schematics installed into generated workspaces.
+
+Requirements for ngdj are derived from djng development; the toolchain is
+expected to evolve as skills are authored.
+
+---
+
 ## Purpose
 
 `django-angular3` enables seamless integration of Django, Django REST Framework
@@ -212,6 +225,27 @@ Build a production-ready business application with:
 - Validation errors must be presented clearly at field and form level
 - Unexpected server errors must be logged and surfaced with user-safe messages
 - Users must not lose unsaved form state because of recoverable UI errors
+
+### 14. Development Experience and Tooling
+
+- When the generated app's Django server runs with `DEBUG=True`, any failure
+  during app generation (Python exceptions raised by djng management commands
+  or app-builder invocations) must surface through Django's standard error
+  reporting mechanism — the same traceback page the developer would see for any
+  unhandled Python exception. Generation failures must not be swallowed silently
+  or reported only to stdout.
+
+- The generated app must expose a `/ng/build` page accessible during
+  development. This page shows the current Angular build and health status from
+  the Angular toolchain's point of view:
+  - Last `ng build` exit status (success or failure) and timestamp
+  - TypeScript compilation errors and warnings, if any
+  - Bundle size summary (main bundle, lazy-loaded chunks)
+  - ESLint output, if configured
+  - A re-trigger control to run `ng build` on demand
+  This page is a developer and operator tool. It must be gated behind the
+  `DEBUG=True` setting or an explicit `ENABLE_NG_BUILD_PAGE=True` flag so it is
+  never exposed in production.
 
 ## Non-Functional Requirements
 

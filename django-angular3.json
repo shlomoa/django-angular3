@@ -9,6 +9,11 @@
     "source": "spec/ui/example.ui.json"
   },
   "angular": {
-    "output": "build/angular"
+    "output": "build/angular",
+    "workspace": {
+      "packageManager": "pnpm",
+      "style": "scss",
+      "routing": true
+    }
   }
 }

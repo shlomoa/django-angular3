@@ -46,13 +46,9 @@ The current scaffold includes a Django app-style package surface and a direct
 CLI. Run the CLI directly for the bundled project config:
 
 ```bash
-django-angular3 validate-project django-angular3.json
-django-angular3 build django-angular3.json --output build
-django-angular3 ng_new django-angular3.json --dry-run
-
-python -m django_angular3.cli validate-project django-angular3.json
-python -m django_angular3.cli build django-angular3.json --output build
-python -m django_angular3.cli ng_new django-angular3.json --dry-run
+django-admin validate-project django-angular3.json
+django-admin build django-angular3.json --output build
+django-admin ng_new django-angular3.json --dry-run
 ```
 
 The standalone CLI keeps the existing validation/build subcommands in

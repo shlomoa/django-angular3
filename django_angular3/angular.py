@@ -169,12 +169,32 @@ def build_ng_openapi_gen_invocations(
             cwd=config.angular_output,
         )
     ]
+
+
+def build_ng_add_invocations(
+    config: ProjectConfig, settings: AngularSettings, *, package: str = "angular-django2", **_: Any
+) -> list[AngularInvocation]:
+    return [
+        AngularInvocation(
+            command_name="ng_add",
+            argv=(
+                settings.ng_executable,
+                "add",
+                package,
+                "--skip-confirmation",
+            ),
+            cwd=config.angular_output,
+        )
+    ]
+
+
 _COMMAND_BUILDERS = {
     "ng_new": build_ng_new_invocations,
     "ng_config": build_ng_config_invocations,
     "ng_build": build_ng_build_invocations,
     "ng_gen_app": build_ng_gen_app_invocations,
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
+    "ng_add": build_ng_add_invocations,
 }
 
 

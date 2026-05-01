@@ -99,6 +99,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the Angular command plan instead of invoking Angular tooling.",
     )
 
+    ng_add = subparsers.add_parser("ng_add", help="Run ng add for an Angular package.")
+    ng_add.add_argument("path", nargs="?", default=None, help="Path to the project config.")
+    ng_add.add_argument(
+        "--package",
+        default="angular-django2",
+        help="Package to add (default: angular-django2).",
+    )
+    ng_add.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the Angular command plan instead of invoking Angular tooling.",
+    )
+
     return parser
 
 
@@ -142,10 +155,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote build plan to {plan_path}")
         return 0
 
-    if args.command in {"ng_new", "ng_config", "ng_build", "ng_gen_app", "ng_openapi_gen"}:
+    if args.command in {"ng_new", "ng_config", "ng_build", "ng_gen_app", "ng_openapi_gen", "ng_add"}:
         plan_options = {}
         if args.command == "ng_gen_app":
             plan_options["app_name"] = args.app_name
+        if args.command == "ng_add":
+            plan_options["package"] = args.package
         return _run_angular_command(args.command, args.path, dry_run=args.dry_run, **plan_options)
 
     parser.error("Unknown command")

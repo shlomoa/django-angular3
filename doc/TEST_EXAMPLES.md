@@ -1,0 +1,522 @@
+# Test Examples
+
+## Overview
+
+Each example defines a concrete scenario that the app builder command can
+execute end-to-end. Together they cover the full range of use cases described
+in `APP_BUILDER_REQUIREMENTS.md`.
+
+Each example consists of:
+- A named scenario with a description
+- Input files: OpenAPI schema and `django-angular3.json` config
+- The expected `ChangeSet` output from the builder
+
+### Shared conventions across all examples
+
+- **Django project name**: varies per example (e.g. `simple_crm`)
+- **Django app name / Angular app name**: `shop` — all six examples use the same
+  primary app. None of the schema or config changes replace the app itself;
+  they evolve the schema and UI configuration within the same `shop` app.
+- The expected build plan (ordered skill steps)
+- The aspect of the solution it demonstrates
+
+Examples are located under `spec/examples/<example-name>/` and can be run via:
+
+```bash
+django-admin build-app spec/examples/<example-name>/django-angular3.json \
+  [--previous-schema spec/examples/<example-name>/previous-schema.yaml] \
+  [--previous-config spec/examples/<example-name>/previous-config.json] \
+  --dry-run
+```
+
+---
+
+## Example 1: Simple CRM — Start from Scratch
+
+**Demonstrates**: Full pipeline from a cold start. All 11 skills invoked in
+order. Baseline for verifying the complete skill chain.
+
+### Scenario
+
+A new project with no previous state. The schema defines two resources:
+`Customer` and `Product`. The config defines one page per resource (list +
+detail) and a site with top-level navigation.
+
+### Input: `schema.yaml`
+
+```yaml
+openapi: "3.0.3"
+info:
+  title: Simple CRM API
+  version: "1.0.0"
+paths:
+  /api/v1/customers/:
+    get:
+      operationId: customer_list
+      tags: [customers]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: customer_create
+      tags: [customers]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Customer"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+  /api/v1/customers/{id}/:
+    get:
+      operationId: customer_retrieve
+      tags: [customers]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    patch:
+      operationId: customer_partial_update
+      tags: [customers]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Customer"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: customer_destroy
+      tags: [customers]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "204": {}
+  /api/v1/products/:
+    get:
+      operationId: product_list
+      tags: [products]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+components:
+  schemas:
+    Customer:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:   { type: integer, readOnly: true }
+        name: { type: string, maxLength: 120 }
+        email: { type: string, format: email }
+        phone: { type: string }
+        active: { type: boolean, default: true }
+    Product:
+      type: object
+      required: [id, name, price]
+      properties:
+        id:    { type: integer, readOnly: true }
+        name:  { type: string, maxLength: 200 }
+        price: { type: number, format: float }
+        sku:   { type: string }
+```
+
+### Input: `django-angular3.json`
+
+```json
+{
+  "project": { "name": "simple_crm" },
+  "app": { "name": "shop" },
+  "openapi": { "source": "spec/examples/01_simple_crm/schema.yaml" },
+  "angular": {
+    "output": "build/examples/01_simple_crm",
+    "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
+  },
+  "ui": {
+    "pages": [
+      { "name": "customer-list",   "resource": "Customer", "type": "list" },
+      { "name": "customer-detail", "resource": "Customer", "type": "detail" },
+      { "name": "product-list",    "resource": "Product",  "type": "list" }
+    ],
+    "site": {
+      "nav": [
+        { "label": "Customers", "route": "/customers" },
+        { "label": "Products",  "route": "/products" }
+      ]
+    }
+  }
+}
+```
+
+### Expected ChangeSet
+
+```json
+{
+  "schema": { "type": "start-from-scratch" },
+  "config": { "type": "start-from-scratch" }
+}
+```
+
+### Expected build plan steps (ordered)
+
+1. `ng-workspace` — create workspace `simple_crm`
+2. `ng-app` — generate Angular Material application `simple_crm`
+3. `ng-api` — generate API client from `schema.yaml`
+4. `ng-data-service` — generate data services for `Customer`, `Product`
+5. `ng-component` — generate list component for `Customer`
+6. `ng-component` — generate detail component for `Customer`
+7. `ng-component` — generate list component for `Product`
+8. `ng-reactive-form` — generate edit form for `Customer`
+9. `ng-page` — generate `customer-list` page
+10. `ng-page` — generate `customer-detail` page
+11. `ng-page` — generate `product-list` page
+12. `ng-site` — assemble site with navigation
+
+---
+
+## Example 2: Schema Evolution — Add Resource
+
+**Demonstrates**: Incremental schema change. Previous state is Example 1.
+Only new-resource skills run; existing workspace, app, and components are
+untouched. Uses `add-things` change path.
+
+### Scenario
+
+The `Order` resource and its endpoints are added to the schema. No config
+change.
+
+### Input: `schema.yaml`
+
+Example 1's schema plus:
+
+```yaml
+paths:
+  /api/v1/orders/:
+    get:
+      operationId: order_list
+      tags: [orders]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Order" }
+  /api/v1/orders/{id}/:
+    get:
+      operationId: order_retrieve
+      tags: [orders]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Order" }
+components:
+  schemas:
+    Order:
+      type: object
+      required: [id, customer, total]
+      properties:
+        id:       { type: integer, readOnly: true }
+        customer: { type: integer, description: "Customer ID" }
+        total:    { type: number, format: float }
+        status:   { type: string, enum: [draft, confirmed, shipped, closed] }
+```
+
+### Previous schema
+
+Example 1's `schema.yaml`.
+
+### Expected ChangeSet
+
+```json
+{
+  "schema": {
+    "type": "add-things",
+    "affected_resources": ["Order"],
+    "breaking": false
+  },
+  "config": { "type": "no-change" }
+}
+```
+
+### Expected build plan steps
+
+1. `ng-api` — regenerate API client (new `Order` endpoints)
+2. `ng-data-service` — generate data service for `Order`
+
+No workspace, app, or existing component steps — they are not affected.
+
+---
+
+## Example 3: Schema Evolution — Breaking Change Blocked
+
+**Demonstrates**: oasdiff breaking-change gate. Builder halts before emitting
+a plan. Verifies the `--acknowledge-breaking` bypass.
+
+### Scenario
+
+The `Customer.email` field (previously required, string) is removed from the
+schema. oasdiff classifies this as a breaking change.
+
+### Input: `schema.yaml`
+
+Example 1's schema with `email` removed from `Customer.required` and
+`Customer.properties`.
+
+### Expected ChangeSet (before gate)
+
+```json
+{
+  "schema": {
+    "type": "breaking",
+    "breaking": true,
+    "affected_resources": ["Customer"]
+  }
+}
+```
+
+### Expected builder output
+
+```
+Breaking schema changes detected:
+  - Customer: required property 'email' removed (breaking)
+
+Review the oasdiff report at build/oasdiff-report.json before proceeding.
+Re-run with --acknowledge-breaking to continue.
+```
+
+Exit code: non-zero (e.g., 2).
+
+### With `--acknowledge-breaking`
+
+Builder proceeds. ChangeSet type becomes `remove-things` for the `email`
+field. Steps include:
+
+1. `ng-api` — regenerate API client
+2. `ng-data-service` — update `Customer` data service
+3. `ng-reactive-form` — update customer edit form (remove `email` field)
+4. `ng-component` — update customer detail component (remove `email` display)
+
+---
+
+## Example 4: Config Change — Add Page (No Schema Change)
+
+**Demonstrates**: Config-only change path. Schema is identical to Example 1.
+Only config-derived skills run. Uses `add-things` on the config side.
+
+### Scenario
+
+A dashboard page is added to the app config. No schema change.
+
+### Input: `django-angular3.json`
+
+Example 1's config plus a new page in `ui.pages`:
+
+```json
+{
+  "ui": {
+    "pages": [
+      { "name": "customer-list",   "resource": "Customer", "type": "list" },
+      { "name": "customer-detail", "resource": "Customer", "type": "detail" },
+      { "name": "product-list",    "resource": "Product",  "type": "list" },
+      { "name": "dashboard",       "type": "custom",       "components": ["customer-summary", "product-summary"] }
+    ]
+  }
+}
+```
+
+Two new standalone components (`customer-summary`, `product-summary`) are also
+added to `ui.components`:
+
+```json
+{
+  "ui": {
+    "components": [
+      { "name": "customer-summary", "type": "small-field", "resource": "Customer", "fields": ["name", "active"] },
+      { "name": "product-summary",  "type": "small-field", "resource": "Product",  "fields": ["name", "price"] }
+    ]
+  }
+}
+```
+
+### Expected ChangeSet
+
+```json
+{
+  "schema": { "type": "no-change" },
+  "config": {
+    "type": "add-things",
+    "affected_pages": ["dashboard"],
+    "affected_components": ["customer-summary", "product-summary"]
+  }
+}
+```
+
+### Expected build plan steps
+
+1. `ng-small-field` — generate `customer-summary` component
+2. `ng-small-field` — generate `product-summary` component
+3. `ng-page` — generate `dashboard` page
+
+---
+
+## Example 5: Combined Schema and Config Change
+
+**Demonstrates**: Schema and config change in the same run. Both change paths
+activate. Verifies that schema steps run before config steps at the same
+dependency level, and that the plan correctly interleaves the two streams.
+
+### Scenario
+
+Starting from Example 2's state (Customer, Product, Order):
+- Schema: a new `Invoice` resource is added.
+- Config: a new `invoice-list` page is added.
+
+### Expected ChangeSet
+
+```json
+{
+  "schema": {
+    "type": "add-things",
+    "affected_resources": ["Invoice"],
+    "breaking": false
+  },
+  "config": {
+    "type": "add-things",
+    "affected_pages": ["invoice-list"]
+  }
+}
+```
+
+### Expected build plan steps (order matters)
+
+1. `ng-api` — regenerate API client (new `Invoice` endpoints) ← schema step
+2. `ng-data-service` — generate `Invoice` data service ← schema step
+3. `ng-component` — generate `Invoice` list component ← schema step
+4. `ng-page` — generate `invoice-list` page ← config step (depends on step 3)
+
+---
+
+## Example 6: Full Replacement — Remove Resource, Add Resource
+
+**Demonstrates**: `replace-things` change type. One resource is removed
+(`Product`) and one is added (`Supplier`). Remove steps precede add steps at
+the same dependency level.
+
+### Expected ChangeSet
+
+```json
+{
+  "schema": {
+    "type": "replace-things",
+    "affected_resources": ["Product", "Supplier"],
+    "breaking": false
+  }
+}
+```
+
+### Expected build plan steps
+
+1. `ng-data-service` — delete `Product` data service
+2. `ng-component` — delete `Product` list and detail components
+3. `ng-page` — delete `product-list` page
+4. `ng-site` — update navigation (remove Products link)
+5. `ng-api` — regenerate API client (no Product endpoints; new Supplier endpoints)
+6. `ng-data-service` — generate `Supplier` data service
+7. `ng-component` — generate `Supplier` list component
+8. `ng-page` — generate `supplier-list` page
+9. `ng-site` — update navigation (add Suppliers link)
+
+---
+
+## Running the Examples
+
+Once the `build-app` command is implemented, all examples can be run
+sequentially to verify each use case:
+
+```bash
+# Example 1: start from scratch
+django-admin build-app \
+  spec/examples/01_simple_crm/django-angular3.json \
+  --dry-run
+
+# Example 2: add resource
+django-admin build-app \
+  spec/examples/02-add-order/django-angular3.json \
+  --previous-schema spec/examples/01_simple_crm/schema.yaml \
+  --previous-config spec/examples/01_simple_crm/django-angular3.json \
+  --dry-run
+
+# Example 3: breaking change blocked
+django-admin build-app \
+  spec/examples/03-breaking-change/django-angular3.json \
+  --previous-schema spec/examples/01_simple_crm/schema.yaml \
+  --dry-run
+# Expected: non-zero exit, no plan emitted
+
+# Example 3b: breaking change acknowledged
+django-admin build-app \
+  spec/examples/03-breaking-change/django-angular3.json \
+  --previous-schema spec/examples/01_simple_crm/schema.yaml \
+  --acknowledge-breaking \
+  --dry-run
+
+# Example 4: config-only change
+django-admin build-app \
+  spec/examples/04-add-dashboard/django-angular3.json \
+  --previous-schema spec/examples/01_simple_crm/schema.yaml \
+  --previous-config spec/examples/01_simple_crm/django-angular3.json \
+  --dry-run
+
+# Example 5: combined schema + config
+django-admin build-app \
+  spec/examples/05-combined-change/django-angular3.json \
+  --previous-schema spec/examples/02-add-order/schema.yaml \
+  --previous-config spec/examples/02-add-order/django-angular3.json \
+  --dry-run
+
+# Example 6: replace resource
+django-admin build-app \
+  spec/examples/06-replace-resource/django-angular3.json \
+  --previous-schema spec/examples/02-add-order/schema.yaml \
+  --dry-run
+```
+
+---
+
+## Coverage Matrix
+
+| Example | start-from-scratch | add-things | remove-things | replace-things | breaking gate | config-only | combined |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 1 Simple CRM | ✓ | | | | | | |
+| 2 Add Resource | | ✓ | | | | | |
+| 3 Breaking Change | | | | | ✓ | | |
+| 4 Config Change | | | | | | ✓ | |
+| 5 Combined | | ✓ | | | | | ✓ |
+| 6 Replace Resource | | ✓ | ✓ | ✓ | | | |
