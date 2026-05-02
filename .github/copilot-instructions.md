@@ -109,6 +109,10 @@ Refactoring is considered a code change and must be validated with tests
       - Wait for user instructions.
 - Low ambiguity → proceed to step completion.
   - Document the ambiguity and its resolution.
+- When searching for a solution, must research and get a clear understanding of the latest and greatest:
+  - best practices, patterns, and approaches for the specific problem at hand.
+  - Latest package versions, features and capabilities.
+  - Avoid trial-and-error and speculative implementation.
   
 ## Specific rules for interactive chat mode
 - Execute in lock-step mode with the user.
