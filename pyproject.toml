@@ -30,6 +30,7 @@ dependencies = [
   "djangorestframework",
   "django-filter",
   "drf-spectacular",
+  "claude-agent-sdk",
 ]
 
 [project.optional-dependencies]
