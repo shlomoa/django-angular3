@@ -35,32 +35,41 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
    - Verify OpenAPI source file exists at `openapi_source_path`
    - Validate OpenAPI spec is well-formed JSON or YAML
    - Check `oasdiff` is installed (`oasdiff --version`)
-   - Check ng-openapi-gen is installed in workspace (`npm list ng-openapi-gen`)
    - If config file path provided, verify it exists; otherwise check for default `ng-openapi-gen.json`
 2. **Schema diff with oasdiff** (if a previous schema version exists):
    - Run: `oasdiff breaking <previous_schema> <openapi_source_path>`
    - If breaking changes are reported, halt and surface the `oasdiff` output to the caller
    - For non-breaking changes, log the summary and continue
    - If no previous schema exists, skip this step and proceed
-3. **Configuration setup** (if config doesn't exist):
-   - Create `ng-openapi-gen.json` at workspace root with:
-     ```json
-     {
-       "$schema": "node_modules/ng-openapi-gen/ng-openapi-gen-schema.json",
-       "input": "<openapi_source_path>",
-       "output": "src/app/api",
-       "ignoreUnusedModels": false
-     }
-     ```
-3. **Run generation**:
-   - Execute: `npx ng-openapi-gen --config <ng_openapi_gen_config_path>`
-   - Capture stdout/stderr for diagnostics
-4. **Verify output**:
+3. **Bootstrap ng-openapi-gen** (if `ng-openapi-gen.json` does not exist):
+
+   Invoke the ngdj schematic via `ng generate`:
+   ```bash
+   cd <workspacePath>
+   ng generate angular-django2:ng-api --inputPath=<openapi_source_path> --outputPath=src/app/api
+   ```
+   The `angular-django2:ng-api` schematic handles:
+   - Adding `ng-openapi-gen` to `devDependencies` in `package.json`
+   - Creating `ng-openapi-gen.json` at the workspace root
+   - Adding a `generate:api` npm script to `package.json`
+   - Scheduling a package install task
+
+4. **Run generation** via the djng wrapper (`django-admin ng_openapi_gen`), which calls:
+   ```bash
+   pnpm exec ng-openapi-gen -i <openapi_source_path>
+   ```
+   or, if a config file is present:
+   ```bash
+   pnpm exec ng-openapi-gen -c ng-openapi-gen.json
+   ```
+   Using `pnpm exec` ensures only locally installed workspace dependencies are used — no runtime downloads.
+
+5. **Verify output**:
    - Confirm `services/` directory populated with `*-api.service.ts` files
    - Confirm `models/` directory populated with model TypeScript interfaces
    - Check for `models.ts` barrel export file
    - Check for `services.ts` barrel export file
-5. **Report results**:
+6. **Report results**:
    - List all generated `*ApiService` files (one per OpenAPI tag)
    - Report count of generated models
    - Output any warnings from ng-openapi-gen
@@ -90,7 +99,7 @@ Regenerate API client code after OpenAPI specification changes.
 3. **Clean previous generation** (optional, based on ng-openapi-gen behavior):
    - ng-openapi-gen handles incremental updates, but note that removed endpoints/models may leave orphaned files
 4. **Re-run generation**:
-   - Execute: `npx ng-openapi-gen --config <ng_openapi_gen_config_path>`
+   - Execute: `pnpm exec ng-openapi-gen -c <ng_openapi_gen_config_path>`
 4. **Diff analysis**:
    - Identify new services (new OpenAPI tags)
    - Identify modified services (changed endpoints)
@@ -183,7 +192,7 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 
 3. **ng-openapi-gen not installed**:
    - Error: `command not found: ng-openapi-gen`
-   - Resolution: Install via `npm install --save-dev ng-openapi-gen`
+   - Resolution: Run `ng generate angular-django2:ng-api` to bootstrap (adds devDependency and config), then re-run generation
 
 4. **Generation errors**:
    - Error: Various ng-openapi-gen errors during generation
@@ -220,7 +229,7 @@ Input:
 Process:
 1. Verify spec/openapi.yaml exists
 2. Create ng-openapi-gen.json config
-3. Run npx ng-openapi-gen
+3. Run pnpm exec ng-openapi-gen (via django-admin ng_openapi_gen)
 4. Report generated files
 
 Output:

@@ -216,40 +216,29 @@ class Command(BaseCommand):
         # 3. Create the build plan
         build_plan = {
             "change_set": change_set,
-            "commands": []
+            "steps": []
         }
-        
-        # Determine commands via Skill Mapping hierarchy
+
+        # Determine steps via Skill Mapping hierarchy
         schema_type = change_set["schema"]["type"]
         resources = change_set["schema"]["affected_resources"]
 
         if schema_type == "start-from-scratch":
-            # 1 ng-workspace
-            build_plan["commands"].append({"skill": "ng-workspace", "mode": "create"})
-            # 2 ng-app
-            build_plan["commands"].append({"skill": "ng-app", "mode": "create"})
-            # 3 ng-api
-            build_plan["commands"].append({"skill": "ng-api", "mode": "create"})
-            
-            # 4 ng-data-service 
-            for resource in resources:
-                build_plan["commands"].append({"skill": "ng-data-service", "mode": "create", "resource_name": resource})
-            
+            build_plan["steps"].append({"step": 1, "skill": "ng-workspace", "mode": "create"})
+            build_plan["steps"].append({"step": 2, "skill": "ng-app", "mode": "create"})
+            build_plan["steps"].append({"step": 3, "skill": "ng-api", "mode": "create"})
+            for i, resource in enumerate(resources, start=4):
+                build_plan["steps"].append({"step": i, "skill": "ng-data-service", "mode": "create", "resource_name": resource})
+
         elif schema_type in ("add-things", "replace-things"):
-            # Update the API layer
-            build_plan["commands"].append({"skill": "ng-api", "mode": "modify"})
-            
-            # Since this is an add/replace, we conservatively run modify on the data service. 
-            # If the service doesn't exist yet, the wrapper itself can fall back to 'create' behaviour 
-            # (or we could explicitly differentiate added vs modified resources later).
-            for resource in resources:
-                build_plan["commands"].append({"skill": "ng-data-service", "mode": "modify", "resource_name": resource})
-                
+            build_plan["steps"].append({"step": 1, "skill": "ng-api", "mode": "modify"})
+            for i, resource in enumerate(resources, start=2):
+                build_plan["steps"].append({"step": i, "skill": "ng-data-service", "mode": "modify", "resource_name": resource})
+
         elif schema_type == "remove-things":
-            build_plan["commands"].append({"skill": "ng-api", "mode": "modify"})
-            # 4 ng-data-service in delete mode
-            for resource in resources:
-                build_plan["commands"].append({"skill": "ng-data-service", "mode": "delete", "resource_name": resource})
+            build_plan["steps"].append({"step": 1, "skill": "ng-api", "mode": "modify"})
+            for i, resource in enumerate(resources, start=2):
+                build_plan["steps"].append({"step": i, "skill": "ng-data-service", "mode": "delete", "resource_name": resource})
 
         self._emit_plan(build_plan, options)
         

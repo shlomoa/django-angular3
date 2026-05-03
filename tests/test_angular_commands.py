@@ -67,13 +67,15 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_ng_new_dry_run_prints_empty_workspace_command(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_new", str(CONFIG_PATH), "--dry-run")
 
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
+        # ng new runs from angular_output.parent so --directory is just the final component
         self.assertEqual(
             plan[0]["argv"],
             [
-                "ng",
+                ng,
                 "new",
                 "django-angular3-scaffold",
                 "--defaults",
@@ -81,36 +83,38 @@ class AngularCliCommandTests(unittest.TestCase):
                 "--skip-install",
                 "--no-create-application",
                 "--package-manager=pnpm",
-                f"--directory={ROOT / 'build' / 'angular'}",
+                "--directory=angular",
             ],
         )
 
     def test_ng_config_dry_run_prints_workspace_configuration_commands(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_config", str(CONFIG_PATH), "--dry-run")
 
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(len(plan), 3)
-        self.assertEqual(plan[0]["argv"], ["ng", "config", "cli.packageManager", "pnpm"])
+        self.assertEqual(plan[0]["argv"], [ng, "config", "cli.packageManager", "pnpm"])
         self.assertEqual(
             plan[1]["argv"],
-            ["ng", "config", "schematics.@schematics/angular:application.style", "scss"],
+            [ng, "config", "schematics.@schematics/angular:application.style", "scss"],
         )
         self.assertEqual(
             plan[2]["argv"],
-            ["ng", "config", "schematics.@schematics/angular:application.routing", "true"],
+            [ng, "config", "schematics.@schematics/angular:application.routing", "true"],
         )
 
     def test_ng_build_dry_run_prints_project_build_command(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_build", str(CONFIG_PATH), "--dry-run")
 
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
             plan[0]["argv"],
-            ["ng", "build", "django-angular3-scaffold", "--configuration=production"],
+            [ng, "build", "django-angular3-scaffold", "--configuration=production"],
         )
 
     def test_ng_gen_app_dry_run_supports_app_name_override(self) -> None:
@@ -118,24 +122,26 @@ class AngularCliCommandTests(unittest.TestCase):
             "ng_gen_app", str(CONFIG_PATH), "--app-name", "portal", "--dry-run"
         )
 
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
             plan[0]["argv"],
-            ["ng", "generate", "application", "portal", "--style=scss", "--routing"],
+            [ng, "generate", "angular-django2:ng-app", "portal", "--style=scss", "--routing"],
         )
 
     def test_ng_openapi_gen_dry_run_uses_openapi_source(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_openapi_gen", str(CONFIG_PATH), "--dry-run")
 
+        pnpm = DEFAULT_ANGULAR_SETTINGS["pnpm_executable"]
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
             plan[0]["argv"],
             [
-                "pnpm",
+                pnpm,
                 "exec",
                 "ng-openapi-gen",
                 "-i",
@@ -146,12 +152,13 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_ng_add_dry_run_defaults_to_angular_django2(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_add", str(CONFIG_PATH), "--dry-run")
 
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
             plan[0]["argv"],
-            ["ng", "add", "angular-django2", "--skip-confirmation"],
+            [ng, "add", "angular-django2", "--skip-confirmation"],
         )
 
     def test_ng_add_dry_run_accepts_custom_package(self) -> None:
@@ -159,12 +166,13 @@ class AngularCliCommandTests(unittest.TestCase):
             "ng_add", str(CONFIG_PATH), "--package", "@angular/material", "--dry-run"
         )
 
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
             plan[0]["argv"],
-            ["ng", "add", "@angular/material", "--skip-confirmation"],
+            [ng, "add", "@angular/material", "--skip-confirmation"],
         )
 
     def test_execute_invocations_rejects_commands_outside_allowlist(self) -> None:

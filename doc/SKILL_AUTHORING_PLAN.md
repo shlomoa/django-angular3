@@ -120,7 +120,7 @@ between phases.
 
 Plan. Capture intent, conduct the interview, and produce a sketch of the
 skill: its `name`, its `description`, the run-time inputs it accepts and which
-`django_project.json` keys feed them, the files it produces, the scripts and
+`django-angular3.json` keys feed them, the files it produces, the scripts and
 shared context it depends on, the open questions to be resolved during
 implementation, and the test prompts that will exercise it.
 
