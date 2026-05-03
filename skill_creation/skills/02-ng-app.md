@@ -42,84 +42,24 @@ Generate a new Angular Material application inside the workspace with complete d
    - Verify workspace is initialized and valid
    - Confirm `appName` doesn't already exist in workspace
 
-2. **Generate application scaffold**
+2. **Generate application using the ngdj composite schematic**
+
+   Invoke through the djng wrapper (`django-admin ng_gen_app`) which calls:
    ```bash
    cd <workspacePath>
-   ng generate application <appName> --routing=<routing> --standalone=<standalone> --style=scss --prefix=<prefix>
+   ng generate angular-django2:ng-app <appName> --style=scss --routing
    ```
 
-3. **Create standard directory structure**
-   - Create `projects/<appName>/src/app/core/` - Core services and guards
-   - Create `projects/<appName>/src/app/shared/components/` - Shared components
-   - Create `projects/<appName>/src/app/shared/pipes/` - Shared pipes
-   - Create `projects/<appName>/src/app/features/` - Feature modules/routes
-   - Create barrel exports (`index.ts`) in each directory
+   The `angular-django2:ng-app` schematic handles all of the following in one step:
+   - Generates the Angular application via `@schematics/angular:application`
+   - Adds `@angular/material` and `@angular/cdk` to `package.json`
+   - Configures the selected Material prebuilt theme in `angular.json` and `styles.scss`
+   - Adds animation providers to `app.config.ts`
+   - Creates the standard directory structure (`core/`, `shared/components/`, `shared/pipes/`, `features/`)
+     with barrel `index.ts` exports in each directory
+   - Writes a Material sidenav app-shell into `app.component.ts/html/scss`
 
-4. **Wire Angular Material theme**
-   - Install Angular Material if not already present:
-     ```bash
-     ng add @angular/material --project=<appName> --theme=indigo-pink --typography=true --animations=true
-     ```
-   - Update `projects/<appName>/src/styles.scss` with custom theme configuration:
-     ```scss
-     @use '@angular/material' as mat;
-     @include mat.core();
-
-     $primary: mat.define-palette(mat.$indigo-palette);
-     $accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
-     $warn: mat.define-palette(mat.$red-palette);
-
-     $theme: mat.define-light-theme((
-       color: (
-         primary: $primary,
-         accent: $accent,
-         warn: $warn,
-       ),
-       typography: mat.define-typography-config(),
-       density: 0,
-     ));
-
-     @include mat.all-component-themes($theme);
-
-     html, body { height: 100%; }
-     body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-     ```
-
-5. **Set up standalone bootstrap configuration**
-   - Create/update `projects/<appName>/src/app/app.config.ts`:
-     ```typescript
-     import { ApplicationConfig } from '@angular/core';
-     import { provideRouter } from '@angular/router';
-     import { provideAnimations } from '@angular/platform-browser/animations';
-     import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-     import { routes } from './app.routes';
-
-     export const appConfig: ApplicationConfig = {
-       providers: [
-         provideRouter(routes),
-         provideAnimations(),
-         provideHttpClient(withInterceptorsFromDi()),
-       ]
-     };
-     ```
-
-   - Update `projects/<appName>/src/main.ts` to use standalone bootstrap:
-     ```typescript
-     import { bootstrapApplication } from '@angular/platform-browser';
-     import { AppComponent } from './app/app.component';
-     import { appConfig } from './app/app.config';
-
-     bootstrapApplication(AppComponent, appConfig)
-       .catch((err) => console.error(err));
-     ```
-
-6. **Generate application shell using template**
-   - Use `{{template:app-shell.ts}}` to create root `AppComponent`
-   - Use `{{template:app-shell.html}}` for component template
-   - Replace `{{APP_NAME}}` placeholder with actual app name
-   - Create responsive navigation shell with Material sidenav
-
-7. **Verify compilation**
+3. **Verify compilation**
    ```bash
    ng build <appName> --configuration=development
    ```
@@ -127,9 +67,9 @@ Generate a new Angular Material application inside the workspace with complete d
 **Output**:
 - Complete Angular Material application created in `projects/<appName>/`
 - Directory structure with `core/`, `shared/`, `features/` folders
-- Material theme configured in `styles.scss`
-- Standalone bootstrap with `app.config.ts`
-- Application shell with responsive navigation
+- Material theme configured in `styles.scss` and `angular.json`
+- Standalone bootstrap with `app.config.ts` including animation provider
+- Material sidenav app shell in `app.component.*`
 - Entry added to `angular.json` for the new application
 - Confirmation message with next steps (e.g., "Run `ng serve <appName>` to start development server")
 
@@ -370,14 +310,10 @@ Optional dependencies:
   standalone: true
 }
 
-// Executes:
-// 1. ng generate application admin-dashboard --routing --standalone --style=scss --prefix=admin
-// 2. Creates core/, shared/, features/ directories
-// 3. Installs Material: ng add @angular/material --project=admin-dashboard
-// 4. Configures theme in projects/admin-dashboard/src/styles.scss
-// 5. Sets up app.config.ts with providers
-// 6. Generates responsive nav shell from app-shell templates
-// 7. Runs: ng build admin-dashboard --configuration=development
+// Executes via djng wrapper:
+// 1. ng generate angular-django2:ng-app admin-dashboard --style=scss --routing
+//    (schematic handles: app generation, Material deps, theme, directory structure, app shell)
+// 2. ng build admin-dashboard --configuration=development
 
 // Output: Application ready at projects/admin-dashboard/
 ```

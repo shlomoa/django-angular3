@@ -223,8 +223,8 @@ invocable djng command or skill invocation.
       "skill": "ng-data-service",
       "mode": "create",
       "reason": "New resource 'Order' requires data service",
-      "command": "django-admin ng_gen_app path/to/django-angular3.json --app-name order-service",
-      "dry_run_command": "..."
+      "command": "invoke skill ng-data-service --mode=create --resource=Order",
+      "dry_run_command": "invoke skill ng-data-service --mode=create --resource=Order --dry-run"
     }
   ]
 }

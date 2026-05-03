@@ -378,7 +378,7 @@ After modifying a workspace, verify:
 
 **Dependent skills** (must have workspace before using):
 - `ng-app` — Angular Material app boiler plate
-- `ng-api-gen` — Angular API generation
+- `ng-api` — Angular API generation
 - All component, form, page, and site generation skills
 
 ### Examples
