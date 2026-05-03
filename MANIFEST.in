@@ -1,1 +1,4 @@
 include requirements.txt
+recursive-include django_angular3/templates *
+recursive-include django_angular3/static *
+recursive-include django_angular3/management *
