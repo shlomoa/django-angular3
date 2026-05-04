@@ -33,6 +33,10 @@ dependencies = [
   "claude-agent-sdk",
 ]
 
+[project.urls]
+Homepage = "https://djangoangular.com/"
+Repository = "https://github.com/shlomoa/django-angular3"
+
 [project.optional-dependencies]
 yaml = ["PyYAML>=6.0"]
 

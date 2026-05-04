@@ -2,6 +2,8 @@
 
 `django-angular3` enables seamless integration of Django, Django REST Framework (DRF), and Angular — giving teams a contract-first, automation-ready bridge between a DRF backend and an Angular Material frontend.
 
+Project website: <https://djangoangular.com/>
+
 It allows you to:
 - Keep Django responsible for data, authentication, and administration.
 - Keep Angular responsible for the end-user application and client-side route tree.
@@ -252,7 +254,8 @@ see [Contributing](CONTRIBUTING.md).
 
 ## Documentation
 
-Public usage documentation is not available yet.
+Public usage documentation is not available yet. The project website is
+available at <https://djangoangular.com/>.
 
 Current project documents:
 
