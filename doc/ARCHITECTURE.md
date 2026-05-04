@@ -75,7 +75,23 @@ In `django-angular3.json`:
 
 ---
 
-## Tooling Layer
+## High-Level Design
+
+### Inputs
+
+|Input|Description|
+|:-|:-|
+|DRF model|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions|
+|Project configuration|A json file describing the project, apps, UI parts, and other configuration details|
+|Non-CRM Angular content|Bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata defined in a separate structured input source|
+
+### Generated artifacts
+
+|Artifact|Description|
+|:-|:-|
+|`OpenAPI contract`|A versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for CRM-facing functionality|
+|Angular integration artifacts|Generated Angular code including typed API clients, resource adapters, and reusable Angular Material-oriented integration helpers derived from the OpenAPI contract|
+
 
 ### djng
 
@@ -111,36 +127,18 @@ implemented in [angular-django2-github] and deployed to [angular-django2] npm pa
   - ngdj-o-2: Provide Angular schematics and code generation templates for generating Angular building blocks from OpenAPI contracts.
   - ngdj-o-3: Provide a set of Angular schematics and code generation templates for generating Angular building blocks from non-CRM content definitions.
 
-Requirements for the SKILLS and `ngdj` are derived from djng requirements.
-
----
-
-## High-Level Design
-
-### Inputs
-
-|Input|Description|
-|:-|:-|
-|DRF model|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions|
-|Project configuration|A json file describing the project, apps, UI parts, and other configuration details|
-
-### Generated artifacts
-
-|Artifact|Description|
-|:-|:-|
-|`OpenAPI contract`|A versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for CRM-facing functionality|
-|Angular integration artifacts|Generated Angular code including typed API clients, resource adapters, and reusable Angular Material-oriented integration helpers derived from the OpenAPI contract|
 
 ### System components
 
 The system consists of:
 
 - A master orchestrator to manage the various stages of the integration process,
-  including contract management and generation workflow control.
-- An Angular application generator.
-- An OpenAPI schema extraction process.
-- An OpenAPI TypeScript generation process - using `ngdj`.
-- A structured UI definition management system.
+  including contract management and generation workflow control - in `djng`.
+- An Angular application generator - in `ngdj` wrappers in `ngdj`.
+- An OpenAPI schema extraction process - in `djng`.
+- An OpenAPI TypeScript generation process - in `ngdj`.
+- A structured UI definition management system - in `djng`.
+- Requirements for `SKILLS` and `ngdj` are derived from `djng`.
 
 ---
 
@@ -228,30 +226,6 @@ This model simplifies:
 
 ---
 
-## Logical Architecture
-
-```text
-Browser
-  -> Angular + Angular Material UI
-  -> DRF RAW data and auth endpoints
-  -> HTTP(S)
-Django Application
-  -> DRF API Layer
-  -> Domain Services
-  -> Django ORM
-
-OpenAPI Contract
-  -> generated Angular integration artifacts
-  -> CRM-oriented generated clients and UI metadata
-
-UI Definition Source
-  -> Non-CRM forms and pages
-  -> Angular assembly
-
-```
-
----
-
 ## Integration Workflow
 
 The integration process should be modeled as an agent chain: a sequenced
@@ -298,35 +272,83 @@ The build pipeline should be designed so a first-time contributor can follow
 this flow without manual hidden steps between export, repository update, and
 build execution.
 
+---
+
+## Frontend and Backend Integration
+
+### Data Architecture
+
+- Database is not concerning this system
+- Timestamps in data transport are UTC and localized to the user's timezone in the frontend.
+
+### Content Sources
+
+The application has two distinct input sources:
+
+- CRM content source: the OpenAPI contract exported by Django and consumed by
+  the generated Angular integration artifacts
+- Non-CRM content source: a separate structured definition set for reactive
+  forms, standalone pages, and bespoke workflows
+
+Here, CRM content means contract-derived resource content, not a narrow
+customer-sales domain assumption.
+
+These two streams should remain separate so contract-derived CRM functionality
+does not get mixed with manually-authored UI definitions.
+
+### Contract Rules
+
+- API contracts must be versioned, with versioning in the backend's responsibility.
+- The frontend must treat the backend as the source of truth for permissions and
+  data content.
+- Shared enumerations and reference data should come from the API, not be hard
+  coded in the client
+- CRM-facing Angular content should always be generated or configured from OpenAPI
+- Non-CRM content definitions should be version-controlled and validated
+  separately from the OpenAPI contract
+- The user-facing product UI remains frontend-owned, while backend data
+  administration services remain Django + DRF-owned
+
+### HTTP Integration
+
+- Use an Angular HTTP interceptor for CSRF, auth-related redirects, and common
+  error handling
+- Centralize API base URL configuration by environment
+
+### Non-CRM Input Source
+
+Use a dedicated structured input source under a path such as `spec/ui/` for
+non-CRM content.
+
+This source should define:
+
+- Reactive form metadata that is not directly derivable from OpenAPI
+- Standalone page definitions
+- Workflow-specific layouts or interaction rules
+
+It should be machine-readable, versioned in the repository, and able to
+reference API resources exposed through the OpenAPI contract.
+
+---
+
 ## Backend Architecture
 
-### Backend Responsibilities
-
-#### `common`
+### `common`
 
 - Shared base models and utilities
 - Reusable pagination, filtering, and exception helpers
 - Shared API response behavior where needed
 
-#### `accounts`
+### `accounts` 
 
-- User model integration
-- Authentication endpoints and profile management
-- Password reset and session management support
-- Administrative account management support for backend operators
+- Management of user accounts, authentication, and authorization
 
-#### `access`
+### `access`
 
 - Roles, groups, and permission mapping
 - Object-level authorization helpers if required
 
-#### `audit`
-
-- Audit event storage
-- Model change logging hooks
-- Query interfaces for authorized audit viewers
-
-#### Administrative UI
+### Administrative UI
 
 - Use Django admin or equivalent backend-native admin tooling for internal data
   administration when it improves operational efficiency
@@ -335,12 +357,71 @@ build execution.
 - Keep administrative tooling clearly distinguished from the Angular end-user
   application
 
-#### Domain apps
+## Frontend Architecture
 
-- Business entities
-- Validation rules
-- Service methods
-- API serializers and viewsets for the module
+### Angular Application Shape
+
+The frontend should be an Angular application with:
+
+- No dependency on Django template rendering or DRF UI facilities for the main
+  product experience
+
+### Angular Integration Artifacts
+
+The Angular integration artifacts are not the whole frontend application.
+
+Their responsibilities should include:
+
+- OpenAPI-derived typed API clients
+- Wrapping or normalizing generated code.
+- CRM-oriented resource adapters and data-access helpers
+- Shared Angular Material integration patterns for list, detail, and standard
+  form experiences.
+- Authentication, CSRF, and transport helpers needed for Django integration
+- Reusable metadata or generation outputs consumed by the main Angular app
+
+It should not own:
+
+- Product-specific application shell decisions
+- Fully bespoke pages that are not OpenAPI-derived
+- Business content that belongs to the main frontend application
+- Backend data administration concerns that belong to Django and DRF
+
+
+### Frontend Responsibilities
+
+#### `core`
+
+- Application bootstrap
+- Authentication state
+- HTTP interceptors
+- Shell layout and global navigation
+- Route guards and app-wide services
+
+#### `shared`
+
+- Reusable UI components
+- Common form helpers
+- Table wrappers, dialogs, and utility code
+
+#### `features`
+
+- Page components
+- Feature routing
+- API service wrappers for the module
+- Feature-specific models and forms
+
+### State Management
+
+- Start with Angular services and RxJS streams
+- Keep server state close to the feature that owns it
+- Introduce heavier state tooling only if cross-feature complexity demands it
+
+### UI Patterns
+
+- Standardize table, list, detail, form, dialog, snackbar, and confirmation patterns
+
+---
 
 ## API Architecture
 
@@ -405,130 +486,9 @@ Use whatever backend specifies to be documented in the contract.
 - Authentication and autorization are the backend's resposibility, frontend access will follow the same roles and rules defined in the backend.
 - Enforce critical permissions server-side regardless of frontend state
 
-## Data Architecture
-
-- Database is not concerning this system
-- Timestamps in data transport are UTC and localized to the user's timezone in the frontend.
-
-## Frontend Architecture
-
-### Angular Application Shape
-
-The frontend should be an Angular application with:
-
-- Angular Material for layout, form controls, tables, dialogs, and feedback
-- Lazy-loaded feature routes
-- Standalone or feature-scoped components organized by responsibility
-- Reactive forms for non-trivial create and edit workflows
-- No dependency on Django template rendering or DRF UI facilities for the main
-  product experience
-
-### Angular Integration Artifacts
-
-The Angular integration artifacts are not the whole frontend application.
-
-Their responsibilities should include:
-
-- OpenAPI-derived typed API clients
-- Wrapping or normalizing generated code.
-- CRM-oriented resource adapters and data-access helpers
-- Shared Angular Material integration patterns for list, detail, and standard
-  form experiences.
-- Authentication, CSRF, and transport helpers needed for Django integration
-- Reusable metadata or generation outputs consumed by the main Angular app
-
-It should not own:
-
-- Product-specific application shell decisions
-- Fully bespoke pages that are not OpenAPI-derived
-- Business content that belongs to the main frontend application
-- Backend data administration concerns that belong to Django and DRF
+---
 
 
-### Frontend Responsibilities
-
-#### `core`
-
-- Application bootstrap
-- Authentication state
-- HTTP interceptors
-- Shell layout and global navigation
-- Route guards and app-wide services
-
-#### `shared`
-
-- Reusable UI components
-- Common form helpers
-- Table wrappers, dialogs, and utility code
-
-#### `features`
-
-- Page components
-- Feature routing
-- API service wrappers for the module
-- Feature-specific models and forms
-
-### State Management
-
-- Start with Angular services and RxJS streams
-- Keep server state close to the feature that owns it
-- Introduce heavier state tooling only if cross-feature complexity demands it
-
-### UI Patterns
-
-- Use Angular Material as the default component set
-- Keep a single theme system with shared spacing, typography, and density rules
-- Standardize list, detail, form, dialog, snackbar, and confirmation patterns
-
-## Frontend and Backend Integration
-
-### Content Sources
-
-The application has two distinct input sources:
-
-- CRM content source: the OpenAPI contract exported by Django and consumed by
-  the generated Angular integration artifacts
-- Non-CRM content source: a separate structured definition set for reactive
-  forms, standalone pages, and bespoke workflows
-
-Here, CRM content means contract-derived resource content, not a narrow
-customer-sales domain assumption.
-
-These two streams should remain separate so contract-derived CRM functionality
-does not get mixed with manually-authored UI definitions.
-
-### Contract Rules
-
-- API contracts must be versioned, with versioning in the backend's responsibility.
-- The frontend must treat the backend as the source of truth for permissions and
-  data content.
-- Shared enumerations and reference data should come from the API, not be hard
-  coded in the client
-- CRM-facing Angular content should always be generated or configured from OpenAPI
-- Non-CRM content definitions should be version-controlled and validated
-  separately from the OpenAPI contract
-- The user-facing product UI remains frontend-owned, while backend data
-  administration services remain Django + DRF-owned
-
-### HTTP Integration
-
-- Use an Angular HTTP interceptor for CSRF, auth-related redirects, and common
-  error handling
-- Centralize API base URL configuration by environment
-
-### Non-CRM Input Source
-
-Use a dedicated structured input source under a path such as `spec/ui/` for
-non-CRM content.
-
-This source should define:
-
-- Reactive form metadata that is not directly derivable from OpenAPI
-- Standalone page definitions
-- Workflow-specific layouts or interaction rules
-
-It should be machine-readable, versioned in the repository, and able to
-reference API resources exposed through the OpenAPI contract.
 
 ## Observability
 
