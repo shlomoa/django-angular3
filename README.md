@@ -4,6 +4,10 @@
 
 Project website: <https://djangoangular.com/>
 
+Related docs:
+- `doc/ARCHITECTURE.md` — architecture, integration boundaries, and design decisions
+- `doc/IMPLEMENTATION_PLAN.md` — implementation sequencing and delivery roadmap
+
 It allows you to:
 - Keep Django responsible for data, authentication, and administration.
 - Keep Angular responsible for the end-user application and client-side route tree.

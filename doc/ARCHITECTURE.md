@@ -2,19 +2,21 @@
 
 ## Purpose and scope
 
-This document describes the architecture of a system for building a tightly integrated full-stack 3-tier web application: with [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] as backend, `Angular Material` on the frontend, and a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification] as the integration boundary between them. The architecture is designed to support a seamless development experience where backend schema drives frontend generated code and integration, while keeping the two layers decoupled at the API boundary.
+This document describes the architecture of `django-angular3` as a contract-driven, agentically orchestrated, SKILLS-based system for generating and integrating Angular application building blocks against a [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] backend. The backend contract is expressed as a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification], which serves as the integration boundary and the source of truth for CRM-facing functionality.
 
-This solution is not an application, it's not a development environment. but rather a set of tools and a methodology used to easily integrate Angular.
-As DRF is enhancing Django with RESTfull oriented features, `django-angular3` is enhancing Django with seamless Angular frontend integration.
+This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Construction may be non-deterministic, but acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validation and test gates.
+
+`django-angular3` extends Django/DRF with contract-driven Angular integration. It plans and governs the construction process, uses agentic orchestration to coordinate iterative bounded SKILLS-based construction, and integrates generated building blocks into a working application while preserving architectural boundaries between backend, frontend, generated artifacts, and non-CRM content.
 
 This document covers:
-- Architectural principles, system components, and integration workflows for the backend and frontend layers.
+- Architectural principles, architectural actors, system components, and integration workflows.
+- The construction, control, and acceptance model used to generate and integrate application building blocks.
 - Architectural decisions and directions and the rationale behind them.
 
 This document does not cover:
 - Detailed implementation guidance for Django, DRF, or Angular development
 - OpenAPI specification and API design.
-- WEB Application development principles or architecture
+- General web application development principles or architecture
 
 ---
 
@@ -34,28 +36,53 @@ A TypeScript-based open-source web application framework led by the Angular Team
 ### [Angular Material]
 A UI component library for Angular that implements Google's Material Design. It provides pre-built components for layout, forms, navigation, and more, with a consistent design language.
 
+### djng
+The `django-angular3` package: the Django/Python-side system in this architecture. It is the contract-governing and planning component responsible for backend-side validation, change interpretation, and generation planning for Angular integration.
+
+### ngdj
+The `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs planned by `djng`.
+
 ### [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.
 
 ### CRM
-CRM stands for Customer Relationship Management. In this context, it refers to the set of functionalities and data models that are directly related to the bussiness management.
-AKA Data model, AKA Bussiness Inteligence, AKA the content domain of the application.
-CRM is this architecture's context is the content fo the generated schema.
+CRM stands for Customer Relationship Management. In this architecture, it is shorthand for contract-derived business-domain content represented by the backend schema and API. It is not limited to a literal customer-sales system.
 
 ### non-CRM content
-Content that is not directly derived from the OpenAPI contract, such as bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata. This content is defined in a separate structured input source and is used to complement the CRM-derived Angular integration artifacts.
+Content that is not directly derived from the OpenAPI contract, such as bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata. This content is defined in a separate structured input source and complements the CRM-derived Angular integration artifacts.
 
 ### [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for CRM-facing functionality and the basis for generating Angular integration artifacts.
 
+### Angular integration artifacts
+Generated Angular outputs derived from the OpenAPI contract and related tooling, including typed API clients, resource adapters, transport helpers, reusable Angular Material-oriented integration helpers, and supporting metadata.
+
 ### [Claude Code API][Claude Code Python SDK]
 An API that allows developers to interact with the Claude AI assistant for coding tasks. It can be used to automate code generation, refactoring, and other programming-related activities as part of the integration workflow between Django/DRF and Angular Material.
 
+### agentic orchestration
+An orchestration model in which an AI agent drives construction and integration work using bounded architectural capabilities rather than a fixed linear pipeline. The orchestrator consumes change requirements, configuration files, and contract-derived inputs, applies SKILLS as needed, and iterates toward a correct working application.
+
 ### [SKILLS][Claude Skills]
-Specific capabilities or functions that the Claude Code API can perform to assist in automating the contract handoff and integration process between Django/DRF and Angular Material. These skills would be defined to enable tasks such as generating Angular components from OpenAPI contracts, validating schema changes, and managing the integration workflow.
+Bounded construction units used by the agentic orchestrator in this architecture. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
+
+### SKILLS-based construction
+A construction model in which bounded SKILLS are the primary execution units for generating, modifying, and integrating application building blocks. This model allows controlled generative freedom while keeping construction within architectural, contract-defined, and validation-defined boundaries.
 
 ### angular-code-agent
-A placeholder name for the process running agent that will orchestrate the contract handoff and integration process between Django/DRF and Angular Material, using the defined SKILLS to automate code generation and integration tasks.
+The orchestrator in this architecture. It consumes change requirements, configuration files, and contract-derived inputs, applies SKILLS-based construction to generate and integrate the required building blocks, and drives the system toward a correct working application.
+
+### correct working application
+An application that assembles into a runnable whole and satisfies the deterministic validation and test gates defined by this architecture. Correctness is judged at the application level, not merely at the level of generated artifacts.
+
+### correct-by-construction
+An architectural goal in which bounded construction, architectural constraints, contract-defined rules, and deterministic validation gates drive generation toward a correct working application, even when the internal construction path is not deterministic.
+
+### non-deterministic generation
+Generation in which the internal construction path, intermediate decisions, or exact emitted outputs may vary across valid runs. This variation is allowed as long as the resulting application still satisfies the architecture's deterministic acceptance criteria.
+
+### deterministic acceptance
+An acceptance model in which application correctness is decided only by explicit validation and test gates. Regardless of how generation proceeds internally, acceptance criteria remain stable and repeatable.
 
 ### Django Project vs Django App
 
@@ -75,7 +102,7 @@ In `django-angular3.json`:
 
 ---
 
-## High-Level Design
+## Toolchain Design
 
 ### Inputs
 
@@ -95,7 +122,7 @@ In `django-angular3.json`:
 
 ### djng
 
-[django-angular3] The package automates the `schema` implementation of the `Angular Material` frontend given the a `DRF` backend using a `angular-code-agent`.
+[django-angular3] The package automates contract-driven Angular Material frontend implementation for a `DRF` backend using an `angular-code-agent`.
 
 - Purpose: The backend owner.
   - Orchestrate the overall integration process
@@ -120,7 +147,7 @@ In `django-angular3.json`:
 
 implemented in [angular-django2-github] and deployed to [angular-django2] npm package.
 
-- Purpose: A "slave" [Angular] ([npmjs] package) generating the complementary frontend UI building 
+- Purpose: A companion [Angular] ([npmjs] package) generating the complementary frontend UI building 
   blocks, Angular application assembly, generated glue code for OpenAPI integration.
 - Responsibilities:
   - ngdj-o-1: Provide a set of commands for managing and assembling the Angular application, including workspace, project layout, application layout.
@@ -128,7 +155,7 @@ implemented in [angular-django2-github] and deployed to [angular-django2] npm pa
   - ngdj-o-3: Provide a set of Angular schematics and code generation templates for generating Angular building blocks from non-CRM content definitions.
 
 
-### System components
+### Toolchain components
 
 The system consists of:
 
@@ -146,7 +173,7 @@ The system consists of:
 
 Applicable to the application built with the help of this system
 
-### Django + DRF
+### Backend responsibilities
 
 Django and DRF are responsible for:
 
@@ -156,7 +183,7 @@ Django and DRF are responsible for:
 - Data administration and operational admin tooling
 - Backend packaging, API delivery, and server-side deployment artifacts
 
-### Angular Material
+### Frontend responsibilities
 
 Angular Material is responsible for:
 
@@ -166,7 +193,7 @@ Angular Material is responsible for:
 - Presentation logic and client-side interaction behavior
 - Consuming backend APIs for the user-facing application experience
 
-### Boundary Rule
+### Ownership boundary
 
 - Django templates, Django admin, and DRF-backed interfaces may be used for data
   administration services and operator workflows
@@ -251,7 +278,7 @@ automation pipeline with explicit handoff artifacts.
 Each stage should produce durable artifacts that can be inspected, tested, and
 handed off to the next stage without hidden assumptions.
 
-### Initial Build Flow
+### Example Build Flow
 
 The first-time use case should follow this concrete repository-oriented flow:
 
@@ -274,11 +301,11 @@ build execution.
 
 ---
 
-## Frontend and Backend Integration
+## Integration Boundaries
 
 ### Data Architecture
 
-- Database is not concerning this system
+- Database design is outside the scope of this system
 - Timestamps in data transport are UTC and localized to the user's timezone in the frontend.
 
 ### Content Sources
@@ -463,8 +490,8 @@ It should not own:
 ### Versioning
 
 - No API level versioning
-- Schema versioning is the contract versioning, it's up to the backend to update the schema version and drive the necessary fronend changes.
-- Use `oasdiff` to determine API change and force Fronend alignment.
+- Schema versioning is the contract versioning; the backend updates the schema version and drives the necessary frontend changes.
+- Use `oasdiff` to detect API changes and force frontend alignment.
 
 ## Authentication and Authorization
 
@@ -483,7 +510,7 @@ Use whatever backend specifies to be documented in the contract.
 ### Permission Model
 
 - Use backend permissions, Django groups and permissions as baseline
-- Authentication and autorization are the backend's resposibility, frontend access will follow the same roles and rules defined in the backend.
+- Authentication and authorization are the backend's responsibility; frontend access follows the same roles and rules defined in the backend.
 - Enforce critical permissions server-side regardless of frontend state
 
 ---
@@ -494,7 +521,7 @@ Use whatever backend specifies to be documented in the contract.
 
 ### Logging
 
-applied to both `djng` and `ngdj`, and the applications they help build
+Applied to both `djng` and `ngdj`, and to the applications they help build:
 - Use structured application logs
 - Include request identifiers where possible
 - Distinguish user errors, validation errors, and system failures
@@ -539,13 +566,13 @@ The generated project should support at least:
 Configuration should be environment-driven and must not require code changes to
 switch environments.
 
-## Implementation notes
+## Implementation Notes
 
 - The preferred generation path is `ng-openapi-gen`
 - OpenAPI schema extraction is done with [drf-spectacular].
 - Schema diff and change detection is done with [oasdiff].
   
-## Decisions Captured Here
+## Architectural Decisions
 
 - Same-origin deployment is the default production target
 - Django session authentication will be the initial first-party auth model.
@@ -558,24 +585,9 @@ switch environments.
 - Non-CRM content is supplied by a separate structured input source
 - Modular backend apps and frontend feature areas are the scaling strategy
 
-## Next Technical Steps
+## Implementation Roadmap
 
-After this architecture is accepted, implementation should proceed in this
-order:
-
-1. Define the structured non-CRM input source for reactive forms, pages and other bespoke UI content.
-2. Revise and finalize the REQUIREMENTS.md file based on this architecture
-3. Derive complete set of `angular-django2` features needed to implement the Angular integration artifacts.
-4. revise and finalize GEMERATE_SKILLS.md with the complete set of SKILLS needed to implement the integration workflow.
-  - revise the skill_creation folder content to reflect the complete set of SKILLS, with detailed descriptions and example prompts for each.
-5. Create SKILLS - define the Claude Code API SKILLS needed to automate the integration workflow.
-6. Create a master orchestrator flow using the `Claude Code Python SDK` that executes the SKILLS in sequence to implement the integration workflow.
-7. Implement the OpenAPI schema extraction process on the Django/DRF side.
-8. Add test cases for E2E integration testing.
-9. Add E2E test for the integration workflow.
-10. Build one business module end to end
-11. Add audit logging, health checks, generator verification, and automated
-    tests
+Implementation sequencing is documented in `doc/IMPLEMENTATION_PLAN.md`.
 
 ## References
 
