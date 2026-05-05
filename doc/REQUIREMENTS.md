@@ -11,6 +11,12 @@ produces. The toolchain is split across two packages:
 Requirements for ngdj are derived from djng development; the toolchain is
 expected to evolve as skills are authored.
 
+### Current implementation notes
+
+- The preferred Angular client generation path is `ng-openapi-gen`.
+- OpenAPI schema extraction is done with `drf-spectacular`.
+- Schema diff and change detection is done with `oasdiff`.
+
 ---
 
 ## Purpose
@@ -320,18 +326,21 @@ The first implementation should include:
 The initial authoring and build flow must support this sequence:
 
 1. A user designs or updates the OpenAPI specification in Swagger Studio
-   (SmartBear's API design tooling, historically associated with SwaggerHub)
-2. The user exports or dumps the OAS artifact into the repository
+  (SmartBear's API design tooling, historically associated with SwaggerHub)
+2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
 3. The user adds non-CRM changes such as bespoke reactive forms, page
-   definitions, or workflow-specific UI content
-4. The user fires a build
-5. The build validates inputs, generates CRM-facing artifacts, assembles the
-   Angular app, and reports any contract or input errors clearly
+  definitions, or workflow-specific UI content into `spec/ui/`
+4. The user fires a build from the repository
+5. The build validates the OAS artifact and non-CRM inputs, generates
+  CRM-facing artifacts, assembles the Angular app, and reports any stage-
+  specific contract or input errors clearly
 
 For this first-time flow:
 
-- The repository must provide a clear location for the source OAS artifact
-- The repository must provide a separate location for non-CRM content inputs
+- The repository must provide a clear location for the source OAS artifact at
+  `spec/openapi/source/`
+- The repository must provide a separate location for non-CRM content inputs at
+  `spec/ui/`
 - The build must fail fast when the OpenAPI contract is invalid or incompatible
   with generation
 - The build must fail fast when non-CRM content inputs are invalid
