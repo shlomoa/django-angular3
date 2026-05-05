@@ -4,7 +4,7 @@
 
 This document describes the architecture of `django-angular3` as a contract-driven, agentically orchestrated, SKILLS-based system for generating and integrating Angular application building blocks against a [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] backend. The backend contract is expressed as a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification], which serves as the integration boundary and the source of truth for CRM-facing functionality.
 
-This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Construction may be non-deterministic, but acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validation and test gates.
+This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Construction may be non-deterministic, but acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validations and tests.
 
 `django-angular3` extends Django/DRF with contract-driven Angular integration. It governs the construction process, uses agentic orchestration to coordinate iterative bounded SKILLS-based construction, and integrates generated building blocks into a working application while preserving architectural boundaries between backend, frontend, generated artifacts, and non-CRM content.
 
@@ -75,7 +75,7 @@ A construction model in which bounded SKILLS are the primary execution units for
 The orchestrator in this architecture. It consumes change requirements, configuration files, and contract-derived inputs, applies SKILLS-based construction to generate and integrate the required building blocks, and drives the system toward a correct working application.
 
 ### correct working application
-An application that assembles into a runnable whole and satisfies the deterministic validation and test gates defined by this architecture. Correctness is judged at the application level, not merely at the level of generated artifacts.
+An application that assembles into a runnable whole and satisfies the deterministic validations and tests defined by this architecture. Individual generated artifacts alone do not establish correctness.
 
 ### correct-by-construction
 An architectural goal in which bounded construction, architectural constraints, contract-defined rules, and deterministic validation gates drive generation toward a correct working application, even when the internal construction path is not deterministic.
@@ -84,7 +84,7 @@ An architectural goal in which bounded construction, architectural constraints, 
 Generation in which the internal construction path, intermediate decisions, or exact emitted outputs may vary across valid runs. This variation is allowed as long as the resulting application still satisfies the architecture's deterministic acceptance criteria.
 
 ### deterministic acceptance
-An acceptance model in which application correctness is decided only by explicit validation and test gates. Regardless of how generation proceeds internally, acceptance criteria remain stable and repeatable.
+An acceptance model in which correctness is decided by explicit validations and tests. Regardless of how generation proceeds internally, acceptance criteria remain stable and repeatable.
 
 ### Django Project vs Django App
 
@@ -290,6 +290,15 @@ The orchestrator may invoke and re-invoke SKILLS as needed while construction is
 5. continue iterating until deterministic acceptance criteria are satisfied or a blocking issue is surfaced explicitly
 
 This loop is part of the architecture, not an implementation accident. Generation may vary internally, but correction and convergence toward a correct working application are expected architectural behavior.
+
+### Verification categories
+
+Verification in this architecture occurs throughout construction and integration. The main categories are:
+
+- Contract verification: validate the OpenAPI contract and detect breaking changes before downstream construction proceeds.
+- Construction-output verification: inspect generated and assembled outputs so they can be corrected, refined, or reused in later iterations.
+- Integration verification: verify alignment between backend behavior, generated integration artifacts, and frontend composition.
+- Test-based verification: use automated tests and smoke tests to verify expected behavior across backend, frontend, and composed application flows.
 
 ### Example Build Flow
 
@@ -545,23 +554,25 @@ Applied to both `djng` and `ngdj`, and to the applications they help build:
 
 ## Testing Strategy
 
+Testing is part of the verification model of this architecture. Test results provide feedback during iterative construction and help verify that backend behavior, Angular-side outputs, and the composed application remain aligned with the contract and architectural boundaries.
+
 ### `djng`
 
 - Unit tests for services, permissions, and model behavior
-- API tests for serializers, endpoints, and authentication
+- API tests for serializers, endpoints, authentication, and contract-producing behavior
 - Database-backed tests for critical workflows
 
 ### `ngdj`
 
 - Unit tests for services and utility logic
-- Component tests for forms, tables, and route-protected pages
+- Component tests for forms, tables, route-protected pages, and generated UI behavior
 - End-to-end tests for login and the main business module workflows
 
 ### Integration
 
-- Verify frontend/backend contracts through automated test coverage
+- Verify frontend/backend alignment through automated coverage across contract, integration, and composed application behavior
 - Include smoke tests in staging before production release
-- E2E tests covering main use cases.
+- End-to-end tests covering main use cases across backend, generated integration artifacts, and frontend composition.
 
 ## Security Considerations
 
@@ -591,8 +602,10 @@ switch environments.
 - Django session authentication will be the initial first-party auth model.
 - Will begin prototyping with sqlite, next will be PostgreSQL
 - OpenAPI is the source of truth for CRM-facing contracts.
+- Contract validation and `oasdiff`-based change detection are required before downstream construction continues.
 - `oasdiff` is the OpenAPI schema diff and change detection tool.
 - `ng-openapi-gen` is the Angular client OpenAPI code-generation tool.
+- Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold
 - Non-CRM content is supplied by a separate structured input source
