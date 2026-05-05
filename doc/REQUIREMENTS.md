@@ -1,39 +1,23 @@
 # Requirements
 
-## Tooling
-
-These requirements describe the platform that the djng/ngdj toolchain
-produces. The toolchain is split across two packages:
-
-- **djng** (`django-angular3`): Python CLI, validation, and skills.
-- **ngdj** (`angular-django2`): Angular schematics installed into generated workspaces.
-
-Requirements for ngdj are derived from djng development; the toolchain is
-expected to evolve as skills are authored.
-
-### Current implementation notes
-
-- The preferred Angular client generation path is `ng-openapi-gen`.
-- OpenAPI schema extraction is done with `drf-spectacular`.
-- Schema diff and change detection is done with `oasdiff`.
-
----
-
 ## Purpose
 
 `django-angular3` enables seamless integration of Django, Django REST Framework
 (DRF), and Angular Material. This document defines the baseline requirements
-for the full-stack application platform that integration targets.
+for the full-stack application platform that the integration targets.
 
 The package bridges the DRF backend and the Angular frontend through a
-contract-first pipeline: it validates OpenAPI artifacts exported from Django,
-plans Angular workspace setup and client code-generation commands, and produces
-deterministic build artifacts that connect both stacks without manual glue work.
+contract-driven, agentically orchestrated construction process: it validates
+OpenAPI artifacts exported from Django, derives Angular workspace setup and
+client code-generation work, and produces durable build artifacts that connect
+both stacks without manual glue work.
 
 Because the business domain is not yet specified, these requirements describe a
 reusable application platform that supports authentication, administration,
 auditing, and modular business features. Domain-specific modules can be added
 on top of this foundation without changing the core architecture.
+
+Related architectural context: see `doc/ARCHITECTURE.md` §§ 1, 3, and 7.
 
 ## Product Vision
 
@@ -69,13 +53,16 @@ Build a production-ready business application with:
 
 ## Platform Responsibilities
 
+See `doc/ARCHITECTURE.md` §§ 4.1-4.3 for the governing responsibility and
+ownership boundaries.
+
 ### Django + DRF
 
 - Own the data model, persistence layer, and backend business logic
 - Own authenticated APIs, authentication services, authorization enforcement,
   and backend integrations
 - Own administrative capabilities for data administration, reference data, and
-  operational tooling
+  operational tooling, including backend-oriented administration interfaces
 - May provide data administration services through Django-native or DRF-backed
   administrative interfaces where appropriate
 - Own backend packaging and deployment-facing server artifacts
@@ -86,7 +73,6 @@ Build a production-ready business application with:
 - Own page layout, navigation, forms, tables, dialogs, and interaction design
 - Own end-user application routing
 - Consume Django and DRF APIs as the backend contract surface
-- Do not replace Django + DRF responsibility for data administration services
 
 ## User Roles
 
@@ -181,11 +167,10 @@ Build a production-ready business application with:
 - The system must provide administrative screens for core configuration
 - Reference data used across business modules must be centrally manageable
 - Administrative changes must be audited
-- Administrative tooling is part of the Django + DRF responsibility boundary and
-  may use Django-native administration capabilities, DRF-backed tools, or other
-  backend-oriented administration interfaces
 
 ### 11. API Requirements
+
+These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 
 - DRF must expose a versioned API namespace
 - API endpoints must support authenticated access, validation, and standard HTTP
@@ -197,42 +182,49 @@ Build a production-ready business application with:
 - `oasdiff` must be used as the OpenAPI schema diff and change detection tool
 - `oasdiff` must run as part of the contract normalization stage to detect
   breaking and non-breaking changes between schema versions
-- Breaking changes detected by `oasdiff` must block downstream generation and
-  generation tooling until explicitly acknowledged or resolved
+- Breaking changes detected by `oasdiff` must block downstream construction
+  until explicitly acknowledged or resolved
 - API schema generation and browsable documentation should be available in
   non-production environments
 
 ### 12. Content Source Strategy
 
-- In this document, CRM-facing content means resource-oriented application
-  content derived from the OpenAPI contract
-- OpenAPI must be the source of truth for CRM-facing content, contracts, and
-  generated Angular integration artifacts
-- The project must use a reproducible OpenAPI-based code generation toolchain,
-  with `oasdiff` for schema diff and change detection and `ng-openapi-gen` as
-  the Angular client generator
+See `doc/ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
+content-boundary and generated-artifact model.
+
+- Terms such as CRM, non-CRM content, OpenAPI contract, and Angular
+  integration artifacts use the definitions in `doc/ARCHITECTURE.md` §§ 2.8-
+  2.11.
+- The OpenAPI contract must be the source of truth for CRM-facing content,
+  contracts, and generated Angular integration artifacts
 - CRM list, detail, and standard form experiences should be derived from the
   OpenAPI contract where practical instead of being duplicated by hand
 - Angular-related integration functionality shared across modules must be
   generated or maintained as reusable Angular integration artifacts
 - Angular client generation may use `ng-openapi-gen` when its Angular-native
   output is a better fit than the baseline generator path
-- The delivery process must support an agent chain with defined handoff
-  artifacts between schema generation, `oasdiff` change detection, client
-  generation, UI assembly, and app integration
-- Non-CRM content such as bespoke reactive forms, standalone pages, and custom
-  workflows must come from a separate structured input source
+- Non-CRM content — such as bespoke reactive forms, standalone pages, and
+  custom workflows — must come from a separate structured input source
 - The non-CRM input source must be versioned, validated, and able to reference
   shared UI primitives and API contracts without becoming the CRM source of
   truth
 
-### 13. Error Handling and Recovery
+### 13. Construction Workflow
+
+See `doc/ARCHITECTURE.md` §§ 7.1-7.4 for the architectural control-loop,
+verification, and build-flow model.
+
+- The delivery process must support an agentically orchestrated control loop
+  with defined handoff artifacts between schema generation, `oasdiff` change
+  detection, client generation, UI assembly, and app integration
+
+### 14. Error Handling and Recovery
 
 - Validation errors must be presented clearly at field and form level
 - Unexpected server errors must be logged and surfaced with user-safe messages
 - Users must not lose unsaved form state because of recoverable UI errors
 
-### 14. Development Experience and Tooling
+### 15. Development Experience and Tooling
 
 - When the generated app's Django server runs with `DEBUG=True`, any failure
   during app generation (Python exceptions raised by djng management commands
@@ -254,6 +246,8 @@ Build a production-ready business application with:
   never exposed in production.
 
 ## Non-Functional Requirements
+
+These quality requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 
 ### Security
 
@@ -326,10 +320,10 @@ The first implementation should include:
 The initial authoring and build flow must support this sequence:
 
 1. A user designs or updates the OpenAPI specification in Swagger Studio
-  (SmartBear's API design tooling, historically associated with SwaggerHub)
+   (SmartBear's API design tooling, historically associated with SwaggerHub)
 2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
 3. The user adds non-CRM changes such as bespoke reactive forms, page
-  definitions, or workflow-specific UI content into `spec/ui/`
+   definitions, or workflow-specific UI content into `spec/ui/`
 4. The user fires a build from the repository
 5. The build validates the OAS artifact and non-CRM inputs, generates
   CRM-facing artifacts, assembles the Angular app, and reports any stage-
@@ -344,8 +338,8 @@ For this first-time flow:
 - The build must fail fast when the OpenAPI contract is invalid or incompatible
   with generation
 - The build must fail fast when non-CRM content inputs are invalid
-- The build must produce deterministic outputs from the same OAS and non-CRM
-  inputs
+- For the same OAS and non-CRM inputs, the build must preserve deterministic
+  validation and acceptance behavior even if internal construction steps vary
 - The build must allow a first-time user to understand which stage failed:
   contract validation, code generation, non-CRM input validation, or final app
   assembly
@@ -360,9 +354,12 @@ For this first-time flow:
 
 ## Acceptance Criteria
 
+See `doc/ARCHITECTURE.md` §§ 7.3, 14, and 17 for the related verification,
+testing, and architectural decision model.
+
 The platform is ready for implementation handoff when:
 
-- The backend/frontend integration model is agreed
+- The backend/frontend integration model is agreed upon
 - Authentication, authorization, and audit expectations are explicit
 - OpenAPI and non-CRM content inputs have clear ownership and boundaries
 - The MVP scope includes one full business module and the shared platform
