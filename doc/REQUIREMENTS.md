@@ -12,6 +12,27 @@ OpenAPI artifacts exported from Django, derives Angular workspace setup and
 client code-generation work, and produces durable build artifacts that connect
 both stacks without manual glue work.
 
+`djng` must act as an active generation component in that process: it must
+define and evolve the generation capabilities needed for Angular integration,
+execute those capabilities through a generator app, and expose command
+wrappers around `ngdj` commands used for Angular-side creation, modification,
+and assembly.
+
+`ngdj` must provide the Angular-side construction capabilities consumed by
+that process: it must support workspace and application assembly, generation
+of Angular artifacts from OpenAPI contracts, and generation of Angular
+artifacts from non-CRM content definitions.
+
+Construction in this process must execute through bounded SKILLS that serve as
+the primary units for generating, modifying, and integrating Angular building
+blocks while remaining within architectural and contract-defined boundaries.
+
+The terms `djng` and `ngdj` use the definitions in `doc/ARCHITECTURE.md`
+§§ 2.5-2.6.
+
+The terms `SKILLS` and `SKILLS-based construction` use the definitions in
+`doc/ARCHITECTURE.md` §§ 2.14-2.15.
+
 Because the business domain is not yet specified, these requirements describe a
 reusable application platform that supports authentication, administration,
 auditing, and modular business features. Domain-specific modules can be added
@@ -50,6 +71,27 @@ Build a production-ready business application with:
   than anonymous public traffic
 - At least one business module will be implemented in the MVP, but the platform
   must support more modules later
+
+## Construction Workflow
+
+See `doc/ARCHITECTURE.md` §§ 7.1-7.4 for the architectural control-loop,
+verification, and build-flow model.
+
+- `djng` must provide the generation entry points that drive integrated Django-
+  Angular construction, including generator-app execution and governed command
+  wrappers around `ngdj` actions
+- `ngdj` must provide the Angular-side commands, schematics, templates, and
+  assembly actions consumed by governed construction, including generation
+  from contract-derived and non-CRM inputs
+- Governed construction must execute through bounded SKILLS used as the
+  primary units for generation, modification, and integration work
+- The delivery process must support an agentically orchestrated control loop
+  with defined handoff artifacts between schema generation, `oasdiff` change
+  detection, client generation, UI assembly, and app integration
+- Governed construction must support iterative inspection, repair, retry, and
+  refinement when emitted outputs are incomplete, inconsistent, or invalid,
+  and must continue until deterministic acceptance conditions are satisfied or
+  a blocking issue is surfaced explicitly
 
 ## Platform Responsibilities
 
@@ -209,22 +251,13 @@ content-boundary and generated-artifact model.
   shared UI primitives and API contracts without becoming the CRM source of
   truth
 
-### 13. Construction Workflow
-
-See `doc/ARCHITECTURE.md` §§ 7.1-7.4 for the architectural control-loop,
-verification, and build-flow model.
-
-- The delivery process must support an agentically orchestrated control loop
-  with defined handoff artifacts between schema generation, `oasdiff` change
-  detection, client generation, UI assembly, and app integration
-
-### 14. Error Handling and Recovery
+### 13. Error Handling and Recovery
 
 - Validation errors must be presented clearly at field and form level
 - Unexpected server errors must be logged and surfaced with user-safe messages
 - Users must not lose unsaved form state because of recoverable UI errors
 
-### 15. Development Experience and Tooling
+### 14. Development Experience and Tooling
 
 - When the generated app's Django server runs with `DEBUG=True`, any failure
   during app generation (Python exceptions raised by djng management commands
