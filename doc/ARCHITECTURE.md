@@ -6,7 +6,7 @@ This document describes the architecture of `django-angular3` as a contract-driv
 
 This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Construction may be non-deterministic, but acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validation and test gates.
 
-`django-angular3` extends Django/DRF with contract-driven Angular integration. It plans and governs the construction process, uses agentic orchestration to coordinate iterative bounded SKILLS-based construction, and integrates generated building blocks into a working application while preserving architectural boundaries between backend, frontend, generated artifacts, and non-CRM content.
+`django-angular3` extends Django/DRF with contract-driven Angular integration. It governs the construction process, uses agentic orchestration to coordinate iterative bounded SKILLS-based construction, and integrates generated building blocks into a working application while preserving architectural boundaries between backend, frontend, generated artifacts, and non-CRM content.
 
 This document covers:
 - Architectural principles, architectural actors, system components, and integration workflows.
@@ -37,10 +37,10 @@ A TypeScript-based open-source web application framework led by the Angular Team
 A UI component library for Angular that implements Google's Material Design. It provides pre-built components for layout, forms, navigation, and more, with a consistent design language.
 
 ### djng
-The `django-angular3` package: the Django/Python-side system in this architecture. It is the contract-governing and planning component responsible for backend-side validation, change interpretation, and generation planning for Angular integration.
+The `django-angular3` package: the Django/Python-side component in this architecture. It is the contract-governing component responsible for backend-side validation, change interpretation, and Angular work derivation.
 
 ### ngdj
-The `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs planned by `djng`.
+The `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`.
 
 ### [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.
@@ -65,6 +65,8 @@ An orchestration model in which an AI agent drives construction and integration 
 
 ### [SKILLS][Claude Skills]
 Bounded construction units used by the agentic orchestrator in this architecture. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
+
+SKILLS are a core architectural subsystem of `django-angular3`. Their subsystem architecture is defined in `doc/GENERATE_SKILLS.md`, and their implementation and authoring plan is defined in `doc/SKILL_AUTHORING_PLAN.md`. This document defines the role of SKILLS in the overall architecture and does not restate their internal design.
 
 ### SKILLS-based construction
 A construction model in which bounded SKILLS are the primary execution units for generating, modifying, and integrating application building blocks. This model allows controlled generative freedom while keeping construction within architectural, contract-defined, and validation-defined boundaries.
@@ -122,33 +124,32 @@ In `django-angular3.json`:
 
 ### djng
 
-[django-angular3] The package automates contract-driven Angular Material frontend implementation for a `DRF` backend using an `angular-code-agent`.
+[django-angular3] The package is the Django/Python-side governance and work-derivation component for contract-driven Angular Material frontend implementation against a `DRF` backend.
 
 - Purpose: The backend owner.
-  - Orchestrate the overall integration process
-  - Manage the backend contract, and drive Angular activities.
+  - Govern the overall integration process
+  - Manage the backend contract, and derive Angular-side work.
     - Manage Python/Django/DRF side of integration.
-    - Drive the matching frontend counterpart as the Angular-side implementation helper.
+    - Define the work that must be carried out by the orchestrator and construction subsystems.
 - Responsibilities:
   - djng-o-1: Provide a set of complementing django-admin commands:
     - For creating, building, and modifying Angular UI.
     - Manage OpenAPI contract lifecycle, including: contract extraction from DRF, validation, versioning
-  - djng-o-2: Provide a set of Claude SKILLS for building, generating and integrating Angular building blocks.
+  - djng-o-2: Define, author, and evolve the Claude SKILLS required for building, generating, and integrating Angular building blocks.
   - djng-o-3: Manage and drive Angular app change requirements through:
     - Detection of change requirements.
     - Converting change requirements into `prompts`
-  - djng-o-4: Provide a flow based on `Claude Code Python SDK` using the `SKILLS` to execute the prompts:
-    - Generate Angular building blocks using a set of [SKILLS][Claude Skills]
-    - Integrate those building blocks into an [Angular Material] frontend app using the DRF `contract`.
+  - djng-o-4: Provide the orchestration entry points and work definitions consumed by `angular-code-agent`:
+    - The orchestrator applies [SKILLS][Claude Skills] to generate Angular building blocks.
+    - The orchestrator integrates those building blocks into an [Angular Material] frontend app using the DRF `contract`.
 
-- The `SKILLS` required by `angular-code-agent` for automating the contract conversion to real Angular integration artifacts.
+- `djng` defines and governs the work to be performed; `angular-code-agent` orchestrates iterative SKILLS-based construction to carry that work out.
 
 ### ngdj
 
 implemented in [angular-django2-github] and deployed to [angular-django2] npm package.
 
-- Purpose: A companion [Angular] ([npmjs] package) generating the complementary frontend UI building 
-  blocks, Angular application assembly, generated glue code for OpenAPI integration.
+- Purpose: A companion [Angular] ([npmjs] package) that provides the Angular-side construction substrate used to materialize required outputs.
 - Responsibilities:
   - ngdj-o-1: Provide a set of commands for managing and assembling the Angular application, including workspace, project layout, application layout.
   - ngdj-o-2: Provide Angular schematics and code generation templates for generating Angular building blocks from OpenAPI contracts.
@@ -157,11 +158,10 @@ implemented in [angular-django2-github] and deployed to [angular-django2] npm pa
 
 ### Toolchain components
 
-The system consists of:
-
-- A master orchestrator to manage the various stages of the integration process,
-  including contract management and generation workflow control - in `djng`.
-- An Angular application generator - in `ngdj` wrappers in `ngdj`.
+- A contract-governing, work-deriving component - in `djng`.
+- An agentic orchestrator that executes derived work through bounded capabilities - `angular-code-agent`.
+- A SKILLS subsystem that provides bounded construction and integration capabilities used by the orchestrator.
+- An Angular-side construction substrate and application generator - in `ngdj`.
 - An OpenAPI schema extraction process - in `djng`.
 - An OpenAPI TypeScript generation process - in `ngdj`.
 - A structured UI definition management system - in `djng`.
@@ -255,10 +255,11 @@ This model simplifies:
 
 ## Integration Workflow
 
-The integration process should be modeled as an agent chain: a sequenced
-automation pipeline with explicit handoff artifacts.
+The integration process should be modeled as an agentic control loop with explicit handoff artifacts. `djng` governs contract lifecycle, validation, and work derivation; `angular-code-agent` orchestrates iterative SKILLS-based construction and integration toward an acceptable application state.
 
-### Recommended stages
+The workflow is not a one-pass pipeline. The stages below describe the architectural work domains and durable artifacts involved in construction, but the orchestrator may revisit them as needed while driving the application toward deterministic acceptance.
+
+### Control-loop stages
 
 1. Backend contract stage: Django models, serializers, and DRF endpoints define
    the business contract and emit an OpenAPI artifact
@@ -276,7 +277,19 @@ automation pipeline with explicit handoff artifacts.
    validated through automated tests and review
 
 Each stage should produce durable artifacts that can be inspected, tested, and
-handed off to the next stage without hidden assumptions.
+reused across iterations without hidden assumptions.
+
+### Repair and refinement loop
+
+The orchestrator may invoke and re-invoke SKILLS as needed while construction is in progress. A typical control cycle is:
+
+1. derive required work from contract changes, configuration, and structured inputs
+2. invoke the relevant SKILLS to generate, modify, or integrate building blocks
+3. inspect emitted artifacts and validation results
+4. repair, refine, or retry construction when outputs are incomplete, inconsistent, or invalid
+5. continue iterating until deterministic acceptance criteria are satisfied or a blocking issue is surfaced explicitly
+
+This loop is part of the architecture, not an implementation accident. Generation may vary internally, but correction and convergence toward a correct working application are expected architectural behavior.
 
 ### Example Build Flow
 
