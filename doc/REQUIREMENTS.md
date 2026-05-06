@@ -462,16 +462,64 @@ and assembled application outputs aligned.
 ## 5.1. Architecture Constraints
 ## 6. Acceptance Criteria
 
+### 6.1. System Acceptance Requirements
 
-## Purpose
+See `doc/ARCHITECTURE.md` §§ 7.3, 14, and 17 for the related verification,
+testing, and architectural decision model.
 
-Construction in this process must execute through bounded SKILLS that serve as
-the primary units for generating, modifying, and integrating Angular building
-blocks while remaining within architectural and contract-defined boundaries.
+The generated platform is acceptable when:
 
-## Product Vision
+- The OpenAPI contract and non-CRM input sources pass the required validation
+  gates for downstream construction
+- Generated and assembled outputs are sufficient to produce a runnable,
+  integrated application rather than only isolated artifacts
+- Backend behavior, generated Angular integration artifacts, and frontend
+  composition remain aligned with the governing contract and ownership
+  boundaries
+- Required verification categories have passed, including contract
+  verification, construction-output verification, integration verification,
+  and test-based verification
+- The assembled application satisfies the MVP scope expected for the current
+  implementation stage, including one complete business module and the shared
+  platform services it depends on
+- Blocking failures are surfaced explicitly through the construction and
+  verification flow rather than being hidden or silently ignored
 
-## Goals
+### 6.2. Implementation Handoff Readiness
+
+See `doc/ARCHITECTURE.md` §§ 17-18 for the related architectural decision and
+implementation-sequencing context.
+
+The platform is ready for implementation handoff when:
+
+- The backend/frontend integration model is agreed upon
+- Authentication, authorization, and audit expectations are explicit
+- OpenAPI and non-CRM content inputs have clear ownership and boundaries
+- The MVP scope includes one full business module and the shared platform
+  services it needs
+- Non-functional requirements are concrete enough to guide engineering choices
+- The architecture supports adding future modules without reworking the core
+  stack
+
+### 6.3. MVP Scope
+
+The first implementation should include:
+
+- Backend project setup with Django and DRF
+- Angular frontend setup with Angular Material
+- Generated Angular integration artifacts for shared Angular/Django integration
+  logic
+- Authentication and role-based authorization
+- User profile and user administration
+- OpenAPI export and consumption flow for CRM-facing features
+- OpenAPI generator configuration committed to the repository and runnable in CI
+- A structured non-CRM content input source for reactive forms and pages
+- One complete business module implemented end to end
+- Shared list, detail, and form patterns
+- Audit logging for key actions
+- Error handling, health checks, and baseline automated tests
+- Local development workflow plus staging-ready deployment setup
+
 
 ## Construction Workflow
 
@@ -525,17 +573,6 @@ ownership boundaries.
 - Django and DRF must own backend-facing capabilities and service endpoints
 - Angular must own the user-facing route tree and presentation behavior, with
   Angular Material as the primary UI system for user-facing functionality
-
-## User Roles
-
-- Anonymous user: can access the login screen and other explicitly public pages
-- Authenticated user: can use permitted business features
-- Manager or supervisor: can review broader data sets and approve sensitive
-  actions when the business domain requires it
-- Administrator: can manage users, roles, reference data, and system
-  configuration
-- Support or operations user: can inspect logs, audit history, and system state
-  within approved permissions
 
 ## Functional Requirements
 
@@ -811,22 +848,6 @@ The generated platform is acceptable when:
   platform services it depends on
 - Blocking failures are surfaced explicitly through the construction and
   verification flow rather than being hidden or silently ignored
-
-## Implementation Handoff Readiness
-
-See `doc/ARCHITECTURE.md` §§ 17-18 for the related architectural decision and
-implementation-sequencing context.
-
-The platform is ready for implementation handoff when:
-
-- The backend/frontend integration model is agreed upon
-- Authentication, authorization, and audit expectations are explicit
-- OpenAPI and non-CRM content inputs have clear ownership and boundaries
-- The MVP scope includes one full business module and the shared platform
-  services it needs
-- Non-functional requirements are concrete enough to guide engineering choices
-- The architecture supports adding future modules without reworking the core
-  stack
 
 ## Appendix
 
