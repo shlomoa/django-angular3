@@ -496,6 +496,35 @@ boundaries, architectural control-loop, verification, and build-flow model.
   and must continue until deterministic acceptance conditions are satisfied or
   a blocking issue is surfaced explicitly
 
+### 4.3.3. First-time build flow
+
+The initial authoring and build flow must support this sequence:
+
+1. A user designs or updates the OpenAPI specification in Swagger Studio
+   (SmartBear's API design tooling, historically associated with SwaggerHub)
+2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
+3. The user adds non-CRM changes such as bespoke reactive forms, page
+   definitions, or workflow-specific UI content into `spec/ui/`
+4. The user fires a build from the repository
+5. The build validates the OAS artifact and non-CRM inputs, generates
+   CRM-facing artifacts, assembles the Angular app, and reports any stage-
+   specific contract or input errors clearly
+
+For this flow:
+
+- The repository must provide a clear location for the source OAS artifact at
+  `spec/openapi/source/`
+- The repository must provide a separate location for non-CRM content inputs at
+  `spec/ui/`
+- The build must fail fast when the OpenAPI contract is invalid or incompatible
+  with generation
+- The build must fail fast when non-CRM content inputs are invalid
+- For the same OAS and non-CRM inputs, the build must preserve deterministic
+  validation and acceptance behavior even if internal construction steps vary
+- The build must allow a first-time user to understand which stage failed:
+  contract validation, code generation, non-CRM input validation, or final app
+  assembly
+
 ## 4.4. Authentication and Identity
 
 - Users must be able to sign in and sign out securely
@@ -644,6 +673,84 @@ content-boundary and generated-artifact model.
 
 ## 5. Non-Functional Requirements
 ## 5.1. Architecture Constraints
+## 5.2. Security
+
+These requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
+
+- Use secure defaults for authentication, cookies, CSRF, headers, and secret
+  management
+- Do not store sensitive tokens in browser local storage
+- Enforce server-side permission checks even if the UI hides an action
+- Use encrypted transport in non-local environments
+
+## 5.3. Performance
+
+- Standard list and detail API responses should feel interactive under normal
+  business usage
+- The UI should render common screens quickly on modern desktop browsers
+- Expensive tasks such as bulk imports, exports, and email batches should be
+  offloaded to background processing when implemented
+
+## 5.4. Reliability
+
+- The application must expose health checks for application and database status
+- Failures in one module should not corrupt unrelated data
+- Production deployments must support rollback or fast redeploy
+
+## 5.5. Maintainability
+
+- The codebase must be modular, readable, and covered by automated tests
+- Shared backend and frontend patterns should be reused instead of duplicated
+- Configuration must be environment-driven
+
+## 5.6. Accessibility
+
+- The UI must meet baseline accessibility expectations for keyboard use, focus
+  visibility, labels, and color contrast
+- Angular Material components should be used in accessible configurations
+
+## 5.7. Observability
+
+- Application logs must be structured and environment-appropriate
+- Errors and warnings must be traceable to a request, user, or background job
+  where possible
+- Basic operational metrics should be collectable in staging and production
+
+## 5.8. Internationalization and Time
+
+- The system must store timestamps in UTC
+- The UI must render dates and times in the user or deployment timezone
+- Text and formatting should be designed so localization can be added later
+
+## 5.9. Deployment Topology
+
+See `doc/ARCHITECTURE.md` § 5 for the architectural deployment model.
+
+### 5.9.1. Production deployment
+
+The generated application must support a same-origin deployment model:
+
+- The Angular application must be built into static assets served from the
+  same origin as the Django backend
+- Django must serve API endpoints under `/api/` and must own authentication
+  and administration routes
+- Static assets must be served either by Django with a static file layer or
+  by a reverse proxy in front of Django
+- The browser must communicate with one origin for both UI and API traffic
+- User-facing application routes must resolve to the Angular entry point
+
+### 5.9.2. Local development topology
+
+The generated application must support a local development topology in which:
+
+- Django runs as the backend development server
+- Angular runs its own local development server
+- The Angular development server proxies API traffic to the Django backend
+- The Angular development server owns user-facing route handling during
+  development
+- Frontend routes and backend routes remain distinct in both local and
+  production configurations
+
 ## 6. Acceptance Criteria
 
 ### 6.1. System Acceptance Requirements
@@ -704,86 +811,6 @@ The first implementation should include:
 - Error handling, health checks, and baseline automated tests
 - Local development workflow plus staging-ready deployment setup
 
-
-## Non-Functional Requirements
-
-These quality requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
-
-### Security
-
-- Use secure defaults for authentication, cookies, CSRF, headers, and secret
-  management
-- Do not store sensitive tokens in browser local storage
-- Enforce server-side permission checks even if the UI hides an action
-- Use encrypted transport in non-local environments
-
-### Performance
-
-- Standard list and detail API responses should feel interactive under normal
-  business usage
-- The UI should render common screens quickly on modern desktop browsers
-- Expensive tasks such as bulk imports, exports, and email batches should be
-  offloaded to background processing when implemented
-
-### Reliability
-
-- The application must expose health checks for application and database status
-- Failures in one module should not corrupt unrelated data
-- Production deployments must support rollback or fast redeploy
-
-### Maintainability
-
-- The codebase must be modular, readable, and covered by automated tests
-- Shared backend and frontend patterns should be reused instead of duplicated
-- Configuration must be environment-driven
-
-### Accessibility
-
-- The UI must meet baseline accessibility expectations for keyboard use, focus
-  visibility, labels, and color contrast
-- Angular Material components should be used in accessible configurations
-
-### Observability
-
-- Application logs must be structured and environment-appropriate
-- Errors and warnings must be traceable to a request, user, or background job
-  where possible
-- Basic operational metrics should be collectable in staging and production
-
-### Internationalization and Time
-
-- The system must store timestamps in UTC
-- The UI must render dates and times in the user or deployment timezone
-- Text and formatting should be designed so localization can be added later
-
-## First-Time Use Case
-
-The initial authoring and build flow must support this sequence:
-
-1. A user designs or updates the OpenAPI specification in Swagger Studio
-   (SmartBear's API design tooling, historically associated with SwaggerHub)
-2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
-3. The user adds non-CRM changes such as bespoke reactive forms, page
-   definitions, or workflow-specific UI content into `spec/ui/`
-4. The user fires a build from the repository
-5. The build validates the OAS artifact and non-CRM inputs, generates
-  CRM-facing artifacts, assembles the Angular app, and reports any stage-
-  specific contract or input errors clearly
-
-For this first-time flow:
-
-- The repository must provide a clear location for the source OAS artifact at
-  `spec/openapi/source/`
-- The repository must provide a separate location for non-CRM content inputs at
-  `spec/ui/`
-- The build must fail fast when the OpenAPI contract is invalid or incompatible
-  with generation
-- The build must fail fast when non-CRM content inputs are invalid
-- For the same OAS and non-CRM inputs, the build must preserve deterministic
-  validation and acceptance behavior even if internal construction steps vary
-- The build must allow a first-time user to understand which stage failed:
-  contract validation, code generation, non-CRM input validation, or final app
-  assembly
 
 ## Appendix
 
