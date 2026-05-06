@@ -1,4 +1,4 @@
-# Requirements
+﻿# Requirements
 
 ## 1. Introduction
 
@@ -454,14 +454,38 @@ and assembled application outputs aligned.
   permissions model.
 
 ## 4. Functional Requirements
-## 4.1. Data Model
-## 4.2. Interfaces and APIs
-## 4.3. Construction Workflow
+
+### 4.1. API Requirements
+
+These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
+
+- The platform must not require API-level namespace versioning as the contract
+  versioning mechanism
+- API endpoints must support authenticated access, validation, and standard HTTP
+  semantics
+- List endpoints must support filtering, sorting, and pagination
+- API errors must return a predictable structure usable by the Angular client
+- The backend must expose a durable, versioned OpenAPI schema artifact for
+  downstream tooling and generated CRM-facing content; schema versioning is the
+  contract versioning mechanism that drives frontend alignment
+- `oasdiff` must be used as the OpenAPI schema diff and change detection tool
+- `oasdiff` must run as part of the contract normalization stage to detect
+  breaking and non-breaking changes between schema versions
+- Breaking changes detected by `oasdiff` must block downstream construction
+  until explicitly acknowledged or resolved
+- The governed construction flow must provide an explicit path for
+  acknowledging or resolving breaking changes before downstream construction
+  is permitted to resume; blocking a build without a supported resolution path
+  is not acceptable behavior
+- API schema generation and browsable documentation should be available in
+  non-production environments
+
+### 4.2. Construction Workflow
 
 See `doc/ARCHITECTURE.md` §§ 4.1-4.3 and 7.1-7.4 for the governing ownership
 boundaries, architectural control-loop, verification, and build-flow model.
 
-### 4.3.1. Platform ownership
+#### 4.1.1. Platform ownership
 
 - Django and DRF must own the data model, persistence layer, backend business
   logic, authenticated APIs, authentication services, authorization
@@ -477,7 +501,7 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - Angular must consume Django and DRF APIs as the backend contract surface and
   must not be the final trust boundary for security decisions
 
-### 4.3.2. Governed construction
+#### 4.1.2. Governed construction
 
 - `djng` must provide the generation entry points that drive integrated Django-
   Angular construction, including backend contract lifecycle governance,
@@ -495,8 +519,14 @@ boundaries, architectural control-loop, verification, and build-flow model.
   refinement when emitted outputs are incomplete, inconsistent, or invalid,
   and must continue until deterministic acceptance conditions are satisfied or
   a blocking issue is surfaced explicitly
+- Governed construction must derive required work by comparing the current
+  contract, configuration, and structured inputs against their previously
+  accepted state; work derivation must not assume a clean-slate context unless
+  no previous state exists
+- Any backend data model change that produces a Django migration must trigger
+  OpenAPI schema re-extraction before the contract normalization stage proceeds
 
-### 4.3.3. First-time build flow
+#### 4.1.3. First-time build flow
 
 The initial authoring and build flow must support this sequence:
 
@@ -525,7 +555,7 @@ For this flow:
   contract validation, code generation, non-CRM input validation, or final app
   assembly
 
-## 4.4. Authentication and Identity
+### 4.3. Authentication and Identity
 
 - Users must be able to sign in and sign out securely
 - The system must support password-based authentication at minimum
@@ -533,7 +563,7 @@ For this flow:
 - Password reset and account recovery flows must be supported
 - Session expiration and idle timeout behavior must be configurable
 
-## 4.5. Authorization
+### 4.4. Authorization
 
 - Access must be restricted to authenticated users unless a route is explicitly
   public
@@ -542,7 +572,7 @@ For this flow:
 - Sensitive actions must be restricted by role and, where needed, object-level
   ownership or scope
 
-## 4.6. User Management
+### 4.5. User Management
 
 - Administrators must be able to create, activate, deactivate, and update users
 - Administrators must be able to assign roles or permission groups
@@ -550,7 +580,7 @@ For this flow:
 - The system must track basic account status metadata such as creation date,
   last login, and active state
 
-## 4.7. Application Shell and Navigation
+### 4.6. Application Shell and Navigation
 
 - The frontend must provide a consistent shell with top-level navigation,
   breadcrumbs, and page titles
@@ -562,7 +592,7 @@ For this flow:
   states
 - User-facing product screens should be implemented in Angular Material
 
-## 4.8. Business Module Pattern
+### 4.7. Business Module Pattern
 
 - The platform must support modular feature areas with isolated backend apps and
   frontend feature modules
@@ -572,7 +602,7 @@ For this flow:
 - Detail views must show key metadata and related records where relevant
 - Forms must include client-side and server-side validation
 
-## 4.9. Search and Data Discovery
+### 4.8. Search and Data Discovery
 
 - Users must be able to search records by primary identifying fields
 - Filters must support common business cases such as status, owner, date range,
@@ -580,7 +610,7 @@ For this flow:
 - Large result sets must be paginated
 - Default sorting must be deterministic
 
-## 4.10. Auditability
+### 4.9. Auditability
 
 - The application must record important security and business events
 - Changes to sensitive data should capture who made the change and when
@@ -588,46 +618,25 @@ For this flow:
 - Authentication events such as login, logout, failed login, and password reset
   should be traceable
 
-## 4.11. Notifications
+### 4.10. Notifications
 
 - The platform should support system notifications for important events
 - Email delivery should be supported for account and workflow notifications
 - In-app notifications are desirable but not required for the first release
 
-## 4.12. File Handling
+### 4.11. File Handling
 
 - The platform should support file attachments for business records where needed
 - File upload validation must enforce size and type restrictions
 - Download access must respect record-level permissions
 
-## 4.13. Administration and Reference Data
+### 4.12. Administration and Reference Data
 
 - The system must provide administrative screens for core configuration
 - Reference data used across business modules must be centrally manageable
 - Administrative changes must be audited
 
-## 4.14. API Requirements
-
-These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
-
-- The platform must not require API-level namespace versioning as the contract
-  versioning mechanism
-- API endpoints must support authenticated access, validation, and standard HTTP
-  semantics
-- List endpoints must support filtering, sorting, and pagination
-- API errors must return a predictable structure usable by the Angular client
-- The backend must expose a durable, versioned OpenAPI schema artifact for
-  downstream tooling and generated CRM-facing content; schema versioning is the
-  contract versioning mechanism that drives frontend alignment
-- `oasdiff` must be used as the OpenAPI schema diff and change detection tool
-- `oasdiff` must run as part of the contract normalization stage to detect
-  breaking and non-breaking changes between schema versions
-- Breaking changes detected by `oasdiff` must block downstream construction
-  until explicitly acknowledged or resolved
-- API schema generation and browsable documentation should be available in
-  non-production environments
-
-## 4.15. Content Source Strategy
+### 4.13. Content Source Strategy
 
 See `doc/ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
 content-boundary and generated-artifact model.
@@ -648,14 +657,26 @@ content-boundary and generated-artifact model.
 - The non-CRM input source must be versioned, validated, and able to reference
   shared UI primitives and API contracts without becoming the CRM source of
   truth
+- The Angular application must be assembled from two input streams: contract-
+  derived Angular integration artifacts produced from the OpenAPI contract, and
+  non-CRM content prepared from the structured input source; these two streams
+  must remain separate and must not be merged into a single source of truth
+- Angular integration artifacts must include OpenAPI-derived typed API clients,
+  CRM-oriented resource adapters, shared Angular Material integration patterns
+  for list, detail, and standard form experiences, and authentication, CSRF,
+  and transport helpers needed for Django integration
+- Angular integration artifacts must not own product-specific application shell
+  decisions, fully bespoke pages that are not OpenAPI-derived, business content
+  that belongs to the main frontend application, or backend data administration
+  concerns that belong to Django and DRF
 
-## 4.16. Error Handling and Recovery
+### 4.14. Error Handling and Recovery
 
 - Validation errors must be presented clearly at field and form level
 - Unexpected server errors must be logged and surfaced with user-safe messages
 - Users must not lose unsaved form state because of recoverable UI errors
 
-## 4.17. Development Experience and Tooling
+### 4.15. Development Experience and Tooling
 
 - When the generated app's Django server runs with `DEBUG=True`, any failure
   during app generation (Python exceptions raised by djng management commands
@@ -671,9 +692,72 @@ content-boundary and generated-artifact model.
   gated behind `DEBUG=True` or an explicit `ENABLE_NG_BUILD_PAGE=True` flag and
   must never be exposed in production.
 
+### 4.16. Verification Requirements
+
+See `doc/ARCHITECTURE.md` § 7.3 for the architectural verification model.
+
+Verification must occur throughout construction and integration, not only as a
+final check. The platform must support the following verification categories:
+
+- **Contract verification**: the OpenAPI contract and non-CRM inputs must be
+  validated and breaking changes detected before downstream construction
+  proceeds; invalid or incompatible inputs must block the corresponding stage
+- **Construction-output verification**: generated and assembled outputs must be
+  inspectable so they can be corrected, refined, or reused across iterations;
+  emitted artifacts must not be treated as opaque or assumed correct without
+  review
+- **Integration verification**: alignment between backend behavior, generated
+  Angular integration artifacts, and frontend composition must be verified
+  after schema changes, business-record changes, and each build or
+  verification cycle
+- **Test-based verification**: automated tests must cover backend, frontend,
+  and composed application flows and must be linked to the staged verification
+  model rather than treated as a separate final phase
+
+### 4.17. Generated Application Structure
+
+See `doc/ARCHITECTURE.md` §§ 9-10 for the architectural structure model.
+
+#### 4.15.1. Backend structure
+
+The generated application backend must be organized as discrete Django apps
+with bounded responsibilities:
+
+- A `common` app must provide shared base models, utilities, and reusable
+  pagination, filtering, and exception helpers
+- An `accounts` app must own user account management, authentication, and
+  authorization
+- An `access` app must own roles, groups, permission mapping, and object-level
+  authorization helpers where required
+- Domain-specific business modules must be implemented as separate apps,
+  keeping module logic isolated from the shared platform apps
+
+#### 4.15.2. Frontend structure
+
+The generated Angular application must be organized into areas with clearly
+bounded responsibilities:
+
+- A `core` area must own application bootstrap, authentication state, HTTP
+  interceptors, shell layout, global navigation, route guards, and app-wide
+  services
+- A `shared` area must own reusable UI components, common form helpers, table
+  wrappers, dialogs, and utility code
+- A `features` area must own page components, feature routing, API service
+  wrappers per module, and feature-specific models and forms
+- The frontend must not depend on Django template rendering or DRF UI
+  facilities for the main product experience
+
+#### 4.15.3. UI patterns
+
+The generated application must standardize and reuse patterns for tables,
+lists, detail views, forms, dialogs, snackbars, and confirmation flows rather
+than implementing these independently per feature.
+
 ## 5. Non-Functional Requirements
-## 5.1. Architecture Constraints
-## 5.2. Security
+
+### 5.1. Architecture Constraints
+
+### 5.2. Security
 
 These requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 
@@ -683,7 +767,7 @@ These requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 - Enforce server-side permission checks even if the UI hides an action
 - Use encrypted transport in non-local environments
 
-## 5.3. Performance
+### 5.3. Performance
 
 - Standard list and detail API responses should feel interactive under normal
   business usage
@@ -691,42 +775,42 @@ These requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 - Expensive tasks such as bulk imports, exports, and email batches should be
   offloaded to background processing when implemented
 
-## 5.4. Reliability
+### 5.4. Reliability
 
 - The application must expose health checks for application and database status
 - Failures in one module should not corrupt unrelated data
 - Production deployments must support rollback or fast redeploy
 
-## 5.5. Maintainability
+### 5.5. Maintainability
 
 - The codebase must be modular, readable, and covered by automated tests
 - Shared backend and frontend patterns should be reused instead of duplicated
 - Configuration must be environment-driven
 
-## 5.6. Accessibility
+### 5.6. Accessibility
 
 - The UI must meet baseline accessibility expectations for keyboard use, focus
   visibility, labels, and color contrast
 - Angular Material components should be used in accessible configurations
 
-## 5.7. Observability
+### 5.7. Observability
 
 - Application logs must be structured and environment-appropriate
 - Errors and warnings must be traceable to a request, user, or background job
   where possible
 - Basic operational metrics should be collectable in staging and production
 
-## 5.8. Internationalization and Time
+### 5.8. Internationalization and Time
 
 - The system must store timestamps in UTC
 - The UI must render dates and times in the user or deployment timezone
 - Text and formatting should be designed so localization can be added later
 
-## 5.9. Deployment Topology
+### 5.9. Deployment Topology
 
 See `doc/ARCHITECTURE.md` § 5 for the architectural deployment model.
 
-### 5.9.1. Production deployment
+#### 5.9.1. Production deployment
 
 The generated application must support a same-origin deployment model:
 
@@ -739,7 +823,7 @@ The generated application must support a same-origin deployment model:
 - The browser must communicate with one origin for both UI and API traffic
 - User-facing application routes must resolve to the Angular entry point
 
-### 5.9.2. Local development topology
+#### 5.9.2. Local development topology
 
 The generated application must support a local development topology in which:
 
@@ -811,6 +895,29 @@ The first implementation should include:
 - Error handling, health checks, and baseline automated tests
 - Local development workflow plus staging-ready deployment setup
 
+### 6.4. Mandatory Acceptance Scenarios
+
+See `doc/TEST_EXAMPLES.md` for the scenario definitions and expected outputs.
+
+The governed construction flow must support and correctly handle each of the
+following scenario classes:
+
+- **Start from scratch**: a cold-start build with no previous state, invoking
+  the full skill chain from workspace creation through app assembly and
+  verification
+- **Schema evolution — add**: an incremental schema change that adds a
+  resource; only the required skills run and existing workspace, app, and
+  components are preserved
+- **Schema evolution — breaking change blocked**: a breaking schema change is
+  detected by `oasdiff`; construction halts before emitting a plan, and the
+  explicit acknowledgement path must be available to unblock and resume
+- **Config-only change**: a structured UI input change with no schema change;
+  only config-derived skills run
+- **Combined schema and config change**: both the contract and the non-CRM
+  input source change in the same build; both change paths activate and
+  interleave correctly
+- **Full replacement**: a resource is removed and a different resource is
+  added; remove steps precede add steps at the same dependency level
 
 ## Appendix
 
