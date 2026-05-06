@@ -778,25 +778,6 @@ These quality requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 - The UI must render dates and times in the user or deployment timezone
 - Text and formatting should be designed so localization can be added later
 
-## MVP Scope
-
-The first implementation should include:
-
-- Backend project setup with Django and DRF
-- Angular frontend setup with Angular Material
-- Generated Angular integration artifacts for shared Angular/Django integration
-  logic
-- Authentication and role-based authorization
-- User profile and user administration
-- OpenAPI export and consumption flow for CRM-facing features
-- OpenAPI generator configuration committed to the repository and runnable in CI
-- A structured non-CRM content input source for reactive forms and pages
-- One complete business module implemented end to end
-- Shared list, detail, and form patterns
-- Audit logging for key actions
-- Error handling, health checks, and baseline automated tests
-- Local development workflow plus staging-ready deployment setup
-
 ## First-Time Use Case
 
 The initial authoring and build flow must support this sequence:
@@ -825,29 +806,6 @@ For this first-time flow:
 - The build must allow a first-time user to understand which stage failed:
   contract validation, code generation, non-CRM input validation, or final app
   assembly
-
-## System Acceptance Requirements
-
-See `doc/ARCHITECTURE.md` §§ 7.3, 14, and 17 for the related verification,
-testing, and architectural decision model.
-
-The generated platform is acceptable when:
-
-- The OpenAPI contract and non-CRM input sources pass the required validation
-  gates for downstream construction
-- Generated and assembled outputs are sufficient to produce a runnable,
-  integrated application rather than only isolated artifacts
-- Backend behavior, generated Angular integration artifacts, and frontend
-  composition remain aligned with the governing contract and ownership
-  boundaries
-- Required verification categories have passed, including contract
-  verification, construction-output verification, integration verification,
-  and test-based verification
-- The assembled application satisfies the MVP scope expected for the current
-  implementation stage, including one complete business module and the shared
-  platform services it depends on
-- Blocking failures are surfaced explicitly through the construction and
-  verification flow rather than being hidden or silently ignored
 
 ## Appendix
 
