@@ -160,9 +160,7 @@ At a high level, the platform must provide:
 
 ### 3.1. Roles and Actors
 
-### 3.1.1. Human and non-human actors
-
-### 3.1.2. End-User Roles, Administrative and Operational Roles, permissions, and responsibilities
+#### 3.1.1. End-User Roles, Administrative and Operational Roles, permissions, and responsibilities
 
 The platform must distinguish end-user, administrative, and operational roles
 and apply role-based permissions consistently across UI navigation, API
@@ -190,7 +188,7 @@ Permission and responsibility expectations:
   ownership or scope
 - administrative changes must be auditable
 
-### 3.1.3. External systems and services
+#### 3.1.2. External systems and services
 
 The platform interacts with external systems and services that provide
 contract inputs, generation support, delivery support, and client access.
@@ -211,7 +209,7 @@ contract inputs, generation support, delivery support, and client access.
 - External identity provider: if single sign-on is added later, an external
   authentication provider may participate as a federated identity service.
 
-### 3.1.4. Actor goals and expectations
+#### 3.1.3. Actor goals and expectations
 
 Each actor must be able to achieve the outcomes associated with that role and
 must be able to judge success through secure access, predictable navigation,
@@ -238,7 +236,7 @@ handling, permission-appropriate navigation and access, reusable business
 module workflows, deterministic search behavior, and auditable business and
 security events.
 
-### 3.1.5. Trust and security boundaries
+#### 3.1.4. Trust and security boundaries
 
 The platform must make trust and security boundaries explicit for all actors
 and must enforce those boundaries through authenticated access, role-based
@@ -457,7 +455,193 @@ and assembled application outputs aligned.
 
 ## 4. Functional Requirements
 ## 4.1. Data Model
-## 4.2. Interfaces/APIs
+## 4.2. Interfaces and APIs
+## 4.3. Construction Workflow
+
+See `doc/ARCHITECTURE.md` §§ 4.1-4.3 and 7.1-7.4 for the governing ownership
+boundaries, architectural control-loop, verification, and build-flow model.
+
+### 4.3.1. Platform ownership
+
+- Django and DRF must own the data model, persistence layer, backend business
+  logic, authenticated APIs, authentication services, authorization
+  enforcement, and backend integrations
+- Django and DRF must own administrative capabilities for data administration,
+  reference data, and operational tooling, including backend-oriented
+  administration interfaces
+- Django and DRF must own backend packaging and deployment-facing server
+  artifacts
+- Angular must own the user-facing application experience, page layout,
+  navigation, forms, tables, dialogs, interaction design, and end-user
+  application routing, with Angular Material as the primary UI system
+- Angular must consume Django and DRF APIs as the backend contract surface and
+  must not be the final trust boundary for security decisions
+
+### 4.3.2. Governed construction
+
+- `djng` must provide the generation entry points that drive integrated Django-
+  Angular construction, including backend contract lifecycle governance,
+  change-requirement derivation, orchestration-facing work definitions,
+  generator-app execution, and governed command wrappers around `ngdj` actions
+- `ngdj` must provide the Angular-side commands, schematics, templates, and
+  assembly actions consumed by governed construction, including generation
+  from contract-derived and non-CRM inputs
+- Governed construction must execute through bounded SKILLS used as the
+  primary units for generation, modification, and integration work
+- The delivery process must support an agentically orchestrated control loop
+  with defined handoff artifacts between schema generation, `oasdiff` change
+  detection, client generation, UI assembly, and app integration
+- Governed construction must support iterative inspection, repair, retry, and
+  refinement when emitted outputs are incomplete, inconsistent, or invalid,
+  and must continue until deterministic acceptance conditions are satisfied or
+  a blocking issue is surfaced explicitly
+
+## 4.4. Authentication and Identity
+
+- Users must be able to sign in and sign out securely
+- The system must support password-based authentication at minimum
+- The system should be designed to add SSO later without major rewrites
+- Password reset and account recovery flows must be supported
+- Session expiration and idle timeout behavior must be configurable
+
+## 4.5. Authorization
+
+- Access must be restricted to authenticated users unless a route is explicitly
+  public
+- The system must support role-based access control
+- Permissions must be enforceable on both API endpoints and UI navigation
+- Sensitive actions must be restricted by role and, where needed, object-level
+  ownership or scope
+
+## 4.6. User Management
+
+- Administrators must be able to create, activate, deactivate, and update users
+- Administrators must be able to assign roles or permission groups
+- Users must be able to view and update their own profile details
+- The system must track basic account status metadata such as creation date,
+  last login, and active state
+
+## 4.7. Application Shell and Navigation
+
+- The frontend must provide a consistent shell with top-level navigation,
+  breadcrumbs, and page titles
+- The frontend must own client-side routing for the user-facing application
+- Navigation items must be shown or hidden based on permissions
+- The UI must support a responsive layout across standard desktop and mobile
+  breakpoints
+- Global feedback patterns must exist for loading, success, warning, and error
+  states
+- User-facing product screens should be implemented in Angular Material
+
+## 4.8. Business Module Pattern
+
+- The platform must support modular feature areas with isolated backend apps and
+  frontend feature modules
+- Each business module should support list, detail, create, update, and
+  deactivate or delete flows where appropriate
+- List screens must support filtering, sorting, and pagination
+- Detail views must show key metadata and related records where relevant
+- Forms must include client-side and server-side validation
+
+## 4.9. Search and Data Discovery
+
+- Users must be able to search records by primary identifying fields
+- Filters must support common business cases such as status, owner, date range,
+  and free text
+- Large result sets must be paginated
+- Default sorting must be deterministic
+
+## 4.10. Auditability
+
+- The application must record important security and business events
+- Changes to sensitive data should capture who made the change and when
+- Audit history must be viewable by authorized users
+- Authentication events such as login, logout, failed login, and password reset
+  should be traceable
+
+## 4.11. Notifications
+
+- The platform should support system notifications for important events
+- Email delivery should be supported for account and workflow notifications
+- In-app notifications are desirable but not required for the first release
+
+## 4.12. File Handling
+
+- The platform should support file attachments for business records where needed
+- File upload validation must enforce size and type restrictions
+- Download access must respect record-level permissions
+
+## 4.13. Administration and Reference Data
+
+- The system must provide administrative screens for core configuration
+- Reference data used across business modules must be centrally manageable
+- Administrative changes must be audited
+
+## 4.14. API Requirements
+
+These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
+
+- The platform must not require API-level namespace versioning as the contract
+  versioning mechanism
+- API endpoints must support authenticated access, validation, and standard HTTP
+  semantics
+- List endpoints must support filtering, sorting, and pagination
+- API errors must return a predictable structure usable by the Angular client
+- The backend must expose a durable, versioned OpenAPI schema artifact for
+  downstream tooling and generated CRM-facing content; schema versioning is the
+  contract versioning mechanism that drives frontend alignment
+- `oasdiff` must be used as the OpenAPI schema diff and change detection tool
+- `oasdiff` must run as part of the contract normalization stage to detect
+  breaking and non-breaking changes between schema versions
+- Breaking changes detected by `oasdiff` must block downstream construction
+  until explicitly acknowledged or resolved
+- API schema generation and browsable documentation should be available in
+  non-production environments
+
+## 4.15. Content Source Strategy
+
+See `doc/ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
+content-boundary and generated-artifact model.
+
+- Terms such as CRM, non-CRM content, OpenAPI contract, and Angular
+  integration artifacts use the definitions in `doc/ARCHITECTURE.md` §§ 2.8-
+  2.11.
+- The OpenAPI contract must be the source of truth for CRM-facing content,
+  contracts, and generated Angular integration artifacts
+- CRM list, detail, and standard form experiences should be derived from the
+  OpenAPI contract where practical instead of being duplicated by hand
+- Angular-related integration functionality shared across modules must be
+  generated or maintained as reusable Angular integration artifacts
+- Angular client generation may use `ng-openapi-gen` when its Angular-native
+  output is a better fit than the baseline generator path
+- Non-CRM content — such as bespoke reactive forms, standalone pages, and
+  custom workflows — must come from a separate structured input source
+- The non-CRM input source must be versioned, validated, and able to reference
+  shared UI primitives and API contracts without becoming the CRM source of
+  truth
+
+## 4.16. Error Handling and Recovery
+
+- Validation errors must be presented clearly at field and form level
+- Unexpected server errors must be logged and surfaced with user-safe messages
+- Users must not lose unsaved form state because of recoverable UI errors
+
+## 4.17. Development Experience and Tooling
+
+- When the generated app's Django server runs with `DEBUG=True`, any failure
+  during app generation (Python exceptions raised by djng management commands
+  or app-builder invocations) must surface through Django's standard error
+  reporting mechanism — the same traceback page the developer would see for any
+  unhandled Python exception. Generation failures must not be swallowed silently
+  or reported only to stdout.
+- The generated app must expose a `/ng/build` page accessible during
+  development. This page shows the current Angular build and health status from
+  the Angular toolchain's point of view: last `ng build` exit status and
+  timestamp, TypeScript compilation errors and warnings, bundle size summary,
+  ESLint output if configured, and a re-trigger control. This page must be
+  gated behind `DEBUG=True` or an explicit `ENABLE_NG_BUILD_PAGE=True` flag and
+  must never be exposed in production.
+
 ## 5. Non-Functional Requirements
 ## 5.1. Architecture Constraints
 ## 6. Acceptance Criteria
@@ -520,212 +704,6 @@ The first implementation should include:
 - Error handling, health checks, and baseline automated tests
 - Local development workflow plus staging-ready deployment setup
 
-
-## Construction Workflow
-
-See `doc/ARCHITECTURE.md` §§ 7.1-7.4 for the architectural control-loop,
-verification, and build-flow model.
-
-- `djng` must provide the generation entry points that drive integrated Django-
-  Angular construction, including backend contract lifecycle governance,
-  change-requirement derivation, orchestration-facing work definitions,
-  generator-app execution, and governed command wrappers around `ngdj` actions
-- `ngdj` must provide the Angular-side commands, schematics, templates, and
-  assembly actions consumed by governed construction, including generation
-  from contract-derived and non-CRM inputs
-- Governed construction must execute through bounded SKILLS used as the
-  primary units for generation, modification, and integration work
-- The delivery process must support an agentically orchestrated control loop
-  with defined handoff artifacts between schema generation, `oasdiff` change
-  detection, client generation, UI assembly, and app integration
-- Governed construction must support iterative inspection, repair, retry, and
-  refinement when emitted outputs are incomplete, inconsistent, or invalid,
-  and must continue until deterministic acceptance conditions are satisfied or
-  a blocking issue is surfaced explicitly
-
-## Platform Responsibilities
-
-See `doc/ARCHITECTURE.md` §§ 4.1-4.3 for the governing responsibility and
-ownership boundaries.
-
-### Django + DRF
-
-- Own the data model, persistence layer, and backend business logic
-- Own authenticated APIs, authentication services, authorization enforcement,
-  and backend integrations
-- Own administrative capabilities for data administration, reference data, and
-  operational tooling, including backend-oriented administration interfaces
-- May provide data administration services through Django-native or DRF-backed
-  administrative interfaces where appropriate
-- Own backend packaging and deployment-facing server artifacts
-
-### Angular Material Frontend
-
-- Own the user-facing application experience
-- Own page layout, navigation, forms, tables, dialogs, and interaction design
-- Own end-user application routing
-- Consume Django and DRF APIs as the backend contract surface
-
-### Ownership Boundary
-
-- The generated platform must preserve the ownership boundary defined in
-  `doc/ARCHITECTURE.md` §§ 4.1-4.3
-- Django and DRF must own backend-facing capabilities and service endpoints
-- Angular must own the user-facing route tree and presentation behavior, with
-  Angular Material as the primary UI system for user-facing functionality
-
-## Functional Requirements
-
-### 1. Authentication and Identity
-
-- Users must be able to sign in and sign out securely
-- The system must support password-based authentication at minimum
-- The system should be designed to add SSO later without major rewrites
-- Password reset and account recovery flows must be supported
-- Session expiration and idle timeout behavior must be configurable
-
-### 2. Authorization
-
-- Access must be restricted to authenticated users unless a route is explicitly
-  public
-- The system must support role-based access control
-- Permissions must be enforceable on both API endpoints and UI navigation
-- Sensitive actions must be restricted by role and, where needed, object-level
-  ownership or scope
-
-### 3. User Management
-
-- Administrators must be able to create, activate, deactivate, and update users
-- Administrators must be able to assign roles or permission groups
-- Users must be able to view and update their own profile details
-- The system must track basic account status metadata such as creation date,
-  last login, and active state
-
-### 4. Application Shell and Navigation
-
-- The frontend must provide a consistent shell with top-level navigation,
-  breadcrumbs, and page titles
-- The frontend must own client-side routing for the user-facing application
-- Navigation items must be shown or hidden based on permissions
-- The UI must support a responsive layout across standard desktop and mobile
-  breakpoints
-- Global feedback patterns must exist for loading, success, warning, and error
-  states
-- User-facing product screens should be implemented in Angular Material
-
-### 5. Business Module Pattern
-
-- The platform must support modular feature areas with isolated backend apps and
-  frontend feature modules
-- Each business module should support list, detail, create, update, and
-  deactivate or delete flows where appropriate
-- List screens must support filtering, sorting, and pagination
-- Detail views must show key metadata and related records where relevant
-- Forms must include client-side and server-side validation
-
-### 6. Search and Data Discovery
-
-- Users must be able to search records by primary identifying fields
-- Filters must support common business cases such as status, owner, date range,
-  and free text
-- Large result sets must be paginated
-- Default sorting must be deterministic
-
-### 7. Auditability
-
-- The application must record important security and business events
-- Changes to sensitive data should capture who made the change and when
-- Audit history must be viewable by authorized users
-- Authentication events such as login, logout, failed login, and password reset
-  should be traceable
-
-### 8. Notifications
-
-- The platform should support system notifications for important events
-- Email delivery should be supported for account and workflow notifications
-- In-app notifications are desirable but not required for the first release
-
-### 9. File Handling
-
-- The platform should support file attachments for business records where needed
-- File upload validation must enforce size and type restrictions
-- Download access must respect record-level permissions
-
-### 10. Administration and Reference Data
-
-- The system must provide administrative screens for core configuration
-- Reference data used across business modules must be centrally manageable
-- Administrative changes must be audited
-
-### 11. API Requirements
-
-These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
-
-- The platform must not require API-level namespace versioning as the contract
-  versioning mechanism
-- API endpoints must support authenticated access, validation, and standard HTTP
-  semantics
-- List endpoints must support filtering, sorting, and pagination
-- API errors must return a predictable structure usable by the Angular client
-- The backend must expose a durable, versioned OpenAPI schema artifact for
-  downstream tooling and generated CRM-facing content; schema versioning is the
-  contract versioning mechanism that drives frontend alignment
-- `oasdiff` must be used as the OpenAPI schema diff and change detection tool
-- `oasdiff` must run as part of the contract normalization stage to detect
-  breaking and non-breaking changes between schema versions
-- Breaking changes detected by `oasdiff` must block downstream construction
-  until explicitly acknowledged or resolved
-- API schema generation and browsable documentation should be available in
-  non-production environments
-
-### 12. Content Source Strategy
-
-See `doc/ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
-content-boundary and generated-artifact model.
-
-- Terms such as CRM, non-CRM content, OpenAPI contract, and Angular
-  integration artifacts use the definitions in `doc/ARCHITECTURE.md` §§ 2.8-
-  2.11.
-- The OpenAPI contract must be the source of truth for CRM-facing content,
-  contracts, and generated Angular integration artifacts
-- CRM list, detail, and standard form experiences should be derived from the
-  OpenAPI contract where practical instead of being duplicated by hand
-- Angular-related integration functionality shared across modules must be
-  generated or maintained as reusable Angular integration artifacts
-- Angular client generation may use `ng-openapi-gen` when its Angular-native
-  output is a better fit than the baseline generator path
-- Non-CRM content — such as bespoke reactive forms, standalone pages, and
-  custom workflows — must come from a separate structured input source
-- The non-CRM input source must be versioned, validated, and able to reference
-  shared UI primitives and API contracts without becoming the CRM source of
-  truth
-
-### 13. Error Handling and Recovery
-
-- Validation errors must be presented clearly at field and form level
-- Unexpected server errors must be logged and surfaced with user-safe messages
-- Users must not lose unsaved form state because of recoverable UI errors
-
-### 14. Development Experience and Tooling
-
-- When the generated app's Django server runs with `DEBUG=True`, any failure
-  during app generation (Python exceptions raised by djng management commands
-  or app-builder invocations) must surface through Django's standard error
-  reporting mechanism — the same traceback page the developer would see for any
-  unhandled Python exception. Generation failures must not be swallowed silently
-  or reported only to stdout.
-
-- The generated app must expose a `/ng/build` page accessible during
-  development. This page shows the current Angular build and health status from
-  the Angular toolchain's point of view:
-  - Last `ng build` exit status (success or failure) and timestamp
-  - TypeScript compilation errors and warnings, if any
-  - Bundle size summary (main bundle, lazy-loaded chunks)
-  - ESLint output, if configured
-  - A re-trigger control to run `ng build` on demand
-  This page is a developer and operator tool. It must be gated behind the
-  `DEBUG=True` setting or an explicit `ENABLE_NG_BUILD_PAGE=True` flag so it is
-  never exposed in production.
 
 ## Non-Functional Requirements
 
