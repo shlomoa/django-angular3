@@ -1,4 +1,4 @@
-# Test Examples
+﻿# Test Examples
 
 ## Overview
 
@@ -23,7 +23,7 @@ Each example consists of:
 Examples are located under `spec/examples/<example-name>/` and can be run via:
 
 ```bash
-django-admin build-app spec/examples/<example-name>/django-angular3.json \
+django-admin build_app spec/examples/<example-name>/django-angular3.json \
   [--previous-schema spec/examples/<example-name>/previous-schema.yaml] \
   [--previous-config spec/examples/<example-name>/previous-config.json] \
   --dry-run
@@ -633,52 +633,52 @@ the same dependency level.
 
 ## Running the Examples
 
-Once the `build-app` command is implemented, all examples can be run
+Once the `build_app` command is implemented, all examples can be run
 sequentially to verify each use case:
 
 ```bash
 # Example 1: start from scratch
-django-admin build-app \
+django-admin build_app \
   spec/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
 # Example 2: add resource
-django-admin build-app \
+django-admin build_app \
   spec/examples/02-add-order/django-angular3.json \
   --previous-schema spec/examples/01_simple_crm/schema.yaml \
   --previous-config spec/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
 # Example 3: breaking change blocked
-django-admin build-app \
+django-admin build_app \
   spec/examples/03-breaking-change/django-angular3.json \
   --previous-schema spec/examples/01_simple_crm/schema.yaml \
   --dry-run
 # Expected: non-zero exit, no plan emitted
 
 # Example 3b: breaking change acknowledged
-django-admin build-app \
+django-admin build_app \
   spec/examples/03-breaking-change/django-angular3.json \
   --previous-schema spec/examples/01_simple_crm/schema.yaml \
   --acknowledge-breaking \
   --dry-run
 
 # Example 4: config-only change
-django-admin build-app \
+django-admin build_app \
   spec/examples/04-add-dashboard/django-angular3.json \
   --previous-schema spec/examples/01_simple_crm/schema.yaml \
   --previous-config spec/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
 # Example 5: combined schema + config
-django-admin build-app \
+django-admin build_app \
   spec/examples/05-combined-change/django-angular3.json \
   --previous-schema spec/examples/02-add-order/schema.yaml \
   --previous-config spec/examples/02-add-order/django-angular3.json \
   --dry-run
 
 # Example 6: replace resource
-django-admin build-app \
+django-admin build_app \
   spec/examples/06-replace-resource/django-angular3.json \
   --previous-schema spec/examples/02-add-order/schema.yaml \
   --dry-run

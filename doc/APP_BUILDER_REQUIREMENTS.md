@@ -1,13 +1,13 @@
-# App Builder Requirements
+﻿# App Builder Requirements
 
 ## Purpose
 
 The app builder is a high-level orchestrator command in djng:
 
 ```bash
-django-admin build-app <config> [options]
+django-admin build_app <config> [options]
 # or equivalently:
-python manage.py build-app <config> [options]
+python manage.py build_app <config> [options]
 ```
 
 Given a current OpenAPI schema and app configuration, and optionally the
