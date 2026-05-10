@@ -326,7 +326,7 @@ invocable djng command or skill invocation.
 
 | Existing command | Relationship to app builder |
 |---|---|
-| `build` | Lower-level; produces a static build artifact plan from config. App builder replaces it for end-to-end orchestration. |
+| `build` | Deterministic command: produces a correct-by-construction build artifact plan from config. Belongs to djng's deterministic command category. `build_app` is the SKILLS-based orchestration command. They serve different purposes within djng's two-category command surface; neither replaces the other. |
 | `ng_new`, `ng_add`, `ng_config` | App builder emits these as steps in the plan when `ng-workspace` skill is triggered. |
 | `ng_gen_app` | App builder emits this as a step when `ng-app` skill is triggered. |
 | `ng_openapi_gen` | App builder emits this as a step when `ng-api` skill is triggered. |

@@ -278,6 +278,22 @@ content-boundary and generated-artifact model.
   `DEBUG=True` setting or an explicit `ENABLE_NG_BUILD_PAGE=True` flag so it is
   never exposed in production.
 
+### 15. Verification Requirements
+
+Construction must be verifiable at each stage. The following verification
+categories are required (see `doc/ARCHITECTURE.md` §7.3 for structural
+classification):
+
+- The system must validate the OpenAPI contract and detect breaking changes
+  before downstream construction proceeds (contract verification).
+- The system must inspect and expose generated and assembled artifacts at each
+  construction step so they can be corrected, refined, or reused in subsequent
+  iterations (construction-output verification).
+- The system must verify alignment between backend behavior, generated
+  integration artifacts, and frontend composition (integration verification).
+- The system must support automated tests across backend, frontend, and composed
+  application flows to verify expected behavior (test-based verification).
+
 ## Non-Functional Requirements
 
 These quality requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
@@ -328,6 +344,16 @@ These quality requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 - The system must store timestamps in UTC
 - The UI must render dates and times in the user or deployment timezone
 - Text and formatting should be designed so localization can be added later
+
+### Deployment
+
+- In production the generated application must be deployable from a single
+  Django-served origin: Django serves both the REST API and the Angular static
+  assets from the same host and port (see `doc/ARCHITECTURE.md` §5.1).
+- The development environment must support running the Angular dev server
+  separately from the Django backend, with the Angular dev server proxying API
+  requests to Django so the two can be developed and reloaded independently
+  (see `doc/ARCHITECTURE.md` §5.2).
 
 ## MVP Scope
 
