@@ -45,3 +45,5 @@ dist/
 tmparea/
 schema.yaml
 schema.yml
+
+.claude/worktrees/
