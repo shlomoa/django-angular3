@@ -1,27 +1,45 @@
-# App Builder Requirements
+﻿# App Builder Requirements
 
 ## Purpose
 
-The app builder is a high-level orchestrator command in djng:
+**`rapp`** is the resulting integrated Django-Angular application — the artifact
+`build_app` receives, modifies, and delivers.
+
+djng provides two categories of Django admin commands for producing `rapp`:
+
+- **Deterministic commands**: produce correct-by-construction outputs without
+  iteration — schema extraction from DRF models, direct ngdj wrapper calls,
+  and similar bounded operations.
+- **`build_app`**: the SKILLS-based orchestration command that drives
+  change-detected construction of `rapp`.
+
+`build_app` is invoked as:
 
 ```bash
-django-admin build-app <config> [options]
+django-admin build_app <config> [options]
 # or equivalently:
-python manage.py build-app <config> [options]
+python manage.py build_app <config> [options]
 ```
 
-Given a current OpenAPI schema and app configuration, and optionally the
-previous versions of both, it:
+`build_app` takes an existing `rapp` (initially empty on first run), two
+OpenAPI schemas (current and previous, previous initially empty on first run),
+and a configuration file. It operates through three internal layers:
 
-1. Detects what changed between the current and previous state.
-2. Classifies each change into a typed change set.
-3. Maps the change set to an ordered sequence of djng skills.
-4. Emits a deterministic build plan — an ordered list of commands — that the
-   caller can review, approve, and execute.
+**Layer 1 — Change derivation**: Compares the current schema against the
+previous schema using `oasdiff`, and the current config against the previous
+config. Produces a typed `ChangeSet` and maps it to the set of SKILLS that
+must be invoked and in what mode.
 
-The app builder does **not** execute commands itself. It produces the plan.
-Execution is a separate, explicit step. This separates planning from side effects
-and makes the pipeline auditable and reversible.
+**Layer 2 — Procedure graph**: Translates the Layer 1 output into a directed
+graph of procedures. Each procedure represents a unit of construction work.
+The graph encodes the SKILLS dependency chain and ordering constraints derived
+from the ChangeSet (delete before create at the same dependency level).
+
+**Layer 3 — SKILLS execution**: Each procedure in the graph prepares the
+inputs for a Claude Code Python SDK API call that invokes one or more SKILLS.
+SKILLS are three-phase wrapper scripts that: (1) call ngdj schematics to
+generate code, (2) modify the generated code as required, and (3) integrate
+it into `rapp`.
 
 ---
 
@@ -62,7 +80,7 @@ From the generated app's `django-angular3.json`:
 
 ---
 
-## Change Detection
+## Layer 1: Change Derivation
 
 ### Schema change detection
 
@@ -141,25 +159,25 @@ The builder produces a `ChangeSet` object:
 
 ---
 
-## Skill and Command Mapping
+## Layer 1 Output: Change-to-SKILLS Mapping
 
-The builder maps each change type to a set of skills using the dependency
-order defined in `doc/SKILL_AUTHORING_PLAN.md`.
+Layer 1 maps each change type to the set of SKILLS to invoke, using the
+dependency order defined in `doc/SKILL_AUTHORING_PLAN.md`.
 
-### Schema change → skills
+### Schema change → SKILLS
 
-| Schema change type | Skills invoked | Notes |
+| Schema change type | SKILLS invoked | Notes |
 |---|---|---|
-| `start-from-scratch` | 1, 2, 3, 4, then config-derived skills | Full pipeline |
-| `no-change` | None (schema-derived) | Config-derived skills still run if config changed |
-| `add-things` | 3 (`ng-api`), 4 (`ng-data-service`) for new resources, then component/page skills for new resources | Existing workspace and app untouched |
-| `remove-things` | 3 (`ng-api`), 4 (`ng-data-service`) in delete mode, component/page skills for removed resources in delete mode | |
+| `start-from-scratch` | 1, 2, 3, 4, then config-derived SKILLS | Full pipeline |
+| `no-change` | None (schema-derived) | Config-derived SKILLS still run if config changed |
+| `add-things` | 3 (`ng-api`), 4 (`ng-data-service`) for new resources, then component/page SKILLS for new resources | Existing workspace and app untouched |
+| `remove-things` | 3 (`ng-api`), 4 (`ng-data-service`) in delete mode, component/page SKILLS for removed resources in delete mode | |
 | `replace-things` | Same as remove-things for removed resources, then add-things for new resources | Order: remove first, then add |
 | `breaking` | Blocked — see Breaking change gate above | |
 
-### Config change → skills
+### Config change → SKILLS
 
-| Config change | Skill | Mode |
+| Config change | SKILL | Mode |
 |---|---|---|
 | Page added | 10 (`ng-page`) | create |
 | Page modified | 10 (`ng-page`) | modify |
@@ -172,9 +190,12 @@ order defined in `doc/SKILL_AUTHORING_PLAN.md`.
 | Site navigation changed | 11 (`ng-site`) | modify |
 | Workspace settings changed | 1 (`ng-workspace`) | modify |
 
-### Execution order
+## Layer 2: Procedure Graph
 
-The builder always respects the skill dependency chain:
+Layer 2 translates the Layer 1 SKILLS mapping into a directed acyclic graph of
+procedures. Each node in the graph is a procedure: a SKILL name, invocation
+mode, reason, SDK inputs, and its dependency edges. The graph encodes the
+following SKILLS dependency chain:
 
 ```
 1  ng-workspace   (foundation)
@@ -190,55 +211,54 @@ The builder always respects the skill dependency chain:
 11 ng-site         (composes 2–10)
 ```
 
-Skills not triggered by any change in the current run are omitted from the
-plan. Skills that must run in delete mode for removed resources precede
-skills that run in create/add mode for new resources at the same dependency
-level.
+SKILLS not triggered by any change in the current run are omitted from the
+graph. Procedures that invoke a SKILL in delete mode for removed resources
+precede procedures that invoke in create/add mode for new resources at the
+same dependency level.
 
----
-
-## Output: Build Plan
-
-The app builder emits an ordered build plan. Each entry in the plan is an
-invocable djng command or skill invocation.
-
-### JSON format (default)
+### JSON representation (default)
 
 ```json
 {
   "generated_at": "2026-04-30T12:00:00Z",
   "config": "path/to/django-angular3.json",
   "change_set": { ... },
-  "steps": [
+  "procedures": [
     {
-      "step": 1,
+      "id": "ng-api-create-Order",
       "skill": "ng-api",
       "mode": "create",
       "reason": "New resource 'Order' added to schema",
-      "command": "django-admin ng_openapi_gen path/to/django-angular3.json",
-      "dry_run_command": "django-admin ng_openapi_gen path/to/django-angular3.json --dry-run"
+      "inputs": {
+        "resource": "Order",
+        "config": "path/to/django-angular3.json"
+      },
+      "depends_on": []
     },
     {
-      "step": 2,
+      "id": "ng-data-service-create-Order",
       "skill": "ng-data-service",
       "mode": "create",
       "reason": "New resource 'Order' requires data service",
-      "command": "invoke skill ng-data-service --mode=create --resource=Order",
-      "dry_run_command": "invoke skill ng-data-service --mode=create --resource=Order --dry-run"
+      "inputs": {
+        "resource": "Order",
+        "config": "path/to/django-angular3.json"
+      },
+      "depends_on": ["ng-api-create-Order"]
     }
   ]
 }
 ```
 
-### Constraints on output
+### Constraints on the procedure graph
 
-- Steps are strictly ordered by the dependency chain.
-- Each step includes `reason` — a human-readable explanation of why the step
+- The graph is a directed acyclic graph: no circular dependencies.
+- Each procedure includes `reason` — a human-readable explanation of why it
   is included.
-- Steps include both the execution command and the dry-run command.
-- The plan is deterministic: the same inputs always produce the same plan.
-- The plan is self-contained: it can be executed by replaying each `command`
-  in order without further input.
+- The graph is deterministic: the same inputs always produce the same graph.
+- Procedures not triggered by any change in the current run are omitted.
+- Layer 3 traverses the graph in dependency order, invoking each procedure
+  via the Claude Code Python SDK.
 
 ---
 
@@ -252,17 +272,18 @@ invocable djng command or skill invocation.
 - If no previous state is available, the builder treats the run as
   `start-from-scratch`.
 
-### FR-2: Plan generation
+### FR-2: Procedure graph generation
 
-- The plan must be deterministic for the same inputs.
-- The plan must respect the skill dependency order.
-- The plan must include a `reason` for every step.
-- The plan must not include steps for skills that are not affected by any change.
+- The procedure graph must be deterministic for the same inputs.
+- The graph must encode the SKILLS dependency chain as dependency edges.
+- Each procedure must include a `reason` for its inclusion.
+- Procedures not triggered by any change in the current run must be omitted.
 
 ### FR-3: Dry run
 
-- `--dry-run` must print the plan without writing to disk or executing any command.
-- Each step in the plan must include a dry-run variant of the command.
+- `--dry-run` must emit the procedure graph without invoking any SKILLS or
+  executing any SDK calls.
+- The emitted graph must be inspectable and human-readable.
 
 ### FR-4: Breaking change gate
 
@@ -283,19 +304,29 @@ invocable djng command or skill invocation.
 
 ### FR-7: Combined changes
 
-- When both schema and config change, schema-derived steps are ordered before
-  config-derived steps at the same dependency level.
+- When both schema and config change, schema-derived procedures are ordered
+  before config-derived procedures at the same dependency level.
+
+### FR-8: SKILLS execution
+
+- Layer 3 must traverse the procedure graph in dependency order.
+- Each procedure must be executed via a Claude Code Python SDK API call
+  invoking the specified SKILL with the specified inputs.
+- SKILLS must follow the three-phase contract: (1) call ngdj schematics,
+  (2) modify generated output, (3) integrate into `rapp`.
 
 ---
 
 ## Non-Functional Requirements
 
-- The builder must run in under 30 seconds for typical schema/config sizes
-  (excluding `oasdiff` execution time, which is treated as an external process).
+- Layers 1 and 2 (change derivation and procedure graph construction) must
+  complete in under 30 seconds for typical schema/config sizes, excluding
+  `oasdiff` execution time which is treated as an external process. Layer 3
+  execution time is unbounded as it depends on Claude Code SDK call duration.
 - The builder must be testable with mock oasdiff output so `oasdiff` does not
   need to be installed to run the test suite.
-- The builder must emit machine-readable output (JSON/YAML) so it can be
-  consumed by CI pipelines.
+- The procedure graph must be emitted in machine-readable format (JSON/YAML)
+  so it can be inspected by CI pipelines before or after execution.
 
 ---
 
@@ -316,9 +347,17 @@ invocable djng command or skill invocation.
    (b) a committed baseline file (e.g., `spec/openapi/previous.json`);
    (c) an explicit `--previous-schema` path. Confirm approach.
 
-4. **Execution model**: Does the plan include only djng CLI commands, or can it
-   also include direct `ng generate angular-django2:*` commands for skills that
-   have not yet been given a djng wrapper?
+4. **Execution model**: ~~Does the plan include only djng CLI commands, or can
+   it also include direct `ng generate angular-django2:*` commands for skills
+   that have not yet been given a djng wrapper?~~ Resolved: Layer 3 executes
+   SKILLS via Claude Code Python SDK API calls. SKILLS invoke ngdj schematics
+   internally. No direct CLI command strings in the procedure graph.
+
+5. **Repair/refinement loop placement**: ARCHITECTURE.md §7.2 requires ≥1
+   iterations per construction stage, terminating on deterministic acceptance
+   criteria. Where in the three-layer architecture does this loop live — inside
+   the SKILL, inside the SDK call, or as a retry at the Layer 3 procedure
+   level? This must be decided before the repair loop can be specified.
 
 ---
 
