@@ -77,12 +77,7 @@ Use these terms consistently in all code, docs, and skills:
 
 ### Config file convention
 
-Both the meta-tool (this repo) and every generated app use a file named
-`django-angular3.json`. The schema follows the hierarchical settings pattern
-of DRF and Django settings: base defaults overridden by environment or
-project-specific values. Generated-app workspace settings live in an
-`angular.workspace` block. Do not introduce a separate `django_project.json`
-file for generated-app configuration.
+See `doc/` for authoritative definitions of configuration files and their roles.
 
 ## Project Overview
 

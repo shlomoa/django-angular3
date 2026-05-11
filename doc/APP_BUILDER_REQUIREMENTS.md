@@ -24,12 +24,9 @@ python manage.py build_app <config> [options]
 
 `build_app` takes:
 - An existing generated app: initially empty on first run.
-- Two OpenAPI schemas: 
-  - current and previous
-  - previous initially empty on first run.
-- Two configuration files: 
-  - current and previous
-  - previous initially empty on first run.
+- `django-angular3.json`: the djng tool configuration. Read as current; always authoritative. Not diffed; changes take effect on the next run without being tracked.
+- Two OpenAPI schemas: current and previous (previous absent on first run).
+- Two `<project>.project.json` files: current and previous (previous absent on first run). `<project>.project.json` is the generated app configuration — name is a placeholder pending schema definition.
 
 ### It operates through three phases:
 
@@ -59,8 +56,11 @@ construction work within each guided agent session.
 
 | Input | Source | Format | Notes |
 |---|---|---|---|
-| App configuration | `django-angular3.json` in the generated app root | JSON, hierarchical settings schema | Must contain `project.name`, `openapi.source`, `angular.output` |
-| OpenAPI schema | Path from `openapi.source` in config | YAML or JSON (OAS 3.x) | The current schema version |
+| `django-angular3.json` | Tool configuration file | JSON | Must contain `project.name`, `openapi.source`, `angular.output`. Read as current; always authoritative. |
+| Current OpenAPI schema | Path from `openapi.source` in `django-angular3.json` | YAML or JSON (OAS 3.x) | The current schema version. |
+| Previous OpenAPI schema | `--previous-schema <path>` | YAML or JSON (OAS 3.x) | OAS file from prior build. Absent on first run — treated as empty; builder uses `start-from-scratch`. |
+| Current `<project>.project.json` | Generated app configuration file (name is a placeholder) | JSON (schema TBD) | Defines the generated app's UI artifacts: pages, components, forms. |
+| Previous `<project>.project.json` | `--previous-project-config <path>` | JSON (schema TBD) | Prior generated app configuration. Absent on first run — non-CRM change detection is skipped. |
 
 ### Optional
 
@@ -69,16 +69,12 @@ are not required for normal operation.
 
 | Input | Flag | Notes |
 |---|---|---|
-| Previous schema | `--previous-schema <path>` | OAS file from prior build. If absent, the builder treats the run as start-from-scratch. |
-| Previous config | `--previous-config <path>` | Prior `django-angular3.json`. If absent, config change detection is skipped. |
 | Output format | `--output-format json\|yaml\|text` | `[DEBUG]` Format for the emitted procedure graph. Default: `json`. |
 | Dry run | `--dry-run` | `[DEBUG]` Emit the procedure graph without invoking any SKILLS or writing to disk. |
 | Graph output path | `--output <dir>` | `[DEBUG]` Write the procedure graph to `<dir>/procedure-graph.<ext>`. Default: `build/`. |
 | Force mode | `--force start-from-scratch` | Override change detection; treat as start-from-scratch regardless of diff. |
 
-### Configuration keys read by the app builder
-
-From the generated app's `django-angular3.json`:
+### Configuration keys read from `django-angular3.json`
 
 | Key | Required | Purpose |
 |---|---|---|
@@ -86,10 +82,6 @@ From the generated app's `django-angular3.json`:
 | `openapi.source` | yes | Path to the current OpenAPI schema |
 | `angular.output` | yes | Workspace root path |
 | `angular.workspace.*` | no | Workspace settings (package manager, style, routing) |
-| `ui.source` | no | Path to the non-CRM UI definition file |
-| `ui.pages` | no | Inline page definitions (alternative to `ui.source`) |
-| `ui.components` | no | Inline component definitions |
-| `ui.forms` | no | Inline reactive form definitions |
 
 ---
 
@@ -105,8 +97,7 @@ oasdiff diff <previous-schema> <current-schema> --format json
 
 oasdiff output is parsed to classify each difference.
 
-If `--previous-schema` is not supplied, or the previous schema file does not
-exist, the change type is `start-from-scratch` for all schema-derived skills.
+If the previous schema is absent (first run), the change type is `start-from-scratch` for all schema-derived skills.
 
 #### Schema change types
 
@@ -130,22 +121,21 @@ Re-run with --acknowledge-breaking to continue.
 
 This matches the contract normalization requirement in `REQUIREMENTS.md`.
 
-### Config change detection
+### Generated app config change detection
 
-Config comparison is a structural diff of the two `django-angular3.json` files.
-The builder diffs the following sections:
+⚠️ The config diff function and the `<project>.project.json` schema are not yet defined. See Open Questions.
+
+Generated app config comparison is a structural diff of the two `<project>.project.json` files.
+The builder diffs the following sections (subject to revision once `<project>.project.json` schema is defined):
 
 | Section | Change meaning |
 |---|---|
-| `angular.workspace.*` | Workspace-level reconfiguration |
-| `ui.pages` / `ui.source` (page definitions) | Pages added, removed, or modified |
-| `ui.components` | Standalone components added, removed, or modified |
-| `ui.forms` | Reactive forms added, removed, or modified |
-| `project.name` | Workspace/app rename — treated as start-from-scratch |
+| `pages` | Pages added, removed, or modified |
+| `components` | Standalone components added, removed, or modified |
+| `forms` | Reactive forms added, removed, or modified |
 
-If `--previous-config` is not supplied, config change detection is skipped and
-config-derived skills are treated as `no-change` (they run only if triggered by
-schema changes).
+If the previous `<project>.project.json` is absent (first run), non-CRM change detection is skipped and
+config-derived skills are treated as `no-change` (they run only if triggered by schema changes).
 
 ---
 
@@ -162,7 +152,7 @@ The builder produces a `ChangeSet` object:
     "oasdiff_report": "<path-to-report>"
   },
   "config": {
-    "type": "add-things | remove-things | replace-things | no-change",
+    "type": "add-things | remove-things | replace-things | no-change | start-from-scratch",
     "affected_pages": ["dashboard"],
     "affected_components": [],
     "affected_forms": ["customer-edit"]
@@ -170,12 +160,14 @@ The builder produces a `ChangeSet` object:
 }
 ```
 
+⚠️ The `config` block structure is preliminary — the `affected_pages`, `affected_components`, and `affected_forms` keys depend on the `<project>.project.json` schema being finalised. See Open Questions.
+
 ---
 
 ## Change-to-SKILLS Mapping
 
 Change derivation maps each change type to the set of SKILLS to invoke, using
-the dependency order defined in `SKILL_AUTHORING_PLAN.md`.
+the dependency order defined in `GENERATE_SKILLS.md`.
 
 ### Schema change → SKILLS
 
@@ -190,18 +182,21 @@ the dependency order defined in `SKILL_AUTHORING_PLAN.md`.
 
 ### Config change → SKILLS
 
-| Config change | SKILL | Mode |
+| `<project>.project.json` change | SKILL | Mode |
 |---|---|---|
 | Page added | 10 (`ng-page`) | create |
 | Page modified | 10 (`ng-page`) | modify |
 | Page removed | 10 (`ng-page`) | delete |
 | Standalone component added | 7 (`ng-component`) | create |
 | Standalone component modified | 7 (`ng-component`) | modify |
+| Standalone component removed | 7 (`ng-component`) | delete |
 | Complex component added | 8 (`ng-complex-component`) | create |
+| Complex component modified | 8 (`ng-complex-component`) | modify |
+| Complex component removed | 8 (`ng-complex-component`) | delete |
 | Reactive form added | 9 (`ng-reactive-form`) | create |
 | Reactive form modified | 9 (`ng-reactive-form`) | modify |
+| Reactive form removed | 9 (`ng-reactive-form`) | delete |
 | Site navigation changed | 11 (`ng-site`) | modify |
-| Workspace settings changed | 1 (`ng-workspace`) | modify |
 
 ## Procedure Graph
 
@@ -234,6 +229,8 @@ is `build_app`'s responsibility: it is not a separate command and is not
 optional. The verification procedures confirm that the generated app is in a correct and
 consistent state after all construction procedures have completed.
 
+⚠️ The specific verification procedures and their acceptance criteria are not yet defined. See Open Questions.
+
 ### JSON representation `[DEBUG]`
 
 ```json
@@ -249,7 +246,10 @@ consistent state after all construction procedures have completed.
       "reason": "New resource 'Order' added to schema",
       "inputs": {
         "resource": "Order",
-        "config": "path/to/django-angular3.json"
+        "config": "path/to/django-angular3.json",
+        "previous_schema": "path/to/previous-schema.yaml",
+        "project_config": "path/to/<project>.project.json",
+        "previous_project_config": "path/to/previous-<project>.project.json"
       },
       "depends_on": []
     },
@@ -260,7 +260,10 @@ consistent state after all construction procedures have completed.
       "reason": "New resource 'Order' requires data service",
       "inputs": {
         "resource": "Order",
-        "config": "path/to/django-angular3.json"
+        "config": "path/to/django-angular3.json",
+        "previous_schema": "path/to/previous-schema.yaml",
+        "project_config": "path/to/<project>.project.json",
+        "previous_project_config": "path/to/previous-<project>.project.json"
       },
       "depends_on": ["ng-api-create-Order"]
     }
@@ -306,7 +309,8 @@ purposes only:
 
 - The builder must detect schema changes using `oasdiff`.
 - The builder must halt on breaking schema changes unless `--acknowledge-breaking` is set.
-- The builder must detect config changes by diffing the `django-angular3.json` files.
+- The builder must detect non-CRM changes by diffing the `<project>.project.json` files.
+  ⚠️ Not yet implementable — depends on the `<project>.project.json` schema being finalised. See Open Questions.
 - If no previous state is available, the builder treats the run as
   `start-from-scratch`.
 
@@ -375,10 +379,10 @@ purposes only:
    Confirm whether the user always provides YAML (`schema.yaml`) or whether
    both formats must be accepted.
 
-2. **UI definition format**: The `ui.source` currently points to a JSON file
-   (`spec/ui/example.ui.json`). Define the schema for inline `ui.pages`,
-   `ui.components`, and `ui.forms` in `django-angular3.json` before
-   implementing config change detection.
+2. **Generated app config format**: Define the schema and final name for
+   `<project>.project.json` — the generated app's configuration file that
+   describes UI artifacts (pages, components, forms). This schema must be
+   finalised before non-CRM change detection can be implemented.
 
 3. **Previous-state storage**: How is the previous schema/config stored?
    Options: (a) git — the builder diffs HEAD vs working tree or two commits;
@@ -391,6 +395,12 @@ purposes only:
    SKILLS to carry out each guided agent session. The agent uses the knowledge
    in the SKILL to invoke ngdj calls to generate schematics internally. No
    direct CLI command strings in the procedure graph.
+
+6. **Verification procedures**: The procedure graph always ends with verification
+   procedures, but the specific checks, acceptance criteria, and failure behavior
+   are not yet defined. Define what constitutes a successful `build_app` run
+   (e.g., Angular build succeeds, generated files pass lint, API client matches
+   schema).
 
 5. ~~**Repair/refinement loop placement**~~: **Resolved — Option B.** The
    Claude Code SDK call IS the repair/refinement loop. The agent executing the

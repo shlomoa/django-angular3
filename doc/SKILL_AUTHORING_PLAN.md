@@ -179,24 +179,7 @@ needed files from `skill_creation/shared/`. `GENERATE_SKILLS.md` remains the
 original design specification; if the split copy is incomplete or inconsistent,
 resolve against `GENERATE_SKILLS.md` and update the split file.
 
-1. `ng-workspace` — Angular Material workspace boilerplate (foundation;
-   depends on nothing).
-2. `ng-app` — Angular Material application inside a workspace (depends on 1).
-3. `ng-api` — Angular API client generation from OpenAPI (depends on 2).
-4. `ng-data-service` — Angular data model service wrapping a generated
-   `<Resource>ApiService` (depends on 3).
-5. `ng-small-field` — Angular Material small field-level component (depends
-   on 2).
-6. `ng-form-field` — Angular Material form field with `ControlValueAccessor`
-   (depends on 2).
-7. `ng-component` — Angular generic component generation (depends on 2).
-8. `ng-complex-component` — Angular Material complex component (depends
-   on 2).
-9. `ng-reactive-form` — Angular Material reactive form (depends on 2 and 6;
-   optionally on 4).
-10. `ng-page` — Angular Material page generation (depends on 2; composes 4,
-    7, 8, and 9).
-11. `ng-site` — Angular Material site generation (composes 2 through 10).
+For the authoritative dependency chain and ordering, see `APP_BUILDER_REQUIREMENTS.md` §Procedure Graph.
 
 ## Ongoing and open items
 
