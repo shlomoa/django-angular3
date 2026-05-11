@@ -198,9 +198,9 @@ the dependency order defined in `doc/SKILL_AUTHORING_PLAN.md`.
 ## Procedure Graph
 
 Procedure graph construction translates the change-to-SKILLS mapping into a
-directed acyclic graph of procedures. Each node in the graph is a procedure: a SKILL name, invocation
-mode, reason, SDK inputs, and its dependency edges. The graph encodes the
-following SKILLS dependency chain:
+directed acyclic graph of procedures. Each node in the graph is a procedure:
+a SKILL name, invocation mode, reason, SDK inputs, and its dependency
+edges. The graph encodes the following SKILLS dependency chain:
 
 ```
 1  ng-workspace   (foundation)
