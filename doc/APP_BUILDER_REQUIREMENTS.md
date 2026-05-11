@@ -32,7 +32,7 @@ python manage.py build_app <config> [options]
 
 **Change derivation**: Two-fold:
 - **CRM**: Compares the current OpenAPI schema against the previous schema using `oasdiff`.
-- **Non-CRM**: Compares the current configuration file against the previous configuration file using an equivalent config diff function. ⚠️ The config diff function is not yet defined — it depends on the `django-angular3.json` schema (particularly `ui.*` sections) being finalised first. See Open Questions.
+- **Non-CRM**: Compares the current `<project>.project.json` against the previous one using an equivalent config diff function. ⚠️ The config diff function is not yet defined — it depends on the `<project>.project.json` schema being finalised first. See `TODO.md`.
 
 Produces a typed `ChangeSet` and maps it to the set of SKILLS that must be invoked and in what mode.
 
@@ -43,7 +43,7 @@ constraints derived from the ChangeSet (delete before create at the same
 dependency level).
 
 **Procedure execution**: `build_app` traverses the procedure graph in dependency
-order. For each procedure node, it makes a Claude Agent SDK `query()` call with
+order. For each procedure node, it makes a Claude Agent SDK call with
 the specified SKILL(s) enabled, the procedure inputs as the prompt, and the
 working directory set to the generated app workspace. The agent carries out the
 construction work within each guided agent session.
@@ -123,7 +123,7 @@ This matches the contract normalization requirement in `REQUIREMENTS.md`.
 
 ### Generated app config change detection
 
-⚠️ The config diff function and the `<project>.project.json` schema are not yet defined. See Open Questions.
+⚠️ The config diff function and the `<project>.project.json` schema are not yet defined. See `TODO.md`.
 
 Generated app config comparison is a structural diff of the two `<project>.project.json` files.
 The builder diffs the following sections (subject to revision once `<project>.project.json` schema is defined):
@@ -160,7 +160,7 @@ The builder produces a `ChangeSet` object:
 }
 ```
 
-⚠️ The `config` block structure is preliminary — the `affected_pages`, `affected_components`, and `affected_forms` keys depend on the `<project>.project.json` schema being finalised. See Open Questions.
+⚠️ The `config` block structure is preliminary — the `affected_pages`, `affected_components`, and `affected_forms` keys depend on the `<project>.project.json` schema being finalised. See `TODO.md`.
 
 ---
 
@@ -229,7 +229,7 @@ is `build_app`'s responsibility: it is not a separate command and is not
 optional. The verification procedures confirm that the generated app is in a correct and
 consistent state after all construction procedures have completed.
 
-⚠️ The specific verification procedures and their acceptance criteria are not yet defined. See Open Questions.
+⚠️ The specific verification procedures and their acceptance criteria are not yet defined. See `TODO.md`.
 
 ### JSON representation `[DEBUG]`
 
@@ -286,11 +286,11 @@ consistent state after all construction procedures have completed.
 ## Durable Artifacts
 
 The durable artifact of each `build_app` run is the set of generated application
-files produced by the Claude Code Python SDK API calls:
+files produced by the guided agent sessions:
 
 | Artifact | Format | Storage path |
 |---|---|---|
-| Generated application files — Angular source files accumulated across each SDK API call (components, services, API clients, routes, configuration) | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root (from `django-angular3.json`) |
+| Generated application files — Angular source files accumulated across guided agent sessions (components, services, API clients, routes, configuration) | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root (from `django-angular3.json`) |
 
 The following internal artifacts are produced for `[DEBUG]` and validation
 purposes only:
@@ -310,7 +310,7 @@ purposes only:
 - The builder must detect schema changes using `oasdiff`.
 - The builder must halt on breaking schema changes unless `--acknowledge-breaking` is set.
 - The builder must detect non-CRM changes by diffing the `<project>.project.json` files.
-  ⚠️ Not yet implementable — depends on the `<project>.project.json` schema being finalised. See Open Questions.
+  ⚠️ Not yet implementable — depends on the `<project>.project.json` schema being finalised. See `TODO.md`.
 - If no previous state is available, the builder treats the run as
   `start-from-scratch`.
 
@@ -336,7 +336,7 @@ purposes only:
 ### FR-5: Start-from-scratch mode
 
 - `--force start-from-scratch` overrides change detection and schedules all
-  eleven skills in dependency order.
+  SKILLS in dependency order.
 
 ### FR-6: Config-only changes
 
@@ -352,7 +352,7 @@ purposes only:
 ### FR-8: Procedure graph traversal and SDK invocation
 
 - `build_app` must traverse the procedure graph in dependency order.
-- For each procedure node, `build_app` must make a Claude Agent SDK `query()` call
+- For each procedure node, `build_app` must make a Claude Agent SDK call
   with the specified SKILL(s) enabled, the procedure inputs as the prompt, and
   the working directory set to the generated app workspace (`angular.output` from
   `django-angular3.json`).
@@ -372,45 +372,6 @@ purposes only:
 
 ---
 
-## Open Questions
-
-1. **Schema format**: The current djng config uses `openapi.source` pointing to
-   a JSON file. The app builder should support both YAML and JSON OpenAPI files.
-   Confirm whether the user always provides YAML (`schema.yaml`) or whether
-   both formats must be accepted.
-
-2. **Generated app config format**: Define the schema and final name for
-   `<project>.project.json` — the generated app's configuration file that
-   describes UI artifacts (pages, components, forms). This schema must be
-   finalised before non-CRM change detection can be implemented.
-
-3. **Previous-state storage**: How is the previous schema/config stored?
-   Options: (a) git — the builder diffs HEAD vs working tree or two commits;
-   (b) a committed baseline file (e.g., `spec/openapi/previous.json`);
-   (c) an explicit `--previous-schema` path. Confirm approach.
-
-4. **Execution model**: ~~Does the plan include only djng CLI commands, or can
-   it also include direct `ng generate angular-django2:*` commands for skills
-   that have not yet been given a djng wrapper?~~ Resolved: `build_app` makes Claude Agent SDK `query()` calls; the agent uses
-   SKILLS to carry out each guided agent session. The agent uses the knowledge
-   in the SKILL to invoke ngdj calls to generate schematics internally. No
-   direct CLI command strings in the procedure graph.
-
-6. **Verification procedures**: The procedure graph always ends with verification
-   procedures, but the specific checks, acceptance criteria, and failure behavior
-   are not yet defined. Define what constitutes a successful `build_app` run
-   (e.g., Angular build succeeds, generated files pass lint, API client matches
-   schema).
-
-5. ~~**Repair/refinement loop placement**~~: **Resolved — Option B.** The
-   Claude Code SDK call IS the repair/refinement loop. The agent executing the
-   SKILL is the loop controller. `build_app` makes one SDK call per procedure;
-   the agent iterates natively (call tool → read result → decide → repeat)
-   until the acceptance criteria embedded in the SKILL instructions are
-   satisfied. ARCHITECTURE.md §7.2's ≥1-iteration requirement is fulfilled
-   inside the agent session, not at the `build_app` level.
-
----
 
 ## Glossary
 
@@ -421,10 +382,11 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. The subject of this document. | §Purpose |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK via `query()` calls. | `ARCHITECTURE.md` §2.16 |
+| **the agent** | The agentic orchestrator bundled in `djng`. Driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
 | **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Each node is a guided agent session. | §Procedure Graph |
-| **guided agent session** | A single Claude Agent SDK `query()` call in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
+| **guided agent session** | A single Claude Agent SDK call in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
 | **ChangeSet** | The typed record of schema and config changes produced by change derivation, used to construct the procedure graph. | §Change Derivation |
+| **`<project>.project.json`** | The generated app's configuration file. Defines the UI artifacts (pages, components, forms) used for non-CRM change detection. Name is a placeholder — schema and final name are TBD. | `TODO.md` MR1 |
 
 ---
