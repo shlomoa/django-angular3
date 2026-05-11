@@ -126,3 +126,125 @@ Each agent declared "done." `ng_build` passes (TypeScript compiler accepts it). 
 - **Global acceptance criteria**: in `doc/REQUIREMENTS.md` §6.4 Mandatory Acceptance Scenarios (currently an empty header) and `doc/APP_BUILDER_REQUIREMENTS.md` §Functional Requirements (new FR for terminal verification).
 - **Failure handling**: in `doc/APP_BUILDER_REQUIREMENTS.md` as a new functional requirement (FR-9 or similar).
 - **Local-to-global gap**: architectural decision required; must be recorded in `doc/ARCHITECTURE.md` §7.2 or §7.3 and cross-referenced in `doc/APP_BUILDER_REQUIREMENTS.md`.
+
+---
+
+## 8. `ng-workspace` Skill Gaps
+
+Identified during skill review 2026-05-11. Items are ordered by priority — fix in sequence because SK1 and SK2 block any real use of the skill, while SK3 and SK4 are usability and maintenance issues.
+
+### SK1 — Document `command_allowlist` requirement (P1 — Critical)
+
+**Symptom**: Running `django-admin ng_new`, `ng_add`, or `ng_config` without expanding the allowlist raises `AngularCommandError: Command 'ng_new' is not allowed.` with no guidance in the skill on how to fix it.
+
+**Root cause**: `settings.py` defaults `command_allowlist` to `("ng_openapi_gen",)` only (line 17). All three commands used by the Create mode (`ng_new`, `ng_add`, `ng_config`) are blocked.
+
+**What the Delete mode also needs**: `ng_workspace_delete` must be in the allowlist for SK2 to work; document it there as well.
+
+**Resolution**:
+
+1. Add a **Prerequisites / Setup** section to `.claude/skills/ng-workspace/SKILL.md` before the Modes section with the following content:
+
+   > **Django settings prerequisite**: `DJANGO_ANGULAR3['command_allowlist']` must include every djng command this skill will call. For Create mode: `["ng_new", "ng_add", "ng_config"]`. For Delete mode, also add `"ng_workspace_delete"`. Add to your Django settings file:
+   >
+   > ```python
+   > DJANGO_ANGULAR3 = {
+   >     "command_allowlist": ["ng_new", "ng_add", "ng_config", "ng_workspace_delete"],
+   > }
+   > ```
+   >
+   > The standalone `django-angular3` CLI (used in this repo without a full Django settings file) still passes through `load_angular_settings()`, which reads `DJANGO_ANGULAR3` from Django settings when configured; if Django is not configured, the module default applies and the commands remain blocked.
+
+2. Add a corresponding row to the **Error Handling** table:
+
+   | Error | Cause | Resolution |
+   |---|---|---|
+   | `Command 'ng_new' is not allowed` | `command_allowlist` does not include the command | Add the command name to `DJANGO_ANGULAR3['command_allowlist']` in Django settings |
+
+**Files to change**: `.claude/skills/ng-workspace/SKILL.md`
+**Verification**: preflight check 3 (`django-admin ng_new --help`) will still pass; the allowlist is checked only at execution time, not at plan time. Add a note to preflight or the skill that `--help` passing does not confirm the allowlist is correct.
+
+---
+
+### SK2 — Fix Delete mode to use `django-admin ng_workspace_delete` (P2 — High)
+
+**Symptom**: SKILL.md Delete mode Process section says:
+
+```bash
+rm -rf <angular.output>
+```
+
+`rm -rf` is a Unix shell command. On Windows (the current development platform) it does not exist; running it in PowerShell either fails or silently does nothing depending on shell configuration.
+
+**Root cause**: The skill was written with a Unix idiom. The management command `ng_workspace_delete` already exists (`django_angular3/management/commands/ng_workspace_delete.py`) and delegates to `shutil.rmtree` via `build_ng_workspace_delete_invocations` in `angular.py` — cross-platform by design.
+
+**Resolution**:
+
+Replace the Delete mode **Process** section with:
+
+```bash
+django-admin ng_workspace_delete <path-to-django-angular3.json> --dry-run
+# Review the planned shutil.rmtree call, then execute:
+django-admin ng_workspace_delete <path-to-django-angular3.json>
+```
+
+Update the **Output** description to: "Workspace directory removed via `shutil.rmtree`. Report the deleted path."
+
+Update the **Dependencies** table to add:
+
+| Command | Purpose |
+|---|---|
+| `ng_workspace_delete` | Removes the workspace directory cross-platform via `shutil.rmtree` |
+
+Note: `ng_workspace_delete` must also be in `command_allowlist` (see SK1).
+
+**Files to change**: `.claude/skills/ng-workspace/SKILL.md`
+**Verification**: Run `django-admin ng_workspace_delete <path> --dry-run` on the example config and confirm the printed plan uses `shutil.rmtree`.
+
+---
+
+### SK3 — Clarify script paths in SKILL.md (P3 — Medium)
+
+**Symptom**: SKILL.md says:
+
+```bash
+python scripts/preflight.py <path-to-django-angular3.json>
+python scripts/verify_workspace.py <path-to-django-angular3.json>
+```
+
+These relative paths assume the shell's working directory is `.claude/skills/ng-workspace/`. When Claude executes the skill from the repo root (the normal working directory), the paths resolve to `<repo-root>/scripts/preflight.py`, which does not exist, producing a `No such file or directory` error before any workspace operation is attempted.
+
+**Root cause**: Script paths were written relative to the skill directory, not the repo root.
+
+**Resolution**:
+
+Replace both script invocations throughout SKILL.md with repo-root-relative paths:
+
+```bash
+python .claude/skills/ng-workspace/scripts/preflight.py <path-to-django-angular3.json>
+python .claude/skills/ng-workspace/scripts/verify_workspace.py <path-to-django-angular3.json>
+```
+
+Affected locations in SKILL.md:
+- Create mode → Pre-flight checks (preflight.py)
+- Validation section after Create (verify_workspace.py)
+
+**Files to change**: `.claude/skills/ng-workspace/SKILL.md`
+**Verification**: From the repo root, run `python .claude/skills/ng-workspace/scripts/preflight.py spec/examples/01_simple_crm/django-angular3.json` and confirm the script is found and runs.
+
+---
+
+### SK4 — Remove duplicate `angular-conventions.md` (P4 — Low)
+
+**Symptom**: The file `.claude/skills/ng-workspace/context/angular-conventions.md` is a byte-for-byte copy of `.claude/skills/shared/angular-conventions.md`. Two sources of truth means edits to one silently diverge from the other.
+
+**Root cause**: The skill-local copy was created when the skill was authored; the shared copy was added separately as the canonical location.
+
+**Resolution**:
+
+1. Delete `.claude/skills/ng-workspace/context/angular-conventions.md`.
+2. Update the `{{context:angular-conventions.md}}` directive in SKILL.md. The context loader resolves paths relative to the skill's `context/` directory, so the directive must either point to the shared file via a relative path or the shared file must be symlinked. Confirm how the Claude Code context loader resolves `{{context:...}}` paths before choosing: if it supports `../` traversal, use `{{context:../../../shared/angular-conventions.md}}`; if not, create a thin redirector file in `context/` that sources the shared copy, or copy on demand via CI.
+3. If the context loader cannot resolve outside the skill directory, keep the skill-local file but add a CI check (or a note in CONTRIBUTING.md) that it must be kept in sync with the shared copy.
+
+**Files to change**: `.claude/skills/ng-workspace/SKILL.md`, delete `.claude/skills/ng-workspace/context/angular-conventions.md` (or replace with redirector)
+**Verification**: Invoke the skill and confirm the `angular-conventions.md` content is still injected into the skill prompt.
