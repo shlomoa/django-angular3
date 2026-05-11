@@ -15,18 +15,19 @@ operating rules.
 
 ## Project context
 
-`django-angular3` is a Python tool. It does not on its own run an Angular
-workspace; it produces project instances that combine Django REST Framework on
-the backend with Angular Material on the frontend, generated against a
-contract-first OpenAPI specification.
+`djng` (`django-angular3`) is the solution — this repository, the Django
+package, and the tool. It contains the agent, SKILLS, `build_app`, and all
+configuration files. It produces generated apps that combine Django REST
+Framework on the backend with Angular Material on the frontend, generated
+against a contract-first OpenAPI specification. See §Glossary.
 
 There are therefore two distinct configuration files in play by path, but
 they share the same filename and schema pattern — and they must not be
 conflated.
 
-`django-angular3.json` at the root of this repository configures the
-meta-tool (djng). It tells the tool how to behave: where to look for OpenAPI
-input, where to write build plans, which package manager to use, and so on.
+`django-angular3.json` at the root of this repository configures `djng`.
+It tells the tool how to behave: where to look for OpenAPI input, where to
+write build plans, which package manager to use, and so on.
 
 `django-angular3.json` at the root of a generated app carries that app's
 project-specific inputs (workspace name, application name, route prefixes,
@@ -91,7 +92,7 @@ package is self-contained.
 ## Tooling boundary
 
 The integration toolchain for the generated project, per `README.md`,
-`doc/ARCHITECTURE.md`, and `doc/REQUIREMENTS.md`, is `drf-spectacular` for
+`ARCHITECTURE.md`, and `REQUIREMENTS.md`, is `drf-spectacular` for
 OpenAPI schema export from the consuming Django project, `oasdiff` for schema
 diff and change detection (breaking changes block downstream generation until
 acknowledged), and `ng-openapi-gen` for Angular client generation. No
@@ -215,3 +216,18 @@ resolution is captured in the skill itself.
 
 Planning phase complete. The next action is to begin the Plan phase for
 `ng-workspace`.
+
+---
+
+## Glossary
+
+For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
+
+| Term | Definition | See |
+|---|---|---|
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
+| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
+| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |

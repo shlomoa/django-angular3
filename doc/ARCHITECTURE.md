@@ -37,7 +37,9 @@ A TypeScript-based open-source web application framework led by the Angular Team
 A UI component library for Angular that implements Google's Material Design. It provides pre-built components for layout, forms, navigation, and more, with a consistent design language.
 
 ### 2.5 djng
-The `django-angular3` package: the Django/Python-side component in this architecture. It is the contract-governing component responsible for backend-side validation, change interpretation, and Angular work derivation.
+The `django-angular3` solution — this repository, the Django package, and the
+tool. Contains the agent, SKILLS, `build_app`, and all configuration files
+required for construction. See §19 Glossary.
 
 ### 2.6 ngdj
 The `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`.
@@ -61,18 +63,26 @@ Generated Angular outputs derived from the OpenAPI contract and related tooling,
 An API that allows developers to interact with the Claude AI assistant for coding tasks. It can be used to automate code generation, refactoring, and other programming-related activities as part of the integration workflow between Django/DRF and Angular Material.
 
 ### 2.13 agentic orchestration
-An orchestration model in which an AI agent drives construction and integration work using bounded architectural capabilities rather than a fixed linear pipeline. The orchestrator consumes change requirements, configuration files, and contract-derived inputs, applies SKILLS as needed, and iterates toward a correct working application.
+An orchestration model in which the orchestrator delegates construction work to
+an AI agent rather than executing it through a fixed procedural pipeline. The
+orchestrator derives a procedure graph from change requirements and configuration,
+then runs each procedure as a guided agent session. Each guided agent session
+carries out the assigned construction work guided by the specified SKILL(s).
 
 ### 2.14 [SKILLS][Claude Skills]
-Bounded construction units used by the agentic orchestrator in this architecture. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
+Bounded AI skills that guide the agent within each guided agent session. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
 
 SKILLS are a core architectural subsystem of `django-angular3`. Their subsystem architecture is defined in `doc/GENERATE_SKILLS.md`, and their implementation and authoring plan is defined in `doc/SKILL_AUTHORING_PLAN.md`. This document defines the role of SKILLS in the overall architecture and does not restate their internal design.
 
 ### 2.15 SKILLS-based construction
 A construction model in which bounded SKILLS are the primary execution units for generating, modifying, and integrating application building blocks. This model allows controlled generative freedom while keeping construction within architectural, contract-defined, and validation-defined boundaries.
 
-### 2.16 angular-code-agent
-The orchestrator in this architecture. It consumes change requirements, configuration files, and contract-derived inputs, applies SKILLS-based construction to generate and integrate the required building blocks, and drives the system toward a correct working application.
+### 2.16 agent
+The agentic orchestrator in this architecture, bundled in `djng`. It consumes
+change requirements, configuration files, and contract-derived inputs, derives a
+procedure graph, and runs each procedure as a guided agent session to build the
+generated application. At implementation level, driven by the Claude Agent SDK.
+The `build_app` Django management command is its entry point.
 
 ### 2.17 correct working application
 An application that assembles into a runnable whole and satisfies the deterministic validations and tests defined by this architecture. Individual generated artifacts alone do not establish correctness.
@@ -124,7 +134,9 @@ In `django-angular3.json`:
 
 ### 3.3 djng
 
-[django-angular3] The package is the Django/Python-side governance and work-derivation component for contract-driven Angular Material frontend implementation against a `DRF` backend.
+`djng` is the `django-angular3` solution — this repository, the Django package,
+and the tool. It contains the agent, SKILLS, `build_app`, and all configuration
+files. See §2.5 and §19 Glossary.
 
 - Purpose: The backend owner.
   - Govern the overall integration process
@@ -138,12 +150,12 @@ In `django-angular3.json`:
   - djng-o-2: Define, author, and evolve the Claude SKILLS required for building, generating, and integrating Angular building blocks.
   - djng-o-3: Manage and drive Angular app change requirements through:
     - Detection of change requirements.
-    - Converting change requirements into `prompts`
-  - djng-o-4: Provide the orchestration entry points and work definitions consumed by `angular-code-agent`:
-    - The orchestrator applies [SKILLS][Claude Skills] to generate Angular building blocks.
-    - The orchestrator integrates those building blocks into an [Angular Material] frontend app using the DRF `contract`.
+    - Converting change requirements into procedure graph inputs
+  - djng-o-4: Provide the orchestration entry points and work definitions consumed by the agent:
+    - The agent runs each procedure as a guided agent session to generate Angular building blocks.
+    - The agent integrates those building blocks into an [Angular Material] frontend app using the DRF `contract`.
 
-- `djng` defines and governs the work to be performed; `angular-code-agent` orchestrates iterative SKILLS-based construction to carry that work out.
+- `djng` defines and governs the work to be performed; the agent derives the procedure graph and runs each procedure as a guided agent session.
 
 ### 3.4 ngdj
 
@@ -159,8 +171,8 @@ implemented in [angular-django2-github] and deployed to [angular-django2] npm pa
 ### 3.5 Toolchain components
 
 - A contract-governing, work-deriving component - in `djng`.
-- An agentic orchestrator that executes derived work through bounded capabilities - `angular-code-agent`.
-- A SKILLS subsystem that provides bounded construction and integration capabilities used by the orchestrator.
+- The agent: the agentic orchestrator that derives the procedure graph and runs each procedure as a guided agent session.
+- A SKILLS subsystem that provides bounded AI skills used to guide the agent within each guided agent session.
 - An Angular-side construction substrate and application generator - in `ngdj`.
 - An OpenAPI schema extraction process - in `djng`.
 - An OpenAPI TypeScript generation process - in `ngdj`.
@@ -255,9 +267,15 @@ This model simplifies:
 
 ## 7. Integration Workflow
 
-The integration process should be modeled as an agentic control loop with explicit handoff artifacts. `djng` governs contract lifecycle, validation, and work derivation; `angular-code-agent` orchestrates iterative SKILLS-based construction and integration toward an acceptable application state.
+The integration process is an agentic construction flow. `djng` governs contract
+lifecycle, validation, and work derivation; the agent derives the procedure graph
+and runs each procedure as a guided agent session toward an acceptable application
+state.
 
-The workflow is not a one-pass pipeline. The stages below describe the architectural work domains and durable artifacts involved in construction, but the orchestrator may revisit them as needed while driving the application toward deterministic acceptance.
+The workflow is not a one-pass pipeline. The stages below describe the
+architectural work domains involved in construction. Within each guided agent
+session, the agent iterates as needed to satisfy the procedure's acceptance
+criteria.
 
 ### 7.1 Control-loop stages
 
@@ -281,15 +299,19 @@ reused across iterations without hidden assumptions.
 
 ### 7.2 Repair and refinement loop
 
-The orchestrator may invoke and re-invoke SKILLS as needed while construction is in progress. A typical control cycle is:
+A typical construction cycle is:
 
-1. derive required work from contract changes, configuration, and structured inputs
-2. invoke the relevant SKILLS to generate, modify, or integrate building blocks
-3. inspect emitted artifacts and validation results
-4. repair, refine, or retry construction when outputs are incomplete, inconsistent, or invalid
-5. continue iterating until deterministic acceptance criteria are satisfied or a blocking issue is surfaced explicitly
+1. Derive required work from contract changes, configuration, and structured inputs
+2. Run each procedure as a guided agent session
+3. Within each guided agent session, inspect emitted artifacts and validation results
+4. Within each guided agent session, repair, refine, or retry construction when
+   outputs are incomplete, inconsistent, or invalid
+5. Within each guided agent session, continue until the procedure's acceptance
+   criteria are satisfied or a blocking issue is surfaced explicitly
 
-This loop is part of the architecture, not an implementation accident. Generation may vary internally, but correction and convergence toward a correct working application are expected architectural behavior.
+This loop is part of the architecture, not an implementation accident. Convergence
+within each session, and the composition of all sessions, produce a correct
+working application.
 
 ### 7.3 Verification categories
 
@@ -338,7 +360,7 @@ The application has two distinct input sources:
 Here, CRM content means contract-derived resource content, not a narrow
 customer-sales domain assumption.
 
-These two streams should remain separate so contract-derived CRM functionality
+These two streams must remain separate so contract-derived CRM functionality
 does not get mixed with manually-authored UI definitions.
 
 ### 8.3 Contract Rules
@@ -605,7 +627,21 @@ switch environments.
 
 Implementation sequencing is documented in `doc/IMPLEMENTATION_PLAN.md`.
 
-## 19. References
+## 19. Glossary
+
+Key actors and terms. Full definitions are in §2.
+
+| Term | Definition | See |
+|---|---|---|
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | §2.5 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | §2.6 |
+| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `doc/APP_BUILDER_REQUIREMENTS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | §2.16 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | §2.14, `doc/GENERATE_SKILLS.md` |
+| **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Each node is a guided agent session. | `doc/APP_BUILDER_REQUIREMENTS.md` §Procedure Graph |
+| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | §2.13 |
+
+## 20. References
 
 [Django]: https://www.djangoproject.com/
 [Django-github]: https://github.com/django/django

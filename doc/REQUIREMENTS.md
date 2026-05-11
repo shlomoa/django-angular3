@@ -2,22 +2,20 @@
 
 ## 1. Introduction
 
-Separation of Concerns Between REQUIREMENTS.md and ARCHITECTURE.md
-- keep **behavioral**, **goal-oriented**, **constraint**, **expectation**, and **acceptance** content in REQUIREMENTS.md
-- move or reduce **structural**, **component**, **technology-choice**, **deployment-topology**, and **internal interaction-design** content to ARCHITECTURE.md
-
 ### 1.1. Purpose of the Document
 
 This document defines the baseline requirements for the full-stack application
 platform and the governed construction model that the integration targets.
 
-The terms `djng` and `ngdj` use the definitions in `doc/ARCHITECTURE.md`
+The terms `djng` and `ngdj` use the definitions in `ARCHITECTURE.md`
 §§ 2.5-2.6.
 
 The terms `SKILLS` and `SKILLS-based construction` use the definitions in
-`doc/ARCHITECTURE.md` §§ 2.14-2.15.
+`ARCHITECTURE.md` §§ 2.14-2.15.
 
-Related architectural context: see `doc/ARCHITECTURE.md` §§ 1, 3, and 7.
+The term `the agent` uses the definition in `ARCHITECTURE.md` §2.16.
+
+Related architectural context: see `ARCHITECTURE.md` §§ 1, 3, and 7.
 
 ### 1.2. Business Problem Being Solved
 
@@ -39,16 +37,16 @@ architecture.
 ### 1.3. System Scope and Boundaries
 
 These requirements are derived from and must remain aligned with
-`doc/ARCHITECTURE.md`.
+`ARCHITECTURE.md`.
 
 This document does not define the internal subsystem design or authoring
 process for SKILLS; those subjects are covered separately in
-`doc/GENERATE_SKILLS.md` and `doc/SKILL_AUTHORING_PLAN.md`.
+`GENERATE_SKILLS.md` and `SKILL_AUTHORING_PLAN.md`.
 
 This document also does not define the detailed app-builder command contract,
 change-set structure, build-plan serialization, or scenario-by-scenario test
 examples. Those are covered separately in
-`doc/APP_BUILDER_REQUIREMENTS.md` and `doc/TEST_EXAMPLES.md`.
+`APP_BUILDER_REQUIREMENTS.md` and `TEST_EXAMPLES.md`.
 
 **Out of initial release scope:**
 
@@ -62,7 +60,6 @@ examples. Those are covered separately in
 
 - The application is first-party software owned by one organization
 - Users access the product through a web browser
-- PostgreSQL is the primary relational database
 - The first release is focused on internal or partner-facing workflows rather
   than anonymous public traffic
 - At least one business module will be implemented in the MVP, but the platform
@@ -457,7 +454,7 @@ and assembled application outputs aligned.
 
 ### 4.1. API Requirements
 
-These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
+These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 
 - The platform must not require API-level namespace versioning as the contract
   versioning mechanism
@@ -477,13 +474,13 @@ These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
   acknowledging or resolving breaking changes before downstream construction
   is permitted to resume; blocking a build without a supported resolution path
   is not acceptable behavior (see `--acknowledge-breaking` in
-  `doc/APP_BUILDER_REQUIREMENTS.md` FR-4 for the governed implementation)
+  `APP_BUILDER_REQUIREMENTS.md` FR-4 for the governed implementation)
 - API schema generation and browsable documentation should be available in
   non-production environments
 
 ### 4.2. Construction Workflow
 
-See `doc/ARCHITECTURE.md` §§ 4.1-4.3 and 7.1-7.4 for the governing ownership
+See `ARCHITECTURE.md` §§ 4.1-4.3 and 7.1-7.4 for the governing ownership
 boundaries, architectural control-loop, verification, and build-flow model.
 
 #### 4.2.1. Platform ownership
@@ -511,15 +508,17 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - `ngdj` must provide the Angular-side commands, schematics, templates, and
   assembly actions consumed by governed construction, including generation
   from contract-derived and non-CRM inputs
-- Governed construction must execute through bounded SKILLS used as the
-  primary units for generation, modification, and integration work
-- The delivery process must support an agentically orchestrated control loop
-  with defined handoff artifacts between schema generation, `oasdiff` change
-  detection, client generation, UI assembly, and app integration
+- Governed construction must be carried out by the agent, with each
+  construction procedure shaped by one or more SKILLS
+- Governed construction must be driven by an agentically orchestrated procedure
+  graph derived from change detection, with each procedure producing output
+  directly into the generated app workspace
 - Governed construction must support iterative inspection, repair, retry, and
   refinement when emitted outputs are incomplete, inconsistent, or invalid,
   and must continue until deterministic acceptance conditions are satisfied or
-  a blocking issue is surfaced explicitly
+  a blocking issue is surfaced explicitly (see `ARCHITECTURE.md` §7.2 for
+  where the repair and refinement loop is located within the construction
+  model)
 - Governed construction must derive required work by comparing the current
   contract, configuration, and structured inputs against their previously
   accepted state; work derivation must not assume a clean-slate context unless
@@ -639,11 +638,11 @@ For this flow:
 
 ### 4.13. Content Source Strategy
 
-See `doc/ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
+See `ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
 content-boundary and generated-artifact model.
 
 - Terms such as CRM, non-CRM content, OpenAPI contract, and Angular
-  integration artifacts use the definitions in `doc/ARCHITECTURE.md` §§ 2.8-
+  integration artifacts use the definitions in `ARCHITECTURE.md` §§ 2.8-
   2.11.
 - The OpenAPI contract must be the source of truth for CRM-facing content,
   contracts, and generated Angular integration artifacts
@@ -695,7 +694,7 @@ content-boundary and generated-artifact model.
 
 ### 4.16. Verification Requirements
 
-See `doc/ARCHITECTURE.md` §7.3 for the architectural verification model.
+See `ARCHITECTURE.md` §7.3 for the architectural verification model.
 
 Verification must occur throughout construction and integration, not only as a
 final check. The platform must support the following verification categories:
@@ -717,7 +716,7 @@ final check. The platform must support the following verification categories:
 
 ### 4.17. Generated Application Structure
 
-See `doc/ARCHITECTURE.md` §§ 9-10 for the architectural structure model.
+See `ARCHITECTURE.md` §§ 9-10 for the architectural structure model.
 
 #### 4.17.1. Backend structure
 
@@ -760,7 +759,7 @@ than implementing these independently per feature.
 
 ### 5.2. Security
 
-These requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
+These requirements elaborate `ARCHITECTURE.md` §§ 13-16.
 
 - Use secure defaults for authentication, cookies, CSRF, headers, and secret
   management
@@ -809,7 +808,7 @@ These requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 
 ### 5.9. Deployment Topology
 
-See `doc/ARCHITECTURE.md` § 5 for the architectural deployment model.
+See `ARCHITECTURE.md` § 5 for the architectural deployment model.
 
 #### 5.9.1. Production deployment
 
@@ -840,7 +839,7 @@ The generated application must support a local development topology in which:
 
 ### 6.1. System Acceptance Requirements
 
-See `doc/ARCHITECTURE.md` §§ 7.3, 14, and 17 for the related verification,
+See `ARCHITECTURE.md` §§ 7.3, 14, and 17 for the related verification,
 testing, and architectural decision model.
 
 The generated platform is acceptable when:
@@ -863,7 +862,7 @@ The generated platform is acceptable when:
 
 ### 6.2. Implementation Handoff Readiness
 
-See `doc/ARCHITECTURE.md` §§ 17-18 for the related architectural decision and
+See `ARCHITECTURE.md` §§ 17-18 for the related architectural decision and
 implementation-sequencing context.
 
 The platform is ready for implementation handoff when:
@@ -898,7 +897,7 @@ The first implementation should include:
 
 ### 6.4. Mandatory Acceptance Scenarios
 
-See `doc/TEST_EXAMPLES.md` for the scenario definitions and expected outputs.
+See `TEST_EXAMPLES.md` for the scenario definitions and expected outputs.
 
 The governed construction flow must support and correctly handle each of the
 following scenario classes:
@@ -923,6 +922,17 @@ following scenario classes:
 ## Appendix
 
 ### A. Glossary
+
+For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
+
+| Term | Definition | See |
+|---|---|---|
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | `ARCHITECTURE.md` §2.6 |
+| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
+| **SKILLS-based construction** | The construction model in which the agent runs each procedure as a guided agent session, using SKILLS to carry out generation, modification, and integration work. | `ARCHITECTURE.md` §2.15 |
 
 ### B. References diagrams
 

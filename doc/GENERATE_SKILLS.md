@@ -3,6 +3,21 @@ Create a solution based on claude code and claude skills to build and maintain A
 * Create skills to build and modify angular objects
 * Generate build commands from an Open API schema
 
+# Glossary
+
+For authoritative definitions see `doc/ARCHITECTURE.md` §2 and §19.
+
+| Term | Definition | See |
+|---|---|---|
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `doc/ARCHITECTURE.md` §2.5 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `doc/ARCHITECTURE.md` §2.6 |
+| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `doc/APP_BUILDER_REQUIREMENTS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `doc/ARCHITECTURE.md` §2.16 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `doc/ARCHITECTURE.md` §2.14 |
+| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `doc/ARCHITECTURE.md` §2.13 |
+
+---
+
 # Skill Architecture
 
 All skills in this document follow the **Agent Skills** format — reusable capabilities designed to be auto-invoked by an outer Claude API agent pipeline.
@@ -93,17 +108,25 @@ Within skill instructions, reference templates using:
 
 Templates are loaded at the resources level when the skill needs them for code generation.
 
-## Auto-Invocation Model
+## Invocation Model
 
-Skills are invoked by an **outer agent**, not by users:
+SKILLS are used by the agent within guided agent sessions, not invoked by users
+directly:
 
-1. **User Request**: User provides high-level task to outer agent (e.g., "Create an Angular Material workspace")
-2. **Skill Selection**: Outer agent loads metadata for all skills and matches user request to appropriate skill(s) based on descriptions
-3. **Skill Execution**: Outer agent forks a new context, loads the selected skill at instructions level, and executes it
-4. **Result Handoff**: Skill completes and returns results to outer agent
-5. **Continuation**: Outer agent may invoke additional skills or return final results to user
+1. **Procedure graph construction**: `build_app` derives a procedure graph from
+   schema and config changes. Each node specifies which SKILL(s) apply and what
+   inputs to provide.
+2. **Guided agent session**: For each procedure node, `build_app` makes a Claude
+   Agent SDK `query()` call with the relevant SKILL(s) enabled and the procedure
+   inputs as the prompt. The agent carries out the construction work, using the
+   SKILL's knowledge to guide its actions — invoking ngdj schematics, reading
+   and writing files, and verifying results.
+3. **Next procedure**: `build_app` proceeds to the next procedure node in
+   dependency order until all procedures are complete.
 
-**Key Principle**: Skills are designed as composable units that can be chained together by the outer agent to accomplish complex tasks.
+**Key Principle**: SKILLS are composable knowledge units. Multiple SKILLS may be
+enabled for a single guided agent session when a procedure composes capabilities
+from several skills.
 
 ## Canonical SKILL.md Template Structure
 

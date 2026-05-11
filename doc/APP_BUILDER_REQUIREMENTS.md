@@ -37,11 +37,11 @@ construction work. The graph encodes the SKILLS dependency chain and ordering
 constraints derived from the ChangeSet (delete before create at the same
 dependency level).
 
-**SKILLS execution**: Each procedure in the graph prepares the inputs for a
-Claude Code Python SDK API call that invokes one or more SKILLS. SKILLS are
-three-phase wrapper scripts that: (1) call ngdj schematics to generate code,
-(2) modify the generated code as required, and (3) integrate it into the
-generated app.
+**Procedure execution**: `build_app` traverses the procedure graph in dependency
+order. For each procedure node, it makes a Claude Agent SDK `query()` call with
+the specified SKILL(s) enabled, the procedure inputs as the prompt, and the
+working directory set to the generated app workspace. The agent carries out the
+construction work within each guided agent session.
 
 ---
 
@@ -120,7 +120,7 @@ Breaking schema changes detected. Review the oasdiff report before proceeding.
 Re-run with --acknowledge-breaking to continue.
 ```
 
-This matches the contract normalization requirement in `doc/REQUIREMENTS.md`.
+This matches the contract normalization requirement in `REQUIREMENTS.md`.
 
 ### Config change detection
 
@@ -167,7 +167,7 @@ The builder produces a `ChangeSet` object:
 ## Change-to-SKILLS Mapping
 
 Change derivation maps each change type to the set of SKILLS to invoke, using
-the dependency order defined in `doc/SKILL_AUTHORING_PLAN.md`.
+the dependency order defined in `SKILL_AUTHORING_PLAN.md`.
 
 ### Schema change → SKILLS
 
@@ -267,8 +267,8 @@ consistent state after all construction procedures have completed.
   is included.
 - The graph is deterministic: the same inputs always produce the same graph.
 - Procedures not triggered by any change in the current run are omitted.
-- SKILLS execution traverses the graph in dependency order, invoking each
-  procedure via the Claude Code Python SDK.
+- `build_app` traverses the graph in dependency order, running each procedure
+  as a guided agent session via the Claude Agent SDK.
 
 ---
 
@@ -351,8 +351,8 @@ purposes only:
 
 - Change derivation and procedure graph construction must complete in under 30
   seconds for typical schema/config sizes, excluding `oasdiff` execution time
-  which is treated as an external process. SKILLS execution time is unbounded
-  as it depends on Claude Code SDK call duration.
+  which is treated as an external process. Guided agent session duration is
+  unbounded as it depends on Claude Agent SDK call duration.
 - The builder must be testable with mock oasdiff output so `oasdiff` does not
   need to be installed to run the test suite.
 - `[DEBUG]` The procedure graph must be emittable in machine-readable format
@@ -379,9 +379,10 @@ purposes only:
 
 4. **Execution model**: ~~Does the plan include only djng CLI commands, or can
    it also include direct `ng generate angular-django2:*` commands for skills
-   that have not yet been given a djng wrapper?~~ Resolved: SKILLS execution
-   uses Claude Code Python SDK API calls. SKILLS invoke ngdj schematics
-   internally. No direct CLI command strings in the procedure graph.
+   that have not yet been given a djng wrapper?~~ Resolved: `build_app` makes Claude Agent SDK `query()` calls; the agent uses
+   SKILLS to carry out each guided agent session. The agent uses the knowledge
+   in the SKILL to invoke ngdj calls to generate schematics internally. No
+   direct CLI command strings in the procedure graph.
 
 5. ~~**Repair/refinement loop placement**~~: **Resolved — Option B.** The
    Claude Code SDK call IS the repair/refinement loop. The agent executing the
@@ -390,6 +391,23 @@ purposes only:
    until the acceptance criteria embedded in the SKILL instructions are
    satisfied. ARCHITECTURE.md §7.2's ≥1-iteration requirement is fulfilled
    inside the agent session, not at the `build_app` level.
+
+---
+
+## Glossary
+
+For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
+
+| Term | Definition | See |
+|---|---|---|
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked during construction. | `ARCHITECTURE.md` §2.6 |
+| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. The subject of this document. | §Purpose |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK via `query()` calls. | `ARCHITECTURE.md` §2.16 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
+| **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Each node is a guided agent session. | §Procedure Graph |
+| **guided agent session** | A single Claude Agent SDK `query()` call in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
+| **ChangeSet** | The typed record of schema and config changes produced by change derivation, used to construct the procedure graph. | §Change Derivation |
 
 ---
 
