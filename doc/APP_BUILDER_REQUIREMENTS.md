@@ -2,16 +2,17 @@
 
 ## Purpose
 
-**`rapp`** is the resulting integrated Django-Angular application — the artifact
-`build_app` receives, modifies, and delivers.
+The **generated app** is the resulting integrated Django-Angular application —
+the artifact `build_app` receives, modifies, and delivers.
 
-djng provides two categories of Django admin commands for producing `rapp`:
+djng provides two categories of Django admin commands for producing the
+generated app:
 
 - **Deterministic commands**: produce correct-by-construction outputs without
   iteration — schema extraction from DRF models, direct ngdj wrapper calls,
   and similar bounded operations.
 - **`build_app`**: the SKILLS-based orchestration command that drives
-  change-detected construction of `rapp`.
+  change-detected construction of the generated app.
 
 `build_app` is invoked as:
 
@@ -21,25 +22,26 @@ django-admin build_app <config> [options]
 python manage.py build_app <config> [options]
 ```
 
-`build_app` takes an existing `rapp` (initially empty on first run), two
-OpenAPI schemas (current and previous, previous initially empty on first run),
-and a configuration file. It operates through three internal layers:
+`build_app` takes an existing generated app (initially empty on first run),
+two OpenAPI schemas (current and previous, previous initially empty on first
+run), and a configuration file. It operates through three phases:
 
-**Layer 1 — Change derivation**: Compares the current schema against the
-previous schema using `oasdiff`, and the current config against the previous
-config. Produces a typed `ChangeSet` and maps it to the set of SKILLS that
-must be invoked and in what mode.
+**Change derivation**: Compares the current schema against the previous schema
+using `oasdiff`, and the current config against the previous config. Produces
+a typed `ChangeSet` and maps it to the set of SKILLS that must be invoked and
+in what mode.
 
-**Layer 2 — Procedure graph**: Translates the Layer 1 output into a directed
-graph of procedures. Each procedure represents a unit of construction work.
-The graph encodes the SKILLS dependency chain and ordering constraints derived
-from the ChangeSet (delete before create at the same dependency level).
+**Procedure graph construction**: Translates the change derivation output into
+a directed graph of procedures. Each procedure represents a unit of
+construction work. The graph encodes the SKILLS dependency chain and ordering
+constraints derived from the ChangeSet (delete before create at the same
+dependency level).
 
-**Layer 3 — SKILLS execution**: Each procedure in the graph prepares the
-inputs for a Claude Code Python SDK API call that invokes one or more SKILLS.
-SKILLS are three-phase wrapper scripts that: (1) call ngdj schematics to
-generate code, (2) modify the generated code as required, and (3) integrate
-it into `rapp`.
+**SKILLS execution**: Each procedure in the graph prepares the inputs for a
+Claude Code Python SDK API call that invokes one or more SKILLS. SKILLS are
+three-phase wrapper scripts that: (1) call ngdj schematics to generate code,
+(2) modify the generated code as required, and (3) integrate it into the
+generated app.
 
 ---
 
@@ -80,7 +82,7 @@ From the generated app's `django-angular3.json`:
 
 ---
 
-## Layer 1: Change Derivation
+## Change Derivation
 
 ### Schema change detection
 
@@ -159,10 +161,10 @@ The builder produces a `ChangeSet` object:
 
 ---
 
-## Layer 1 Output: Change-to-SKILLS Mapping
+## Change-to-SKILLS Mapping
 
-Layer 1 maps each change type to the set of SKILLS to invoke, using the
-dependency order defined in `doc/SKILL_AUTHORING_PLAN.md`.
+Change derivation maps each change type to the set of SKILLS to invoke, using
+the dependency order defined in `doc/SKILL_AUTHORING_PLAN.md`.
 
 ### Schema change → SKILLS
 
@@ -190,10 +192,10 @@ dependency order defined in `doc/SKILL_AUTHORING_PLAN.md`.
 | Site navigation changed | 11 (`ng-site`) | modify |
 | Workspace settings changed | 1 (`ng-workspace`) | modify |
 
-## Layer 2: Procedure Graph
+## Procedure Graph
 
-Layer 2 translates the Layer 1 SKILLS mapping into a directed acyclic graph of
-procedures. Each node in the graph is a procedure: a SKILL name, invocation
+Procedure graph construction translates the change-to-SKILLS mapping into a
+directed acyclic graph of procedures. Each node in the graph is a procedure: a SKILL name, invocation
 mode, reason, SDK inputs, and its dependency edges. The graph encodes the
 following SKILLS dependency chain:
 
@@ -218,7 +220,7 @@ same dependency level.
 
 The final node(s) in the graph are always verification procedures. Verification
 is `build_app`'s responsibility: it is not a separate command and is not
-optional. The verification procedures confirm that `rapp` is in a correct and
+optional. The verification procedures confirm that the generated app is in a correct and
 consistent state after all construction procedures have completed.
 
 ### JSON representation (default)
@@ -262,8 +264,8 @@ consistent state after all construction procedures have completed.
   is included.
 - The graph is deterministic: the same inputs always produce the same graph.
 - Procedures not triggered by any change in the current run are omitted.
-- Layer 3 traverses the graph in dependency order, invoking each procedure
-  via the Claude Code Python SDK.
+- SKILLS execution traverses the graph in dependency order, invoking each
+  procedure via the Claude Code Python SDK.
 
 ---
 
@@ -314,20 +316,20 @@ consistent state after all construction procedures have completed.
 
 ### FR-8: SKILLS execution
 
-- Layer 3 must traverse the procedure graph in dependency order.
+- SKILLS execution must traverse the procedure graph in dependency order.
 - Each procedure must be executed via a Claude Code Python SDK API call
   invoking the specified SKILL with the specified inputs.
 - SKILLS must follow the three-phase contract: (1) call ngdj schematics,
-  (2) modify generated output, (3) integrate into `rapp`.
+  (2) modify generated output, (3) integrate into the generated app.
 
 ---
 
 ## Non-Functional Requirements
 
-- Layers 1 and 2 (change derivation and procedure graph construction) must
-  complete in under 30 seconds for typical schema/config sizes, excluding
-  `oasdiff` execution time which is treated as an external process. Layer 3
-  execution time is unbounded as it depends on Claude Code SDK call duration.
+- Change derivation and procedure graph construction must complete in under 30
+  seconds for typical schema/config sizes, excluding `oasdiff` execution time
+  which is treated as an external process. SKILLS execution time is unbounded
+  as it depends on Claude Code SDK call duration.
 - The builder must be testable with mock oasdiff output so `oasdiff` does not
   need to be installed to run the test suite.
 - The procedure graph must be emitted in machine-readable format (JSON/YAML)
@@ -354,15 +356,15 @@ consistent state after all construction procedures have completed.
 
 4. **Execution model**: ~~Does the plan include only djng CLI commands, or can
    it also include direct `ng generate angular-django2:*` commands for skills
-   that have not yet been given a djng wrapper?~~ Resolved: Layer 3 executes
-   SKILLS via Claude Code Python SDK API calls. SKILLS invoke ngdj schematics
+   that have not yet been given a djng wrapper?~~ Resolved: SKILLS execution
+   uses Claude Code Python SDK API calls. SKILLS invoke ngdj schematics
    internally. No direct CLI command strings in the procedure graph.
 
 5. **Repair/refinement loop placement**: ARCHITECTURE.md §7.2 requires ≥1
    iterations per construction stage, terminating on deterministic acceptance
-   criteria. Where in the three-layer architecture does this loop live — inside
-   the SKILL, inside the SDK call, or as a retry at the Layer 3 procedure
-   level? This must be decided before the repair loop can be specified.
+   criteria. Where in the three-phase architecture does this loop live — inside
+   the SKILL, inside the SDK call, or as a retry at the SKILLS execution level?
+   This must be decided before the repair loop can be specified.
 
 ---
 
@@ -374,4 +376,4 @@ consistent state after all construction procedures have completed.
 | `ng_new`, `ng_add`, `ng_config` | Invoked as procedures in the graph when the `ng-workspace` SKILL is triggered. |
 | `ng_gen_app` | Invoked as a procedure in the graph when the `ng-app` SKILL is triggered. |
 | `ng_openapi_gen` | Invoked as a procedure in the graph when the `ng-api` SKILL is triggered. |
-| `ng_build` | Invoked as the final verification procedure(s) in the Layer 2 graph. Verification is `build_app`'s responsibility and is always included as the terminal node(s) of the graph. |
+| `ng_build` | Invoked as the final verification procedure(s) in the procedure graph. Verification is `build_app`'s responsibility and is always included as the terminal node(s) of the graph. |
