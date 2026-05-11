@@ -692,49 +692,33 @@ content-boundary and generated-artifact model.
   gated behind `DEBUG=True` or an explicit `ENABLE_NG_BUILD_PAGE=True` flag and
   must never be exposed in production.
 
-### 15. Verification Requirements
+### 4.16. Verification Requirements
 
-Construction must be verifiable at each stage. The following verification
-categories are required (see `doc/ARCHITECTURE.md` §7.3 for structural
-classification):
-
-- The system must validate the OpenAPI contract and detect breaking changes
-  before downstream construction proceeds (contract verification).
-- The system must inspect and expose generated and assembled artifacts at each
-  construction step so they can be corrected, refined, or reused in subsequent
-  iterations (construction-output verification).
-- The system must verify alignment between backend behavior, generated
-  integration artifacts, and frontend composition (integration verification).
-- The system must support automated tests across backend, frontend, and composed
-  application flows to verify expected behavior (test-based verification).
-
-## Non-Functional Requirements
-
-See `doc/ARCHITECTURE.md` § 7.3 for the architectural verification model.
+See `doc/ARCHITECTURE.md` §7.3 for the architectural verification model.
 
 Verification must occur throughout construction and integration, not only as a
 final check. The platform must support the following verification categories:
 
 - **Contract verification**: the OpenAPI contract and non-CRM inputs must be
   validated and breaking changes detected before downstream construction
-  proceeds; invalid or incompatible inputs must block the corresponding stage
+  proceeds; invalid or incompatible inputs must block the corresponding stage.
 - **Construction-output verification**: generated and assembled outputs must be
   inspectable so they can be corrected, refined, or reused across iterations;
   emitted artifacts must not be treated as opaque or assumed correct without
-  review
+  review.
 - **Integration verification**: alignment between backend behavior, generated
   Angular integration artifacts, and frontend composition must be verified
   after schema changes, business-record changes, and each build or
-  verification cycle
+  verification cycle.
 - **Test-based verification**: automated tests must cover backend, frontend,
   and composed application flows and must be linked to the staged verification
-  model rather than treated as a separate final phase
+  model rather than treated as a separate final phase.
 
 ### 4.17. Generated Application Structure
 
 See `doc/ARCHITECTURE.md` §§ 9-10 for the architectural structure model.
 
-#### 4.15.1. Backend structure
+#### 4.17.1. Backend structure
 
 The generated application backend must be organized as discrete Django apps
 with bounded responsibilities:
@@ -748,7 +732,7 @@ with bounded responsibilities:
 - Domain-specific business modules must be implemented as separate apps,
   keeping module logic isolated from the shared platform apps
 
-#### 4.15.2. Frontend structure
+#### 4.17.2. Frontend structure
 
 The generated Angular application must be organized into areas with clearly
 bounded responsibilities:
@@ -763,7 +747,7 @@ bounded responsibilities:
 - The frontend must not depend on Django template rendering or DRF UI
   facilities for the main product experience
 
-#### 4.15.3. UI patterns
+#### 4.17.3. UI patterns
 
 The generated application must standardize and reuse patterns for tables,
 lists, detail views, forms, dialogs, snackbars, and confirmation flows rather
@@ -822,17 +806,77 @@ These requirements elaborate `doc/ARCHITECTURE.md` §§ 13-16.
 - The UI must render dates and times in the user or deployment timezone
 - Text and formatting should be designed so localization can be added later
 
-### Deployment
+### 5.9. Deployment Topology
 
-- In production the generated application must be deployable from a single
-  Django-served origin: Django serves both the REST API and the Angular static
-  assets from the same host and port (see `doc/ARCHITECTURE.md` §5.1).
-- The development environment must support running the Angular dev server
-  separately from the Django backend, with the Angular dev server proxying API
-  requests to Django so the two can be developed and reloaded independently
-  (see `doc/ARCHITECTURE.md` §5.2).
+See `doc/ARCHITECTURE.md` § 5 for the architectural deployment model.
 
-## MVP Scope
+#### 5.9.1. Production deployment
+
+The generated application must support a same-origin deployment model:
+
+- The Angular application must be built into static assets served from the
+  same origin as the Django backend
+- Django must serve API endpoints under `/api/` and must own authentication
+  and administration routes
+- Static assets must be served either by Django with a static file layer or
+  by a reverse proxy in front of Django
+- The browser must communicate with one origin for both UI and API traffic
+- User-facing application routes must resolve to the Angular entry point
+
+#### 5.9.2. Local development topology
+
+The generated application must support a local development topology in which:
+
+- Django runs as the backend development server
+- Angular runs its own local development server
+- The Angular development server proxies API traffic to the Django backend
+- The Angular development server owns user-facing route handling during
+  development
+- Frontend routes and backend routes remain distinct in both local and
+  production configurations
+
+## 6. Acceptance Criteria
+
+### 6.1. System Acceptance Requirements
+
+See `doc/ARCHITECTURE.md` §§ 7.3, 14, and 17 for the related verification,
+testing, and architectural decision model.
+
+The generated platform is acceptable when:
+
+- The OpenAPI contract and non-CRM input sources pass the required validation
+  gates for downstream construction
+- Generated and assembled outputs are sufficient to produce a runnable,
+  integrated application rather than only isolated artifacts
+- Backend behavior, generated Angular integration artifacts, and frontend
+  composition remain aligned with the governing contract and ownership
+  boundaries
+- Required verification categories have passed, including contract
+  verification, construction-output verification, integration verification,
+  and test-based verification
+- The assembled application satisfies the MVP scope expected for the current
+  implementation stage, including one complete business module and the shared
+  platform services it depends on
+- Blocking failures are surfaced explicitly through the construction and
+  verification flow rather than being hidden or silently ignored
+
+### 6.2. Implementation Handoff Readiness
+
+See `doc/ARCHITECTURE.md` §§ 17-18 for the related architectural decision and
+implementation-sequencing context.
+
+The platform is ready for implementation handoff when:
+
+- The backend/frontend integration model is agreed upon
+- Authentication, authorization, and audit expectations are explicit
+- OpenAPI and non-CRM content inputs have clear ownership and boundaries
+- The MVP scope includes one full business module and the shared platform
+  services it needs
+- Non-functional requirements are concrete enough to guide engineering choices
+- The architecture supports adding future modules without reworking the core
+  stack
+
+### 6.3. MVP Scope
 
 The first implementation should include:
 

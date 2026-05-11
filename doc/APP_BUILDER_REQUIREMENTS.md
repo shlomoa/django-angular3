@@ -58,9 +58,9 @@ it into `rapp`.
 |---|---|---|
 | Previous schema | `--previous-schema <path>` | OAS file from prior build. If absent, the builder treats the run as start-from-scratch. |
 | Previous config | `--previous-config <path>` | Prior `django-angular3.json`. If absent, config change detection is skipped. |
-| Output format | `--output-format json\|yaml\|text` | Format for the emitted build plan. Default: `json`. |
-| Dry run | `--dry-run` | Print the plan without writing it to disk. |
-| Plan output path | `--output <dir>` | Write the plan to `<dir>/build-plan.<ext>`. Default: `build/`. |
+| Output format | `--output-format json\|yaml\|text` | Format for the emitted procedure graph. Default: `json`. |
+| Dry run | `--dry-run` | Emit the procedure graph without invoking any SKILLS or writing to disk. |
+| Graph output path | `--output <dir>` | Write the procedure graph to `<dir>/procedure-graph.<ext>`. Default: `build/`. |
 | Force mode | `--force start-from-scratch` | Override change detection; treat as start-from-scratch regardless of diff. |
 
 ### Configuration keys read by the app builder
@@ -216,6 +216,11 @@ graph. Procedures that invoke a SKILL in delete mode for removed resources
 precede procedures that invoke in create/add mode for new resources at the
 same dependency level.
 
+The final node(s) in the graph are always verification procedures. Verification
+is `build_app`'s responsibility: it is not a separate command and is not
+optional. The verification procedures confirm that `rapp` is in a correct and
+consistent state after all construction procedures have completed.
+
 ### JSON representation (default)
 
 ```json
@@ -299,8 +304,8 @@ same dependency level.
 ### FR-6: Config-only changes
 
 - When the schema has not changed (`no-change`) but the config has changed,
-  only config-derived skills are included in the plan.
-- Schema-derived skills are not re-run unless triggered by a schema change.
+  only config-derived SKILLS are included in the procedure graph.
+- Schema-derived SKILLS are not re-run unless triggered by a schema change.
 
 ### FR-7: Combined changes
 
@@ -366,7 +371,7 @@ same dependency level.
 | Existing command | Relationship to app builder |
 |---|---|
 | `build` | Deterministic command: produces a correct-by-construction build artifact plan from config. Belongs to djng's deterministic command category. `build_app` is the SKILLS-based orchestration command. They serve different purposes within djng's two-category command surface; neither replaces the other. |
-| `ng_new`, `ng_add`, `ng_config` | App builder emits these as steps in the plan when `ng-workspace` skill is triggered. |
-| `ng_gen_app` | App builder emits this as a step when `ng-app` skill is triggered. |
-| `ng_openapi_gen` | App builder emits this as a step when `ng-api` skill is triggered. |
-| `ng_build` | App builder may emit this as a final verification step. |
+| `ng_new`, `ng_add`, `ng_config` | Invoked as procedures in the graph when the `ng-workspace` SKILL is triggered. |
+| `ng_gen_app` | Invoked as a procedure in the graph when the `ng-app` SKILL is triggered. |
+| `ng_openapi_gen` | Invoked as a procedure in the graph when the `ng-api` SKILL is triggered. |
+| `ng_build` | Invoked as the final verification procedure(s) in the Layer 2 graph. Verification is `build_app`'s responsibility and is always included as the terminal node(s) of the graph. |
