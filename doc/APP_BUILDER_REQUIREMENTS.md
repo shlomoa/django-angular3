@@ -56,13 +56,16 @@ generated app.
 
 ### Optional
 
+Items marked `[DEBUG]` are available for inspection and troubleshooting; they
+are not required for normal operation.
+
 | Input | Flag | Notes |
 |---|---|---|
 | Previous schema | `--previous-schema <path>` | OAS file from prior build. If absent, the builder treats the run as start-from-scratch. |
 | Previous config | `--previous-config <path>` | Prior `django-angular3.json`. If absent, config change detection is skipped. |
-| Output format | `--output-format json\|yaml\|text` | Format for the emitted procedure graph. Default: `json`. |
-| Dry run | `--dry-run` | Emit the procedure graph without invoking any SKILLS or writing to disk. |
-| Graph output path | `--output <dir>` | Write the procedure graph to `<dir>/procedure-graph.<ext>`. Default: `build/`. |
+| Output format | `--output-format json\|yaml\|text` | `[DEBUG]` Format for the emitted procedure graph. Default: `json`. |
+| Dry run | `--dry-run` | `[DEBUG]` Emit the procedure graph without invoking any SKILLS or writing to disk. |
+| Graph output path | `--output <dir>` | `[DEBUG]` Write the procedure graph to `<dir>/procedure-graph.<ext>`. Default: `build/`. |
 | Force mode | `--force start-from-scratch` | Override change detection; treat as start-from-scratch regardless of diff. |
 
 ### Configuration keys read by the app builder
@@ -195,9 +198,9 @@ the dependency order defined in `doc/SKILL_AUTHORING_PLAN.md`.
 ## Procedure Graph
 
 Procedure graph construction translates the change-to-SKILLS mapping into a
-directed acyclic graph of procedures. Each node in the graph is a procedure: a SKILL name, invocation
-mode, reason, SDK inputs, and its dependency edges. The graph encodes the
-following SKILLS dependency chain:
+directed acyclic graph of procedures. Each node in the graph is a procedure:
+a SKILL name, invocation mode, reason, SDK inputs, and its dependency
+edges. The graph encodes the following SKILLS dependency chain:
 
 ```
 1  ng-workspace   (foundation)
@@ -223,7 +226,7 @@ is `build_app`'s responsibility: it is not a separate command and is not
 optional. The verification procedures confirm that the generated app is in a correct and
 consistent state after all construction procedures have completed.
 
-### JSON representation (default)
+### JSON representation `[DEBUG]`
 
 ```json
 {
@@ -286,7 +289,7 @@ consistent state after all construction procedures have completed.
 - Each procedure must include a `reason` for its inclusion.
 - Procedures not triggered by any change in the current run must be omitted.
 
-### FR-3: Dry run
+### FR-3: Dry run `[DEBUG]`
 
 - `--dry-run` must emit the procedure graph without invoking any SKILLS or
   executing any SDK calls.
@@ -332,8 +335,8 @@ consistent state after all construction procedures have completed.
   as it depends on Claude Code SDK call duration.
 - The builder must be testable with mock oasdiff output so `oasdiff` does not
   need to be installed to run the test suite.
-- The procedure graph must be emitted in machine-readable format (JSON/YAML)
-  so it can be inspected by CI pipelines before or after execution.
+- `[DEBUG]` The procedure graph must be emittable in machine-readable format
+  (JSON/YAML) for inspection and CI consumption.
 
 ---
 
@@ -360,11 +363,13 @@ consistent state after all construction procedures have completed.
    uses Claude Code Python SDK API calls. SKILLS invoke ngdj schematics
    internally. No direct CLI command strings in the procedure graph.
 
-5. **Repair/refinement loop placement**: ARCHITECTURE.md §7.2 requires ≥1
-   iterations per construction stage, terminating on deterministic acceptance
-   criteria. Where in the three-phase architecture does this loop live — inside
-   the SKILL, inside the SDK call, or as a retry at the SKILLS execution level?
-   This must be decided before the repair loop can be specified.
+5. ~~**Repair/refinement loop placement**~~: **Resolved — Option B.** The
+   Claude Code SDK call IS the repair/refinement loop. The agent executing the
+   SKILL is the loop controller. `build_app` makes one SDK call per procedure;
+   the agent iterates natively (call tool → read result → decide → repeat)
+   until the acceptance criteria embedded in the SKILL instructions are
+   satisfied. ARCHITECTURE.md §7.2's ≥1-iteration requirement is fulfilled
+   inside the agent session, not at the `build_app` level.
 
 ---
 
