@@ -22,14 +22,22 @@ django-admin build_app <config> [options]
 python manage.py build_app <config> [options]
 ```
 
-`build_app` takes an existing generated app (initially empty on first run),
-two OpenAPI schemas (current and previous, previous initially empty on first
-run), and a configuration file. It operates through three phases:
+`build_app` takes:
+- An existing generated app: initially empty on first run.
+- Two OpenAPI schemas: 
+  - current and previous
+  - previous initially empty on first run.
+- Two configuration files: 
+  - current and previous
+  - previous initially empty on first run.
 
-**Change derivation**: Compares the current schema against the previous schema
-using `oasdiff`, and the current config against the previous config. Produces
-a typed `ChangeSet` and maps it to the set of SKILLS that must be invoked and
-in what mode.
+### It operates through three phases:
+
+**Change derivation**: Two-fold:
+- **CRM**: Compares the current OpenAPI schema against the previous schema using `oasdiff`.
+- **Non-CRM**: Compares the current configuration file against the previous configuration file using an equivalent config diff function. ⚠️ The config diff function is not yet defined — it depends on the `django-angular3.json` schema (particularly `ui.*` sections) being finalised first. See Open Questions.
+
+Produces a typed `ChangeSet` and maps it to the set of SKILLS that must be invoked and in what mode.
 
 **Procedure graph construction**: Translates the change derivation output into
 a directed graph of procedures. Each procedure represents a unit of
@@ -410,13 +418,3 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **ChangeSet** | The typed record of schema and config changes produced by change derivation, used to construct the procedure graph. | §Change Derivation |
 
 ---
-
-## Relationship to Existing Commands
-
-| Existing command | Relationship to app builder |
-|---|---|
-| `build` | Deterministic command: produces a correct-by-construction build artifact plan from config. Belongs to djng's deterministic command category. `build_app` is the SKILLS-based orchestration command. They serve different purposes within djng's two-category command surface; neither replaces the other. |
-| `ng_new`, `ng_add`, `ng_config` | Invoked as procedures in the graph when the `ng-workspace` SKILL is triggered. |
-| `ng_gen_app` | Invoked as a procedure in the graph when the `ng-app` SKILL is triggered. |
-| `ng_openapi_gen` | Invoked as a procedure in the graph when the `ng-api` SKILL is triggered. |
-| `ng_build` | Invoked as the final verification procedure(s) in the procedure graph. Verification is `build_app`'s responsibility and is always included as the terminal node(s) of the graph. |
