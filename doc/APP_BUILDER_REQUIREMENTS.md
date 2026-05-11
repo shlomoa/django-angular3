@@ -272,6 +272,26 @@ consistent state after all construction procedures have completed.
 
 ---
 
+## Durable Artifacts
+
+The durable artifact of each `build_app` run is the set of generated application
+files produced by the Claude Code Python SDK API calls:
+
+| Artifact | Format | Storage path |
+|---|---|---|
+| Generated application files — Angular source files accumulated across each SDK API call (components, services, API clients, routes, configuration) | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root (from `django-angular3.json`) |
+
+The following internal artifacts are produced for `[DEBUG]` and validation
+purposes only:
+
+| Internal artifact | Format | Storage path |
+|---|---|---|
+| oasdiff diff report | YAML | `build/oasdiff-report.yaml` |
+| `ChangeSet` | JSON | `build/changeset.json` |
+| Procedure graph | JSON or YAML | `build/procedure-graph.json` |
+
+---
+
 ## Functional Requirements
 
 ### FR-1: Change detection
@@ -317,13 +337,13 @@ consistent state after all construction procedures have completed.
 - When both schema and config change, schema-derived procedures are ordered
   before config-derived procedures at the same dependency level.
 
-### FR-8: SKILLS execution
+### FR-8: Procedure graph traversal and SDK invocation
 
-- SKILLS execution must traverse the procedure graph in dependency order.
-- Each procedure must be executed via a Claude Code Python SDK API call
-  invoking the specified SKILL with the specified inputs.
-- SKILLS must follow the three-phase contract: (1) call ngdj schematics,
-  (2) modify generated output, (3) integrate into the generated app.
+- `build_app` must traverse the procedure graph in dependency order.
+- For each procedure node, `build_app` must make a Claude Agent SDK `query()` call
+  with the specified SKILL(s) enabled, the procedure inputs as the prompt, and
+  the working directory set to the generated app workspace (`angular.output` from
+  `django-angular3.json`).
 
 ---
 

@@ -4,37 +4,31 @@ Generated: 2026-05-11. All items below are open unless marked **Resolved**.
 
 ---
 
-## 1. APP_BUILDER_REQUIREMENTS.md — Open Questions (OQ1–OQ3)
+## 1. APP_BUILDER_REQUIREMENTS.md — Open Questions
 
-These were in the `doc/APP_BUILDER_REQUIREMENTS.md` Open Questions section from the outset.
-OQ4 and OQ5 are resolved and crossed out in the document; OQ1–OQ3 remain open.
+OQ1 (schema format) is resolved: the Inputs table already accepts YAML or JSON OAS 3.x.
+OQ3 (previous-state storage) is an implementation detail: the `--previous-schema` / `--previous-config` flags define the interface; where the file lives is up to the implementer.
+OQ4 and OQ5 are resolved and crossed out in the document.
+
+**OQ2 remains open and is a top-priority gap.**
 
 | # | Question | Detail | Options / proposals | Origin | Input sources |
 |---|---|---|---|---|---|
-| OQ1 | **Schema format** | `openapi.source` in `django-angular3.json` currently points to a JSON file. The app builder should accept both YAML and JSON OAS 3.x files. | (a) Accept both; auto-detect by file extension or content. (b) Require YAML only. (c) Require JSON only. | APP_BUILDER_REQUIREMENTS.md §Inputs table; `spec/openapi/` examples use JSON | `django_angular3/config.py`, `spec/openapi/source/`, `django-angular3.json` `openapi.source` key |
-| OQ2 | **UI definition format** | `ui.source` points to a JSON file (`spec/ui/example.ui.json`). The schema for inline `ui.pages`, `ui.components`, and `ui.forms` in `django-angular3.json` is not yet defined. Config change detection cannot be implemented until the schema is fixed. | Define a JSON Schema for each inline section, OR require `ui.source` only (no inline definitions). | APP_BUILDER_REQUIREMENTS.md §Inputs — Config keys table; `spec/ui/example.ui.json` | `spec/ui/`, `django_angular3/validation.py`, `django-angular3.json` `ui.*` keys |
-| OQ3 | **Previous-state storage** | `build_app` compares current schema/config against a previous version. Where the previous version lives is unspecified. | (a) Git: diff HEAD vs working tree or two named commits. (b) Committed baseline file (e.g. `spec/openapi/previous.json`). (c) Explicit `--previous-schema` / `--previous-config` CLI paths (already defined as optional flags — this option treats them as the sole mechanism). | APP_BUILDER_REQUIREMENTS.md §Optional inputs table and §Change Derivation | `django_angular3/management/commands/`, `spec/openapi/`, APP_BUILDER_REQUIREMENTS.md |
+| OQ2 | **⚠️ TOP PRIORITY — UI definition format** | `ui.source` points to a JSON file (`spec/ui/example.ui.json`). The schema for inline `ui.pages`, `ui.components`, and `ui.forms` in `django-angular3.json` is not yet defined. Config change detection cannot be implemented until the schema is fixed. | Define a JSON Schema for each inline section, OR require `ui.source` only (no inline definitions). | APP_BUILDER_REQUIREMENTS.md §Inputs — Config keys table; `spec/ui/example.ui.json` | `spec/ui/`, `django_angular3/validation.py`, `django-angular3.json` `ui.*` keys |
 
 ---
 
 ## 2. APP_BUILDER_REQUIREMENTS.md — Architectural Item (A3)
 
-| # | Item | Detail | What is missing | Origin | Input sources |
-|---|---|---|---|---|---|
-| A3 | **Per-stage durable artifacts table** | ARCHITECTURE.md §7.1 states each stage should produce durable artifacts that can be inspected, tested, and reused across iterations. APP_BUILDER_REQUIREMENTS.md defines the three phases (change derivation, procedure graph construction, SKILLS execution) and their outputs textually, but no table maps phase → artifact → format → storage location. | Add a table with columns: Phase, Artifact produced, Format, Storage path, Inspectable? | ARCHITECTURE.md §7.1 specifies durable artifacts per stage; APP_BUILDER_REQUIREMENTS.md §JSON representation describes the procedure graph structure but only as a `[DEBUG]` side-effect, not a first-class artifact record. | ARCHITECTURE.md §7.1, APP_BUILDER_REQUIREMENTS.md §Procedure Graph, §JSON representation |
+**Resolved.** `## Durable Artifacts` section added to `APP_BUILDER_REQUIREMENTS.md` after `## Procedure Graph`. Primary artifact is the generated application files (TypeScript / HTML / SCSS / JSON) in `angular.output`. Internal debug artifacts (oasdiff report, ChangeSet, procedure graph) documented as `[DEBUG]` only.
 
 ---
 
 ## 3. Cross-Document Misalignment — SKILL_AUTHORING_PLAN.md vs APP_BUILDER_REQUIREMENTS.md
 
-| Aspect | SKILL_AUTHORING_PLAN.md says | APP_BUILDER_REQUIREMENTS.md says | Gap |
-|---|---|---|---|
-| How SKILLS are invoked | SKILLS invoke djng Python wrappers (`ng_new`, `ng_config`, `ng_openapi_gen`, `ng_build`, etc.) bundled in `scripts/`. | SKILLS are invoked via Claude Code Python SDK API calls. `build_app` makes one SDK call per procedure. | Neither document acknowledges the other level. The full chain is: `build_app` → SDK call → agent session → Bash → djng wrapper → ngdj schematic. |
-| Who is the loop controller | Per-skill cadence includes a Verification phase; SKILL instructions define acceptance criteria. | Option B (resolved): the agent executing the SKILL iterates natively until SKILL acceptance criteria are satisfied. | Consistent in intent, but the chain description in SKILL_AUTHORING_PLAN.md stops at the djng-wrapper level without acknowledging the agent/SDK wrapper above it. |
-| Resolution needed | Neither document needs to be the single source of truth, but each should acknowledge the other level with a one-sentence cross-reference. | Same. | Draft: SKILL_AUTHORING_PLAN.md should note SKILLS are invoked via SDK calls; APP_BUILDER_REQUIREMENTS.md FR-8 already states SDK invocation but should note SKILLS internally call djng wrappers. |
-
-**Origin**: identified during OQ5 analysis. Reading GENERATE_SKILLS.md (SKILLS are agent instructions in forked contexts) and SKILL_AUTHORING_PLAN.md (SKILLS call djng wrappers) together reveals the gap.
-**Input sources**: `doc/SKILL_AUTHORING_PLAN.md` §Tooling boundary, `doc/APP_BUILDER_REQUIREMENTS.md` §FR-8, `doc/GENERATE_SKILLS.md` §Auto-invocation model.
+**Resolved.** Correct separation of responsibilities applied:
+- `APP_BUILDER_REQUIREMENTS.md` FR-8 rewritten: owns only `build_app` traversal and Claude Agent SDK `query()` invocation. No internal SKILL detail.
+- `SKILL_AUTHORING_PLAN.md` §Tooling boundary: unchanged — correctly owns what SKILLS do internally (invoke djng wrappers). Each document stays within its own layer.
 
 ---
 
