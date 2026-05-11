@@ -476,7 +476,8 @@ These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 - The governed construction flow must provide an explicit path for
   acknowledging or resolving breaking changes before downstream construction
   is permitted to resume; blocking a build without a supported resolution path
-  is not acceptable behavior
+  is not acceptable behavior (see `--acknowledge-breaking` in
+  `doc/APP_BUILDER_REQUIREMENTS.md` FR-4 for the governed implementation)
 - API schema generation and browsable documentation should be available in
   non-production environments
 
@@ -485,7 +486,7 @@ These requirements elaborate `doc/ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 See `doc/ARCHITECTURE.md` §§ 4.1-4.3 and 7.1-7.4 for the governing ownership
 boundaries, architectural control-loop, verification, and build-flow model.
 
-#### 4.1.1. Platform ownership
+#### 4.2.1. Platform ownership
 
 - Django and DRF must own the data model, persistence layer, backend business
   logic, authenticated APIs, authentication services, authorization
@@ -501,7 +502,7 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - Angular must consume Django and DRF APIs as the backend contract surface and
   must not be the final trust boundary for security decisions
 
-#### 4.1.2. Governed construction
+#### 4.2.2. Governed construction
 
 - `djng` must provide the generation entry points that drive integrated Django-
   Angular construction, including backend contract lifecycle governance,
@@ -526,7 +527,7 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - Any backend data model change that produces a Django migration must trigger
   OpenAPI schema re-extraction before the contract normalization stage proceeds
 
-#### 4.1.3. First-time build flow
+#### 4.2.3. First-time build flow
 
 The initial authoring and build flow must support this sequence:
 
