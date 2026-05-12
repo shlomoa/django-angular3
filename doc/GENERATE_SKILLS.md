@@ -1357,11 +1357,11 @@ After modifying a workspace, verify:
 
 **Error**: `EACCES: permission denied`
 - **Cause**: Insufficient permissions to create directory or install packages
-- **Resolution**: Check directory permissions, avoid using sudo with npm (configure npm prefix instead)
+- **Resolution**: Check directory permissions
 
-**Error**: `npm ERR! code ERESOLVE` (dependency conflicts)
+**Error**: Dependency conflict during `pnpm install`
 - **Cause**: Conflicting package versions
-- **Resolution**: Use `--legacy-peer-deps` or `--force` flag, or resolve dependency versions manually
+- **Resolution**: Resolve dependency versions manually or use `--force` flag
 
 **Error**: `Schematic "ng-add" not found in collection "@angular/material"`
 - **Cause**: Material package issue or version mismatch
@@ -5275,7 +5275,7 @@ Procedure-level inputs:
 
 2. **Spec run**:
    ```bash
-   npm test -- --watch=false --include='**/<formName>.component.spec.ts'
+   pnpm exec ng test --watch=false --include='**/<formName>.component.spec.ts'
    ```
    - Confirm form spec passes
    - Verify validation state transition tests

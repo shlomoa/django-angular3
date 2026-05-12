@@ -21,28 +21,31 @@ configuration files. It produces generated apps that combine Django REST
 Framework on the backend with Angular Material on the frontend, generated
 against a contract-first OpenAPI specification. See §Glossary.
 
-There are therefore two distinct configuration files in play by path, but
-they share the same filename and schema pattern — and they must not be
-conflated.
+There are two configuration files that skills must not conflate.
 
-`django-angular3.json` at the root of this repository configures `djng`.
-It tells the tool how to behave: where to look for OpenAPI input, where to
-write build plans, which package manager to use, and so on.
+`django-angular3.json` is the `djng` tool configuration. It tells the tool
+how to behave: workspace root path (`angular.output`), project name
+(`project.name`), OpenAPI source path (`openapi.source`), package manager,
+stylesheet format, routing settings, and so on. This file is **golden** —
+`build_app` reads it as current and authoritative on every run; it is never
+diffed between runs and its changes take effect immediately on the next
+invocation. The eleven skills authored from `GENERATE_SKILLS.md` operate on a
+generated app. Their run-time inputs are sourced from the generated app's
+`django-angular3.json`.
 
-`django-angular3.json` at the root of a generated app carries that app's
-project-specific inputs (workspace name, application name, route prefixes,
-theming choices, OpenAPI source paths for that project, UI specification
-paths, and so on). Both files use the same hierarchical settings schema —
-the generated-app file adds an `angular.workspace` block and any other
-app-specific sections. The eleven skills authored from `GENERATE_SKILLS.md`
-operate on a generated app, so the bulk of their run-time input is sourced
-from the generated app's `django-angular3.json` and from files it points to.
+`<project>.project.json` is the generated app configuration file (placeholder
+name — schema and final name are not yet defined; see `TODO.md`). It defines
+the UI artifacts — pages, components, forms — used for non-CRM change
+detection. `build_app` diffs this file between runs to detect non-CRM changes;
+it is not golden. Skills that depend on non-CRM changes receive them as part
+of the `ChangeSet` procedure input, not by reading `<project>.project.json`
+directly.
 
-Either file may legitimately contain pointers to other files that are not yet
-present. A pointer to a missing-but-promised file is a valid pipeline state,
-not an error: it represents work that an earlier skill in the orchestration is
-responsible for producing. Only invalid (malformed or unparseable) referenced
-files are hard errors.
+Either configuration file may legitimately contain pointers to other files
+that are not yet present. A pointer to a missing-but-promised file is a valid
+pipeline state, not an error: it represents work that an earlier skill in the
+orchestration is responsible for producing. Only invalid (malformed or
+unparseable) referenced files are hard errors.
 
 ## Two-tier input model
 
@@ -55,16 +58,24 @@ should be invoked, the format of its output, and the format and constraints of
 the run-time input the skill must accept. Author-time input is a description,
 not an instance.
 
-Run-time input is the concrete values an end user (or, more typically, an
-orchestrator) provides when invoking the skill. For these eleven skills,
-run-time input is sourced from the generated app's `django-angular3.json`
-and from files it points to, never from prompts typed in chat by a human end
-user.
+Run-time input is the concrete values an orchestrator provides when invoking
+the skill. For these eleven skills, run-time input comes from two sources:
+
+- **`django-angular3.json` keys** — read directly by the skill from the
+  generated app's tool configuration file (e.g., `angular.output`,
+  `project.name`, `openapi.source`). This file is golden; the skill reads it
+  as current.
+- **Procedure-level inputs** — supplied by `build_app` as the prompt for each
+  guided agent session. These include resource names, component names, form
+  names, placement hints, and similar procedure-specific values that vary per
+  procedure node in the graph.
+
+Run-time input is never typed in chat by a human end user.
 
 Each skill's `Inputs` section in `GENERATE_SKILLS.md` is best understood as a
 schema describing both layers: which keys are read directly from the generated
-app's `django-angular3.json`, and which are paths the skill must dereference
-and parse. The authored SKILL.md will be explicit about the layer for every
+app's `django-angular3.json`, and which are procedure-level values supplied by
+`build_app`. The authored SKILL.md will be explicit about the layer for every
 input.
 
 ## Skill format and output location
@@ -99,12 +110,18 @@ acknowledged), and `ng-openapi-gen` for Angular client generation. No
 alternative Angular client generator is in scope, and no alternative OpenAPI
 diff tool is in scope.
 
-Skills do not call Angular CLI, `ng-openapi-gen`, or `oasdiff` directly. They
-invoke this repository's Python wrappers (`ng_new`, `ng_config`,
-`ng_openapi_gen`, `ng_build`, and so on), which honor the operating principle
-that Angular tooling must not download packages at runtime and that workspace
-dependencies are used locally via `pnpm exec`. Each skill bundles the
-wrappers it needs in its `scripts/` directory.
+Skills do not call Angular CLI, `ng-openapi-gen`, or `oasdiff` directly.
+
+`oasdiff` is run by `build_app` during the Change Derivation phase, before
+any skill is invoked. Skills receive the resulting `ChangeSet` as procedure
+input. A skill must never re-run `oasdiff` itself.
+
+For Angular operations, skills invoke this repository's Python wrappers
+(`ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_openapi_gen`, `ng_build`,
+`ng_workspace_delete`), which honor the operating principle that Angular
+tooling must not download packages at runtime and that workspace dependencies
+are used locally via `pnpm exec`. Each skill bundles the wrappers it needs in
+its `scripts/` directory.
 
 The default settings surface for this repository (per `README.md`) is `pnpm`
 as the package manager, `scss` as the stylesheet format, routing enabled,
@@ -197,8 +214,9 @@ resolution is captured in the skill itself.
 
 ## Status
 
-Planning phase complete. The next action is to begin the Plan phase for
-`ng-workspace`.
+Document cascade complete. `APP_BUILDER_REQUIREMENTS.md`, `GENERATE_SKILLS.md`,
+and this document have been revised and aligned. The next action is to begin
+the Plan phase for `ng-workspace`.
 
 ---
 
