@@ -5,16 +5,16 @@ Create a solution based on claude code and claude skills to build and maintain A
 
 # Glossary
 
-For authoritative definitions see `doc/ARCHITECTURE.md` §2 and §19.
+For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 | Term | Definition | See |
 |---|---|---|
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `doc/ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `doc/ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `doc/APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `doc/ARCHITECTURE.md` §2.16 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `doc/ARCHITECTURE.md` §2.14 |
-| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `doc/ARCHITECTURE.md` §2.13 |
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
+| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `ARCHITECTURE.md` §2.14 |
+| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
 
 ---
 
@@ -127,6 +127,11 @@ directly:
 **Key Principle**: SKILLS are composable knowledge units. Multiple SKILLS may be
 enabled for a single guided agent session when a procedure composes capabilities
 from several skills.
+
+**Implementation note**: Higher-level documents (`APP_BUILDER_REQUIREMENTS.md`,
+`ARCHITECTURE.md`) use the abstract term "Claude Agent SDK call" to describe a
+guided agent session. In the Claude Agent SDK, this is implemented as a `query()`
+call. This document uses `query()` to refer to that concrete function.
 
 ## Canonical SKILL.md Template Structure
 
@@ -1042,12 +1047,15 @@ The `ng-workspace` skill manages the creation, modification, and deletion of Ang
 
 ### Inputs
 
-**From project configuration**:
-- **`workspacePath`** (string, required): Absolute path where the workspace will be created (e.g., `/home/user/projects/my-angular-app`)
-- **`packageManager`** (enum, optional): Package manager to use (`npm` | `yarn` | `pnpm`). Defaults to `pnpm` unless project configuration says otherwise
-- **`style`** (enum, optional): Stylesheet format (`css` | `scss` | `sass` | `less`). Defaults to `scss`
-- **`routing`** (boolean, optional): Whether to include routing in the default application. Defaults to `true`
-- **`workspaceName`** (string, optional): Name of the workspace. Defaults to directory name from `workspacePath`
+All inputs are read from `django-angular3.json` passed as the procedure input.
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `angular.output` | yes | string | — | Absolute path where the workspace will be created |
+| `project.name` | yes | string | — | Name of the workspace |
+| `angular.workspace.packageManager` | no | `npm` \| `yarn` \| `pnpm` | `pnpm` | Package manager to use |
+| `angular.workspace.style` | no | `css` \| `scss` \| `sass` \| `less` | `scss` | Stylesheet format |
+| `angular.workspace.routing` | no | boolean | `true` | Whether to include routing |
 
 ### Mode: Create
 

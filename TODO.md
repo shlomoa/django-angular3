@@ -12,7 +12,30 @@ Generated: 2026-05-11. All items below are open unless marked **Resolved**.
 
 ---
 
-## 2. Missing E2E Verification Specification
+## 2. `spec/examples/` Input Files Missing
+
+The six scenarios in `doc/TEST_EXAMPLES.md` reference input files under
+`spec/examples/<example-name>/` — `schema.yaml`, `django-angular3.json`, and
+where applicable `previous-schema.yaml`, `previous-config.json`, and `ui.json`.
+None of these files exist. The examples cannot be run even with `--dry-run`
+until the input files are created.
+
+| Example | Files needed | Blocked by |
+|---|---|---|
+| 1 Simple CRM | `schema.yaml`, `django-angular3.json`, `ui.json` | — |
+| 2 Add Resource | `schema.yaml`, `django-angular3.json` | Example 1 files |
+| 3 Breaking Change | `schema.yaml`, `django-angular3.json` | Example 1 files |
+| 4 Config Change | `django-angular3.json` with inline `ui.pages`/`ui.components` | MR1 |
+| 5 Combined | `schema.yaml`, `django-angular3.json` | Example 2 files |
+| 6 Replace Resource | `schema.yaml`, `django-angular3.json` | Example 2 files |
+
+Examples 1, 2, 3, 5, and 6 are unblocked. Example 4 depends on MR1.
+
+Prerequisite for `IMPLEMENTATION_PLAN.md` item 10.
+
+---
+
+## 3. Missing E2E Verification Specification
 
 Prerequisite for the original session goal: E2E test from example Django app to a running integrated application.
 
@@ -28,11 +51,11 @@ Prerequisite for the original session goal: E2E test from example Django app to 
 
 ---
 
-## 3. Success Criteria — Not Yet Specified
+## 4. Success Criteria — Not Yet Specified
 
 The most consequential gap. Without this, Option B is a statement of intent, not a guarantee. A SKILL agent session can end without meeting requirements. Local acceptance by each SKILL does not imply global correctness of the assembled application.
 
-### 3.1 Failure modes for a SKILL agent session
+### 4.1 Failure modes for a SKILL agent session
 
 | Failure mode | Mechanism | Consequence for build_app |
 |---|---|---|
@@ -45,7 +68,7 @@ The most consequential gap. Without this, Option B is a statement of intent, not
 
 **Current gap**: `build_app` has no mechanism to detect that a SKILL agent ended without satisfying its acceptance criteria. It makes one SDK call per procedure and advances to the next node regardless.
 
-### 3.2 Local vs. global correctness
+### 4.2 Local vs. global correctness
 
 Each SKILL agent verifies its own output against its own local acceptance criteria. Local satisfaction is necessary but not sufficient for global correctness. A representative failure chain:
 
@@ -57,7 +80,7 @@ ng-page  calls      dataService.load(route.params.id)  ← locally valid
 
 Each agent declared "done." `ng_build` passes (TypeScript compiler accepts it). At runtime, a string is silently passed where a number is expected. No existing check catches this.
 
-### 3.3 What must be specified
+### 4.3 What must be specified
 
 | Level | What it covers | Status | Blocking |
 |---|---|---|---|
@@ -66,7 +89,7 @@ Each agent declared "done." `ng_build` passes (TypeScript compiler accepts it). 
 | **Failure handling** | What `build_app` does when a SKILL agent ends without evidence of success: halt, retry the SDK call, surface a structured error, or roll back partial changes. | Not specified | Blocks build_app implementation |
 | **Local-to-global gap coverage** | How the architecture ensures a set of locally-correct SKILL outputs also satisfies global correctness. Options: integration tests in the terminal procedure, a dedicated cross-SKILL consistency check, or a post-graph verification SKILL. | Not specified; architecture currently silent | Blocks E2E goal |
 
-### 3.4 Where this must land
+### 4.4 Where this must land
 
 - **Per-SKILL acceptance criteria**: in each SKILL's `SKILL.md` instructions (during SKILL authoring, Plan phase).
 - **Global acceptance criteria**: in `doc/REQUIREMENTS.md` §6.4 Mandatory Acceptance Scenarios (currently an empty header) and `doc/APP_BUILDER_REQUIREMENTS.md` §Functional Requirements (new FR for terminal verification).
