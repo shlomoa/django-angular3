@@ -1150,7 +1150,7 @@ Package manager availability and Angular CLI access are validated by the `ng_new
 After successful execution, the workspace directory contains:
 
 ```
-<workspacePath>/
+<angular.output>/
 ├── .angular/                    # Angular cache directory
 ├── .editorconfig               # Editor configuration
 ├── .gitignore                  # Git ignore rules
@@ -1369,7 +1369,7 @@ After modifying a workspace, verify:
 
 **Error**: `The serve command requires to be run in an Angular project`
 - **Cause**: Not in workspace root directory
-- **Resolution**: Verify `workspacePath` is correct and contains `angular.json`
+- **Resolution**: Verify `angular.output` in `django-angular3.json` is correct and points to a directory containing `angular.json`
 
 **Error**: Workspace directory already exists and is not empty
 - **Cause**: Target directory contains files
@@ -1595,7 +1595,7 @@ Update an existing Angular Material application with changes to providers, globa
 
 1. **Validate application exists**
    - Verify `projects/<project.name>/` exists
-   - Check `angular.json` contains configuration for `<appName>`
+   - Check `angular.json` contains configuration for `<project.name>`
    - Confirm application is using standalone architecture
 
 2. **Update providers in app.config.ts**
@@ -1758,7 +1758,7 @@ Steps to validate successful execution of the skill:
 
 Common errors and their resolution strategies:
 
-**Error**: `Application <appName> already exists`
+**Error**: Application with name `<project.name>` already exists
 - **Cause**: Attempting to create an app with a name that's already in use
 - **Resolution**: Use Delete mode first, or choose a different app name
 
@@ -1793,30 +1793,23 @@ Required prerequisites before executing this skill:
 Optional dependencies:
 
 - If using OpenAPI integration, **Angular API generation** (Skill 3) should be executed after app creation
-- If creating multi-app workspace, this skill can be executed multiple times with different `appName` values
-
 ### Examples
 
 **Example 1: Create a new admin dashboard application**
 
 ```typescript
-// Inputs
-{
-  appName: "admin-dashboard",
-  workspacePath: "/workspace/my-project",
-  prefix: "admin",
-  routing: true,
-  standalone: true
-}
+// Inputs from django-angular3.json:
+//   project.name = "admin-dashboard"
+//   angular.output = "/workspace/my-project"
+// Procedure-level: prefix = "admin"
 
 // Executes:
-// 1. ng generate application admin-dashboard --routing --standalone --style=scss --prefix=admin
+// 1. django-admin ng_gen_app django-angular3.json
 // 2. Creates core/, shared/, features/ directories
-// 3. Installs Material: ng add @angular/material --project=admin-dashboard
-// 4. Configures theme in projects/admin-dashboard/src/styles.scss
-// 5. Sets up app.config.ts with providers
-// 6. Generates responsive nav shell from app-shell templates
-// 7. Runs: ng build admin-dashboard --configuration=development
+// 3. Configures theme in projects/admin-dashboard/src/styles.scss
+// 4. Sets up app.config.ts with providers
+// 5. Generates responsive nav shell from app-shell templates
+// 6. django-admin ng_build django-angular3.json
 
 // Output: Application ready at projects/admin-dashboard/
 ```
@@ -1824,32 +1817,17 @@ Optional dependencies:
 **Example 2: Modify existing app to add authentication provider**
 
 ```typescript
-// Inputs
-{
-  appName: "admin-dashboard",
-  workspacePath: "/workspace/my-project",
-  modifications: {
-    providers: [
-      {
-        action: "add",
-        provider: "provideAuth",
-        import: "./core/auth",
-        config: { apiUrl: "https://api.example.com" }
-      }
-    ],
-    styles: `
-      .authenticated { border-left: 3px solid green; }
-      .unauthenticated { border-left: 3px solid red; }
-    `
-  }
-}
+// Inputs from django-angular3.json:
+//   project.name = "admin-dashboard"
+//   angular.output = "/workspace/my-project"
+// Procedure-level: add provideAuth provider + styles
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.config.ts
 // 2. Adds import: import { provideAuth } from './core/auth';
 // 3. Adds to providers: provideAuth({ apiUrl: 'https://api.example.com' })
 // 4. Appends custom styles to projects/admin-dashboard/src/styles.scss
-// 5. Runs: ng build admin-dashboard --configuration=development
+// 5. django-admin ng_build django-angular3.json
 
 // Output: Updated app.config.ts and styles.scss
 ```
@@ -1857,26 +1835,14 @@ Optional dependencies:
 **Example 3: Register lazy-loaded feature route**
 
 ```typescript
-// Inputs
-{
-  appName: "admin-dashboard",
-  workspacePath: "/workspace/my-project",
-  modifications: {
-    routes: [
-      {
-        path: "users",
-        loadComponent: () => import("./features/users/users-list.component")
-          .then(m => m.UsersListComponent),
-        title: "User Management"
-      }
-    ]
-  }
-}
+// Inputs from django-angular3.json:
+//   project.name = "admin-dashboard"
+//   angular.output = "/workspace/my-project"
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.routes.ts
 // 2. Adds new route definition to routes array
-// 3. Runs: ng build admin-dashboard --configuration=development
+// 3. django-admin ng_build django-angular3.json
 
 // Output: Updated app.routes.ts with new lazy route
 ```
@@ -1884,18 +1850,15 @@ Optional dependencies:
 **Example 4: Delete an application**
 
 ```typescript
-// Inputs
-{
-  appName: "old-admin",
-  workspacePath: "/workspace/my-project",
-  confirm: true
-}
+// Inputs from django-angular3.json:
+//   project.name = "old-admin"
+//   angular.output = "/workspace/my-project"
+// Procedure-level: confirm = true
 
 // Executes:
 // 1. Verifies projects/old-admin/ exists
 // 2. Removes: rm -rf projects/old-admin
 // 3. Updates angular.json to remove "old-admin" project entry
-// 4. Verifies workspace: ng build --help
 
 // Output: Application "old-admin" removed from workspace
 ```
@@ -2826,9 +2789,9 @@ Common errors and their resolution strategies:
 - **Cause**: Attempting to create a component with a name that already exists
 - **Resolution**: Use Modify mode to update existing component, or Delete mode first, or choose a different name
 
-**Error**: `Application <appName> not found in workspace`
-- **Cause**: Invalid `appName` or workspace path
-- **Resolution**: Verify workspace path contains `angular.json` and application exists in `projects/`
+**Error**: Application `<project.name>` not found in workspace
+- **Cause**: `project.name` in `django-angular3.json` does not match any project in the workspace
+- **Resolution**: Verify `angular.output` contains `angular.json` and the application exists in `projects/`
 
 **Error**: `Invalid placement path: feature/<feature-name> does not exist`
 - **Cause**: Feature directory doesn't exist
@@ -2875,12 +2838,12 @@ Dependent skills (use this skill before):
 
 **Example 1: Create a status badge component in shared**
 
+Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `project.name = "admin-dashboard"`
+
 ```json
 {
   "mode": "create",
   "componentName": "status-badge",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "shared",
   "componentType": "badge",
   "materialModules": ["MatBadgeModule", "MatIconModule"]
@@ -2922,8 +2885,6 @@ Dependent skills (use this skill before):
 {
   "mode": "create",
   "componentName": "export-button",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "feature/reports",
   "componentType": "button"
 }
@@ -2947,8 +2908,6 @@ Dependent skills (use this skill before):
 {
   "mode": "modify",
   "componentName": "status-badge",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "shared",
   "modifications": {
     "addInputs": [
@@ -2975,8 +2934,6 @@ Dependent skills (use this skill before):
 {
   "mode": "delete",
   "componentName": "old-badge",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "shared",
   "confirmDelete": true
 }
@@ -3548,9 +3505,9 @@ Common errors and their resolution strategies:
 - **Cause**: Attempting to create a component with a name that already exists
 - **Resolution**: Use Modify mode to update existing component, or Delete mode first, or choose a different name
 
-**Error**: `Application <appName> not found in workspace`
-- **Cause**: Invalid `appName` or workspace path
-- **Resolution**: Verify workspace path contains `angular.json` and application exists in `projects/`
+**Error**: Application `<project.name>` not found in workspace
+- **Cause**: `project.name` in `django-angular3.json` does not match any project in the workspace
+- **Resolution**: Verify `angular.output` contains `angular.json` and the application exists in `projects/`
 
 **Error**: `Invalid placement path: feature/<feature-name> does not exist`
 - **Cause**: Feature directory doesn't exist
@@ -3613,12 +3570,12 @@ Dependent skills (use this skill before):
 
 **Example 1: Create an email input form field in shared**
 
+Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `project.name = "admin-dashboard"`
+
 ```json
 {
   "mode": "create",
   "componentName": "email-input",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "shared",
   "fieldType": "input",
   "inputType": "email",
@@ -3674,8 +3631,6 @@ Dependent skills (use this skill before):
 {
   "mode": "create",
   "componentName": "country-select",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "feature/users",
   "fieldType": "select",
   "valueType": "string",
@@ -3718,8 +3673,6 @@ Dependent skills (use this skill before):
 {
   "mode": "create",
   "componentName": "birth-date-picker",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "feature/users",
   "fieldType": "datepicker",
   "valueType": "Date",
@@ -3764,8 +3717,6 @@ Dependent skills (use this skill before):
 {
   "mode": "modify",
   "componentName": "email-input",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "shared",
   "modifications": {
     "addValidators": ["maxlength"],
@@ -3797,8 +3748,6 @@ Dependent skills (use this skill before):
 {
   "mode": "modify",
   "componentName": "description-input",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "shared",
   "modifications": {
     "changeFieldType": "textarea"
@@ -3823,8 +3772,6 @@ Dependent skills (use this skill before):
 {
   "mode": "delete",
   "componentName": "old-phone-input",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "placement": "shared",
   "confirmDelete": true
 }
@@ -4446,21 +4393,20 @@ Optional dependencies:
 **Example 1: Create a display component for product card**
 
 ```typescript
-// Inputs
+// Inputs from django-angular3.json: angular.output, project.name = "admin-dashboard"
+// Procedure-level:
 {
   componentName: "product-card",
   targetPath: "src/app/shared/components",
-  type: "display",
-  workspacePath: "/workspace/my-project",
-  appName: "admin-dashboard"
+  type: "display"
 }
 
 // Executes:
-// 1. ng generate component src/app/shared/components/product-card --standalone
+// 1. pnpm exec ng generate component src/app/shared/components/product-card --standalone --project=admin-dashboard
 // 2. Replaces files using component-display templates
 // 3. Replaces {{COMPONENT_NAME_KEBAB}} with "product-card"
 // 4. Replaces {{COMPONENT_NAME_PASCAL}} with "ProductCard"
-// 5. Runs: ng build admin-dashboard --configuration=development
+// 5. django-admin ng_build django-angular3.json
 
 // Output: Display component created at src/app/shared/components/product-card/
 // Usage: <app-product-card [title]="product.name" [data]="product" (actionClicked)="onBuy()" />
@@ -4469,20 +4415,20 @@ Optional dependencies:
 **Example 2: Create a container component for user list**
 
 ```typescript
-// Inputs
+// Inputs from django-angular3.json: angular.output, project.name
+// Procedure-level:
 {
   componentName: "user-list",
   targetPath: "src/app/features/users",
-  type: "container",
-  workspacePath: "/workspace/my-project"
+  type: "container"
 }
 
 // Executes:
-// 1. ng generate component src/app/features/users/user-list --standalone
+// 1. pnpm exec ng generate component src/app/features/users/user-list --standalone --project=<project.name>
 // 2. Replaces files using component-container templates
 // 3. Adds service injection placeholder comments
 // 4. Adds toSignal() usage examples
-// 5. Runs: ng build --configuration=development
+// 5. django-admin ng_build django-angular3.json
 
 // Output: Container component created at src/app/features/users/user-list/
 // Next step: Inject UserService and bind data using toSignal()
@@ -4491,20 +4437,20 @@ Optional dependencies:
 **Example 3: Create a dialog component for confirmation**
 
 ```typescript
-// Inputs
+// Inputs from django-angular3.json: angular.output, project.name
+// Procedure-level:
 {
   componentName: "confirm-delete",
   targetPath: "src/app/shared/dialogs",
-  type: "dialog",
-  workspacePath: "/workspace/my-project"
+  type: "dialog"
 }
 
 // Executes:
-// 1. ng generate component src/app/shared/dialogs/confirm-delete --standalone
+// 1. pnpm exec ng generate component src/app/shared/dialogs/confirm-delete --standalone --project=<project.name>
 // 2. Replaces files using component-dialog templates
 // 3. Adds MAT_DIALOG_DATA and MatDialogRef injections
 // 4. Adds cancel and confirm action buttons
-// 5. Runs: ng build --configuration=development
+// 5. django-admin ng_build django-angular3.json
 
 // Output: Dialog component created at src/app/shared/dialogs/confirm-delete/
 // Usage: this.dialog.open(ConfirmDeleteComponent, { data: { title: 'Delete?', message: 'Are you sure?' } })
@@ -4513,11 +4459,11 @@ Optional dependencies:
 **Example 4: Modify existing component to add service injection**
 
 ```typescript
-// Inputs
+// Inputs from django-angular3.json: angular.output, project.name
+// Procedure-level:
 {
   componentName: "user-list",
   targetPath: "src/app/features/users",
-  workspacePath: "/workspace/my-project",
   modifications: {
     services: [
       {
@@ -4535,7 +4481,7 @@ Optional dependencies:
 // 2. Adds: import { UserService } from '../../core/services/user.service';
 // 3. Adds: private userService = inject(UserService);
 // 4. Adds: users$ = toSignal(this.userService.getUsers$(), { initialValue: [] });
-// 5. Runs: ng build --configuration=development
+// 5. django-admin ng_build django-angular3.json
 
 // Output: Component updated with UserService injection and signal binding
 ```
@@ -4543,11 +4489,11 @@ Optional dependencies:
 **Example 5: Delete a component and clean up references**
 
 ```typescript
-// Inputs
+// Inputs from django-angular3.json: angular.output, project.name
+// Procedure-level:
 {
   componentName: "old-widget",
   targetPath: "src/app/shared/components",
-  workspacePath: "/workspace/my-project",
   confirm: true
 }
 
@@ -4556,7 +4502,7 @@ Optional dependencies:
 // 2. Removes component from parent component imports (if found)
 // 3. Deletes: rm -rf src/app/shared/components/old-widget
 // 4. Updates: src/app/shared/components/index.ts (removes export)
-// 5. Runs: ng build --configuration=development
+// 5. django-admin ng_build django-angular3.json
 
 // Output: Component deleted. Manual cleanup needed in:
 //   - src/app/pages/dashboard/dashboard.component.html (remove <app-old-widget>)
@@ -4855,12 +4801,12 @@ Required prerequisites before executing this skill:
 
 **Example 1: Create a themed complex component with nested children**
 
+Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `project.name = "admin-dashboard"`
+
 ```json
 {
   "componentName": "user-menu",
   "targetPath": "src/app/shared/components",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "features": ["mixins", "nested", "projection"]
 }
 ```
@@ -4871,8 +4817,6 @@ Required prerequisites before executing this skill:
 {
   "componentName": "filter-builder",
   "targetPath": "src/app/features/search",
-  "workspacePath": "/workspace/my-project",
-  "appName": "admin-dashboard",
   "features": ["cdk-overlay"]
 }
 ```
@@ -5323,7 +5267,7 @@ Procedure-level inputs:
 
 1. **Compile check**:
    ```bash
-   npx tsc --noEmit --project tsconfig.json
+   pnpm exec tsc --noEmit --project tsconfig.json
    ```
    - Confirm form component compiles with typed `FormGroup<>` interface
    - Verify Material module imports are correct
@@ -5390,11 +5334,11 @@ Procedure-level inputs:
 
 **Example 1: Create a user profile form with API integration**
 
+Input from `django-angular3.json`: `angular.output = "/workspace/my-app"`, `project.name = "admin-dashboard"`
+
 ```json
 {
   "formName": "user-profile",
-  "workspacePath": "/workspace/my-app",
-  "appName": "admin-dashboard",
   "targetPath": "features/users/forms",
   "mode": "both",
   "resourceName": "user"
@@ -5427,8 +5371,6 @@ Procedure-level inputs:
 ```json
 {
   "formName": "contact",
-  "workspacePath": "/workspace/my-app",
-  "appName": "public-site",
   "targetPath": "shared/forms",
   "mode": "create"
 }
@@ -5449,10 +5391,8 @@ Procedure-level inputs:
 **Example 3: Modify existing form to add a new field**
 
 ```markdown
-Input:
+Input from django-angular3.json: angular.output, project.name = "admin-dashboard"
 - formName: "product-edit"
-- workspacePath: "/workspace/my-app"
-- appName: "admin-dashboard"
 - targetPath: "features/products/forms"
 - change: "Add 'category' select field with dropdown options"
 
@@ -5967,12 +5907,11 @@ Procedure-level inputs:
 
 **Example 1: Create a site from UI spec and OpenAPI**
 
+Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`, `project.name = "admin-portal"`, `openapi.source = "spec/openapi.yaml"`
+
 ```json
 {
-  "workspacePath": "/workspace/admin-portal",
-  "appName": "admin-portal",
-  "uiSpecPath": "spec/ui/",
-  "openapi_source_path": "spec/openapi.yaml"
+  "uiSpecPath": "spec/ui/"
 }
 ```
 
@@ -5987,10 +5926,10 @@ Procedure-level inputs:
 
 **Example 2: Modify site navigation**
 
+Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`, `project.name = "admin-portal"`
+
 ```json
 {
-  "workspacePath": "/workspace/admin-portal",
-  "appName": "admin-portal",
   "change": "navigation"
 }
 ```
