@@ -25,7 +25,7 @@ Examples are located under `spec/examples/<example-name>/` and can be run via:
 ```bash
 django-admin build_app spec/examples/<example-name>/django-angular3.json \
   [--previous-schema spec/examples/<example-name>/previous-schema.yaml] \
-  [--previous-config spec/examples/<example-name>/previous-config.json] \
+  [--previous-project-config spec/examples/<example-name>/previous-project-config.json] \
   --dry-run
 ```
 
@@ -314,7 +314,11 @@ components:
       name: sessionid
 ```
 
-### Input: `ui.json`
+### Input: `<project>.project.json` (placeholder name — schema TBD)
+
+> ⚠️ The generated app configuration file name and schema are not yet defined
+> (see `TODO.md` item 1). The content and path shown below are illustrative;
+> the actual file name and schema will be specified when that item is resolved.
 
 ```json
 {
@@ -339,7 +343,6 @@ components:
   "project": { "name": "simple_crm" },
   "app": { "name": "shop" },
   "openapi": { "source": "spec/examples/01_simple_crm/schema.yaml" },
-  "ui": { "source": "spec/examples/01_simple_crm/ui.json" },
   "angular": {
     "output": "build/examples/01_simple_crm",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
@@ -506,40 +509,47 @@ field. Steps include:
 **Demonstrates**: Config-only change path. Schema is identical to Example 1.
 Only config-derived skills run. Uses `add-things` on the config side.
 
+> ⚠️ This example is blocked by `TODO.md` item 1. The `<project>.project.json`
+> file name and schema are not yet defined; neither the config diff function
+> nor the config-derived skill dispatch are implementable until they are. The
+> inputs and expected output below are illustrative.
+
 ### Scenario
 
-A dashboard page is added to the app config. No schema change.
+A dashboard page is added to the generated app configuration. No schema change.
 
 ### Input: `django-angular3.json`
 
-Example 1's config plus a new page in `ui.pages`:
+Same as Example 1 — no change (this file is golden; it is never diffed).
+
+### Input: current `<project>.project.json` (placeholder name — schema TBD)
+
+Example 1's generated app configuration plus a new page and two new components:
 
 ```json
 {
-  "ui": {
-    "pages": [
-      { "name": "customer-list",   "resource": "Customer", "type": "list" },
-      { "name": "customer-detail", "resource": "Customer", "type": "detail" },
-      { "name": "product-list",    "resource": "Product",  "type": "list" },
-      { "name": "dashboard",       "type": "custom",       "components": ["customer-summary", "product-summary"] }
+  "pages": [
+    { "name": "customer-list",   "resource": "Customer", "type": "list" },
+    { "name": "customer-detail", "resource": "Customer", "type": "detail" },
+    { "name": "product-list",    "resource": "Product",  "type": "list" },
+    { "name": "dashboard",       "type": "custom",       "components": ["customer-summary", "product-summary"] }
+  ],
+  "components": [
+    { "name": "customer-summary", "type": "small-field", "resource": "Customer", "fields": ["name", "active"] },
+    { "name": "product-summary",  "type": "small-field", "resource": "Product",  "fields": ["name", "price"] }
+  ],
+  "site": {
+    "nav": [
+      { "label": "Customers", "route": "/customers" },
+      { "label": "Products",  "route": "/products" }
     ]
   }
 }
 ```
 
-Two new standalone components (`customer-summary`, `product-summary`) are also
-added to `ui.components`:
+### Input: previous `<project>.project.json`
 
-```json
-{
-  "ui": {
-    "components": [
-      { "name": "customer-summary", "type": "small-field", "resource": "Customer", "fields": ["name", "active"] },
-      { "name": "product-summary",  "type": "small-field", "resource": "Product",  "fields": ["name", "price"] }
-    ]
-  }
-}
-```
+Example 1's `<project>.project.json` (the state before this change).
 
 ### Expected ChangeSet
 
@@ -568,11 +578,15 @@ added to `ui.components`:
 activate. Verifies that schema steps run before config steps at the same
 dependency level, and that the plan correctly interleaves the two streams.
 
+> ⚠️ The config-side portion of this example is blocked by `TODO.md` item 1.
+> The schema-side portion (new `Invoice` resource) is unblocked and can be
+> verified independently.
+
 ### Scenario
 
 Starting from Example 2's state (Customer, Product, Order):
 - Schema: a new `Invoice` resource is added.
-- Config: a new `invoice-list` page is added.
+- Config: a new `invoice-list` page is added to the generated app configuration.
 
 ### Expected ChangeSet
 
@@ -642,11 +656,12 @@ django-admin build_app \
   spec/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
-# Example 2: add resource
+# Example 2: add resource (schema change only; previous project config passed to confirm no-change)
+# Note: --previous-project-config path uses a placeholder name pending TODO.md item 1
 django-admin build_app \
   spec/examples/02-add-order/django-angular3.json \
   --previous-schema spec/examples/01_simple_crm/schema.yaml \
-  --previous-config spec/examples/01_simple_crm/django-angular3.json \
+  --previous-project-config spec/examples/01_simple_crm/simple_crm.project.json \
   --dry-run
 
 # Example 3: breaking change blocked
@@ -663,18 +678,18 @@ django-admin build_app \
   --acknowledge-breaking \
   --dry-run
 
-# Example 4: config-only change
+# Example 4: config-only change (blocked by TODO.md item 1 — illustrative only)
 django-admin build_app \
   spec/examples/04-add-dashboard/django-angular3.json \
   --previous-schema spec/examples/01_simple_crm/schema.yaml \
-  --previous-config spec/examples/01_simple_crm/django-angular3.json \
+  --previous-project-config spec/examples/01_simple_crm/simple_crm.project.json \
   --dry-run
 
-# Example 5: combined schema + config
+# Example 5: combined schema + config (config side blocked by TODO.md item 1 — illustrative only)
 django-admin build_app \
   spec/examples/05-combined-change/django-angular3.json \
   --previous-schema spec/examples/02-add-order/schema.yaml \
-  --previous-config spec/examples/02-add-order/django-angular3.json \
+  --previous-project-config spec/examples/02-add-order/simple_crm.project.json \
   --dry-run
 
 # Example 6: replace resource
