@@ -1945,40 +1945,34 @@ Generate TypeScript API client code (services and models) from OpenAPI specifica
 Generate API client code from an OpenAPI specification when it doesn't exist.
 
 **Input Requirements**:
-- `openapi_source_path` (string): Path to the OpenAPI specification file (JSON or YAML format)
-- `ng_openapi_gen_config_path` (string, optional): Path to ng-openapi-gen configuration file. Defaults to `ng-openapi-gen.json` at workspace root
-- `output_path` (string, optional): Target directory for generated files. Defaults to `src/app/api/` as configured in ng-openapi-gen config
+- `openapi.source` (from `django-angular3.json`, required): Path to the current OpenAPI specification file (JSON or YAML)
+- `angular.output` (from `django-angular3.json`, required): Angular workspace root (used to locate `ng-openapi-gen.json`)
+
+Output path is configured in `ng-openapi-gen.json` at the workspace root; breaking-change detection is already performed by `build_app` before invoking this skill.
 
 **Process**:
 1. **Preflight validation**:
-   - Verify OpenAPI source file exists at `openapi_source_path`
-   - Validate OpenAPI spec is well-formed JSON or YAML
-   - Check `oasdiff` is installed (`oasdiff --version`)
-   - Check ng-openapi-gen is installed in workspace (`npm list ng-openapi-gen`)
-   - If config file path provided, verify it exists; otherwise check for default `ng-openapi-gen.json`
-2. **Schema diff with oasdiff** (if a previous schema version exists):
-   - Run: `oasdiff breaking <previous_schema> <openapi_source_path>`
-   - If breaking changes are reported, halt and surface the `oasdiff` output to the caller
-   - For non-breaking changes, log the summary and continue
-   - If no previous schema exists, skip this step and proceed
-3. **Configuration setup** (if config doesn't exist):
+   - Verify `openapi.source` file exists and is well-formed JSON or YAML
+   - Check `ng-openapi-gen` is installed in workspace: `pnpm list ng-openapi-gen`
+   - Check for `ng-openapi-gen.json` at `angular.output` root
+2. **Configuration setup** (if `ng-openapi-gen.json` doesn't exist):
    - Create `ng-openapi-gen.json` at workspace root with:
      ```json
      {
        "$schema": "node_modules/ng-openapi-gen/ng-openapi-gen-schema.json",
-       "input": "<openapi_source_path>",
+       "input": "<openapi.source>",
        "output": "src/app/api",
        "ignoreUnusedModels": false
      }
      ```
-3. **Run generation**:
-   - Execute: `npx ng-openapi-gen --config <ng_openapi_gen_config_path>`
-   - Capture stdout/stderr for diagnostics
+3. **Run generation** via djng wrapper (`ng_openapi_gen` is in `command_allowlist` by default):
+   ```bash
+   django-admin ng_openapi_gen django-angular3.json
+   ```
 4. **Verify output**:
    - Confirm `services/` directory populated with `*-api.service.ts` files
    - Confirm `models/` directory populated with model TypeScript interfaces
-   - Check for `models.ts` barrel export file
-   - Check for `services.ts` barrel export file
+   - Check for `models.ts` and `services.ts` barrel export files
 5. **Report results**:
    - List all generated `*ApiService` files (one per OpenAPI tag)
    - Report count of generated models
@@ -1995,31 +1989,26 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
 Regenerate API client code after OpenAPI specification changes.
 
 **Input Requirements**:
-- `openapi_source_path` (string): Path to the updated OpenAPI specification file
-- `ng_openapi_gen_config_path` (string, optional): Path to ng-openapi-gen configuration file
+- `openapi.source` (from `django-angular3.json`, required): Path to the updated OpenAPI specification file
+- `angular.output` (from `django-angular3.json`, required): Angular workspace root
+
+Breaking-change detection is already performed by `build_app` before invoking this skill. The `oasdiff_report` is available in the ChangeSet passed as procedure input.
 
 **Process**:
 1. **Verify existing generation**:
-   - Confirm `ng-openapi-gen.json` config exists
+   - Confirm `ng-openapi-gen.json` config exists at `angular.output`
    - Confirm output directory exists with previous generation
-2. **Schema diff with oasdiff**:
-   - Run: `oasdiff breaking <previous_schema> <openapi_source_path>`
-   - If breaking changes are reported, halt and surface the `oasdiff` output to the caller before regenerating
-   - Run: `oasdiff summary <previous_schema> <openapi_source_path>` and include in the change report
-3. **Clean previous generation** (optional, based on ng-openapi-gen behavior):
-   - ng-openapi-gen handles incremental updates, but note that removed endpoints/models may leave orphaned files
-4. **Re-run generation**:
-   - Execute: `npx ng-openapi-gen --config <ng_openapi_gen_config_path>`
+2. **Clean previous generation** (optional):
+   - ng-openapi-gen handles incremental updates, but removed endpoints/models may leave orphaned files
+3. **Re-run generation** via djng wrapper:
+   ```bash
+   django-admin ng_openapi_gen django-angular3.json
+   ```
 4. **Diff analysis**:
-   - Identify new services (new OpenAPI tags)
-   - Identify modified services (changed endpoints)
-   - Identify new models
-   - Identify modified models (schema changes)
+   - Identify new, modified, and removed services and models by comparing directory contents before and after
 5. **Report changes**:
-   - Include the `oasdiff summary` output in the change report
-   - List added services and models
-   - List modified services and models
-   - Warn about any orphaned files if manual cleanup needed
+   - List added, modified, and removed services and models
+   - Warn about any orphaned files requiring manual cleanup
 
 **Output**:
 - Updated TypeScript services reflecting spec changes
@@ -2033,21 +2022,18 @@ Regenerate API client code after OpenAPI specification changes.
 Remove generated API client code directory; invoke Create mode to regenerate.
 
 **Input Requirements**:
-- `output_path` (string, optional): Directory to remove. Defaults to `src/app/api/`
+- `angular.output` (from `django-angular3.json`, required): Angular workspace root (output path is read from `ng-openapi-gen.json`)
 
 **Process**:
 1. **Verify target**:
-   - Confirm output directory exists
-   - Verify it contains ng-openapi-gen generated structure (`services/`, `models/`, barrel exports)
-2. **Safety check**:
-   - Warn if directory contains non-generated files
-   - Confirm user intent if interactive, or proceed if auto-invoked with regeneration intent
-3. **Remove directory**:
-   - Execute: `rm -rf <output_path>`
-4. **Optional: Remove configuration**:
-   - Ask whether to remove `ng-openapi-gen.json` (typically keep for regeneration)
-5. **Suggest regeneration**:
-   - If deletion was to clean before regeneration, automatically invoke Create mode
+   - Read `ng-openapi-gen.json` to determine `output` path
+   - Confirm output directory exists and contains ng-openapi-gen generated structure (`services/`, `models/`, barrel exports)
+2. **Warn if non-generated files present**
+3. **Remove directory** using Bash tool:
+   ```bash
+   rm -rf <output_path>
+   ```
+4. **Retain `ng-openapi-gen.json`** for subsequent regeneration via Create mode
 
 **Output**:
 - Removed output directory
@@ -2080,7 +2066,7 @@ Remove generated API client code directory; invoke Create mode to regenerate.
    - Confirm barrel files exist and contain re-exports
 3. **TypeScript compilation check**:
    ```bash
-   npx tsc --noEmit --project tsconfig.json
+   pnpm exec tsc --noEmit --project tsconfig.json
    ```
    - Confirm generated files compile without errors
 4. **Service naming validation**:
@@ -2098,11 +2084,11 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 
 2. **Invalid OpenAPI spec**:
    - Error: `OpenAPI schema validation failed`
-   - Resolution: Validate spec using online validator or `npx @apidevtools/swagger-cli validate <spec>`
+   - Resolution: Validate spec using `django-admin validate-project django-angular3.json` or an online validator
 
 3. **ng-openapi-gen not installed**:
    - Error: `command not found: ng-openapi-gen`
-   - Resolution: Install via `npm install --save-dev ng-openapi-gen`
+   - Resolution: Install via `pnpm install --save-dev ng-openapi-gen`
 
 4. **Generation errors**:
    - Error: Various ng-openapi-gen errors during generation
@@ -2121,8 +2107,8 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 - Angular Material workspace boilerplate must exist (workspace with `package.json` and Angular CLI)
 
 **Required Tools**:
-- `oasdiff` CLI installed (download the prebuilt binary from https://github.com/oasdiff/oasdiff/releases)
-- `ng-openapi-gen` npm package installed in workspace
+- `oasdiff` — used by `build_app` for change derivation before invoking this skill; not called by the skill directly
+- `ng-openapi-gen` npm package installed in workspace (`pnpm install --save-dev ng-openapi-gen`)
 - Angular workspace with TypeScript configuration
 
 **Optional Dependencies**:
@@ -2132,14 +2118,14 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 
 **Example 1: Initial API generation**
 ```markdown
-Input:
-- openapi_source_path: "spec/openapi.yaml"
-- output_path: "src/app/api"
+Input (from django-angular3.json):
+- openapi.source: "spec/openapi.yaml"
+- angular.output: "/path/to/workspace"
 
 Process:
 1. Verify spec/openapi.yaml exists
 2. Create ng-openapi-gen.json config
-3. Run npx ng-openapi-gen
+3. Run: django-admin ng_openapi_gen django-angular3.json
 4. Report generated files
 
 Output:
