@@ -6,7 +6,7 @@ Project website: <https://djangoangular.com/>
 
 Related docs:
 - `doc/ARCHITECTURE.md` — architecture, integration boundaries, and design decisions
-- `doc/IMPLEMENTATION_PLAN.md` — implementation sequencing and delivery roadmap
+- `TODO.md` — implementation sequencing, delivery roadmap, and open items
 
 It allows you to:
 - Keep Django responsible for data, authentication, and administration.

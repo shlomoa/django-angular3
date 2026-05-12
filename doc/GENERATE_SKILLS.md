@@ -1515,10 +1515,10 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
    > **Note**: `ng_gen_app` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
 3. **Create standard directory structure**
-   - Create `projects/<appName>/src/app/core/` - Core services and guards
-   - Create `projects/<appName>/src/app/shared/components/` - Shared components
-   - Create `projects/<appName>/src/app/shared/pipes/` - Shared pipes
-   - Create `projects/<appName>/src/app/features/` - Feature modules/routes
+   - Create `projects/<project.name>/src/app/core/` - Core services and guards
+   - Create `projects/<project.name>/src/app/shared/components/` - Shared components
+   - Create `projects/<project.name>/src/app/shared/pipes/` - Shared pipes
+   - Create `projects/<project.name>/src/app/features/` - Feature modules/routes
    - Create barrel exports (`index.ts`) in each directory
 
 4. **Wire Angular Material theme**
@@ -1611,12 +1611,12 @@ Update an existing Angular Material application with changes to providers, globa
 **Process**:
 
 1. **Validate application exists**
-   - Verify `projects/<appName>/` exists
+   - Verify `projects/<project.name>/` exists
    - Check `angular.json` contains configuration for `<appName>`
    - Confirm application is using standalone architecture
 
 2. **Update providers in app.config.ts**
-   - Read existing `projects/<appName>/src/app/app.config.ts`
+   - Read existing `projects/<project.name>/src/app/app.config.ts`
    - Parse provider array
    - Add new providers to the `providers` array:
      ```typescript
@@ -1634,7 +1634,7 @@ Update an existing Angular Material application with changes to providers, globa
    - Maintain formatting and import statements
 
 3. **Update global styles**
-   - Read `projects/<appName>/src/styles.scss`
+   - Read `projects/<project.name>/src/styles.scss`
    - Append new styles to end of file (or update existing theme if modifying theme)
    - Example modifications:
      ```scss
@@ -1647,7 +1647,7 @@ Update an existing Angular Material application with changes to providers, globa
      ```
 
 4. **Register lazy routes**
-   - Read `projects/<appName>/src/app/app.routes.ts`
+   - Read `projects/<project.name>/src/app/app.routes.ts`
    - Add new route definitions:
      ```typescript
      import { Routes } from '@angular/router';
@@ -1719,7 +1719,7 @@ Remove an Angular Material application completely from the workspace, including 
 5. **Verify workspace integrity**: Read `angular.json` and confirm it is valid JSON with no remaining references to `<project.name>`.
 
 **Output**:
-- Application directory `projects/<appName>/` removed
+- Application directory `projects/<project.name>/` removed
 - Entry removed from `angular.json`
 - Workspace remains valid and functional
 - Confirmation message listing what was deleted
@@ -1743,19 +1743,19 @@ Steps to validate successful execution of the skill:
 
 1. **Verify directory structure**
    ```bash
-   ls -la projects/<appName>/src/app/
+   ls -la projects/<project.name>/src/app/
    # Should contain: core/, shared/, features/, app.component.ts, app.config.ts, app.routes.ts
    ```
 
 2. **Verify Material theme is wired**
    ```bash
-   cat projects/<appName>/src/styles.scss | grep "@angular/material"
+   cat projects/<project.name>/src/styles.scss | grep "@angular/material"
    # Should contain Material theme imports and configuration
    ```
 
 3. **Verify standalone bootstrap**
    ```bash
-   cat projects/<appName>/src/main.ts | grep "bootstrapApplication"
+   cat projects/<project.name>/src/main.ts | grep "bootstrapApplication"
    # Should use bootstrapApplication() not platformBrowserDynamic()
    ```
 
@@ -2192,6 +2192,11 @@ The `ng-data-service` skill manages handwritten Angular data services that sit o
 
 ### Inputs
 
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path (used to locate the workspace)
+- `project.name`: Project name (used to resolve the application directory)
+
+Procedure-level input (provided by `build_app` when invoking this skill):
 - `resource_name` (string): Resource name used to resolve the generated `<Resource>ApiService` and related model types
 
 **Resource Mapping**:
@@ -2297,12 +2302,12 @@ Remove a handwritten Angular data service and its associated unit spec.
 **Post-Create/Modify Validation**:
 1. **Compile check**:
    ```bash
-   npx tsc --noEmit --project tsconfig.json
+   pnpm exec tsc --noEmit --project tsconfig.json
    ```
    - Confirm the service and spec compile with the generated API imports
 2. **Spec run**:
    ```bash
-   npm test -- --watch=false --include='**/<resource>.service.spec.ts'
+   pnpm exec ng test --watch=false --include='**/<resource>.service.spec.ts'
    ```
    - Confirm the targeted service spec passes
 3. **Manual review**:
@@ -2405,12 +2410,16 @@ All skills support three operational modes:
 Generate a standalone Angular Material small field-level component from scratch with typed signals, Material imports, ARIA attributes, and test harness.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path
+- `project.name`: Application name within the workspace
+
+Procedure-level inputs (provided by `build_app`):
 - `componentName` (string, required): Name of the component in kebab-case (e.g., `status-badge`, `action-button`)
-- `workspacePath` (string, required): Absolute path to the Angular workspace root directory
-- `appName` (string, required): Name of the application within the workspace (e.g., `my-app`, `admin-dashboard`)
 - `placement` (string, required): Where to place the component:
-  - `shared` — Place in `projects/<appName>/src/app/shared/components/` (for reusable components)
-  - `feature/<feature-name>` — Place in `projects/<appName>/src/app/features/<feature-name>/components/` (for feature-specific components)
+  - `shared` — Place in `projects/<project.name>/src/app/shared/components/` (for reusable components)
+  - `feature/<feature-name>` — Place in `projects/<project.name>/src/app/features/<feature-name>/components/` (for feature-specific components)
 - `componentType` (string, optional): Type of component to scaffold. Defaults to `generic`:
   - `button` — Action button with icon support
   - `chip` — Material chip with removable option
@@ -2422,17 +2431,18 @@ Generate a standalone Angular Material small field-level component from scratch 
 **Process**:
 
 1. **Validate prerequisites**:
-   - Verify workspace exists at `workspacePath` and contains `angular.json`
-   - Verify application `appName` exists in `projects/<appName>/`
+   - Read `angular.output` and `project.name` from `django-angular3.json`
+   - Verify workspace exists at `angular.output` and contains `angular.json`
+   - Verify application `<project.name>` exists in `projects/<project.name>/`
    - Confirm workspace uses standalone component architecture
    - Validate `componentName` follows naming conventions (lowercase, hyphenated)
    - Check component doesn't already exist at target path
 
 2. **Determine target directory**:
    - If `placement` is `shared`:
-     - Target: `projects/<appName>/src/app/shared/components/<componentName>/`
+     - Target: `projects/<project.name>/src/app/shared/components/<componentName>/`
    - If `placement` is `feature/<feature-name>`:
-     - Target: `projects/<appName>/src/app/features/<feature-name>/components/<componentName>/`
+     - Target: `projects/<project.name>/src/app/features/<feature-name>/components/<componentName>/`
    - Create directory if it doesn't exist:
      ```bash
      mkdir -p <targetDirectory>
@@ -2544,22 +2554,21 @@ Generate a standalone Angular Material small field-level component from scratch 
        ```
 
 7. **Update barrel export** (if in shared directory):
-   - Read `projects/<appName>/src/app/shared/components/index.ts`
+   - Read `projects/<project.name>/src/app/shared/components/index.ts`
    - If file doesn't exist, create it
    - Add export: `export * from './<componentName>/<componentName>.component';`
    - Maintain alphabetical ordering
 
 8. **Verify compilation**:
    ```bash
-   cd <workspacePath>
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Confirm build completes without errors
    - Check for TypeScript errors
 
 9. **Run component tests**:
    ```bash
-   ng test <appName> --watch=false --include='**/<componentName>.component.spec.ts'
+   pnpm exec ng test <project.name> --watch=false --include='**/<componentName>.component.spec.ts'
    ```
    - Confirm all tests pass
 
@@ -2579,9 +2588,11 @@ Generate a standalone Angular Material small field-level component from scratch 
 Update an existing Angular Material small field-level component by adding/removing inputs/outputs, updating template, or modifying styles.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName` (string, required): Name of the existing component to modify
-- `workspacePath` (string, required): Absolute path to the Angular workspace
-- `appName` (string, required): Name of the application within the workspace
 - `placement` (string, required): Current placement location (`shared` or `feature/<feature-name>`)
 - `modifications` (object, required): Changes to apply:
   - `addInputs`: Array of input signals to add with type information
@@ -2660,12 +2671,12 @@ Update an existing Angular Material small field-level component by adding/removi
 
 6. **Verify compilation**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 7. **Run updated tests**:
    ```bash
-   ng test <appName> --watch=false --include='**/<componentName>.component.spec.ts'
+   pnpm exec ng test <project.name> --watch=false --include='**/<componentName>.component.spec.ts'
    ```
 
 **Output**:
@@ -2680,9 +2691,11 @@ Update an existing Angular Material small field-level component by adding/removi
 Remove an Angular Material small field-level component completely, including all files and references.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName` (string, required): Name of the component to delete
-- `workspacePath` (string, required): Absolute path to the Angular workspace
-- `appName` (string, required): Name of the application within the workspace
 - `placement` (string, required): Current placement location
 - `confirmDelete` (boolean, required): Safety confirmation (must be `true`)
 
@@ -2695,7 +2708,7 @@ Remove an Angular Material small field-level component completely, including all
 2. **Check for component usage**:
    - Search for imports of the component across the application:
      ```bash
-     cd projects/<appName>/src/app
+     cd projects/<project.name>/src/app
      grep -r "import.*<ComponentName>Component" --include="*.ts"
      ```
    - If component is imported anywhere, list usage locations and warn:
@@ -2704,7 +2717,7 @@ Remove an Angular Material small field-level component completely, including all
 
 3. **Remove from barrel exports**:
    - If component was in `shared/components/`:
-     - Read `projects/<appName>/src/app/shared/components/index.ts`
+     - Read `projects/<project.name>/src/app/shared/components/index.ts`
      - Remove export line: `export * from './<componentName>/<componentName>.component';`
    - If component was in feature directory, check for feature-level barrel exports
 
@@ -2720,13 +2733,13 @@ Remove an Angular Material small field-level component completely, including all
 
 6. **Verify compilation after deletion**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Confirm build succeeds (no broken imports)
 
 7. **Run tests**:
    ```bash
-   ng test <appName> --watch=false
+   pnpm exec ng test <project.name> --watch=false
    ```
    - Confirm no failing tests due to missing component
 
@@ -2786,13 +2799,13 @@ Steps to validate successful execution of the skill:
 
 6. **Compile check**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Should complete without errors
 
 7. **Run specs**:
    ```bash
-   ng test <appName> --watch=false --include='**/<componentName>.component.spec.ts'
+   pnpm exec ng test <project.name> --watch=false --include='**/<componentName>.component.spec.ts'
    ```
    - Should pass all tests
 
@@ -2818,7 +2831,7 @@ Steps to validate successful execution of the skill:
 
 2. **Verify no broken imports**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Should compile successfully
 
@@ -3025,12 +3038,16 @@ All skills support three operational modes:
 Generate a standalone Angular Material form field component implementing `ControlValueAccessor` with Material form field wrapper, validation support, and test harness.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path
+- `project.name`: Application name within the workspace
+
+Procedure-level inputs:
 - `componentName` (string, required): Name of the form field component in kebab-case (e.g., `email-input`, `date-picker`, `country-select`)
-- `workspacePath` (string, required): Absolute path to the Angular workspace root directory
-- `appName` (string, required): Name of the application within the workspace (e.g., `my-app`, `admin-dashboard`)
 - `placement` (string, required): Where to place the component:
-  - `shared` — Place in `projects/<appName>/src/app/shared/form-fields/` (for reusable form fields)
-  - `feature/<feature-name>` — Place in `projects/<appName>/src/app/features/<feature-name>/form-fields/` (for feature-specific form fields)
+  - `shared` — Place in `projects/<project.name>/src/app/shared/form-fields/` (for reusable form fields)
+  - `feature/<feature-name>` — Place in `projects/<project.name>/src/app/features/<feature-name>/form-fields/` (for feature-specific form fields)
 - `fieldType` (enum, required): Type of input field to scaffold:
   - `input` — Text input field (default, supports type="text|number|email|password|tel|url")
   - `textarea` — Multi-line text area
@@ -3044,17 +3061,18 @@ Generate a standalone Angular Material form field component implementing `Contro
 **Process**:
 
 1. **Validate prerequisites**:
-   - Verify workspace exists at `workspacePath` and contains `angular.json`
-   - Verify application `appName` exists in `projects/<appName>/`
+   - Read `angular.output` and `project.name` from `django-angular3.json`
+   - Verify workspace exists at `angular.output` and contains `angular.json`
+   - Verify application `<project.name>` exists in `projects/<project.name>/`
    - Confirm workspace uses standalone component architecture
    - Validate `componentName` follows naming conventions (lowercase, hyphenated)
    - Check component doesn't already exist at target path
 
 2. **Determine target directory**:
    - If `placement` is `shared`:
-     - Target: `projects/<appName>/src/app/shared/form-fields/<componentName>/`
+     - Target: `projects/<project.name>/src/app/shared/form-fields/<componentName>/`
    - If `placement` is `feature/<feature-name>`:
-     - Target: `projects/<appName>/src/app/features/<feature-name>/form-fields/<componentName>/`
+     - Target: `projects/<project.name>/src/app/features/<feature-name>/form-fields/<componentName>/`
    - Create directory if it doesn't exist:
      ```bash
      mkdir -p <targetDirectory>
@@ -3257,14 +3275,13 @@ Generate a standalone Angular Material form field component implementing `Contro
 
 8. **Compile check**:
    ```bash
-   cd <workspacePath>
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Verify build succeeds with no errors
 
 9. **Run specs**:
    ```bash
-   ng test <appName> --watch=false --include='**/<componentName>.component.spec.ts'
+   pnpm exec ng test <project.name> --watch=false --include='**/<componentName>.component.spec.ts'
    ```
    - Verify all tests pass
 
@@ -3283,9 +3300,11 @@ Generate a standalone Angular Material form field component implementing `Contro
 Update an existing form field component to change input type, add/remove validators, update error messages, or modify configuration.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName` (string, required): Name of the form field component to modify
-- `workspacePath` (string, required): Absolute path to the Angular workspace root directory
-- `appName` (string, required): Name of the application within the workspace
 - `placement` (string, required): Where the component is located (`shared` or `feature/<feature-name>`)
 - `modifications` (object, required): Specifies what to modify:
   - `changeFieldType` (enum, optional): Change to different field type (`input` | `textarea` | `select` | `datepicker` | `autocomplete`)
@@ -3361,13 +3380,12 @@ Update an existing form field component to change input type, add/remove validat
 
 4. **Compile check**:
    ```bash
-   cd <workspacePath>
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 5. **Run specs**:
    ```bash
-   ng test <appName> --watch=false --include='**/<componentName>.component.spec.ts'
+   pnpm exec ng test <project.name> --watch=false --include='**/<componentName>.component.spec.ts'
    ```
 
 **Output**:
@@ -3381,9 +3399,11 @@ Update an existing form field component to change input type, add/remove validat
 Remove a form field component completely from the codebase, including all related files and imports.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName` (string, required): Name of the form field component to delete
-- `workspacePath` (string, required): Absolute path to the Angular workspace root directory
-- `appName` (string, required): Name of the application within the workspace
 - `placement` (string, required): Where the component is located (`shared` or `feature/<feature-name>`)
 - `confirmDelete` (boolean, required): Explicit confirmation flag to prevent accidental deletion
 - `force` (boolean, optional): Force deletion even if component is still imported elsewhere (default: `false`)
@@ -3397,7 +3417,7 @@ Remove a form field component completely from the codebase, including all relate
 2. **Check for component usage**:
    - Search for imports of the component across codebase:
      ```bash
-     grep -r "from.*<componentName>.component" projects/<appName>/src/
+     grep -r "from.*<componentName>.component" projects/<project.name>/src/
      ```
    - If imports found and `force` is `false`:
      - Return error listing files that import the component
@@ -3423,13 +3443,13 @@ Remove a form field component completely from the codebase, including all relate
 
 6. **Verify compilation after deletion**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Confirm build succeeds (no broken imports)
 
 7. **Run tests**:
    ```bash
-   ng test <appName> --watch=false
+   pnpm exec ng test <project.name> --watch=false
    ```
    - Confirm no failing tests due to missing component
 
@@ -3501,13 +3521,13 @@ Steps to validate successful execution of the skill:
 
 8. **Compile check**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Should complete without errors
 
 9. **Run specs**:
    ```bash
-   ng test <appName> --watch=false --include='**/<componentName>.component.spec.ts'
+   pnpm exec ng test <project.name> --watch=false --include='**/<componentName>.component.spec.ts'
    ```
    - Should pass all tests including CVA tests
 
@@ -3533,7 +3553,7 @@ Steps to validate successful execution of the skill:
 
 2. **Verify no broken imports**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Should compile successfully
 
@@ -3863,12 +3883,14 @@ The `ng-component` skill manages the creation, modification, and deletion of Ang
 
 ### Inputs
 
-**From invocation context**:
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path
+- `project.name`: Application name within the workspace
+
+Procedure-level inputs:
 - **`componentName`** (string, required): Name of the component in kebab-case (e.g., `user-profile`, `product-card`)
 - **`targetPath`** (string, required): Relative path from app source directory where component will be created (e.g., `src/app/features/users`, `src/app/shared/components`)
 - **`type`** (enum, required): Component type (`display` | `container` | `dialog`)
-- **`workspacePath`** (string, required): Absolute path to the Angular workspace root directory
-- **`appName`** (string, optional): Name of the application within workspace (required for multi-app workspaces)
 
 ### Modes
 
@@ -3882,18 +3904,15 @@ Generate a new Angular component from scratch when it doesn't exist.
 - `componentName`: Must be valid kebab-case identifier (lowercase, hyphenated)
 - `targetPath`: Must be valid directory path within the application
 - `type`: Must be one of: `display`, `container`, or `dialog`
-- `workspacePath`: Must point to valid Angular workspace
-- `appName`: Optional, defaults to default project in workspace
 
 **Pre-flight Checks**:
 
 Before creating the component, verify:
 
-1. Workspace exists and contains `angular.json`
-2. Target application exists (if `appName` specified)
+1. Read `angular.output` and `project.name` from `django-angular3.json`
+2. Workspace exists at `angular.output` and contains `angular.json`
 3. Target directory exists or can be created
 4. Component with same name doesn't already exist at target path
-5. Angular CLI is accessible (`ng version`)
 
 **Process (Create Mode)**:
 
@@ -3905,8 +3924,7 @@ The creation process varies based on component `type`:
 
 1. **Generate component scaffold**:
    ```bash
-   cd <workspacePath>
-   ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
+   pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
    ```
 
 2. **Replace component TypeScript file** using `{{template:component-display.ts.tpl}}`:
@@ -4012,7 +4030,7 @@ The creation process varies based on component `type`:
 
 1. **Generate component scaffold** (same as display):
    ```bash
-   ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
+   pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
    ```
 
 2. **Replace component TypeScript file** using `{{template:component-container.ts.tpl}}`:
@@ -4113,7 +4131,7 @@ The creation process varies based on component `type`:
 
 1. **Generate component scaffold** (same as display):
    ```bash
-   ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
+   pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
    ```
 
 2. **Replace component TypeScript file** using `{{template:component-dialog.ts.tpl}}`:
@@ -4263,7 +4281,7 @@ Update an existing Angular component with changes to template, services, or type
 
 6. **Verify compilation**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 **Output**:
@@ -4289,7 +4307,6 @@ Remove an Angular component completely, including all files and references in pa
 
 2. **Search for component references**:
    ```bash
-   cd <workspacePath>
    grep -r "{{COMPONENT_NAME_PASCAL}}Component" --include="*.ts" --include="*.html"
    grep -r "app-{{COMPONENT_NAME_KEBAB}}" --include="*.html"
    ```
@@ -4314,7 +4331,7 @@ Remove an Angular component completely, including all files and references in pa
 
 6. **Verify compilation**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 **Output**:
@@ -4375,13 +4392,13 @@ Steps to validate successful execution of the skill:
 
 6. **Compile check**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    # Should complete without errors
    ```
 
 7. **Run unit tests**:
    ```bash
-   ng test <appName> --include='**/<componentName>.component.spec.ts'
+   pnpm exec ng test <project.name> --include='**/<componentName>.component.spec.ts'
    # Should pass with no failures
    ```
 
@@ -4623,8 +4640,7 @@ Before creating the component, verify:
 
 1. **Generate the parent standalone component scaffold**:
    ```bash
-   cd <workspacePath>
-   ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
+   pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
    ```
 
 2. **Replace the generated parent component** with a Material-oriented complex component implementation that:
@@ -4781,7 +4797,7 @@ Steps to validate successful execution of the skill:
 
 2. **Compile check**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Should complete without TypeScript, template, or styling errors
 
@@ -4920,7 +4936,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
 
 1. **Pre-flight validation**:
    - Verify workspace exists at `workspacePath` and contains `angular.json`
-   - Verify application `appName` exists in `projects/<appName>/`
+   - Verify application `appName` exists in `projects/<project.name>/`
    - Validate `formName` follows naming conventions (lowercase, hyphenated)
    - Check form component doesn't already exist at `targetPath/<formName>/`
    - If `resourceName` is provided:
@@ -4929,7 +4945,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
      - Extract field names and types from the resource model
 
 2. **Determine target directory**:
-   - Resolve full path: `projects/<appName>/src/app/<targetPath>/<formName>/`
+   - Resolve full path: `projects/<project.name>/src/app/<targetPath>/<formName>/`
    - Create directory if it doesn't exist:
      ```bash
      mkdir -p <targetDirectory>
@@ -5187,7 +5203,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
    - Note integration with data service (if applicable)
 
 **Output**:
-- New reactive form component at `projects/<appName>/src/app/<targetPath>/<formName>/`
+- New reactive form component at `projects/<project.name>/src/app/<targetPath>/<formName>/`
 - Four files: `.component.ts`, `.component.html`, `.component.scss`, `.component.spec.ts`
 - Typed `FormGroup<>` interface matching resource model (if provided)
 - Integration with data service for submit/cancel actions (if provided)
@@ -5256,7 +5272,7 @@ Remove a reactive form component and clean up references (route configurations, 
 - `targetPath` (string): Location of form component
 
 **Process**:
-1. Locate form component directory: `projects/<appName>/src/app/<targetPath>/<formName>/`
+1. Locate form component directory: `projects/<project.name>/src/app/<targetPath>/<formName>/`
 2. Verify all component files exist:
    - `<formName>.component.ts`
    - `<formName>.component.html`
@@ -5268,7 +5284,7 @@ Remove a reactive form component and clean up references (route configurations, 
    - Check for barrel exports (`index.ts`) re-exporting this component
 4. Remove all four component files:
    ```bash
-   rm -rf projects/<appName>/src/app/<targetPath>/<formName>/
+   rm -rf projects/<project.name>/src/app/<targetPath>/<formName>/
    ```
 5. Remove stale imports and references:
    - If component is used in routes: Remove route entry or comment with TODO for manual cleanup
@@ -5641,7 +5657,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 
 2. **Compile check**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Confirm the page component, route file, and optional sidenav changes compile without errors
 
@@ -5882,7 +5898,7 @@ Remove the Angular application that owns the generated site from the workspace.
 
 1. **Full compile**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
    - Confirm the complete generated site compiles successfully
 

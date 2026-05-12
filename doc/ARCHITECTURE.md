@@ -625,7 +625,7 @@ switch environments.
 
 ## 18. Implementation Roadmap
 
-Implementation sequencing is documented in `doc/IMPLEMENTATION_PLAN.md`.
+Implementation sequencing is documented in `TODO.md`.
 
 ## 19. Glossary
 
