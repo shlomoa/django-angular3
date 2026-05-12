@@ -1063,41 +1063,43 @@ Generate an Angular Material workspace from scratch when it doesn't exist.
 
 #### Input Requirements
 
-- **`workspacePath`**: Must not already exist or must be an empty directory
-- **`packageManager`**: Valid package manager executable must be available in PATH
-- **`style`**: Must be a valid Angular CLI stylesheet option
-- **`routing`**: Boolean flag
-- **`workspaceName`**: Valid workspace name (lowercase, hyphenated)
+- **`angular.output`**: Must not already exist or must be an empty directory
+- **`project.name`**: Valid workspace name (lowercase, hyphenated)
+- **`angular.workspace.packageManager`**: Valid package manager executable must be available in PATH
+- **`angular.workspace.style`**: Must be a valid Angular CLI stylesheet option
+- **`angular.workspace.routing`**: Boolean flag
 
 #### Pre-flight Checks
 
 Before creating the workspace, verify:
 
-1. Target directory doesn't exist or is empty
-2. Package manager is installed and accessible (`npm --version`, `yarn --version`, or `pnpm --version`)
-3. Angular CLI is installed globally or can be invoked via npx (`ng version` or `npx @angular/cli version`)
-4. Node.js version meets Angular's requirements (currently Node 18.19+ or 20.11+ or 22.0+)
-5. Sufficient disk space is available (minimum 500MB recommended)
+1. `angular.output` directory does not exist or is empty
+2. Node.js version meets Angular's requirements (currently Node 18.19+ or 20.11+ or 22.0+)
+3. Sufficient disk space is available (minimum 500MB recommended)
+
+Package manager availability and Angular CLI access are validated by the `ng_new` djng wrapper.
 
 #### Process (Create Mode)
 
-1. **Create workspace with Angular CLI**:
+1. **Create workspace via djng wrapper**:
    ```bash
-   npx @angular/cli@latest new <workspaceName> \
-     --directory=<workspacePath> \
-     --package-manager=<packageManager> \
-     --style=<style> \
-     --routing=<routing> \
-     --standalone=true \
-     --skip-git=false \
-     --skip-install=false
+   django-admin ng_new django-angular3.json --dry-run
+   ```
+   Review the planned invocation. When `ng_new` is in `command_allowlist`, execute:
+   ```bash
+   django-admin ng_new django-angular3.json
    ```
 
-2. **Install Angular Material**:
+2. **Install Angular Material via djng wrapper**:
    ```bash
-   cd <workspacePath>
-   npx ng add @angular/material --skip-confirmation --theme=custom --typography=true --animations=true
+   django-admin ng_add django-angular3.json --dry-run
    ```
+   When `ng_add` is in `command_allowlist`, execute:
+   ```bash
+   django-admin ng_add django-angular3.json
+   ```
+
+   > **Note**: `ng_new` and `ng_add` are not in `command_allowlist` by default — they plan dry-runs unless the allowlist is explicitly broadened. See `django_angular3/settings.py`.
 
 3. **Configure custom Material theme**:
    - Read the generated `src/styles.scss`
@@ -1129,12 +1131,12 @@ Before creating the workspace, verify:
 
 8. **Install additional development dependencies**:
    ```bash
-   <packageManager> install --save-dev @angular-eslint/builder @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/schematics @angular-eslint/template-parser
+   pnpm install --save-dev @angular-eslint/builder @angular-eslint/eslint-plugin @angular-eslint/eslint-plugin-template @angular-eslint/schematics @angular-eslint/template-parser
    ```
 
-9. **Initialize ESLint configuration**:
+9. **Initialize ESLint configuration** (uses locally installed Angular CLI — no download):
    ```bash
-   npx ng add @angular-eslint/schematics --skip-confirmation
+   pnpm exec ng add @angular-eslint/schematics --skip-confirmation
    ```
 
 10. **Create initial Git commit** (if not skipped):
@@ -1156,7 +1158,7 @@ After successful execution, the workspace directory contains:
 ├── angular.json                # Angular workspace configuration
 ├── node_modules/               # Installed dependencies
 ├── package.json                # NPM package manifest
-├── package-lock.json           # (or yarn.lock / pnpm-lock.yaml)
+├── pnpm-lock.yaml              # pnpm lock file (default package manager)
 ├── README.md                   # Project readme
 ├── tsconfig.json               # TypeScript configuration
 ├── tsconfig.app.json           # App-specific TS config
@@ -1187,9 +1189,11 @@ After successful execution, the workspace directory contains:
 
 Update an existing workspace with configuration changes, package updates, or new tooling.
 
+> **Note**: `build_app` does not trigger `ng-workspace` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
+
 #### Input Requirements
 
-- **`workspacePath`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
+- **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 - **`modificationTarget`** (enum): Type of modification to perform:
   - `add-package`: Add NPM package(s)
   - `update-packages`: Update existing packages to latest versions
@@ -1210,41 +1214,41 @@ Update an existing workspace with configuration changes, package updates, or new
 5. Commit changes: `git add . && git commit -m "chore: add <packageName>"`
 
 **For `update-packages` modifications**:
-1. Verify workspace exists
-2. Update all packages: `<packageManager> update` (or `npm-check-updates -u && npm install`)
-3. Run build: `ng build`
-4. Run tests: `ng test`
+1. Verify `angular.output` exists and contains `angular.json`
+2. Update all packages: `pnpm update`
+3. Run build: `django-admin ng_build django-angular3.json`
+4. Run tests: `pnpm exec ng test --watch=false`
 5. Fix any breaking changes
 6. Commit changes: `git add . && git commit -m "chore: update dependencies"`
 
 **For `update-angular` modifications**:
-1. Verify workspace exists
-2. Run Angular update: `ng update @angular/core @angular/cli @angular/material`
+1. Verify `angular.output` exists and contains `angular.json`
+2. Run Angular update: `pnpm exec ng update @angular/core @angular/cli @angular/material`
 3. Review migration messages
-4. Run build and tests
+4. Run build and tests: `django-admin ng_build django-angular3.json` and `pnpm exec ng test --watch=false`
 5. Fix any breaking changes or deprecated API usage
 6. Commit changes: `git add . && git commit -m "chore: update Angular to v<version>"`
 
 **For `change-build-config` modifications**:
-1. Verify workspace exists
-2. Read `angular.json`
+1. Verify `angular.output` exists and contains `angular.json`
+2. Read `angular.json` using Read tool
 3. Apply requested configuration changes using Edit tool
 4. Validate JSON syntax
-5. Test build with new configuration
+5. Test build: `django-admin ng_build django-angular3.json`
 6. Commit changes: `git add angular.json && git commit -m "chore: update build configuration"`
 
 **For `reconfigure-material` modifications**:
-1. Verify workspace exists
-2. Update `src/styles.scss` with new theme configuration
-3. Test theme by running dev server: `ng serve`
+1. Verify `angular.output` exists and contains `angular.json`
+2. Update `src/styles.scss` with new theme configuration using Edit tool
+3. Test build: `django-admin ng_build django-angular3.json`
 4. Verify Material components render correctly
 5. Commit changes: `git add . && git commit -m "style: update Material theme"`
 
 **For `add-eslint-rule` modifications**:
-1. Verify workspace exists and ESLint is configured
-2. Read `.eslintrc.json`
+1. Verify `angular.output` exists and ESLint is configured
+2. Read `.eslintrc.json` using Read tool
 3. Add or modify rules using Edit tool
-4. Run linter: `ng lint`
+4. Run linter: `pnpm exec ng lint`
 5. Fix any new violations
 6. Commit changes: `git add . && git commit -m "chore: update ESLint rules"`
 
@@ -1260,47 +1264,28 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
 #### Input Requirements
 
-- **`workspacePath`**: Must exist and contain an Angular workspace
-- **`confirmDelete`** (boolean, required): Safety confirmation flag (must be `true`)
-- **`backupBeforeDelete`** (boolean, optional): Create backup before deletion. Defaults to `false`
-
-#### Pre-flight Checks
-
-1. Verify `workspacePath` exists
-2. Verify it contains `angular.json` (confirm it's an Angular workspace)
-3. Require explicit `confirmDelete: true` flag
-4. Warn if workspace has uncommitted Git changes
+- **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 
 #### Process (Delete Mode)
 
-1. **Check for uncommitted changes**:
+1. **Remove workspace via djng wrapper**:
    ```bash
-   cd <workspacePath>
-   git status --porcelain
+   django-admin ng_workspace_delete django-angular3.json --dry-run
    ```
-   If output is not empty, warn: "Workspace has uncommitted changes. Commit or stash before deletion."
+   Review the planned invocation. When `ng_workspace_delete` is in `command_allowlist`, execute:
+   ```bash
+   django-admin ng_workspace_delete django-angular3.json
+   ```
+   The wrapper removes the directory cross-platform via `shutil.rmtree`.
 
-2. **Create backup** (if `backupBeforeDelete: true`):
-   ```bash
-   tar -czf <workspacePath>-backup-$(date +%Y%m%d-%H%M%S).tar.gz <workspacePath>
-   mv <workspacePath>-backup-*.tar.gz <backupLocation>
-   ```
+   > **Note**: `ng_workspace_delete` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
-3. **Remove workspace directory**:
-   ```bash
-   rm -rf <workspacePath>
-   ```
-
-4. **Verify deletion**:
-   ```bash
-   [ ! -d <workspacePath> ] && echo "Workspace deleted successfully"
-   ```
+2. **Verify deletion**: Confirm `angular.output` directory no longer exists.
 
 #### Output
 
 - Workspace directory removed
-- Backup created if requested
-- Confirmation message with deletion status
+- Deletion confirmed
 
 ### Supporting Files
 
@@ -1332,19 +1317,19 @@ After creating a workspace, verify:
 
 3. **Build succeeds**:
    ```bash
-   cd <workspacePath> && ng build
+   django-admin ng_build django-angular3.json
    ```
    Expected: Build completes without errors
 
 4. **Tests pass**:
    ```bash
-   cd <workspacePath> && ng test --watch=false
+   pnpm exec ng test --watch=false
    ```
    Expected: All tests pass
 
 5. **Dev server starts**:
    ```bash
-   cd <workspacePath> && ng serve --port 4200
+   pnpm exec ng serve --port 4200
    ```
    Expected: Server starts and application loads at `http://localhost:4200`
 
@@ -1357,18 +1342,18 @@ After creating a workspace, verify:
 
 After modifying a workspace, verify:
 
-1. **Build still succeeds**: `ng build`
-2. **Tests still pass**: `ng test --watch=false`
-3. **Linter passes**: `ng lint` (if ESLint configured)
-4. **No TypeScript errors**: `ng build --configuration production`
+1. **Build still succeeds**: `django-admin ng_build django-angular3.json`
+2. **Tests still pass**: `pnpm exec ng test --watch=false`
+3. **Linter passes**: `pnpm exec ng lint` (if ESLint configured)
+4. **No TypeScript errors**: `django-admin ng_build django-angular3.json` (production configuration)
 
 ### Error Handling
 
 #### Common Errors and Resolutions
 
 **Error**: `ng: command not found`
-- **Cause**: Angular CLI not installed
-- **Resolution**: Install globally (`npm install -g @angular/cli`) or use npx
+- **Cause**: Angular CLI not installed in workspace `node_modules`
+- **Resolution**: Re-run `django-admin ng_new django-angular3.json` to recreate the workspace with all dependencies
 
 **Error**: `EACCES: permission denied`
 - **Cause**: Insufficient permissions to create directory or install packages
@@ -1394,9 +1379,10 @@ After modifying a workspace, verify:
 
 **Prerequisites**:
 - Node.js (v18.19+ or v20.11+ or v22.0+)
-- NPM/Yarn/PNPM package manager
+- pnpm package manager
 - Git (for version control)
 - Sufficient disk space (500MB+)
+- djng installed with `ng_new`, `ng_add`, `ng_build`, `ng_workspace_delete` wrappers available
 
 **No skill dependencies**: This is the foundational skill. All other Angular skills depend on this skill being executed first to create the workspace.
 
@@ -1502,25 +1488,31 @@ All skills support three operational modes:
 
 Generate a new Angular Material application inside the workspace with complete directory structure, theme configuration, and standalone bootstrap setup.
 
-**Input Requirements**:
-- `appName` (required): Name of the application (e.g., `my-app`, `admin-dashboard`)
-- `workspacePath` (required): Absolute path to the Angular workspace root directory
-- `prefix` (optional): Component selector prefix (defaults to `app`)
-- `routing` (optional): Whether to include routing configuration (defaults to `true`)
-- `standalone` (optional): Whether to use standalone components (defaults to `true`)
+**Input Requirements** (all from `django-angular3.json`):
+- `project.name` (required): Name of the application
+- `angular.output` (required): Absolute path to the Angular workspace root directory
+- `angular.workspace.prefix` (optional): Component selector prefix (defaults to `app`)
+- `angular.workspace.routing` (optional): Whether to include routing configuration (defaults to `true`)
+
+Note: `standalone: true` is a fixed Angular convention and is not configurable.
 
 **Process**:
 
 1. **Validate workspace exists**
-   - Check that `workspacePath` exists and contains `angular.json`
+   - Check that `angular.output` exists and contains `angular.json`
    - Verify workspace is initialized and valid
-   - Confirm `appName` doesn't already exist in workspace
+   - Confirm `project.name` doesn't already exist in workspace
 
-2. **Generate application scaffold**
+2. **Generate application scaffold via djng wrapper**:
    ```bash
-   cd <workspacePath>
-   ng generate application <appName> --routing=<routing> --standalone=<standalone> --style=scss --prefix=<prefix>
+   django-admin ng_gen_app django-angular3.json --dry-run
    ```
+   When `ng_gen_app` is in `command_allowlist`, execute:
+   ```bash
+   django-admin ng_gen_app django-angular3.json
+   ```
+
+   > **Note**: `ng_gen_app` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
 3. **Create standard directory structure**
    - Create `projects/<appName>/src/app/core/` - Core services and guards
@@ -1530,11 +1522,8 @@ Generate a new Angular Material application inside the workspace with complete d
    - Create barrel exports (`index.ts`) in each directory
 
 4. **Wire Angular Material theme**
-   - Install Angular Material if not already present:
-     ```bash
-     ng add @angular/material --project=<appName> --theme=indigo-pink --typography=true --animations=true
-     ```
-   - Update `projects/<appName>/src/styles.scss` with custom theme configuration:
+   - Angular Material is already installed at the workspace level by `ng-workspace`.
+   - Update `projects/<project.name>/src/styles.scss` with app-level theme configuration using Edit tool:
      ```scss
      @use '@angular/material' as mat;
      @include mat.core();
@@ -1560,7 +1549,7 @@ Generate a new Angular Material application inside the workspace with complete d
      ```
 
 5. **Set up standalone bootstrap configuration**
-   - Create/update `projects/<appName>/src/app/app.config.ts`:
+   - Create/update `projects/<project.name>/src/app/app.config.ts`:
      ```typescript
      import { ApplicationConfig } from '@angular/core';
      import { provideRouter } from '@angular/router';
@@ -1577,7 +1566,7 @@ Generate a new Angular Material application inside the workspace with complete d
      };
      ```
 
-   - Update `projects/<appName>/src/main.ts` to use standalone bootstrap:
+   - Update `projects/<project.name>/src/main.ts` to use standalone bootstrap:
      ```typescript
      import { bootstrapApplication } from '@angular/platform-browser';
      import { AppComponent } from './app/app.component';
@@ -1593,28 +1582,27 @@ Generate a new Angular Material application inside the workspace with complete d
    - Replace `{{APP_NAME}}` placeholder with actual app name
    - Create responsive navigation shell with Material sidenav
 
-7. **Verify compilation**
+7. **Verify compilation**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 **Output**:
-- Complete Angular Material application created in `projects/<appName>/`
+- Complete Angular Material application created in `projects/<project.name>/`
 - Directory structure with `core/`, `shared/`, `features/` folders
 - Material theme configured in `styles.scss`
 - Standalone bootstrap with `app.config.ts`
 - Application shell with responsive navigation
 - Entry added to `angular.json` for the new application
-- Confirmation message with next steps (e.g., "Run `ng serve <appName>` to start development server")
 
 #### Modify
 
 Update an existing Angular Material application with changes to providers, global styles, or routing configuration.
 
 **Input Requirements**:
-- `appName` (required): Name of the existing application to modify
-- `workspacePath` (required): Absolute path to the Angular workspace
-- `modifications` (required): Object describing changes to make:
+- `project.name` (from `django-angular3.json`, required): Name of the existing application to modify
+- `angular.output` (from `django-angular3.json`, required): Absolute path to the Angular workspace
+- `modifications` (from procedure inputs, required): Object describing changes to make:
   - `providers`: Array of provider configurations to add/remove
   - `styles`: CSS/SCSS rules to add to global styles
   - `routes`: Route definitions to register (lazy-loaded or eager)
@@ -1677,17 +1665,16 @@ Update an existing Angular Material application with changes to providers, globa
    - Maintain route ordering and guard configurations
 
 5. **Update dependencies**
-   - If `dependencies` specified, update `package.json`:
+   - If `dependencies` specified:
      ```bash
-     cd <workspacePath>
-     npm install <package>@<version>
+     pnpm install <package>@<version>
      # or
-     npm uninstall <package>
+     pnpm uninstall <package>
      ```
 
-6. **Verify compilation**
+6. **Verify compilation**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 **Output**:
@@ -1701,40 +1688,35 @@ Update an existing Angular Material application with changes to providers, globa
 
 Remove an Angular Material application completely from the workspace, including all source files and configuration.
 
-**Input Requirements**:
-- `appName` (required): Name of the application to delete
-- `workspacePath` (required): Absolute path to the Angular workspace
-- `confirm` (required): Boolean confirmation flag (must be `true`)
+**Input Requirements** (all from `django-angular3.json`):
+- `project.name` (required): Name of the application to delete
+- `angular.output` (required): Absolute path to the Angular workspace
 
 **Process**:
 
 1. **Validate application exists**
-   - Verify `projects/<appName>/` exists
-   - Check `angular.json` contains configuration for `<appName>`
+   - Verify `<angular.output>/projects/<project.name>/` exists
+   - Check `angular.json` contains configuration for `<project.name>`
    - Confirm no other applications depend on this one
 
-2. **Remove application directory**
+2. **Remove application directory** using Bash tool:
    ```bash
-   rm -rf <workspacePath>/projects/<appName>
+   rm -rf <angular.output>/projects/<project.name>
    ```
 
-3. **Update angular.json**
-   - Read `angular.json`
-   - Remove entry from `projects` object for `<appName>`
+3. **Update `angular.json`** using Read and Edit tools:
+   - Remove entry from `projects` object for `<project.name>`
    - Remove any build configurations, serve targets, and test targets
    - Update default project if this was the default
 
-4. **Clean up dependencies (optional)**
+4. **Clean up dependencies (optional)**:
    - Check if Angular Material is used by other apps
    - If this was the only app using Material, optionally remove:
      ```bash
-     npm uninstall @angular/material @angular/cdk
+     pnpm uninstall @angular/material @angular/cdk
      ```
 
-5. **Verify workspace integrity**
-   ```bash
-   ng build --help  # Confirm workspace still valid
-   ```
+5. **Verify workspace integrity**: Read `angular.json` and confirm it is valid JSON with no remaining references to `<project.name>`.
 
 **Output**:
 - Application directory `projects/<appName>/` removed
@@ -1777,17 +1759,17 @@ Steps to validate successful execution of the skill:
    # Should use bootstrapApplication() not platformBrowserDynamic()
    ```
 
-4. **Compile check**
+4. **Compile check**:
    ```bash
-   ng build <appName> --configuration=development
-   # Should complete without errors
+   django-admin ng_build django-angular3.json
    ```
+   Expected: Build completes without errors
 
-5. **Serve and verify**
+5. **Serve and verify**:
    ```bash
-   ng serve <appName>
-   # Navigate to http://localhost:4200 and verify Material components render
+   pnpm exec ng serve <project.name>
    ```
+   Navigate to `http://localhost:4200` and verify Material components render
 
 ### Error Handling
 
@@ -1803,7 +1785,7 @@ Common errors and their resolution strategies:
 
 **Error**: `Cannot find module '@angular/material'`
 - **Cause**: Angular Material not installed or installation failed
-- **Resolution**: Run `ng add @angular/material --project=<appName>` manually
+- **Resolution**: Run `django-admin ng_add django-angular3.json` to install Material at workspace level
 
 **Error**: `Compilation failed: Cannot find module './app/app.config'`
 - **Cause**: Standalone bootstrap not properly configured
@@ -1815,7 +1797,7 @@ Common errors and their resolution strategies:
 
 **Error**: `Port 4200 is already in use`
 - **Cause**: Another application is already running on default port
-- **Resolution**: Stop other dev servers or use `ng serve <appName> --port=4201`
+- **Resolution**: Stop other dev servers or use `pnpm exec ng serve <project.name> --port=4201`
 
 ### Dependencies
 
