@@ -1307,12 +1307,12 @@ After creating a workspace, verify:
 
 1. **Directory structure exists**:
    ```bash
-   [ -f <workspacePath>/angular.json ] && echo "✓ Workspace created"
+   [ -f <angular.output>/angular.json ] && echo "✓ Workspace created"
    ```
 
 2. **Dependencies installed**:
    ```bash
-   [ -d <workspacePath>/node_modules ] && echo "✓ Dependencies installed"
+   [ -d <angular.output>/node_modules ] && echo "✓ Dependencies installed"
    ```
 
 3. **Build succeeds**:
@@ -1395,60 +1395,43 @@ After modifying a workspace, verify:
 
 #### Example 1: Create New Workspace
 
-**Input**:
-```json
-{
-  "mode": "create",
-  "workspacePath": "/home/user/projects/my-shop",
-  "packageManager": "pnpm",
-  "style": "scss",
-  "routing": true,
-  "workspaceName": "my-shop"
-}
-```
+**Input** (from `django-angular3.json`):
+- `project.name`: `"my-shop"`
+- `angular.output`: `"/home/user/projects/my-shop"`
+- `angular.workspace.packageManager`: `"pnpm"`
+- `angular.workspace.style`: `"scss"`
+- `angular.workspace.routing`: `true`
 
 **Execution**:
-1. Run `npx @angular/cli new my-shop --directory=/home/user/projects/my-shop --package-manager=pnpm --style=scss --routing=true --standalone=true`
-2. Install Material with `ng add @angular/material`
+1. Run `django-admin ng_new django-angular3.json`
+2. Run `django-admin ng_add django-angular3.json`
 3. Configure custom SCSS theme
-4. Install ESLint
+4. Install ESLint with `pnpm exec ng add @angular-eslint/schematics`
 5. Create initial commit
 
 **Output**: Workspace created at `/home/user/projects/my-shop` with Material configured
 
 #### Example 2: Update Angular Version
 
-**Input**:
-```json
-{
-  "mode": "modify",
-  "workspacePath": "/home/user/projects/my-shop",
-  "modificationTarget": "update-angular",
-  "modificationDetails": {
-    "targetVersion": "latest"
-  }
-}
-```
+**Input** (from `django-angular3.json`):
+- `project.name`: `"my-shop"`
+- `angular.output`: `"/home/user/projects/my-shop"`
 
 **Execution**:
-1. Run `ng update @angular/core @angular/cli @angular/material`
+1. Run `pnpm exec ng update @angular/core @angular/cli @angular/material`
 2. Review and apply migrations
-3. Run tests
+3. Run `django-admin ng_build django-angular3.json` and `pnpm exec ng test --watch=false`
 4. Commit changes
 
 **Output**: Angular updated to latest version with all migrations applied
 
 #### Example 3: Delete Workspace
 
-**Input**:
-```json
-{
-  "mode": "delete",
-  "workspacePath": "/home/user/projects/my-shop",
-  "confirmDelete": true,
-  "backupBeforeDelete": true
-}
-```
+**Input** (from `django-angular3.json`):
+- `project.name`: `"my-shop"`
+- `angular.output`: `"/home/user/projects/my-shop"`
+
+Procedure-level input: `confirmDelete: true`
 
 **Execution**:
 1. Check for uncommitted changes (warn if present)
@@ -4227,9 +4210,12 @@ The creation process varies based on component `type`:
 Update an existing Angular component with changes to template, services, or type conversion.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName`: Must reference existing component
 - `targetPath`: Must point to existing component directory
-- `workspacePath`: Must point to valid Angular workspace
 - `modifications` (required): Object describing changes to make:
   - `template`: HTML changes to apply to template
   - `services`: Array of service injections to add/remove
@@ -4294,9 +4280,12 @@ Update an existing Angular component with changes to template, services, or type
 Remove an Angular component completely, including all files and references in parent components or routes.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName`: Must reference existing component to delete
 - `targetPath`: Must point to existing component directory
-- `workspacePath`: Must point to valid Angular workspace
 - `confirm` (required): Boolean confirmation flag (must be `true`)
 
 **Process**:
@@ -4601,11 +4590,13 @@ The `ng-complex-component` skill manages Angular Material components that go bey
 
 ### Inputs
 
-**From invocation context**:
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path
+- `project.name`: Application name within the workspace
+
+Procedure-level inputs:
 - **`componentName`** (string, required): Component name in kebab-case (e.g., `user-menu`, `filter-builder`)
 - **`targetPath`** (string, required): Relative path from app source directory where the component directory will be created
-- **`workspacePath`** (string, required): Absolute path to the Angular workspace root
-- **`appName`** (string, optional): Angular application name, required for multi-app workspaces
 - **`features`** (array, required): List of advanced features to enable. Allowed values:
   - `mixins`
   - `nested`
@@ -4623,15 +4614,14 @@ Generate a new Angular Material complex component from scratch.
 **Input Requirements**:
 - `componentName` must be valid kebab-case
 - `targetPath` must resolve inside the Angular application source tree
-- `workspacePath` must contain a valid Angular workspace
 - `features` must contain one or more supported feature flags
 
 **Pre-flight Checks**:
 
 Before creating the component, verify:
 
-1. `angular.json` exists under `workspacePath`
-2. Target application exists if `appName` is specified
+1. Read `angular.output` and `project.name` from `django-angular3.json`
+2. `angular.json` exists under `angular.output`
 3. Angular Material and `@angular/cdk` are installed when `cdk-overlay` is requested
 4. The target component directory does not already exist
 5. Root theme entrypoint (typically `src/styles.scss`) exists and is writable when `mixins` is requested
@@ -4714,8 +4704,12 @@ Before creating the component, verify:
 Update an existing complex component by adding advanced composition features without rebuilding the entire component.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName` must reference an existing component directory
-- `targetPath` and `workspacePath` must point to valid existing paths
+- `targetPath` must point to a valid existing path
 - `features` must describe the feature(s) to add or expand
 
 **Process**:
@@ -4747,9 +4741,12 @@ Update an existing complex component by adding advanced composition features wit
 Remove a complex component and its advanced integrations completely.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `componentName` must reference an existing complex component
 - `targetPath` must resolve to the existing component directory
-- `workspacePath` must point to the Angular workspace root
 - `confirm` (required): Must be `true`
 
 **Process**:
@@ -4803,7 +4800,7 @@ Steps to validate successful execution of the skill:
 
 3. **Theme injection verified**:
    ```bash
-   grep -n "<componentName>-theme" <workspacePath>/src/styles.scss
+   grep -n "<componentName>-theme" src/styles.scss
    ```
    - Should show the mixin import/include when `mixins` is enabled
    - Should return no matches after Delete mode cleanup
@@ -4904,9 +4901,12 @@ The `ng-reactive-form` skill manages Angular reactive form components that use t
 
 ### Inputs
 
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path
+- `project.name`: Application name within the workspace
+
+Procedure-level inputs:
 - `formName` (string, required): Name of the form component in kebab-case (e.g., `user-profile`, `order-create`, `product-edit`)
-- `workspacePath` (string, required): Absolute path to the Angular workspace root directory
-- `appName` (string, required): Name of the application within the workspace
 - `targetPath` (string, required): Relative path from app source where form should be placed (e.g., `features/users/forms`, `shared/forms`)
 - `mode` (enum, required): Form operational mode:
   - `create` — Form for creating new resources (empty initial values)
@@ -4925,9 +4925,11 @@ The `ng-reactive-form` skill manages Angular reactive form components that use t
 Generate a new Angular reactive form component from scratch with typed `FormGroup<>`, Material form fields, validation, loading state, server error handling, and comprehensive spec tests.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `formName` (string): Form component name in kebab-case
-- `workspacePath` (string): Workspace root path
-- `appName` (string): Application name
 - `targetPath` (string): Target directory relative to app source
 - `mode` (enum): `create`, `edit`, or `both`
 - `resourceName` (string, optional): Resource name for API integration
@@ -4935,8 +4937,9 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
 **Process**:
 
 1. **Pre-flight validation**:
-   - Verify workspace exists at `workspacePath` and contains `angular.json`
-   - Verify application `appName` exists in `projects/<project.name>/`
+   - Read `angular.output` and `project.name` from `django-angular3.json`
+   - Verify workspace exists at `angular.output` and contains `angular.json`
+   - Verify application `<project.name>` exists in `projects/<project.name>/`
    - Validate `formName` follows naming conventions (lowercase, hyphenated)
    - Check form component doesn't already exist at `targetPath/<formName>/`
    - If `resourceName` is provided:
@@ -5216,9 +5219,11 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
 Update an existing reactive form component to add/remove fields, change validators, update submit target, or adjust behavior.
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `formName` (string): Name of the form to modify
-- `workspacePath` (string): Workspace root path
-- `appName` (string): Application name
 - `targetPath` (string): Current location of form component
 - Description of changes:
   - Fields to add/remove (with types and validators)
@@ -5266,9 +5271,11 @@ Update an existing reactive form component to add/remove fields, change validato
 Remove a reactive form component and clean up references (route configurations, parent component imports).
 
 **Input Requirements**:
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - `formName` (string): Name of the form to delete
-- `workspacePath` (string): Workspace root path
-- `appName` (string): Application name
 - `targetPath` (string): Location of form component
 
 **Process**:
@@ -5490,12 +5497,15 @@ The `ng-page` skill manages top-level Angular Material pages inside an existing 
 
 ### Inputs
 
-**From invocation context**:
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path
+- `project.name`: Application name within the workspace
+
+Procedure-level inputs:
 - **`pageName`** (string, required): Page component name in kebab-case (for example `users-list`, `order-detail`, `team-dashboard`)
 - **`routePath`** (string, required): Route path segment to register in the feature route file (for example `users`, `orders/:id`, `dashboard`)
 - **`pageType`** (enum, required): Page type (`list` | `detail` | `dashboard` | `workflow`)
 - **`featureName`** (string, required): Feature area that owns the route and page files (for example `users`, `orders`, `admin`)
-- **`appName`** (string, optional): Angular application name used when the workspace contains more than one application and for compile validation commands
 
 ### Modes
 
@@ -5752,11 +5762,13 @@ The `ng-site` skill coordinates complete Angular Material site generation for an
 
 ### Inputs
 
-**From invocation context**:
-- **`workspacePath`** (string, required): Absolute path to the Angular workspace root
-- **`appName`** (string, optional): Angular application name when the workspace contains more than one app and for validation commands
+Read from `django-angular3.json`:
+- `angular.output`: Angular workspace root path
+- `project.name`: Application name within the workspace
+- `openapi.source`: Path to the OpenAPI source used by `ng-api` for client generation
+
+Procedure-level inputs:
 - **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/ui/`, used to discover pages, navigation structure, and forms
-- **`openapi_source_path`** (string, optional): Path to the OpenAPI source used by `ng-api` for client generation
 - **`defaults`** (object, optional): Fallback definitions to use when no UI spec is provided, such as default pages, route prefixes, or auth requirements
 
 ### Modes
@@ -5768,15 +5780,15 @@ All skills support three operational modes:
 Create a complete Angular Material site by orchestrating the existing Angular generation skills in the correct order and then wiring shared site-level infrastructure.
 
 **Input Requirements**:
-- `workspacePath` must point to an existing Angular workspace
-- `appName` is required when the workspace contains multiple applications
+- `angular.output` must point to an existing Angular workspace
 - `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/ui/`
-- `openapi_source_path` is optional; when provided it should resolve to a valid OpenAPI document
+- `openapi.source` is optional; when provided it should resolve to a valid OpenAPI document
 
 **Process (Create Mode)**:
 
 1. **Verify workspace and app exist before orchestration**
-   - Confirm `workspacePath` exists and contains `angular.json`
+   - Read `angular.output` and `project.name` from `django-angular3.json`
+   - Confirm `angular.output` exists and contains `angular.json`
    - Confirm the target Angular application already exists in the workspace
    - If either the workspace or application is missing, stop and instruct the caller to run `ng-workspace` first and then `ng-app`
 
@@ -5795,7 +5807,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - Ensure the shell exposes a stable place for feature navigation and authenticated child routes
 
 4. **Invoke `ng-api` when an OpenAPI source is available**
-   - If `openapi_source_path` is present, pass it through to `ng-api` as `openapi_source_path` and generate or refresh Angular API clients before page or form generation
+   - If `openapi.source` is present in `django-angular3.json`, pass through to `ng-api` and generate or refresh Angular API clients before page or form generation
    - Reuse the generated models and services as the typed foundation for resource-backed pages and forms
 
 5. **Invoke `ng-page` for each site page**
@@ -5829,7 +5841,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 **Output**:
 - Site-level `app.component.ts` shell with `MatSidenav` layout
 - Root route configuration wired for generated pages and auth protection
-- Generated OpenAPI clients when `openapi_source_path` is provided
+- Generated OpenAPI clients when `openapi.source` is provided in `django-angular3.json`
 - Generated Angular Material pages for each discovered or default page
 - Generated reactive forms for each discovered form definition
 - Global Material theme in `styles.scss`
@@ -5865,8 +5877,10 @@ Update an existing Angular Material site without regenerating the entire applica
 Remove the Angular application that owns the generated site from the workspace.
 
 **Input Requirements**:
-- Existing `workspacePath`
-- Existing `appName`
+
+Read from `django-angular3.json`: `angular.output`, `project.name`
+
+Procedure-level inputs:
 - Explicit confirmation before removal
 
 **Process**:
