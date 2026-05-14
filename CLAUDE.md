@@ -138,7 +138,7 @@ In the djng/ngdj toolchain:
   should continue to use locally installed workspace dependencies via
   `pnpm exec`.
 
-## Development Commands
+## Development and Verification Workflow
 
 ### Command paradigm
 
@@ -154,50 +154,23 @@ python manage.py <command> [args]
 ```
 
 This repository also ships a **standalone CLI** (`django-angular3` entry point)
-as a convenience for meta-tool development and CI in this repo, where a full
-Django project configuration is not required. The standalone CLI is not the
-intended invocation form for end users of the generated app.
+for meta-tool development and CI in this repo, where a full Django project
+configuration is not required. When writing skills, documentation, or
+requirements for the generated app, use `django-admin <command>`.
 
-When writing skills, documentation, or requirements that target the generated
-app, always use `django-admin <command>`.
-
-Install locally:
+### Core local commands
 
 ```bash
 python -m pip install -e .
-```
-
-Install with YAML support:
-
-```bash
 python -m pip install -e .[yaml]
-```
-
-Run tests:
-
-```bash
 python -m unittest discover -s tests -p "test*.py"
-```
-
-Validate the bundled project config:
-
-```bash
 django-admin validate-project django-angular3.json
-```
-
-Preview the deterministic build plan:
-
-```bash
 django-admin build django-angular3.json --dry-run
+django-admin build_app django-angular3.json --dry-run
 ```
 
-Write the build plan:
-
-```bash
-django-admin build django-angular3.json --output build
-```
-
-Preview Angular wrapper commands:
+Preview Angular wrapper commands through djng rather than invoking Angular
+tooling directly:
 
 ```bash
 django-admin ng_new django-angular3.json --dry-run
@@ -208,25 +181,33 @@ django-admin ng_openapi_gen django-angular3.json --dry-run
 django-admin ng_build django-angular3.json --dry-run
 ```
 
-## Validation Expectations
+### Development and test cycles
 
-Before finishing executable-code changes, run the unittest suite when
-practical:
+- **`djng`**: unit tests for services, permissions, and model behavior; API
+  tests for serializers, endpoints, authentication, and contract-producing
+  behavior; database-backed tests for critical workflows. For any Python-side
+  change use the repository unittest suite and the relevant `django-admin`
+  dry runs to verify inspectable outputs.
+- **`ngdj`**: unit tests for services and utility logic; component tests for
+  forms, tables, route-protected pages, and generated UI behavior; end-to-end
+  tests for login and the main business module workflows. Keep Angular
+  operations wrapper-driven from `djng` and use workspace-local dependencies
+  via `pnpm exec`.
+- **Integration**: automated coverage across contract, integration, and
+  composed application behavior. Verification is iterative — re-verify
+  frontend/backend alignment after schema changes, business-record changes, and
+  each build or verification cycle. Include smoke tests in staging before
+  production release.
 
-```bash
-python -m unittest discover -s tests -p "test*.py"
-```
+### Generated-app development feedback
 
-For config, validation, or build-plan changes, also run:
-
-```bash
-django-admin validate-project django-angular3.json
-django-admin build django-angular3.json --dry-run
-```
-
-If a change touches Angular command planning, run the relevant `ng_* --dry-run`
-command and verify the planned invocation instead of executing external Angular
-tooling by default.
+- With `DEBUG=True`, failures raised by djng management commands or app-builder
+  runs in the generated app must surface through Django's normal error
+  reporting, not be swallowed or reduced to stdout-only output.
+- The generated app must expose a development-only `/ng/build` page gated by
+  `DEBUG=True` or `ENABLE_NG_BUILD_PAGE=True` so Angular build health, TypeScript
+  errors and warnings, bundle summary, and retrigger controls are visible during
+  development.
 
 ## Documentation Notes
 
