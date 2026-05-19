@@ -252,7 +252,7 @@ class ExportSchemaCommandTests(unittest.TestCase):
             ) as mock_run:
                 # oasdiff diff returns empty (no changes).
                 mock_run.return_value = MagicMock(
-                    stdout='{}', stderr='', returncode=0
+                    stdout="{}", stderr="", returncode=0
                 )
                 call_command(
                     "build_app",

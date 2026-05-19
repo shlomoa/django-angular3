@@ -181,8 +181,8 @@ class Command(BaseCommand):
         if not current_schema_path:
             raise CommandError("Config missing openapi.source")
 
-        # Resolve previous schema: explicit flag takes priority; fall back to
-        # the conventional .previous path written by export_schema.
+        # Resolve previous schema: if not provided via --previous-schema, auto-discover
+        # the conventional .previous artifact written by export_schema.
         prev_schema_path = options["previous_schema"]
         if not prev_schema_path:
             auto_previous = get_previous_schema_path(current_config.openapi_source)
