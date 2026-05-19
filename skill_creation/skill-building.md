@@ -15,7 +15,7 @@ Free-form prose is fine; I'll ask follow-ups to fill the gaps.
 
 Whatever a competent practitioner would need to do the task by hand. Concretely: the input shape (file paths, schemas, structured data, free text), the output shape (exact format, extensions, naming, directory layout), conventions or style rules the output must follow, edge cases (missing input, conflicts, partial state), and dependencies on other skills or artifacts.
 
-The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `GENERATE_SKILLS.md` is exactly this kind of input — a structured spec.
+The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `doc/GENERATE_SKILLS.md` is exactly this kind of input — a structured spec.
 
 **3. Bundled resources — optional**
 

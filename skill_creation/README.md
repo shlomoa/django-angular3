@@ -1,12 +1,12 @@
 # Skill Creation Working Set
 
-This folder splits `GENERATE_SKILLS.md` into smaller working files for the
+This folder splits `doc/GENERATE_SKILLS.md` into smaller working files for the
 skill authoring cadence described in `doc/SKILL_AUTHORING_PLAN.md`.
 
-`GENERATE_SKILLS.md` remains the original design specification. These files are
+`doc/GENERATE_SKILLS.md` remains the original design specification. These files are
 the operational source for planning, implementing, and verifying one skill at a
 time. If a split file appears incomplete or inconsistent with
-`GENERATE_SKILLS.md`, resolve the discrepancy against `GENERATE_SKILLS.md` and
+`doc/GENERATE_SKILLS.md`, resolve the discrepancy against `doc/GENERATE_SKILLS.md` and
 then update the split file.
 
 ## Layout
