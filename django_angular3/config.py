@@ -88,3 +88,17 @@ def _optional_path(root: Path, value: Any, label: str) -> Path | None:
     if not isinstance(value, str) or not value.strip():
         raise ConfigError(f"Configuration value '{label}' must be a non-empty string.")
     return (root / value).resolve()
+
+
+def get_previous_schema_path(source: Path) -> Path:
+    """Return the conventional path for the previous schema artifact.
+
+    The previous schema is stored alongside the current schema with
+    ``.previous`` inserted before the file extension.  For example::
+
+        spec/openapi/source/api.json  →  spec/openapi/source/api.previous.json
+
+    This path is written by ``export_schema`` before the current schema is
+    overwritten, and consumed by ``build_app`` for change detection.
+    """
+    return source.parent / (source.stem + ".previous" + source.suffix)

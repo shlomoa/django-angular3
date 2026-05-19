@@ -6,7 +6,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...config import load_project_config, ConfigError
+from ...config import get_previous_schema_path, load_project_config, ConfigError
 from ...tools import ensure_oasdiff
 
 
@@ -171,19 +171,26 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         config_path = options["config"]
-        prev_schema_path = options["previous_schema"]
-        
+
         try:
             current_config = load_project_config(config_path)
         except ConfigError as exc:
             raise CommandError(str(exc))
-            
+
         current_schema_path = current_config.openapi_source
         if not current_schema_path:
             raise CommandError("Config missing openapi.source")
-            
+
+        # Resolve previous schema: explicit flag takes priority; fall back to
+        # the conventional .previous path written by export_schema.
+        prev_schema_path = options["previous_schema"]
+        if not prev_schema_path:
+            auto_previous = get_previous_schema_path(current_config.openapi_source)
+            if auto_previous.exists():
+                prev_schema_path = str(auto_previous)
+                self.stdout.write(f"Auto-detected previous schema: {prev_schema_path}")
+
         # Ensure we have oasdiff installed via JIT
-        self.stdout.write("Checking dependencies...")
         try:
             ensure_oasdiff()
         except RuntimeError as e:
