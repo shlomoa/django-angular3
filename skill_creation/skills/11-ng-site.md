@@ -180,7 +180,7 @@ Remove the Angular application that owns the generated site from the workspace.
    ```bash
    django-angular3 ng_build django-angular3.json --dry-run
    ```
-   - Confirm the planned build step is valid without executing a full deployment build
+   - Confirm the dry-run build preview is valid without executing a full deployment build
 
 3. **Manual route review**:
    - Confirm the app shell exposes the expected navigation structure
