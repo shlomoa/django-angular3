@@ -3,10 +3,10 @@ import datetime
 import json
 import subprocess
 from pathlib import Path
-
+from typing import Any
 from django.core.management.base import BaseCommand, CommandError
 
-from ...config import load_project_config, ConfigError
+from ...config import get_previous_schema_path, load_project_config, ConfigError
 from ...tools import ensure_oasdiff
 
 
@@ -63,7 +63,7 @@ class Command(BaseCommand):
         base_cmd = f"django-admin {cmd_name} {config_path}"
         if resource_name:
             base_cmd += f" --resource {resource_name}"
-        step = {
+        step: dict[str, Any] = {
             "step": step_num,
             "skill": skill,
             "mode": mode,
@@ -75,10 +75,10 @@ class Command(BaseCommand):
             step["resource_name"] = resource_name
         return step
 
-    def _diff_schemas(self, previous_schema: str, current_schema: str) -> dict:
+    def _diff_schemas(self, previous_schema: str, current_schema: str) -> dict[str, Any]:
         oasdiff_exe = ensure_oasdiff()
         
-        cmd = [
+        cmd: list[str] = [
             oasdiff_exe,
             "diff",
             previous_schema,
@@ -87,7 +87,7 @@ class Command(BaseCommand):
         ]
         
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            result: subprocess.CompletedProcess[str] = subprocess.run(cmd, capture_output=True, text=True, check=True)
             if not result.stdout.strip():
                 return {} # No changes
             return json.loads(result.stdout)
@@ -101,25 +101,25 @@ class Command(BaseCommand):
                 pass
             raise CommandError(f"oasdiff failed: {e.stderr}")
             
-    def _extract_resources(self, path_list: list, path_dict: dict) -> set:
+    def _extract_resources(self, path_list: list[str], path_dict: dict[str, Any]) -> set[str]:
         """Extracts base resource names from OpenAPI paths like '/api/v1/customers/' -> 'customers'."""
-        resources = set()
+        resources: set[str] = set()
         
         # Handle lists (added/deleted)
         for p in path_list:
-            parts = [part for part in p.split("/") if part and not part.startswith("{")]
+            parts: list[str] = [part for part in p.split("/") if part and not part.startswith("{")]
             if parts:
                 resources.add(parts[-1]) # Rough heuristic for resource name
                 
         # Handle dicts (modified)
         for p in path_dict.keys():
-            parts = [part for part in p.split("/") if part and not part.startswith("{")]
+            parts: list[str] = [part for part in p.split("/") if part and not part.startswith("{")]
             if parts:
                 resources.add(parts[-1])
                 
         return resources
 
-    def _evaluate_schema_changes(self, diff_result: dict) -> dict:
+    def _evaluate_schema_changes(self, diff_result: dict[str, Any]) -> dict[str, Any]:
         paths_diff = diff_result.get("paths", {})
         added_paths = paths_diff.get("added", [])
         deleted_paths = paths_diff.get("deleted", [])
@@ -152,7 +152,7 @@ class Command(BaseCommand):
             "oasdiff_report": diff_result,
         }
 
-    def _diff_config(self, previous_config_path: str, current_config_path: str) -> dict:
+    def _diff_config(self, previous_config_path: str, current_config_path: str) -> dict[str, Any]:
         try:
             prev_cfg = load_project_config(previous_config_path)
             curr_cfg = load_project_config(current_config_path)
@@ -169,27 +169,34 @@ class Command(BaseCommand):
             "affected_forms": []
         }
 
-    def handle(self, *args, **options) -> None:
-        config_path = options["config"]
-        prev_schema_path = options["previous_schema"]
-        
+    def handle(self, *args: list[str], **options: dict[str, Any]) -> None:
+        config_path: str | Any = options["config"]
+
         try:
             current_config = load_project_config(config_path)
         except ConfigError as exc:
             raise CommandError(str(exc))
-            
-        current_schema_path = current_config.openapi_source
+
+        current_schema_path: Path = current_config.openapi_source
         if not current_schema_path:
             raise CommandError("Config missing openapi.source")
-            
+
+        # Resolve previous schema: if not provided via --previous-schema, auto-discover
+        # the conventional .previous artifact written by export_schema.
+        prev_schema_path: str | Any = options["previous_schema"]
+        if not prev_schema_path:
+            auto_previous = get_previous_schema_path(current_config.openapi_source)
+            if auto_previous.exists():
+                prev_schema_path = str(auto_previous)
+                self.stdout.write(f"Auto-detected previous schema: {prev_schema_path}")
+
         # Ensure we have oasdiff installed via JIT
-        self.stdout.write("Checking dependencies...")
         try:
             ensure_oasdiff()
         except RuntimeError as e:
             raise CommandError(str(e))
 
-        change_set = {
+        change_set: dict[str, Any] = {
             "schema": {
                 "type": "start-from-scratch",
                 "affected_resources": [],
@@ -205,7 +212,7 @@ class Command(BaseCommand):
         }
 
         # 1. Schema Change Detection
-        if options["force"] == "start-from-scratch" or not prev_schema_path or not Path(prev_schema_path).exists():
+        if str(options["force"]) == "start-from-scratch" or not prev_schema_path or not Path(prev_schema_path).exists():
             change_set["schema"]["type"] = "start-from-scratch"
             
             # To extract resources for start-from-scratch, we diff against an empty spec
@@ -215,7 +222,7 @@ class Command(BaseCommand):
                 empty_schema_path = f.name
                 
             try:
-                diff_result = self._diff_schemas(empty_schema_path, current_schema_path)
+                diff_result: dict[str, Any] = self._diff_schemas(empty_schema_path, current_schema_path)
                 schema_changes = self._evaluate_schema_changes(diff_result)
                 # Keep type as start-from-scratch, but inherit the affected resources
                 change_set["schema"]["affected_resources"] = schema_changes["affected_resources"]
@@ -231,26 +238,26 @@ class Command(BaseCommand):
             schema_changes = self._evaluate_schema_changes(diff_result)
             
             # Detect breaking changes using `oasdiff breaking`
-            cmd_break = [ensure_oasdiff(), "breaking", prev_schema_path, current_schema_path, "--format", "json"]
+            cmd_break: list[str] = [ensure_oasdiff(), "breaking", prev_schema_path, str(current_schema_path), "--format", "json"]
             try:
                 break_result = subprocess.run(cmd_break, capture_output=True, text=True, check=False)
-                break_json = json.loads(break_result.stdout) if break_result.stdout.strip() else []
+                break_json: list[dict[str, Any]] = json.loads(break_result.stdout) if break_result.stdout.strip() else []
                 if break_json:
                     schema_changes["breaking"] = True
             except Exception:
                 pass
 
             if schema_changes["breaking"] and not options["acknowledge_breaking"]:
-                self.stderr.write(self.style.ERROR(
-                    "Breaking schema changes detected. Review the oasdiff report before proceeding.\n"
-                    "Re-run with --acknowledge-breaking to continue."
-                ))
+                if callable(getattr(self.style, 'ERROR', None)):
+                    self.stderr.write(self.style.ERROR("Breaking schema changes detected. Review the oasdiff report before proceeding.\nRe-run with --acknowledge-breaking to continue."))
+                else:
+                    self.stderr.write("Breaking schema changes detected. Review the oasdiff report before proceeding.\nRe-run with --acknowledge-breaking to continue.")
                 raise SystemExit(2)
 
             change_set["schema"] = schema_changes
 
         # 2. Config Change Detection
-        prev_config_path = options["previous_config"]
+        prev_config_path: str | Any = options["previous_config"]
         if prev_config_path and Path(prev_config_path).exists():
             change_set["config"] = self._diff_config(prev_config_path, config_path)
 
@@ -335,7 +342,7 @@ class Command(BaseCommand):
                     resource_name=resource,
                 ))
 
-        build_plan = {
+        build_plan: dict[str, Any] = {
             "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "config": config_path,
             "change_set": change_set,
@@ -344,8 +351,8 @@ class Command(BaseCommand):
 
         self._emit_plan(build_plan, options)
 
-    def _emit_plan(self, build_plan: dict, options: dict) -> None:
-        plan_str = json.dumps(build_plan, indent=2)
+    def _emit_plan(self, build_plan: dict[str, Any], options: dict[str, Any]) -> None:
+        plan_str: str = json.dumps(build_plan, indent=2)
         
         if options["dry_run"]:
             self.stdout.write("--- DRY RUN: Build Plan ---")
@@ -358,4 +365,7 @@ class Command(BaseCommand):
         
         out_file = out_dir / f"build-plan.{ext}"
         out_file.write_text(plan_str, encoding="utf-8")
-        self.stdout.write(self.style.SUCCESS(f"Build plan written to {out_file}"))
+        if not callable(getattr(self.style, 'SUCCESS', None)):
+            self.stdout.write(f"Build plan written to {out_file}")
+        else:
+            self.stdout.write(self.style.SUCCESS(f"Build plan written to {out_file}"))
