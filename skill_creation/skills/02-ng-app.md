@@ -28,59 +28,121 @@ All skills support three operational modes:
 
 Generate a new Angular Material application inside the workspace with complete directory structure, theme configuration, and standalone bootstrap setup.
 
-**Input Requirements**:
-- `appName` (required): Name of the application (e.g., `my-app`, `admin-dashboard`)
-- `workspacePath` (required): Absolute path to the Angular workspace root directory
-- `prefix` (optional): Component selector prefix (defaults to `app`)
-- `routing` (optional): Whether to include routing configuration (defaults to `true`)
-- `standalone` (optional): Whether to use standalone components (defaults to `true`)
+**Input Requirements** (all from `django-angular3.json`):
+- `project.name` (required): Name of the application
+- `angular.output` (required): Absolute path to the Angular workspace root directory
+- `angular.workspace.prefix` (optional): Component selector prefix (defaults to `app`)
+- `angular.workspace.routing` (optional): Whether to include routing configuration (defaults to `true`)
+
+Note: `standalone: true` is a fixed Angular convention and is not configurable.
 
 **Process**:
 
 1. **Validate workspace exists**
-   - Check that `workspacePath` exists and contains `angular.json`
+   - Check that `angular.output` exists and contains `angular.json`
    - Verify workspace is initialized and valid
-   - Confirm `appName` doesn't already exist in workspace
+   - Confirm `project.name` doesn't already exist in workspace
 
-2. **Generate application using the ngdj composite schematic**
-
-   Invoke through the djng wrapper (`django-admin ng_gen_app`) which calls:
+2. **Generate application scaffold via djng wrapper**:
    ```bash
-   cd <workspacePath>
-   ng generate angular-django2:ng-app <appName> --style=scss --routing
+   django-admin ng_gen_app django-angular3.json --dry-run
+   ```
+   When `ng_gen_app` is in `command_allowlist`, execute:
+   ```bash
+   django-admin ng_gen_app django-angular3.json
    ```
 
-   The `angular-django2:ng-app` schematic handles all of the following in one step:
-   - Generates the Angular application via `@schematics/angular:application`
-   - Adds `@angular/material` and `@angular/cdk` to `package.json`
-   - Configures the selected Material prebuilt theme in `angular.json` and `styles.scss`
-   - Adds animation providers to `app.config.ts`
-   - Creates the standard directory structure (`core/`, `shared/components/`, `shared/pipes/`, `features/`)
-     with barrel `index.ts` exports in each directory
-   - Writes a Material sidenav app-shell into `app.component.ts/html/scss`
+   > **Note**: `ng_gen_app` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
-3. **Verify compilation**
+3. **Create standard directory structure**
+   - Create `projects/<project.name>/src/app/core/` - Core services and guards
+   - Create `projects/<project.name>/src/app/shared/components/` - Shared components
+   - Create `projects/<project.name>/src/app/shared/pipes/` - Shared pipes
+   - Create `projects/<project.name>/src/app/features/` - Feature modules/routes
+   - Create barrel exports (`index.ts`) in each directory
+
+4. **Wire Angular Material theme**
+   - Angular Material is already installed at the workspace level by `ng-workspace`.
+   - Update `projects/<project.name>/src/styles.scss` with app-level theme configuration using Edit tool:
+     ```scss
+     @use '@angular/material' as mat;
+     @include mat.core();
+
+     $primary: mat.define-palette(mat.$indigo-palette);
+     $accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+     $warn: mat.define-palette(mat.$red-palette);
+
+     $theme: mat.define-light-theme((
+       color: (
+         primary: $primary,
+         accent: $accent,
+         warn: $warn,
+       ),
+       typography: mat.define-typography-config(),
+       density: 0,
+     ));
+
+     @include mat.all-component-themes($theme);
+
+     html, body { height: 100%; }
+     body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+     ```
+
+5. **Set up standalone bootstrap configuration**
+   - Create/update `projects/<project.name>/src/app/app.config.ts`:
+     ```typescript
+     import { ApplicationConfig } from '@angular/core';
+     import { provideRouter } from '@angular/router';
+     import { provideAnimations } from '@angular/platform-browser/animations';
+     import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+     import { routes } from './app.routes';
+
+     export const appConfig: ApplicationConfig = {
+       providers: [
+         provideRouter(routes),
+         provideAnimations(),
+         provideHttpClient(withInterceptorsFromDi()),
+       ]
+     };
+     ```
+
+   - Update `projects/<project.name>/src/main.ts` to use standalone bootstrap:
+     ```typescript
+     import { bootstrapApplication } from '@angular/platform-browser';
+     import { AppComponent } from './app/app.component';
+     import { appConfig } from './app/app.config';
+
+     bootstrapApplication(AppComponent, appConfig)
+       .catch((err) => console.error(err));
+     ```
+
+6. **Generate application shell using template**
+   - Use `{{template:app-shell.ts}}` to create root `AppComponent`
+   - Use `{{template:app-shell.html}}` for component template
+   - Replace `{{APP_NAME}}` placeholder with actual app name
+   - Create responsive navigation shell with Material sidenav
+
+7. **Verify compilation**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 **Output**:
-- Complete Angular Material application created in `projects/<appName>/`
+- Complete Angular Material application created in `projects/<project.name>/`
 - Directory structure with `core/`, `shared/`, `features/` folders
-- Material theme configured in `styles.scss` and `angular.json`
-- Standalone bootstrap with `app.config.ts` including animation provider
-- Material sidenav app shell in `app.component.*`
+- Material theme configured in `styles.scss`
+- Standalone bootstrap with `app.config.ts`
+- Application shell with responsive navigation
 - Entry added to `angular.json` for the new application
-- Confirmation message with next steps (e.g., "Run `ng serve <appName>` to start development server")
 
 #### Modify
 
 Update an existing Angular Material application with changes to providers, global styles, or routing configuration.
 
 **Input Requirements**:
-- `appName` (required): Name of the existing application to modify
-- `workspacePath` (required): Absolute path to the Angular workspace
-- `modifications` (required): Object describing changes to make:
+- `project.name` (from `django-angular3.json`, required): Name of the existing application to modify
+- `angular.output` (from `django-angular3.json`, required): Absolute path to the Angular workspace
+- `modifications` (from procedure inputs, required): Object describing changes to make:
   - `providers`: Array of provider configurations to add/remove
   - `styles`: CSS/SCSS rules to add to global styles
   - `routes`: Route definitions to register (lazy-loaded or eager)
@@ -89,12 +151,12 @@ Update an existing Angular Material application with changes to providers, globa
 **Process**:
 
 1. **Validate application exists**
-   - Verify `projects/<appName>/` exists
-   - Check `angular.json` contains configuration for `<appName>`
+   - Verify `projects/<project.name>/` exists
+   - Check `angular.json` contains configuration for `<project.name>`
    - Confirm application is using standalone architecture
 
 2. **Update providers in app.config.ts**
-   - Read existing `projects/<appName>/src/app/app.config.ts`
+   - Read existing `projects/<project.name>/src/app/app.config.ts`
    - Parse provider array
    - Add new providers to the `providers` array:
      ```typescript
@@ -112,7 +174,7 @@ Update an existing Angular Material application with changes to providers, globa
    - Maintain formatting and import statements
 
 3. **Update global styles**
-   - Read `projects/<appName>/src/styles.scss`
+   - Read `projects/<project.name>/src/styles.scss`
    - Append new styles to end of file (or update existing theme if modifying theme)
    - Example modifications:
      ```scss
@@ -125,7 +187,7 @@ Update an existing Angular Material application with changes to providers, globa
      ```
 
 4. **Register lazy routes**
-   - Read `projects/<appName>/src/app/app.routes.ts`
+   - Read `projects/<project.name>/src/app/app.routes.ts`
    - Add new route definitions:
      ```typescript
      import { Routes } from '@angular/router';
@@ -143,17 +205,16 @@ Update an existing Angular Material application with changes to providers, globa
    - Maintain route ordering and guard configurations
 
 5. **Update dependencies**
-   - If `dependencies` specified, update `package.json`:
+   - If `dependencies` specified:
      ```bash
-     cd <workspacePath>
-     npm install <package>@<version>
+     pnpm install <package>@<version>
      # or
-     npm uninstall <package>
+     pnpm uninstall <package>
      ```
 
-6. **Verify compilation**
+6. **Verify compilation**:
    ```bash
-   ng build <appName> --configuration=development
+   django-admin ng_build django-angular3.json
    ```
 
 **Output**:
@@ -167,43 +228,38 @@ Update an existing Angular Material application with changes to providers, globa
 
 Remove an Angular Material application completely from the workspace, including all source files and configuration.
 
-**Input Requirements**:
-- `appName` (required): Name of the application to delete
-- `workspacePath` (required): Absolute path to the Angular workspace
-- `confirm` (required): Boolean confirmation flag (must be `true`)
+**Input Requirements** (all from `django-angular3.json`):
+- `project.name` (required): Name of the application to delete
+- `angular.output` (required): Absolute path to the Angular workspace
 
 **Process**:
 
 1. **Validate application exists**
-   - Verify `projects/<appName>/` exists
-   - Check `angular.json` contains configuration for `<appName>`
+   - Verify `<angular.output>/projects/<project.name>/` exists
+   - Check `angular.json` contains configuration for `<project.name>`
    - Confirm no other applications depend on this one
 
-2. **Remove application directory**
+2. **Remove application directory** using Bash tool:
    ```bash
-   rm -rf <workspacePath>/projects/<appName>
+   rm -rf <angular.output>/projects/<project.name>
    ```
 
-3. **Update angular.json**
-   - Read `angular.json`
-   - Remove entry from `projects` object for `<appName>`
+3. **Update `angular.json`** using Read and Edit tools:
+   - Remove entry from `projects` object for `<project.name>`
    - Remove any build configurations, serve targets, and test targets
    - Update default project if this was the default
 
-4. **Clean up dependencies (optional)**
+4. **Clean up dependencies (optional)**:
    - Check if Angular Material is used by other apps
    - If this was the only app using Material, optionally remove:
      ```bash
-     npm uninstall @angular/material @angular/cdk
+     pnpm uninstall @angular/material @angular/cdk
      ```
 
-5. **Verify workspace integrity**
-   ```bash
-   ng build --help  # Confirm workspace still valid
-   ```
+5. **Verify workspace integrity**: Read `angular.json` and confirm it is valid JSON with no remaining references to `<project.name>`.
 
 **Output**:
-- Application directory `projects/<appName>/` removed
+- Application directory `projects/<project.name>/` removed
 - Entry removed from `angular.json`
 - Workspace remains valid and functional
 - Confirmation message listing what was deleted
@@ -227,39 +283,39 @@ Steps to validate successful execution of the skill:
 
 1. **Verify directory structure**
    ```bash
-   ls -la projects/<appName>/src/app/
+   ls -la projects/<project.name>/src/app/
    # Should contain: core/, shared/, features/, app.component.ts, app.config.ts, app.routes.ts
    ```
 
 2. **Verify Material theme is wired**
    ```bash
-   cat projects/<appName>/src/styles.scss | grep "@angular/material"
+   cat projects/<project.name>/src/styles.scss | grep "@angular/material"
    # Should contain Material theme imports and configuration
    ```
 
 3. **Verify standalone bootstrap**
    ```bash
-   cat projects/<appName>/src/main.ts | grep "bootstrapApplication"
+   cat projects/<project.name>/src/main.ts | grep "bootstrapApplication"
    # Should use bootstrapApplication() not platformBrowserDynamic()
    ```
 
-4. **Compile check**
+4. **Compile check**:
    ```bash
-   ng build <appName> --configuration=development
-   # Should complete without errors
+   django-admin ng_build django-angular3.json
    ```
+   Expected: Build completes without errors
 
-5. **Serve and verify**
+5. **Serve and verify**:
    ```bash
-   ng serve <appName>
-   # Navigate to http://localhost:4200 and verify Material components render
+   pnpm exec ng serve <project.name>
    ```
+   Navigate to `http://localhost:4200` and verify Material components render
 
 ### Error Handling
 
 Common errors and their resolution strategies:
 
-**Error**: `Application <appName> already exists`
+**Error**: Application with name `<project.name>` already exists
 - **Cause**: Attempting to create an app with a name that's already in use
 - **Resolution**: Use Delete mode first, or choose a different app name
 
@@ -269,7 +325,7 @@ Common errors and their resolution strategies:
 
 **Error**: `Cannot find module '@angular/material'`
 - **Cause**: Angular Material not installed or installation failed
-- **Resolution**: Run `ng add @angular/material --project=<appName>` manually
+- **Resolution**: Run `django-admin ng_add django-angular3.json` to install Material at workspace level
 
 **Error**: `Compilation failed: Cannot find module './app/app.config'`
 - **Cause**: Standalone bootstrap not properly configured
@@ -281,7 +337,7 @@ Common errors and their resolution strategies:
 
 **Error**: `Port 4200 is already in use`
 - **Cause**: Another application is already running on default port
-- **Resolution**: Stop other dev servers or use `ng serve <appName> --port=4201`
+- **Resolution**: Stop other dev servers or use `pnpm exec ng serve <project.name> --port=4201`
 
 ### Dependencies
 
@@ -294,26 +350,23 @@ Required prerequisites before executing this skill:
 Optional dependencies:
 
 - If using OpenAPI integration, **Angular API generation** (Skill 3) should be executed after app creation
-- If creating multi-app workspace, this skill can be executed multiple times with different `appName` values
-
 ### Examples
 
 **Example 1: Create a new admin dashboard application**
 
 ```typescript
-// Inputs
-{
-  appName: "admin-dashboard",
-  workspacePath: "/workspace/my-project",
-  prefix: "admin",
-  routing: true,
-  standalone: true
-}
+// Inputs from django-angular3.json:
+//   project.name = "admin-dashboard"
+//   angular.output = "/workspace/my-project"
+// Procedure-level: prefix = "admin"
 
-// Executes via djng wrapper:
-// 1. ng generate angular-django2:ng-app admin-dashboard --style=scss --routing
-//    (schematic handles: app generation, Material deps, theme, directory structure, app shell)
-// 2. ng build admin-dashboard --configuration=development
+// Executes:
+// 1. django-admin ng_gen_app django-angular3.json
+// 2. Creates core/, shared/, features/ directories
+// 3. Configures theme in projects/admin-dashboard/src/styles.scss
+// 4. Sets up app.config.ts with providers
+// 5. Generates responsive nav shell from app-shell templates
+// 6. django-admin ng_build django-angular3.json
 
 // Output: Application ready at projects/admin-dashboard/
 ```
@@ -321,32 +374,17 @@ Optional dependencies:
 **Example 2: Modify existing app to add authentication provider**
 
 ```typescript
-// Inputs
-{
-  appName: "admin-dashboard",
-  workspacePath: "/workspace/my-project",
-  modifications: {
-    providers: [
-      {
-        action: "add",
-        provider: "provideAuth",
-        import: "./core/auth",
-        config: { apiUrl: "https://api.example.com" }
-      }
-    ],
-    styles: `
-      .authenticated { border-left: 3px solid green; }
-      .unauthenticated { border-left: 3px solid red; }
-    `
-  }
-}
+// Inputs from django-angular3.json:
+//   project.name = "admin-dashboard"
+//   angular.output = "/workspace/my-project"
+// Procedure-level: add provideAuth provider + styles
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.config.ts
 // 2. Adds import: import { provideAuth } from './core/auth';
 // 3. Adds to providers: provideAuth({ apiUrl: 'https://api.example.com' })
 // 4. Appends custom styles to projects/admin-dashboard/src/styles.scss
-// 5. Runs: ng build admin-dashboard --configuration=development
+// 5. django-admin ng_build django-angular3.json
 
 // Output: Updated app.config.ts and styles.scss
 ```
@@ -354,26 +392,14 @@ Optional dependencies:
 **Example 3: Register lazy-loaded feature route**
 
 ```typescript
-// Inputs
-{
-  appName: "admin-dashboard",
-  workspacePath: "/workspace/my-project",
-  modifications: {
-    routes: [
-      {
-        path: "users",
-        loadComponent: () => import("./features/users/users-list.component")
-          .then(m => m.UsersListComponent),
-        title: "User Management"
-      }
-    ]
-  }
-}
+// Inputs from django-angular3.json:
+//   project.name = "admin-dashboard"
+//   angular.output = "/workspace/my-project"
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.routes.ts
 // 2. Adds new route definition to routes array
-// 3. Runs: ng build admin-dashboard --configuration=development
+// 3. django-admin ng_build django-angular3.json
 
 // Output: Updated app.routes.ts with new lazy route
 ```
@@ -381,19 +407,15 @@ Optional dependencies:
 **Example 4: Delete an application**
 
 ```typescript
-// Inputs
-{
-  appName: "old-admin",
-  workspacePath: "/workspace/my-project",
-  confirm: true
-}
+// Inputs from django-angular3.json:
+//   project.name = "old-admin"
+//   angular.output = "/workspace/my-project"
+// Procedure-level: confirm = true
 
 // Executes:
 // 1. Verifies projects/old-admin/ exists
 // 2. Removes: rm -rf projects/old-admin
 // 3. Updates angular.json to remove "old-admin" project entry
-// 4. Verifies workspace: ng build --help
 
 // Output: Application "old-admin" removed from workspace
 ```
-
