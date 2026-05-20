@@ -25,17 +25,17 @@ class ProjectConfig:
 def load_project_config(path: str | Path) -> ProjectConfig:
     config_path = Path(path).resolve()
     try:
-        document = load_document(config_path)
+        document: dict[str, Any] | None = load_document(config_path)
     except DocumentError as exc:
         raise ConfigError(str(exc)) from exc
 
     if not isinstance(document, dict):
         raise ConfigError("Project configuration must be a mapping.")
 
-    project = _require_mapping(document, "project")
-    openapi = _require_mapping(document, "openapi")
-    ui = _require_mapping(document, "ui")
-    angular = _require_mapping(document, "angular")
+    project: dict[str, Any] = _require_mapping(document, "project")
+    openapi: dict[str, Any] = _require_mapping(document, "openapi")
+    ui: dict[str, Any] = _require_mapping(document, "ui")
+    angular: dict[str, Any] = _require_mapping(document, "angular")
 
     root = config_path.parent
     project_name = _require_string(project, "name", section="project")
@@ -65,7 +65,7 @@ def load_project_config(path: str | Path) -> ProjectConfig:
 
 
 def _require_mapping(document: dict[str, Any], key: str) -> dict[str, Any]:
-    value = document.get(key)
+    value: dict[str, Any] | None = document.get(key)
     if not isinstance(value, dict):
         raise ConfigError(f"Configuration section '{key}' must be a mapping.")
     return value
@@ -88,3 +88,17 @@ def _optional_path(root: Path, value: Any, label: str) -> Path | None:
     if not isinstance(value, str) or not value.strip():
         raise ConfigError(f"Configuration value '{label}' must be a non-empty string.")
     return (root / value).resolve()
+
+
+def get_previous_schema_path(source: Path) -> Path:
+    """Return the conventional path for the previous schema artifact.
+
+    The previous schema is stored alongside the current schema with
+    ``.previous`` inserted before the file extension.  For example::
+
+        spec/openapi/source/api.json  →  spec/openapi/source/api.previous.json
+
+    This path is written by ``export_schema`` before the current schema is
+    overwritten, and consumed by ``build_app`` for change detection.
+    """
+    return source.parent / (source.stem + ".previous" + source.suffix)

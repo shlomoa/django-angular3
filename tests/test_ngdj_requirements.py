@@ -3,16 +3,16 @@ import unittest
 from pathlib import Path
 
 from django_angular3.angular import plan_angular_command
+from typing import Any
 
-
-ROOT = Path(__file__).resolve().parent.parent
-NGDJ_ROOT = ROOT.parent / "angular-django2"
+ROOT: Path = Path(__file__).resolve().parent.parent
+NGDJ_ROOT: Path = ROOT.parent / "angular-django2"
 
 
 @unittest.skipUnless(NGDJ_ROOT.is_dir(), "angular-django2 sibling repository is required")
 class NgdjRequirementsContractTests(unittest.TestCase):
-    def _collection(self) -> dict:
-        collection_path = (
+    def _collection(self) -> Any :
+        collection_path: Path = (
             NGDJ_ROOT / "projects" / "angular-django2" / "schematics" / "collection.json"
         )
         self.assertTrue(collection_path.is_file())
@@ -53,7 +53,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
         source = ng_app_index_path.read_text(encoding="utf-8")
         self.assertIn("externalSchematic('@schematics/angular', 'application'", source)
-        self.assertIn("style: 'scss'", source)
+        self.assertIn("style: options.style", source)
 
     def test_ng_api_schematic_bootstraps_ng_openapi_gen(self) -> None:
         ng_api_index_path = (
