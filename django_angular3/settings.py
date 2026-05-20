@@ -1,6 +1,7 @@
 import os
 from collections.abc import Mapping, Sequence
 from types import SimpleNamespace
+from typing import Any
 
 
 class AngularCommandError(RuntimeError):
@@ -9,7 +10,7 @@ class AngularCommandError(RuntimeError):
 
 _is_win = os.name == "nt"
 
-DEFAULT_ANGULAR_SETTINGS = {
+DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
     "config_path": "django-angular3.json",
     "node_executable": "node.exe" if _is_win else "node",
     "pnpm_executable": "pnpm.cmd" if _is_win else "pnpm",
