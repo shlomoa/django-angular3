@@ -1085,7 +1085,7 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    ```bash
    django-admin ng_new django-angular3.json --dry-run
    ```
-   Review the planned invocation. When `ng_new` is in `command_allowlist`, execute:
+   Review the dry-run output (the previewed command invocation). When `ng_new` is in `command_allowlist`, execute:
    ```bash
    django-admin ng_new django-angular3.json
    ```
@@ -1272,7 +1272,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
    ```bash
    django-admin ng_workspace_delete django-angular3.json --dry-run
    ```
-   Review the planned invocation. When `ng_workspace_delete` is in `command_allowlist`, execute:
+   Review the dry-run output (the previewed command invocation). When `ng_workspace_delete` is in `command_allowlist`, execute:
    ```bash
    django-admin ng_workspace_delete django-angular3.json
    ```
@@ -5860,7 +5860,7 @@ Procedure-level inputs:
    ```bash
    django-angular3 ng_build django-angular3.json --dry-run
    ```
-   - Confirm the planned build step is valid without executing a full deployment build
+   - Confirm the dry-run build preview is valid without executing a full deployment build
 
 3. **Manual route review**:
    - Confirm the app shell exposes the expected navigation structure
