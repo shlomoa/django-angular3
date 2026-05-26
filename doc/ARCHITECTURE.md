@@ -61,6 +61,7 @@ Generated Angular outputs derived from the OpenAPI contract and related tooling,
 
 ### 2.12 [Claude Code API][Claude Code Python SDK]
 An API that allows developers to interact with the Claude AI assistant for coding tasks. It can be used to automate code generation, refactoring, and other programming-related activities as part of the integration workflow between Django/DRF and Angular Material.
+Implementation and documentation of the Claude Code API Python SDK are available in [Claude Code Python SDK - GitHub].
 
 ### 2.13 agentic orchestration
 An orchestration model in which the orchestrator delegates construction work to
@@ -652,13 +653,14 @@ Key actors and terms. Full definitions are in §2.
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [Claude Code Python SDK]: https://platform.claude.com/docs/en/api/sdks/python
+[Claude Code Python SDK - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
 [Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#evaluation-and-iteration
 [oasdiff]: https://www.oasdiff.com/
 [oasdiff-github]: https://github.com/oasdiff/oasdiff
 [DRF - Django REST Framework]: https://www.django-rest-framework.org/
 [DRF-github]: https://github.com/encode/django-rest-framework
-[Angular]: https://angular.io/
-[Angular Material]: https://material.angular.io/
+[Angular]: https://angular.dev/
+[Angular Material]: https://material.angular.dev/
 [npmjs]: https://www.npmjs.com/
 [OpenAPI]: https://www.openapis.org/
 [OpenAPI 3.1 Specification]: https://spec.openapis.org/oas/v3.1.0.html
