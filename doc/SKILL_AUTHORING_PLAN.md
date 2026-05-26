@@ -232,3 +232,15 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
 | **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
+
+## References
+
+| Term | Description | Link |
+|---|---|---|
+| Claude Code Skills Documentation | General documentation for SKILL development. |[Claude Code Skills Documentation]|
+| Claude Code SDK - creating skills | Documentation for creating skills using Claude Code SDK. |[Claude Code SDK - creating skills]|
+
+[Claude Code Skills Documentation]: https://code.claude.com/docs/en/skills
+[Claude Code SDK - creating skills]: https://code.claude.com/docs/en/agent-sdk/skills#creating-skills
+
+---
