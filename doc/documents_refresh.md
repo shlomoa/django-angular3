@@ -795,7 +795,35 @@ explicit direction to begin and per-patch approval per the operating rules.
 
 ## Phase 4 — Applied patches log
 
-**Status:** `pending` — Phase 3 sign-off received. Awaiting direction to start patch application; per-patch approval still required.
+**Status:** `in_progress` — Tier 1 (Critical) applied. Tier 2 awaiting direction.
 
-Phase 4 will record each applied patch (file, finding ID, commit reference)
-and any follow-up issues discovered during application.
+### Tier 1 — Critical patches  ·  `completed`
+
+| Finding | File(s) edited | Edits made |
+|---|---|---|
+| **A1** | `doc/ARCHITECTURE.md` | (a) §2.12 header + body rewritten to use "Claude Agent SDK" with correct purpose; (b) §20 link-defs renamed to `[Claude Agent SDK - Python]` and `[Claude Agent SDK - Python - GitHub]` with URLs `platform.claude.com/docs/en/agent-sdk/python` and `github.com/anthropics/claude-agent-sdk-python`. |
+| **R2** | `doc/REQUIREMENTS.md` | (a) Glossary entry for "the agent" rewritten to cite the new labels; (b) Appendix D rows updated; (c) link-defs at end of file updated. |
+| **X1** | `doc/APP_BUILDER_REQUIREMENTS.md` | Line 213 — `ng-small-field` → `ng-field-component`. |
+| **G1** | `doc/GENERATE_SKILLS.md` | (a) §"Dynamic Context Injection" rewritten as §"Progressive disclosure of supporting files" with subsections for markdown-link references and CLI-only shell-command interpolation; (b) canonical template "Context Files" / "Templates" subsections updated to use markdown links + `templates/<file>` paths; (c) "Shared Context Files" section preamble rewritten; (d) Templates section preamble rewritten; (e) inline-with-backticks cases at lines 1296, 5588–5590, 5596 rewritten to use markdown links; (f) replace_all sweeps for `{{context:../../shared/angular-conventions.md}}`, `{{context:../../shared/angular-material-patterns.md}}`, `{{context:../../shared/openapi-integration.md}}` → `See [<file>](../shared/<file>)`; (g) replace_all sweeps for 19 unique `{{template:<name>}}` patterns → `templates/<name>`. Final grep confirms zero `{{context:` or `{{template:` patterns remain. |
+
+### Tier 1 — Verifications  ·  `completed`
+
+| Verification | Result |
+|---|---|
+| **M1 + M3** — grep master pair for stale `Claude Code API`, `Claude Code Python SDK` | ✓ Zero occurrences in `ARCHITECTURE.md`, `REQUIREMENTS.md`, `APP_BUILDER_REQUIREMENTS.md`, `GENERATE_SKILLS.md`. Remaining hits are intentional (in `document_validate_plan.md` and `documents_refresh.md` themselves, documenting the fixes) or in out-of-scope files. |
+| **X1 post-apply** — grep for `ng-small-field` in primary docs | ✓ Zero occurrences in the four primary docs. **Side finding:** `doc/TEST_EXAMPLES.md` lines 569–570 still use `ng-small-field`. Out of validation scope but inconsistent with the new name; flagged for follow-up. |
+| **G1 post-apply** — grep `{{context:`, `{{template:` in `GENERATE_SKILLS.md` | ✓ Zero occurrences remain. |
+
+### Side findings raised during Tier 1
+
+| Item | Severity | File | Notes |
+|---|---|---|---|
+| `ng-small-field` references in `doc/TEST_EXAMPLES.md` (lines 569–570) | Low–Medium | `doc/TEST_EXAMPLES.md` | Test examples cite the old skill name. Out of scope for this validation but is now stale and would mislead anyone reading test examples. Suggest adding to a "scope expansion" follow-up. |
+
+### Tier 2 — Unblock skill authoring  ·  `pending`
+
+Patches in this tier (in apply order): **A2**, **R3**, **G3**, **G6**, **G4**.
+
+### Tiers 3–6  ·  `pending`
+
+See [document_validate_plan.md §5](document_validate_plan.md) for the full ordering with Tier column.

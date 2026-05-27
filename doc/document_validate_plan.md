@@ -133,30 +133,30 @@ Phase 1 + Phase 2 findings, merged. Sorted by severity, then by dependency
 chain (A2 must precede G2/G3/G6/G8 because those reference labels added
 by A2). Phase 3 ratified this ordering in sub-step 3.5.
 
-| Order | Finding | Severity | Title | File(s) | Depends on |
-|---|---|---|---|---|---|
-| 1 | **A1** | Critical | ARCH §2.12 wrong SDK name + URL (`Claude Code API`/`Claude Code Python SDK` → `Claude Agent SDK`) | `ARCHITECTURE.md` lines 62–64, 655 | — |
-| 2 | **R2** | Critical | REQ Glossary + link-defs SDK references (cascade from A1) | `REQUIREMENTS.md` lines 933, 1005–1006, 1024–1025 | A1 |
-| 3 | **M1+M3** | Critical | Single product-name cleanup across master pair (resolved by 1+2 cascade) | both | A1, R2 |
-| 4 | **X1** | Critical | Skill #5 name mismatch (`ng-small-field` vs `ng-field-component`) — breaks SDK skill resolution | `APP_BUILDER_REQUIREMENTS.md` line 213 | — |
-| 5 | **G1** | Critical | `{{context:...}}` / `{{template:...}}` syntax does not exist — remove from 11 skills + canonical template | `GENERATE_SKILLS.md` lines 87–109, 209–214, and 11 skill sections | — |
-| 6 | **A2** | High | ARCH §2.14 best-practices page used as formal SKILLS definition; add [Claude Code Skills] + [Claude Agent SDK Skills] labels | `ARCHITECTURE.md` lines 73–76, 657 | — |
-| 7 | **R3** | High | REQ `[Claude Skills]` link-def (cascade from A2) | `REQUIREMENTS.md` lines 14, 1007, 1026 | A2 |
-| 8 | **R4** | High | `[ng-openapi-gen]` URL differs between ARCH and REQ | `ARCHITECTURE.md` line 653 | — |
-| 9 | **R1** | High | REQ has two competing reference structures (Appendix D + link-defs) | `REQUIREMENTS.md` lines 988–1007, 1009–1026 | — |
-| 10 | **G4** | High | `openapi-integration.md` shared context violates `oasdiff` boundary | `GENERATE_SKILLS.md` line 295 + `skill_creation/shared/openapi-integration.md` | — |
-| 11 | **G2** | High | "Three Loading Levels" auto-injection model is inaccurate | `GENERATE_SKILLS.md` lines 65–85 | A2 (so the rewrite can cite formal sources) |
-| 12 | **G3** | High | Canonical YAML frontmatter incomplete; lacks dual-mode guidance | `GENERATE_SKILLS.md` lines 41–55 | A2 |
-| 13 | **G6** | High | 11 skill descriptions lack `when_to_use` trigger language | `GENERATE_SKILLS.md` 11 skill YAML blocks | G3 (template) |
-| 14 | **G5** | Medium | "auto-invoked" language implies wrong invocation model | `GENERATE_SKILLS.md` lines 23, 1871 | — |
-| 15 | **G8** | Medium | Skill Architecture section makes claims without referencing master-pair formal sources | `GENERATE_SKILLS.md` lines 21–234 (intro) | A2 |
-| 16 | **M2** | Medium | URL-def duplication between ARCH §20 and REQ link-defs — add sync-note | `REQUIREMENTS.md` line ~1009 | — |
-| 17 | **A5** | Medium | ARCH §3.4 ngdj responsibility claims overstate current implementation — reframe as target capabilities | `ARCHITECTURE.md` lines 163–169 | — |
-| 18 | **A4** | Low–Med | OpenAPI 3.1 pin — document toolchain compatibility table | `ARCHITECTURE.md` lines 56–57 | — |
-| 19 | **G7** | Low | `ng-workspace` Delete-mode backup inconsistency | `GENERATE_SKILLS.md` lines 1270–1283, 1430–1442 | — |
-| 20 | **A3** | Low | ARCH §20 dead-label cleanup (7 defined-never-cited labels) | `ARCHITECTURE.md` lines 648, 651, 652, 654, 659, 661, 667 | R4 |
-| 21 | **B1** | Low | APP_BUILDER line 122 vague REQ cross-reference | `APP_BUILDER_REQUIREMENTS.md` line 122 | — |
-| 22 | **R5** | Low | REQ §4.2.3 Swagger Studio parenthetical wording | `REQUIREMENTS.md` line 533 | — |
+| Order | Tier | Finding | Severity | Status | Title | File(s) | Depends on |
+|---|---|---|---|---|---|---|---|
+| 1 | 1 | **A1** | Critical | ✅ applied | ARCH §2.12 wrong SDK name + URL (`Claude Code API`/`Claude Code Python SDK` → `Claude Agent SDK`) | `ARCHITECTURE.md` lines 62–64, 655 | — |
+| 2 | 1 | **R2** | Critical | ✅ applied | REQ Glossary + Appendix D + link-defs SDK references (cascade from A1) | `REQUIREMENTS.md` lines 933, 1005–1006, 1024–1025 | A1 |
+| 3 | 1 | **M1+M3** | Critical | ✅ verified | Single product-name cleanup across master pair (resolved by 1+2 cascade); grep confirms no remaining `Claude Code API` / `Claude Code Python SDK` in primary docs | both | A1, R2 |
+| 4 | 1 | **X1** | Critical | ✅ applied | Skill #5 name mismatch (`ng-small-field` → `ng-field-component`) | `APP_BUILDER_REQUIREMENTS.md` line 213 | — |
+| 5 | 1 | **G1** | Critical | ✅ applied | `{{context:...}}` / `{{template:...}}` syntax removed (3 meta-doc rewrites + 3 surgical inline fixes + 3 context replace_all + 19 template replace_all + 1 leftover template-section preamble) | `GENERATE_SKILLS.md` §"Dynamic Context Injection" + canonical template + shared-context preamble + all 11 skill sections | — |
+| 6 | 2 | **A2** | High | pending | ARCH §2.14 best-practices page used as formal SKILLS definition; add [Claude Code Skills] + [Claude Agent SDK Skills] labels | `ARCHITECTURE.md` lines 73–76, 657 | — |
+| 7 | 2 | **R3** | High | pending | REQ `[Claude Skills]` link-def (cascade from A2) | `REQUIREMENTS.md` lines 14, 1007, 1026 | A2 |
+| 8 | 3 | **R4** | High | pending | `[ng-openapi-gen]` URL differs between ARCH and REQ | `ARCHITECTURE.md` line 653 | — |
+| 9 | 3 | **R1** | High | pending | REQ has two competing reference structures (Appendix D + link-defs) | `REQUIREMENTS.md` lines 988–1007, 1009–1026 | — |
+| 10 | 2 | **G4** | High | pending | `openapi-integration.md` shared context violates `oasdiff` boundary | `GENERATE_SKILLS.md` line 295 + `skill_creation/shared/openapi-integration.md` | — |
+| 11 | 3 | **G2** | High | pending | "Three Loading Levels" auto-injection model is inaccurate | `GENERATE_SKILLS.md` lines 65–85 | A2 |
+| 12 | 2 | **G3** | High | pending | Canonical YAML frontmatter incomplete; lacks dual-mode guidance | `GENERATE_SKILLS.md` lines 41–55 | A2 |
+| 13 | 2 | **G6** | High | pending | 11 skill descriptions lack `when_to_use` trigger language | `GENERATE_SKILLS.md` 11 skill YAML blocks | G3 (template) |
+| 14 | 4 | **G5** | Medium | pending | "auto-invoked" language implies wrong invocation model | `GENERATE_SKILLS.md` lines 23, 1871 | — |
+| 15 | 3 | **G8** | Medium | pending | Skill Architecture section makes claims without referencing master-pair formal sources | `GENERATE_SKILLS.md` lines 21–234 (intro) | A2 |
+| 16 | 4 | **M2** | Medium | pending | URL-def duplication between ARCH §20 and REQ link-defs — add sync-note | `REQUIREMENTS.md` line ~1009 | — |
+| 17 | 4 | **A5** | Medium | pending | ARCH §3.4 ngdj responsibility claims overstate current implementation — reframe as target capabilities | `ARCHITECTURE.md` lines 163–169 | — |
+| 18 | 5 | **A4** | Low–Med | pending | OpenAPI 3.1 pin — document toolchain compatibility table | `ARCHITECTURE.md` lines 56–57 | — |
+| 19 | 6 | **G7** | Low | pending | `ng-workspace` Delete-mode backup inconsistency | `GENERATE_SKILLS.md` lines 1270–1283, 1430–1442 | — |
+| 20 | 6 | **A3** | Low | pending | ARCH §20 dead-label cleanup (7 defined-never-cited labels) | `ARCHITECTURE.md` lines 648, 651, 652, 654, 659, 661, 667 | R4 |
+| 21 | 6 | **B1** | Low | pending | APP_BUILDER line 122 vague REQ cross-reference | `APP_BUILDER_REQUIREMENTS.md` line 122 | — |
+| 22 | 6 | **R5** | Low | pending | REQ §4.2.3 Swagger Studio parenthetical wording | `REQUIREMENTS.md` line 533 | — |
 
 **Totals.** 21 patches + 1 verification row (M1+M3). 4 Critical patches, 8
 High, 4 Medium, 1 Low-Med, 4 Low. 3 cascade groups: {A1, R2}, {A2, R3, G2,
@@ -170,7 +170,7 @@ G3, G6, G8} (with G3→G6 inner edge), {R4, A3}. 14 independent patches.
 | 1 — Master pair | `completed` | 11 actionable findings, 0 deferred. |
 | 2 — Downstream pair | `completed` | 10 actionable findings (1 APP_BUILDER + 8 GENERATE_SKILLS + 1 cross-pair X1). 2 Critical, 4 High, 2 Medium, 2 Low. |
 | 3 — Consolidated register | `completed` | All sub-steps 3.1–3.6 completed. §5 ordering ratified and signed off. 21 patches across 4 docs (+ 1 shared-context file via G4). 3 cascade groups, 14 independent patches. |
-| 4 — Apply patches | `pending` | Phase 3 sign-off received. Awaiting user direction to start patch application. Per-patch approval still required per the operating rules. |
+| 4 — Apply patches | `in_progress` | Tier 1 (Critical) applied: A1, R2, X1, G1 + M1+M3 verification ✓. Tier 2 (`A2`, `R3`, `G3`, `G6`, `G4`) is next — awaiting user direction. Side finding during Tier 1: `doc/TEST_EXAMPLES.md` lines 569–570 still use the old `ng-small-field` name (out of scope but stale). |
 
 ## 7. Open questions
 

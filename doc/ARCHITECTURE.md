@@ -59,9 +59,8 @@ The versioned OpenAPI schema exported from the DRF layer, serving as the source 
 ### 2.11 Angular integration artifacts
 Generated Angular outputs derived from the OpenAPI contract and related tooling, including typed API clients, resource adapters, transport helpers, reusable Angular Material-oriented integration helpers, and supporting metadata.
 
-### 2.12 [Claude Code API][Claude Code Python SDK]
-An API that allows developers to interact with the Claude AI assistant for coding tasks. It can be used to automate code generation, refactoring, and other programming-related activities as part of the integration workflow between Django/DRF and Angular Material.
-Implementation and documentation of the Claude Code API Python SDK are available in [Claude Code Python SDK - GitHub].
+### 2.12 [Claude Agent SDK][Claude Agent SDK - Python]
+Anthropic's official agent-construction SDK. The agent (§2.16) uses it to run each procedure as a guided agent session via `query()` calls. Installed as `pip install claude-agent-sdk`. Implementation repository: [Claude Agent SDK - Python - GitHub].
 
 ### 2.13 agentic orchestration
 An orchestration model in which the orchestrator delegates construction work to
@@ -652,8 +651,8 @@ Key actors and terms. Full definitions are in §2.
 [django-angular3-github]: https://github.com/shlomoa/django-angular3
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
-[Claude Code Python SDK]: https://platform.claude.com/docs/en/api/sdks/python
-[Claude Code Python SDK - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
+[Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
+[Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
 [Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#evaluation-and-iteration
 [oasdiff]: https://www.oasdiff.com/
 [oasdiff-github]: https://github.com/oasdiff/oasdiff

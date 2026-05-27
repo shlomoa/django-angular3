@@ -930,7 +930,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the [Claude Code Python SDK] (implementation repository: [Claude Code Python SDK - GitHub]). | `ARCHITECTURE.md` §2.16 |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the [Claude Agent SDK - Python] (implementation repository: [Claude Agent SDK - Python - GitHub]). | `ARCHITECTURE.md` §2.16 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
 | **SKILLS-based construction** | The construction model in which the agent runs each procedure as a guided agent session, using SKILLS to carry out generation, modification, and integration work. | `ARCHITECTURE.md` §2.15 |
 
@@ -1002,8 +1002,8 @@ sequenceDiagram
 | `[OpenAPI 3.1 Specification]` | `https://spec.openapis.org/oas/v3.1.0.html` | External web reference |
 | `[oasdiff]` | `https://www.oasdiff.com/` | External web reference |
 | `[ng-openapi-gen]` | `https://github.com/cyclosproject/ng-openapi-gen` | External web reference |
-| `[Claude Code Python SDK]` | `https://platform.claude.com/docs/en/api/sdks/python` | External web reference |
-| `[Claude Code Python SDK - GitHub]` | `https://github.com/anthropics/claude-agent-sdk-python` | External web reference |
+| `[Claude Agent SDK - Python]` | `https://platform.claude.com/docs/en/agent-sdk/python` | External web reference |
+| `[Claude Agent SDK - Python - GitHub]` | `https://github.com/anthropics/claude-agent-sdk-python` | External web reference |
 | `[Claude Skills]` | `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#evaluation-and-iteration` | External web reference |
 
 [ARCHITECTURE.md]: ARCHITECTURE.md
@@ -1021,6 +1021,6 @@ sequenceDiagram
 [OpenAPI 3.1 Specification]: https://spec.openapis.org/oas/v3.1.0.html
 [oasdiff]: https://www.oasdiff.com/
 [ng-openapi-gen]: https://github.com/cyclosproject/ng-openapi-gen
-[Claude Code Python SDK]: https://platform.claude.com/docs/en/api/sdks/python
-[Claude Code Python SDK - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
+[Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
+[Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
 [Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#evaluation-and-iteration
