@@ -566,8 +566,8 @@ Example 1's `<project>.project.json` (the state before this change).
 
 ### Expected build plan steps
 
-1. `ng-small-field` — generate `customer-summary` component
-2. `ng-small-field` — generate `product-summary` component
+1. `ng-field-component` — generate `customer-summary` component
+2. `ng-field-component` — generate `product-summary` component
 3. `ng-page` — generate `dashboard` page
 
 ---

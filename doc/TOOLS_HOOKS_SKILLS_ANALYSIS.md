@@ -170,7 +170,7 @@ that are natural candidates for packaging as **Plugins**.
 | **Location in ARCHITECTURE.md** | §2.5, §2.14, §3.3, §3.5 |
 | **Current approach** | All construction capabilities (agent, SKILLS, `build_app` entry point, configuration) are bundled inside the `djng` repository but are not packaged in the Claude plugin format |
 | **Why a Plugin is better** | The full set of 11 Angular construction Skills, the schema and generation Tools (§2 above), and the validation/enforcement Hooks (§3 above) together form a complete, coherent capability that any `djng`-backed project needs. Packaging them as a Claude plugin enables: (a) installation with a single command, (b) versioning independent of the Django package, (c) reuse across multiple generated-app projects without copying files. |
-| **Plugin contents** | Skills: all 11 Angular SKILL.md files (`ng-workspace`, `ng-app`, `ng-api`, `ng-data-service`, `ng-small-field`, `ng-form-field`, `ng-component`, `ng-complex-component`, `ng-reactive-form`, `ng-page`, `ng-site`); Tools: `export_schema`, `oasdiff_diff`, `ng_openapi_gen`, `validate_openapi_schema`; Hooks: breaking-change gate (PreToolUse), migration-triggered extraction (PostToolUse), session cleanup (Stop). |
+| **Plugin contents** | Skills: all 11 Angular SKILL.md files (`ng-workspace`, `ng-app`, `ng-api`, `ng-data-service`, `ng-field-component`, `ng-form-field`, `ng-component`, `ng-complex-component`, `ng-reactive-form`, `ng-page`, `ng-site`); Tools: `export_schema`, `oasdiff_diff`, `ng_openapi_gen`, `validate_openapi_schema`; Hooks: breaking-change gate (PreToolUse), migration-triggered extraction (PostToolUse), session cleanup (Stop). |
 
 ### 4.2 ngdj Angular Scaffold Plugin
 

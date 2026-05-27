@@ -985,26 +985,7 @@ sequenceDiagram
 
 ### D. References
 
-| Label | Target | Kind |
-|---|---|---|
-| `[ARCHITECTURE.md]` | `ARCHITECTURE.md` | Internal document |
-| `[APP_BUILDER_REQUIREMENTS.md]` | `APP_BUILDER_REQUIREMENTS.md` | Internal document |
-| `[GENERATE_SKILLS.md]` | `GENERATE_SKILLS.md` | Internal document |
-| `[SKILL_AUTHORING_PLAN.md]` | `SKILL_AUTHORING_PLAN.md` | Internal document |
-| `[TEST_EXAMPLES.md]` | `TEST_EXAMPLES.md` | Internal document |
-| `[spec/examples/01_simple_crm/]` | `../spec/examples/01_simple_crm/` | Example workspace |
-| `[spec/openapi/source/example.openapi.json]` | `../spec/openapi/source/example.openapi.json` | Example OpenAPI artifact |
-| `[spec/ui/example.ui.json]` | `../spec/ui/example.ui.json` | Example UI artifact |
-| `[Django]` | `https://www.djangoproject.com/` | External web reference |
-| `[DRF - Django REST Framework]` | `https://www.django-rest-framework.org/` | External web reference |
-| `[Angular]` | `https://angular.dev/` | External web reference |
-| `[Angular Material]` | `https://material.angular.dev/` | External web reference |
-| `[OpenAPI 3.1 Specification]` | `https://spec.openapis.org/oas/v3.1.0.html` | External web reference |
-| `[oasdiff]` | `https://www.oasdiff.com/` | External web reference |
-| `[ng-openapi-gen]` | `https://github.com/cyclosproject/ng-openapi-gen` | External web reference |
-| `[Claude Agent SDK - Python]` | `https://platform.claude.com/docs/en/agent-sdk/python` | External web reference |
-| `[Claude Agent SDK - Python - GitHub]` | `https://github.com/anthropics/claude-agent-sdk-python` | External web reference |
-| `[Claude Skills]` | `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview` | External web reference |
+Labels used in this document are defined in the link-definitions block at the end of this file. Internal labels (other docs in this repo and `spec/*` artifacts) are owned here. External labels mirror `ARCHITECTURE.md` §20 — update both files when changing an external URL.
 
 [ARCHITECTURE.md]: ARCHITECTURE.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md

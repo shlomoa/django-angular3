@@ -20,7 +20,9 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 # Skill Architecture
 
-All skills in this document follow the **Agent Skills** format — reusable capabilities designed to be auto-invoked by an outer Claude API agent pipeline.
+The formal skill format used here is defined by Anthropic — see `ARCHITECTURE.md` §20: [Claude Skills] (conceptual overview), [Claude Code Skills] (CLI-side reference: extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] (SDK-side discovery and invocation). This section describes the project-specific application of that format; for the authoritative skill-format reference, consult the upstream documents.
+
+All skills in this document follow the **Agent Skills** format — reusable capabilities invoked explicitly by `build_app` via the Claude Agent SDK `query(skills=[...])` option, or by users via `/<skill-name>` in the Claude Code CLI.
 
 ## Directory Structure
 
@@ -66,27 +68,11 @@ allowed-tools:
 - **`context`**: Always `fork` — each skill execution runs in an isolated context
 - **`allowed-tools`**: List of Claude Code tools the skill is permitted to use during execution
 
-## Three Loading Levels
+## Skill loading model
 
-Skills are loaded incrementally to manage token costs:
+At session start, the skill loader preloads only the YAML frontmatter (`name`, `description`, `when_to_use`) of every discovered SKILL.md into the model's context. When a skill is invoked — by the user typing `/<name>` in CLI mode, or by `build_app` selecting it via `query(skills=[...])` in SDK mode — the SKILL.md body loads. Supporting files (shared references, templates, scripts) live on the filesystem and are read by Claude on demand via the Read tool when SKILL.md links to them. Scripts are executed via Bash; their source is never loaded as context.
 
-### 1. Metadata Level (lowest cost)
-- Loads only the YAML frontmatter
-- Used by outer agent for skill discovery and matching
-- Minimal token consumption (~50-100 tokens per skill)
-
-### 2. Instructions Level (medium cost)
-- Loads the full `SKILL.md` content including all markdown sections
-- Loads any files referenced in the `context/` directory
-- Used when the outer agent has selected the skill and needs execution instructions
-- Moderate token consumption (~500-2000 tokens depending on skill complexity)
-
-### 3. Resources Level (highest cost)
-- Loads all referenced templates, examples, and supporting files
-- Only loaded when skill execution requires access to these resources
-- High token consumption (~2000-10000+ tokens for complex skills with many templates)
-
-**Token Cost Strategy**: The outer agent loads metadata for all skills, instructions for candidate skills, and resources only for the executing skill, minimizing overall token usage.
+**Token strategy.** Keep SKILL.md body under ~500 lines (per [Claude Skills Best Practices]). Move detailed reference material into separate files in the same skill directory and link to them. Files that Claude does not need to read incur no token cost.
 
 ## Progressive disclosure of supporting files
 

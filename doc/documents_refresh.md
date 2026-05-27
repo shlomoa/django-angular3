@@ -811,14 +811,23 @@ explicit direction to begin and per-patch approval per the operating rules.
 | Verification | Result |
 |---|---|
 | **M1 + M3** — grep master pair for stale `Claude Code API`, `Claude Code Python SDK` | ✓ Zero occurrences in `ARCHITECTURE.md`, `REQUIREMENTS.md`, `APP_BUILDER_REQUIREMENTS.md`, `GENERATE_SKILLS.md`. Remaining hits are intentional (in `document_validate_plan.md` and `documents_refresh.md` themselves, documenting the fixes) or in out-of-scope files. |
-| **X1 post-apply** — grep for `ng-small-field` in primary docs | ✓ Zero occurrences in the four primary docs. **Side finding:** `doc/TEST_EXAMPLES.md` lines 569–570 still use `ng-small-field`. Out of validation scope but inconsistent with the new name; flagged for follow-up. |
+| **X1 post-apply** — grep for `ng-small-field` in primary docs | ✓ Zero occurrences in the four primary docs. Side finding (stale references in out-of-scope files) was subsequently treated as part of completing X1 — see "X1 cascade cleanup" below. |
 | **G1 post-apply** — grep `{{context:`, `{{template:` in `GENERATE_SKILLS.md` | ✓ Zero occurrences remain. |
 
-### Side findings raised during Tier 1
+### X1 cascade cleanup (resolved post-Tier 1)
 
-| Item | Severity | File | Notes |
-|---|---|---|---|
-| `ng-small-field` references in `doc/TEST_EXAMPLES.md` (lines 569–570) | Low–Medium | `doc/TEST_EXAMPLES.md` | Test examples cite the old skill name. Out of scope for this validation but is now stale and would mislead anyone reading test examples. Suggest adding to a "scope expansion" follow-up. |
+The X1 rename (`ng-small-field` → `ng-field-component`) created stale references in four locations outside the primary validation scope. These were resolved as part of completing X1 (a rename is not complete until every reference is updated):
+
+| File | Edit |
+|---|---|
+| `doc/TEST_EXAMPLES.md` lines 569, 570 | `ng-small-field` → `ng-field-component` (replace_all) |
+| `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` line 173 | Plugin contents skill list updated |
+| `skill_creation/README.md` line 29 | Reference to working file renamed |
+| `skill_creation/skills/05-ng-small-field.md` | File renamed to `05-ng-field-component.md` via `git mv` (preserves history) |
+
+Final grep: only the two tracking docs (`document_validate_plan.md` and `documents_refresh.md`) still contain the string `ng-small-field`, where it appears intentionally as documentation of the rename.
+
+**Lesson recorded.** The Phase 0 scope decision (which docs to validate as primary subjects) does not override the obligation to complete a rename across every file it touches. Future cascade-from-rename cleanups will be performed as part of the rename itself, not asked about as scope expansion.
 
 ### Tier 2 — Unblock skill authoring  ·  `completed`
 
@@ -842,10 +851,29 @@ explicit direction to begin and per-patch approval per the operating rules.
 
 The G6 ng-api description rewrite removed the "Auto-invoked when the outer agent detects" wording, which was part of finding **G5**. That portion of G5 is therefore resolved early. G5's other reference (line 23 in §"Skill Architecture" preamble: "designed to be auto-invoked by an outer Claude API agent pipeline") remains and is still scheduled for Tier 4.
 
-### Tier 3 — Documentation correctness  ·  `pending`
+### Tier 3 — Documentation correctness  ·  `completed`
 
-Patches in this tier (in apply order): **R4**, **R1**, **G2**, **G8**.
+| Finding | File(s) edited | Edits made |
+|---|---|---|
+| **R4** | `doc/ARCHITECTURE.md` | Line 653 — `[ng-openapi-gen]` URL changed from npm to GitHub, matching REQ's link-def. `[ng-openapi-gen-github]` (line 654) is now a duplicate URL and will be removed by A3 in Tier 6. |
+| **R1** | `doc/REQUIREMENTS.md` | Appendix D collapsed to a 2-sentence note: internal labels owned here, external labels mirror ARCH §20. The link-defs block at end of file is the actual index — no separate table needed. (First two passes were bloated; this is the final form.) |
+| **G2** | `doc/GENERATE_SKILLS.md` | §"Three Loading Levels" (lines 69–89) replaced with new §"Skill loading model": *"At session start, the skill loader preloads only the YAML frontmatter… When a skill is invoked — by the user typing `/<name>` in CLI mode, or by `build_app` selecting it via `query(skills=[...])` in SDK mode — the SKILL.md body loads. Supporting files live on the filesystem and are read on demand…"* Plus a token-strategy note citing [Claude Skills Best Practices]. |
+| **G8** | `doc/GENERATE_SKILLS.md` | §"Skill Architecture" intro (lines 21–23) gained a leading paragraph citing `ARCHITECTURE.md` §20: [Claude Skills], [Claude Code Skills], [Claude Agent SDK Skills]. |
+| **G5 (early)** | `doc/GENERATE_SKILLS.md` | Line 23 — "designed to be auto-invoked by an outer Claude API agent pipeline" replaced with "invoked explicitly by `build_app` via the Claude Agent SDK `query(skills=[...])` option, or by users via `/<skill-name>` in the Claude Code CLI." Applied alongside G8 since both edit the same paragraph. **G5 is now fully resolved**: line 1871 was fixed in Tier 2 (via G6), line 23 in Tier 3. |
 
-### Tiers 4–6  ·  `pending`
+### Tier 3 — Verifications  ·  `completed`
+
+| Verification | Result |
+|---|---|
+| Grep for `Three Loading Levels` in `doc/` | ✓ Only `documents_refresh.md` contains the string (documenting the patch). Primary docs are clean. |
+| Grep for `designed to be auto-invoked by an outer Claude API` in `doc/` | ✓ Only `documents_refresh.md`. The string is gone from `GENERATE_SKILLS.md`. |
+| Grep for `npmjs.com/package/ng-openapi-gen` in `doc/` | ✓ Only in `documents_refresh.md` describing the URL change. `ARCHITECTURE.md` and `REQUIREMENTS.md` both now use the GitHub URL. |
+| R1 visual check | Appendix D is now 2 sentences; the link-defs block at end of file is the index. |
+
+### Tier 4 — Accuracy improvements  ·  `pending`
+
+Patches in this tier (in apply order): **M2**, **A5**. (G5 was originally in this tier but was completed early in Tier 3.)
+
+### Tiers 5–6  ·  `pending`
 
 See [document_validate_plan.md §5](document_validate_plan.md) for the full ordering with Tier column.

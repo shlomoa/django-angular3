@@ -26,7 +26,7 @@ skill_creation/
     02-ng-app.md
     03-ng-api.md
     04-ng-data-service.md
-    05-ng-small-field.md
+    05-ng-field-component.md
     06-ng-form-field.md
     07-ng-component.md
     08-ng-complex-component.md
