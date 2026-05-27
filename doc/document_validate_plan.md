@@ -150,13 +150,13 @@ by A2). Phase 3 ratified this ordering in sub-step 3.5.
 | 13 | 2 | **G6** | High | ✅ applied | All 11 skill YAML blocks gained a `when_to_use:` line with explicit `build_app` dispatch + CLI invocation triggers (verified grep `^when_to_use:` = 13 total = 11 skills + 2 canonical templates) | `GENERATE_SKILLS.md` 11 skill YAML blocks | G3 (template) |
 | 14 | 4 | **G5** | Medium | ✅ applied (early) | Both occurrences resolved. Line 1871 was rewritten in Tier 2 via G6's description rewrite (replaced "Auto-invoked when the outer agent detects" wording). Line 23 was rewritten in Tier 3 alongside G8 (replaced "designed to be auto-invoked by an outer Claude API agent pipeline" with the correct explicit-invocation model). | `GENERATE_SKILLS.md` lines 23, 1871 | — |
 | 15 | 3 | **G8** | Medium | ✅ applied | `§"Skill Architecture"` intro gained a leading paragraph citing `ARCHITECTURE.md` §20: [Claude Skills], [Claude Code Skills], [Claude Agent SDK Skills]. The following sentence about the Agent Skills format was also rewritten to describe the explicit `query(skills=[...])` and `/<skill-name>` invocation paths (which subsumes G5's line 23 fix). | `GENERATE_SKILLS.md` lines 21–23 | A2 |
-| 16 | 4 | **M2** | Medium | pending | URL-def duplication between ARCH §20 and REQ link-defs — add sync-note | `REQUIREMENTS.md` line ~1009 | — |
-| 17 | 4 | **A5** | Medium | pending | ARCH §3.4 ngdj responsibility claims overstate current implementation — reframe as target capabilities | `ARCHITECTURE.md` lines 163–169 | — |
-| 18 | 5 | **A4** | Low–Med | pending | OpenAPI 3.1 pin — document toolchain compatibility table | `ARCHITECTURE.md` lines 56–57 | — |
-| 19 | 6 | **G7** | Low | pending | `ng-workspace` Delete-mode backup inconsistency | `GENERATE_SKILLS.md` lines 1270–1283, 1430–1442 | — |
-| 20 | 6 | **A3** | Low | pending | ARCH §20 dead-label cleanup (7 defined-never-cited labels) | `ARCHITECTURE.md` lines 648, 651, 652, 654, 659, 661, 667 | R4 |
-| 21 | 6 | **B1** | Low | pending | APP_BUILDER line 122 vague REQ cross-reference | `APP_BUILDER_REQUIREMENTS.md` line 122 | — |
-| 22 | 6 | **R5** | Low | pending | REQ §4.2.3 Swagger Studio parenthetical wording | `REQUIREMENTS.md` line 533 | — |
+| 16 | 4 | **M2** | Medium | ✅ applied | One-line HTML comment added above REQ link-defs block: external URLs mirror ARCH §20; update both. | `REQUIREMENTS.md` line ~1010 | — |
+| 17 | 4 | **A5** | Medium | closed (no-op) | Architecture documents describe target capabilities by convention; an implementation-status line does not belong in this kind of document. Reverted §3.4 to original wording. | `ARCHITECTURE.md` line 165 | — |
+| 18 | 5 | **A4** | Low–Med | ✅ applied | One-line note added to REQ §2.3 OpenAPI bullet: "OAS 3.1 is the pinned version; the toolchain does not yet support OAS 3.2." ARCH §2.10 not modified (architecture docs do not carry version-status detail per the A5 directive). | `REQUIREMENTS.md` line 128 | — |
+| 19 | 6 | **G7** | Low | ✅ applied | `ng-workspace` Example 3 execution + output aligned with Process steps (backup tarball mention removed). | `GENERATE_SKILLS.md` lines 1425–1431 | — |
+| 20 | 6 | **A3** | Low | ✅ applied | All 7 formerly-dead labels are now cited in ARCH body (citation not deletion). `[django-angular3]` + `[django-angular3-github]` → §1; `[Django-github]` → §2.1; `[DRF-github]` → §2.2; `[drf-spectacular]` → §11.2; `[oasdiff-github]` + `[ng-openapi-gen-github]` → §17. | `ARCHITECTURE.md` lines 5, 27, 31, 512, 620, 621 | R4 |
+| 21 | 6 | **B1** | Low | ✅ applied | APP_BUILDER line 122 `§4.1` section pointer added. | `APP_BUILDER_REQUIREMENTS.md` line 122 | — |
+| 22 | 6 | **R5** | Low | ✅ applied | REQ §4.2.3 line 533 rewrites Swagger Studio parenthetical. | `REQUIREMENTS.md` lines 533–534 | — |
 
 **Totals.** 21 patches + 1 verification row (M1+M3). 4 Critical patches, 8
 High, 4 Medium, 1 Low-Med, 4 Low. 3 cascade groups: {A1, R2}, {A2, R3, G2,
@@ -170,7 +170,7 @@ G3, G6, G8} (with G3→G6 inner edge), {R4, A3}. 14 independent patches.
 | 1 — Master pair | `completed` | 11 actionable findings, 0 deferred. |
 | 2 — Downstream pair | `completed` | 10 actionable findings (1 APP_BUILDER + 8 GENERATE_SKILLS + 1 cross-pair X1). 2 Critical, 4 High, 2 Medium, 2 Low. |
 | 3 — Consolidated register | `completed` | All sub-steps 3.1–3.6 completed. §5 ordering ratified and signed off. 21 patches across 4 docs (+ 1 shared-context file via G4). 3 cascade groups, 14 independent patches. |
-| 4 — Apply patches | `in_progress` | Tier 1 applied (A1, R2, X1, G1) ✓. Tier 2 applied (A2, R3, G3, G6, G4) ✓. X1 cascade cleanup completed (4 out-of-scope files updated, working file renamed). Tier 3 applied (R4, R1, G2, G8) ✓ + early G5 line 23 ✓ (G5 fully resolved across both occurrences). Tier 4 (M2, A5) is next — G5 is now ✅ applied, so Tier 4 reduces to 2 patches. Awaiting user direction. |
+| 4 — Apply patches | `completed` | All tiers applied. A5 closed as no-op. R4 reverted by user (kept both `[ng-openapi-gen]` npm and `[ng-openapi-gen-github]` labels). A3 resolved by citing each formerly-dead label in its natural location in ARCH body (no deletions). |
 
 ## 7. Open questions
 

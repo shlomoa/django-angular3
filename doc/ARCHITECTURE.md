@@ -2,7 +2,7 @@
 
 ## 1. Purpose and scope
 
-This document describes the architecture of `django-angular3` as a contract-driven, agentically orchestrated, SKILLS-based system for generating and integrating Angular application building blocks against a [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] backend. The backend contract is expressed as a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification], which serves as the integration boundary and the source of truth for CRM-facing functionality.
+This document describes the architecture of `django-angular3` (package: [django-angular3]; source: [django-angular3-github]) as a contract-driven, agentically orchestrated, SKILLS-based system for generating and integrating Angular application building blocks against a [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] backend. The backend contract is expressed as a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification], which serves as the integration boundary and the source of truth for CRM-facing functionality.
 
 This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Construction may be non-deterministic, but acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validations and tests.
 
@@ -24,11 +24,11 @@ This document does not cover:
 
 ### 2.1 [Django]
 
-A high-level Python web framework that encourages rapid development and clean, pragmatic design. It provides an ORM, authentication, admin interface, and a robust ecosystem of packages.
+A high-level Python web framework that encourages rapid development and clean, pragmatic design. It provides an ORM, authentication, admin interface, and a robust ecosystem of packages. Source: [Django-github].
 
 ### 2.2 [Django REST Framework (DRF)][DRF - Django REST Framework]
 
-A powerful and flexible toolkit for building Web APIs in Django. It provides serializers, viewsets, authentication, permissions, and schema generation capabilities.
+A powerful and flexible toolkit for building Web APIs in Django. It provides serializers, viewsets, authentication, permissions, and schema generation capabilities. Source: [DRF-github].
 
 ### 2.3 [Angular]
 A TypeScript-based open-source web application framework led by the Angular Team at Google. It provides a component-based architecture, powerful templating, and a rich ecosystem for building dynamic single-page applications.
@@ -509,7 +509,7 @@ It should not own:
 
 ### 11.2 Generation Toolchain
 
-- Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction.
+- Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction via [drf-spectacular].
 - Run the schema diff and change detection tool:
   - Run it after exporting the OpenAPI schema from DRF.
   - Run it before any generation step to surface breaking changes early
@@ -617,8 +617,8 @@ switch environments.
 - Will begin prototyping with sqlite, next will be PostgreSQL
 - OpenAPI is the source of truth for CRM-facing contracts.
 - Contract validation and `oasdiff`-based change detection are required before downstream construction continues.
-- `oasdiff` is the OpenAPI schema diff and change detection tool.
-- `ng-openapi-gen` is the Angular client OpenAPI code-generation tool.
+- [oasdiff] is the OpenAPI schema diff and change detection tool (source: [oasdiff-github]).
+- [ng-openapi-gen] is the Angular client OpenAPI code-generation tool (source: [ng-openapi-gen-github]).
 - Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold

@@ -119,7 +119,7 @@ Breaking schema changes detected. Review the oasdiff report before proceeding.
 Re-run with --acknowledge-breaking to continue.
 ```
 
-This matches the contract normalization requirement in `REQUIREMENTS.md`.
+This matches the contract normalization requirement in `REQUIREMENTS.md` §4.1.
 
 ### Generated app config change detection
 

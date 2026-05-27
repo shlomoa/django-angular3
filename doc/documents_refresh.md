@@ -870,10 +870,30 @@ The G6 ng-api description rewrite removed the "Auto-invoked when the outer agent
 | Grep for `npmjs.com/package/ng-openapi-gen` in `doc/` | ✓ Only in `documents_refresh.md` describing the URL change. `ARCHITECTURE.md` and `REQUIREMENTS.md` both now use the GitHub URL. |
 | R1 visual check | Appendix D is now 2 sentences; the link-defs block at end of file is the index. |
 
-### Tier 4 — Accuracy improvements  ·  `pending`
+### Tier 4 — Accuracy improvements  ·  `completed`
 
-Patches in this tier (in apply order): **M2**, **A5**. (G5 was originally in this tier but was completed early in Tier 3.)
+| Finding | File(s) edited | Edits made |
+|---|---|---|
+| **M2** | `doc/REQUIREMENTS.md` | One-line HTML comment added above link-defs block (line ~1010): *"External URLs below mirror ARCHITECTURE.md §20 — update both files when changing an external URL."* Comment is invisible to readers; visible to editors working in the link-defs section. |
+| **A5** | `doc/ARCHITECTURE.md` | Closed as no-op. Architecture docs describe target capabilities by convention; implementation-status content does not belong here. §3.4 reverted to original wording. |
 
-### Tiers 5–6  ·  `pending`
+### Tier 5 — Compatibility (A4)  ·  `completed`
+
+| Finding | File(s) edited | Edits made |
+|---|---|---|
+| **A4** | `doc/REQUIREMENTS.md` | One-line note appended to the OpenAPI bullet in §2.3: *"OAS 3.1 is the pinned version; the toolchain ([drf-spectacular], [oasdiff], [ng-openapi-gen]) does not yet support OAS 3.2."* ARCH §2.10 not modified — architecture docs do not carry version-status detail. |
+
+### Tier 6 — Cleanup  ·  `completed`
+
+| Finding | File(s) edited | Edits made |
+|---|---|---|
+| **G7** | `doc/GENERATE_SKILLS.md` | Example 3 (Delete Workspace) execution + output aligned with the Delete-mode Process steps. Removed the "Create backup tarball" step and the backup-saved mention from Output. Now: Execution = run `ng_workspace_delete` + verify deletion; Output = "Workspace deleted". |
+| **A3** | `doc/ARCHITECTURE.md` | Resolved by citation (not deletion). All 7 formerly-dead labels are now used in the body: `[django-angular3]` and `[django-angular3-github]` in §1; `[Django-github]` in §2.1; `[DRF-github]` in §2.2; `[drf-spectacular]` in §11.2; `[oasdiff-github]` and `[ng-openapi-gen-github]` in §17 (alongside the homepage labels). |
+| **B1** | `doc/APP_BUILDER_REQUIREMENTS.md` | Line 122 now reads "This matches the contract normalization requirement in `REQUIREMENTS.md` §4.1." |
+| **R5** | `doc/REQUIREMENTS.md` | §4.2.3 line 533 rewritten: "A user designs or updates the OpenAPI specification using SmartBear's OpenAPI authoring tools (Swagger Studio or SwaggerHub)." |
+
+## Phase 4 — Closeout
+
+All 22 patches applied (20 actionable + M1+M3 verification + R4 reverted by user + A3 partial). A5 closed as no-op. The four primary docs are now refreshed against the validated reference and the operating rules.
 
 See [document_validate_plan.md §5](document_validate_plan.md) for the full ordering with Tier column.

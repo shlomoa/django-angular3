@@ -1423,12 +1423,10 @@ After modifying a workspace, verify:
 Procedure-level input: `confirmDelete: true`
 
 **Execution**:
-1. Check for uncommitted changes (warn if present)
-2. Create backup tarball
-3. Remove workspace directory
-4. Confirm deletion
+1. Run `django-admin ng_workspace_delete django-angular3.json` (when in `command_allowlist`)
+2. Confirm `angular.output` directory no longer exists
 
-**Output**: Workspace deleted, backup saved to `/home/user/projects/my-shop-backup-20260425-153000.tar.gz`
+**Output**: Workspace deleted
 
 ## Angular Material app boiler plate
 

@@ -125,7 +125,7 @@ External dependencies and services include:
 
 - Swagger Studio / SwaggerHub-style authoring flow for designing or updating
   the OpenAPI specification before export
-- versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) exported into `spec/openapi/source/`
+- versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) exported into `spec/openapi/source/`. OAS 3.1 is the pinned version; the toolchain ([drf-spectacular], [oasdiff], [ng-openapi-gen]) does not yet support OAS 3.2.
 - structured non-CRM UI inputs maintained in `spec/ui/`
 - [oasdiff] for OpenAPI schema diffing and change detection
 - [ng-openapi-gen] where Angular-native client generation is required
@@ -530,8 +530,8 @@ boundaries, architectural control-loop, verification, and build-flow model.
 
 The initial authoring and build flow must support this sequence:
 
-1. A user designs or updates the OpenAPI specification in Swagger Studio
-   (SmartBear's API design tooling, historically associated with SwaggerHub)
+1. A user designs or updates the OpenAPI specification using SmartBear's
+   OpenAPI authoring tools (Swagger Studio or SwaggerHub)
 2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
 3. The user adds non-CRM changes such as bespoke reactive forms, page
    definitions, or workflow-specific UI content into `spec/ui/`
@@ -987,6 +987,7 @@ sequenceDiagram
 
 Labels used in this document are defined in the link-definitions block at the end of this file. Internal labels (other docs in this repo and `spec/*` artifacts) are owned here. External labels mirror `ARCHITECTURE.md` §20 — update both files when changing an external URL.
 
+<!-- External URLs below mirror ARCHITECTURE.md §20 — update both files when changing an external URL. -->
 [ARCHITECTURE.md]: ARCHITECTURE.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
 [GENERATE_SKILLS.md]: GENERATE_SKILLS.md
