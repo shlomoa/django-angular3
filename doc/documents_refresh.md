@@ -784,18 +784,18 @@ If Phase 4 prefers grouping by file:
 
 Within each file, apply in §5 order. Run the M1+M3 verification grep after step 2.
 
-### 3.6 Phase 3 deliverable — ratified register  ·  `current step`
+### 3.6 Phase 3 deliverable — ratified register  ·  `completed`
 
 The ratified apply-order lives in
-[`document_validate_plan.md` §5](document_validate_plan.md). Phase 3 is
-complete pending user sign-off; Phase 4 (patch application) is blocked on
-that sign-off and on per-patch approval per the operating rules.
+[`document_validate_plan.md` §5](document_validate_plan.md). User signed off
+on the Phase 3 register. Phase 4 (patch application) is now `pending` — awaiting
+explicit direction to begin and per-patch approval per the operating rules.
 
 ---
 
 ## Phase 4 — Applied patches log
 
-**Status:** `blocked` — awaiting Phase 3 sign-off and per-patch user approval.
+**Status:** `pending` — Phase 3 sign-off received. Awaiting direction to start patch application; per-patch approval still required.
 
 Phase 4 will record each applied patch (file, finding ID, commit reference)
 and any follow-up issues discovered during application.

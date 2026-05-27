@@ -110,7 +110,7 @@ Merge Phase 1 and Phase 2 findings into one actionable register.
 | 3.3 | Group findings by target file. | Low | `completed` — 4 file clusters (ARCH 6, REQ 5, APP_BUILDER 2, GENERATE_SKILLS 8). 2 cross-file patches (R4, G4). See `documents_refresh.md` §3.3. |
 | 3.4 | Identify cascade dependencies (e.g., R2 cascades from A1). | High | `completed` — 3 cascade groups identified: {A1→R2}, {A2→R3,G2,G3,G6,G8} with G3→G6 inner edge, {R4→A3}. 14 independent patches. See `documents_refresh.md` §3.4. |
 | 3.5 | Sort the global apply-order by urgency + dependencies. | High | `completed` — §5 ordering ratified: all severity bands ordered correctly, all dependency edges satisfied, no double-counting. See `documents_refresh.md` §3.5. |
-| 3.6 | Stop for approval before Phase 4. | — | `current step` |
+| 3.6 | Stop for approval before Phase 4. | — | `completed` — user signed off on Phase 3 register. |
 
 **Deliverable:** Ratified §5 ordering below.
 
@@ -169,8 +169,8 @@ G3, G6, G8} (with G3→G6 inner edge), {R4, A3}. 14 independent patches.
 | 0 — Discovery | `completed` | Phase 0 report delivered; cleared by user. |
 | 1 — Master pair | `completed` | 11 actionable findings, 0 deferred. |
 | 2 — Downstream pair | `completed` | 10 actionable findings (1 APP_BUILDER + 8 GENERATE_SKILLS + 1 cross-pair X1). 2 Critical, 4 High, 2 Medium, 2 Low. |
-| 3 — Consolidated register | `completed` | Sub-steps 3.1 through 3.5 `completed`. §5 ordering ratified. 21 patches across 4 docs (+ 1 shared-context file via G4). 3 cascade groups, 14 independent patches. Sub-step 3.6 is the stop point. |
-| 4 — Apply patches | `blocked` | Blocked by Phase 3 sign-off and per-patch approval. |
+| 3 — Consolidated register | `completed` | All sub-steps 3.1–3.6 completed. §5 ordering ratified and signed off. 21 patches across 4 docs (+ 1 shared-context file via G4). 3 cascade groups, 14 independent patches. |
+| 4 — Apply patches | `pending` | Phase 3 sign-off received. Awaiting user direction to start patch application. Per-patch approval still required per the operating rules. |
 
 ## 7. Open questions
 
