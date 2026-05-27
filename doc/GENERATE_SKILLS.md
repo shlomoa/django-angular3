@@ -20,7 +20,9 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 # Skill Architecture
 
-All skills in this document follow the **Agent Skills** format — reusable capabilities designed to be auto-invoked by an outer Claude API agent pipeline.
+The formal skill format used here is defined by Anthropic — see `ARCHITECTURE.md` §20: [Claude Skills] (conceptual overview), [Claude Code Skills] (CLI-side reference: extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] (SDK-side discovery and invocation). This section describes the project-specific application of that format; for the authoritative skill-format reference, consult the upstream documents.
+
+All skills in this document follow the **Agent Skills** format — reusable capabilities invoked explicitly by `build_app` via the Claude Agent SDK `query(skills=[...])` option, or by users via `/<skill-name>` in the Claude Code CLI.
 
 ## Directory Structure
 
@@ -41,9 +43,11 @@ Every `SKILL.md` file begins with YAML frontmatter that defines skill metadata:
 ```yaml
 ---
 name: <skill-name>
-description: <brief description of skill purpose>
+description: <capability statement, third person, no I/you>
+when_to_use: <"Use when build_app dispatches X, or when a user runs /<skill-name> to do Y">
 user-invocable: false
 context: fork
+agent: <subagent type if context: fork is set; usually general-purpose, Explore, or Plan>
 allowed-tools:
   - Read
   - Write
@@ -54,6 +58,8 @@ allowed-tools:
 ---
 ```
 
+**Dual-mode requirement.** These skills are used both by direct CLI invocation (a user types `/<skill-name>` in Claude Code) and by `build_app` via the Claude Agent SDK (`query(skills=[...], allowedTools=[...])`). The `allowed-tools` frontmatter field is honored by the CLI but **not** by the SDK — `build_app` must mirror the same tool list in its `query()` `allowedTools` option. The canonical tool list per skill in this document is the source of truth for both surfaces. See `ARCHITECTURE.md` §2.14 references to [Claude Code Skills] and [Claude Agent SDK Skills] for the authoritative field reference.
+
 ### Field Definitions
 
 - **`name`**: Unique identifier for the skill (matches directory name)
@@ -62,51 +68,31 @@ allowed-tools:
 - **`context`**: Always `fork` — each skill execution runs in an isolated context
 - **`allowed-tools`**: List of Claude Code tools the skill is permitted to use during execution
 
-## Three Loading Levels
+## Skill loading model
 
-Skills are loaded incrementally to manage token costs:
+At session start, the skill loader preloads only the YAML frontmatter (`name`, `description`, `when_to_use`) of every discovered SKILL.md into the model's context. When a skill is invoked — by the user typing `/<name>` in CLI mode, or by `build_app` selecting it via `query(skills=[...])` in SDK mode — the SKILL.md body loads. Supporting files (shared references, templates, scripts) live on the filesystem and are read by Claude on demand via the Read tool when SKILL.md links to them. Scripts are executed via Bash; their source is never loaded as context.
 
-### 1. Metadata Level (lowest cost)
-- Loads only the YAML frontmatter
-- Used by outer agent for skill discovery and matching
-- Minimal token consumption (~50-100 tokens per skill)
+**Token strategy.** Keep SKILL.md body under ~500 lines (per [Claude Skills Best Practices]). Move detailed reference material into separate files in the same skill directory and link to them. Files that Claude does not need to read incur no token cost.
 
-### 2. Instructions Level (medium cost)
-- Loads the full `SKILL.md` content including all markdown sections
-- Loads any files referenced in the `context/` directory
-- Used when the outer agent has selected the skill and needs execution instructions
-- Moderate token consumption (~500-2000 tokens depending on skill complexity)
+## Progressive disclosure of supporting files
 
-### 3. Resources Level (highest cost)
-- Loads all referenced templates, examples, and supporting files
-- Only loaded when skill execution requires access to these resources
-- High token consumption (~2000-10000+ tokens for complex skills with many templates)
+Per the formal skill format ([Claude Code Skills], [Claude Agent SDK Skills]), SKILL.md preloads only its YAML frontmatter (`name`, `description`, optionally `when_to_use`) into the session at startup. The body of SKILL.md loads when the skill is invoked. Supporting files (shared references, templates, scripts) live on the filesystem and are read on demand by Claude via the Read tool when SKILL.md links to them. Scripts in `scripts/` are executed via Bash; their source is never loaded as context.
 
-**Token Cost Strategy**: The outer agent loads metadata for all skills, instructions for candidate skills, and resources only for the executing skill, minimizing overall token usage.
+### Referencing supporting files
 
-## Dynamic Context Injection
-
-Skills can reference external context that gets injected at load time:
-
-### Context File References
-
-Within `SKILL.md`, reference context files using:
+Use standard markdown links from SKILL.md to point at supporting files. Keep references one level deep so Claude reads them in full (deeply nested references can lead to partial reads):
 
 ```markdown
-{{context:filename.md}}
+## Conventions
+See [angular-conventions.md](../shared/angular-conventions.md) — read this before scaffolding.
+
+## Templates
+Use the template at `templates/component.ts.tpl` — read and adapt for the output file.
 ```
 
-When the skill loads at the instructions level, these references are replaced with the actual file contents from `.claude/skills/<skill-name>/context/filename.md`.
+### Dynamic context injection (CLI only)
 
-### Template References
-
-Within skill instructions, reference templates using:
-
-```markdown
-{{template:template-name.ts}}
-```
-
-Templates are loaded at the resources level when the skill needs them for code generation.
+For dynamic context injected at load time, the Claude Code CLI supports shell-command interpolation via the `` !`<command>` `` syntax. The Claude Agent SDK does not perform this preprocessing — under SDK invocation, Claude must use the Bash tool explicitly when shell output is needed inline.
 
 ## Invocation Model
 
@@ -140,9 +126,11 @@ Every `SKILL.md` file follows this structure:
 ```markdown
 ---
 name: <skill-name>
-description: <brief description>
+description: <capability statement, third person, no I/you>
+when_to_use: <"Use when build_app dispatches X, or when a user runs /<skill-name> to do Y">
 user-invocable: false
 context: fork
+agent: <subagent type>
 allowed-tools:
   - Read
   - Write
@@ -206,12 +194,12 @@ Remove the artifact completely.
 
 ## Context Files
 
-{{context:additional-guidance.md}}
+- See [shared-context-file.md](../shared/shared-context-file.md) — replace with the actual filename when this skill needs the shared content.
 
 ## Templates
 
-- `template-name.ts` — description of template purpose
-- `another-template.html` — description of template purpose
+- `templates/template-name.ts` — description of template purpose
+- `templates/another-template.html` — description of template purpose
 
 ## Validation
 
@@ -234,12 +222,12 @@ This canonical structure ensures consistency across all 11 skills and provides c
 
 # Shared Context Files
 
-Shared context files are reference documents stored in `.claude/skills/shared/` that multiple skills load on-demand at the instructions level. They eliminate duplication by centralising conventions, patterns, and integration rules that apply across many skills.
+Shared context files are reference documents stored in `.claude/skills/shared/` that multiple skills read on demand. They eliminate duplication by centralising conventions, patterns, and integration rules that apply across many skills.
 
-Each file is injected into a skill using the standard context reference syntax:
+Each skill references a shared file using a standard markdown link with a one-level-up relative path. From inside a skill directory at `.claude/skills/<skill-name>/SKILL.md`:
 
 ```markdown
-{{context:../../shared/<filename>}}
+See [angular-conventions.md](../shared/angular-conventions.md) — when this skill needs shared Angular conventions.
 ```
 
 ## `angular-conventions.md`
@@ -292,7 +280,7 @@ Each file is injected into a skill using the standard context reference syntax:
 
 **Contents**:
 
-- **oasdiff — schema diff and change detection**: Run `oasdiff` against the previous and current OpenAPI schema before any generation step. Breaking changes reported by `oasdiff` must be acknowledged or resolved before generation proceeds.
+- **oasdiff — schema diff and change detection**: `oasdiff` is run by `build_app` during the Change Derivation phase, before any skill is invoked. Skills receive the resulting `ChangeSet` as procedure input (see `APP_BUILDER_REQUIREMENTS.md` §"Change Derivation"). Skills must **not** re-run `oasdiff`.
 - **ng-openapi-gen output paths**: Generated files are placed in `src/app/api/` by default. The output directory is configured in `ng-openapi-gen.json` at the workspace root.
 - **Service naming**: Each OpenAPI tag produces one Angular service named `<Tag>ApiService` (e.g., tag `Users` → `UsersApiService`). Import from `src/app/api/services/<tag>-api.service.ts`.
 - **Import patterns**: Models are imported from `src/app/api/models/<model-name>.ts`. The barrel export at `src/app/api/models.ts` re-exports all models.
@@ -309,10 +297,10 @@ Each file is injected into a skill using the standard context reference syntax:
 
 Template files are reusable Angular code scaffolds stored in `.claude/skills/<skill-name>/templates/` that skills reference during code generation. Each template provides a complete, working example following the conventions defined in the Shared Context Files section.
 
-Skills inject these templates using the standard template reference syntax:
+Skills reference these templates by relative path. Claude reads the file via the Read tool when the skill instructs it to use the scaffold:
 
 ```markdown
-{{template:template-name.ts}}
+Use the template at `templates/component.ts.tpl` — read and adapt for the output file.
 ```
 
 ## Template 1: Standalone Component (`.ts` + `.html` + `.scss`)
@@ -1029,6 +1017,7 @@ The mode to apply to each object is determined by running `oasdiff` against the 
 ---
 name: ng-workspace
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
+when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /ng-workspace to scaffold or update an Angular workspace from django-angular3.json.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -1293,7 +1282,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
 This skill references the following shared context files:
 
-- **`{{context:../../shared/angular-conventions.md}}`** — Loaded at instructions level, provides conventions for standalone components, signals, SCSS theming, naming, imports, and testing patterns
+- [angular-conventions.md](../shared/angular-conventions.md) — Conventions for standalone components, signals, SCSS theming, naming, imports, and testing patterns.
 
 #### Template Files
 
@@ -1434,12 +1423,10 @@ After modifying a workspace, verify:
 Procedure-level input: `confirmDelete: true`
 
 **Execution**:
-1. Check for uncommitted changes (warn if present)
-2. Create backup tarball
-3. Remove workspace directory
-4. Confirm deletion
+1. Run `django-admin ng_workspace_delete django-angular3.json` (when in `command_allowlist`)
+2. Confirm `angular.output` directory no longer exists
 
-**Output**: Workspace deleted, backup saved to `/home/user/projects/my-shop-backup-20260425-153000.tar.gz`
+**Output**: Workspace deleted
 
 ## Angular Material app boiler plate
 
@@ -1447,6 +1434,7 @@ Procedure-level input: `confirmDelete: true`
 ---
 name: ng-app
 description: Manage Angular Material application within a workspace - create app structure with Material theme, modify providers and routing, or delete app
+when_to_use: Use when build_app dispatches an app-creation, app-modification, or app-deletion procedure node, or when a user runs /ng-app to scaffold or update an Angular Material application inside an existing workspace.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -1560,8 +1548,8 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
      ```
 
 6. **Generate application shell using template**
-   - Use `{{template:app-shell.ts}}` to create root `AppComponent`
-   - Use `{{template:app-shell.html}}` for component template
+   - Use `templates/app-shell.ts.tpl` to create root `AppComponent`
+   - Use `templates/app-shell.html.tpl` for component template
    - Replace `{{APP_NAME}}` placeholder with actual app name
    - Create responsive navigation shell with Material sidenav
 
@@ -1709,9 +1697,9 @@ Remove an Angular Material application completely from the workspace, including 
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md)
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
 ### Templates
 
@@ -1868,7 +1856,8 @@ Optional dependencies:
 ```yaml
 ---
 name: ng-api
-description: Generate Angular API clients from OpenAPI specifications using ng-openapi-gen. Auto-invoked when the outer agent detects a need to generate or regenerate API service layer code from an OpenAPI schema.
+description: Generate TypeScript API client code from an OpenAPI specification using ng-openapi-gen.
+when_to_use: Use when build_app dispatches an api-generation procedure node (initial generation or schema-change regeneration), or when a user runs /ng-api to regenerate API clients after OpenAPI schema changes.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -1987,7 +1976,7 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 
 ### Context Files
 
-{{context:../../shared/openapi-integration.md}}
+See [openapi-integration.md](../shared/openapi-integration.md)
 
 ### Supporting Files
 
@@ -2120,6 +2109,7 @@ Cleaned and regenerated API client code
 ---
 name: ng-data-service
 description: Create, modify, or delete Angular data services that wrap generated `<Resource>ApiService` clients with typed `Observable` methods, snack-bar feedback, and focused unit tests.
+when_to_use: Use when build_app dispatches a data-service procedure node for a resource that has generated <Resource>ApiService code, or when a user runs /ng-data-service to wrap a generated API client with typed Observables and snack-bar feedback.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2236,7 +2226,7 @@ Remove a handwritten Angular data service and its associated unit spec.
 
 ### Context Files
 
-{{context:../../shared/openapi-integration.md}}
+See [openapi-integration.md](../shared/openapi-integration.md)
 
 ### Supporting Files
 
@@ -2331,6 +2321,7 @@ Output:
 ---
 name: ng-field-component
 description: Create, modify, or delete Angular Material small field-level components with typed input/output signals, Material imports, and ARIA accessibility
+when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /ng-field-component to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2394,7 +2385,7 @@ Procedure-level inputs (provided by `build_app`):
      mkdir -p <targetDirectory>
      ```
 
-3. **Generate component TypeScript file** using `{{template:component.ts.tpl}}`:
+3. **Generate component TypeScript file** using `templates/component.ts.tpl`:
    - Create `<componentName>.component.ts` with:
      - `@Component` decorator with `standalone: true`
      - Typed input signals using `input<T>()` with appropriate types
@@ -2413,7 +2404,7 @@ Procedure-level inputs (provided by `build_app`):
      - **icon-tooltip**: Add `MatIconModule`, `MatTooltipModule`; input for `icon`, `tooltip`
      - **generic**: Add `MatCardModule`, `MatButtonModule`; basic input/output signals
 
-4. **Generate component HTML template** using `{{template:component.html.tpl}}`:
+4. **Generate component HTML template** using `templates/component.html.tpl`:
    - Create `<componentName>.component.html` with:
      - Material component markup based on `componentType`
      - Use `@if` for conditional rendering (not `*ngIf`)
@@ -2427,7 +2418,7 @@ Procedure-level inputs (provided by `build_app`):
      - Add `tabindex` for keyboard navigation
      - Add `aria-hidden="true"` for decorative elements
 
-5. **Generate component SCSS file** using `{{template:component.scss.tpl}}`:
+5. **Generate component SCSS file** using `templates/component.scss.tpl`:
    - Create `<componentName>.component.scss` with:
      - `:host` selector for component-level styles
      - Material theme token usage via `mat.get-theme-color()` and `mat.get-theme-typography()`
@@ -2698,9 +2689,9 @@ Procedure-level inputs:
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md)
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
 ### Templates
 
@@ -2953,6 +2944,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: ng-form-field
 description: Create, modify, or delete Angular Material form field components implementing ControlValueAccessor for seamless reactive forms integration with validation and error handling
+when_to_use: Use when build_app dispatches a form-field-component procedure node, or when a user runs /ng-form-field to scaffold a Material form-field component that implements ControlValueAccessor for reactive forms.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3018,7 +3010,7 @@ Procedure-level inputs:
      mkdir -p <targetDirectory>
      ```
 
-3. **Generate component TypeScript file** using `{{template:form-field.ts.tpl}}`:
+3. **Generate component TypeScript file** using `templates/form-field.ts.tpl`:
    - Create `<componentName>.component.ts` with:
      - `@Component` decorator with `standalone: true`
      - Implement `ControlValueAccessor` interface with:
@@ -3054,7 +3046,7 @@ Procedure-level inputs:
      - `{{FIELD_NAME_PASCAL}}` → e.g., `EmailInput`
      - `{{VALUE_TYPE}}` → e.g., `string`, `number`, `Date`
 
-4. **Generate component HTML template** using `{{template:form-field.html.tpl}}`:
+4. **Generate component HTML template** using `templates/form-field.html.tpl`:
    - Create `<componentName>.component.html` with:
      - Wrap input in `<mat-form-field>` with `appearance="outline"`
      - Add `<mat-label>` bound to `label()` signal
@@ -3075,7 +3067,7 @@ Procedure-level inputs:
      - Use modern control flow (`@if`, `@for`) instead of `*ngIf`, `*ngFor`
      - Add ARIA attributes: `[attr.aria-required]="required()"`, `[attr.aria-invalid]="formControl?.invalid && formControl?.touched"`
 
-5. **Generate component SCSS file** using `{{template:component.scss.tpl}}`:
+5. **Generate component SCSS file** using `templates/component.scss.tpl`:
    - Create `<componentName>.component.scss` with:
      - `:host` selector with `display: block; width: 100%;`
      - Material theme token usage for colors
@@ -3402,9 +3394,9 @@ Procedure-level inputs:
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md)
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
 ### Templates
 
@@ -3795,6 +3787,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: ng-component
 description: Create, modify, or delete Angular Material components (display, container, or dialog types) with standalone architecture and Material theming
+when_to_use: Use when build_app dispatches a component procedure node for display, container, or dialog types, or when a user runs /ng-component to scaffold a standalone Angular Material component.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3857,7 +3850,7 @@ The creation process varies based on component `type`:
    pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
    ```
 
-2. **Replace component TypeScript file** using `{{template:component-display.ts.tpl}}`:
+2. **Replace component TypeScript file** using `templates/component-display.ts.tpl`:
    ```typescript
    import { Component, input, output } from '@angular/core';
    import { CommonModule } from '@angular/common';
@@ -3890,7 +3883,7 @@ The creation process varies based on component `type`:
    }
    ```
 
-3. **Replace component template** using `{{template:component-display.html.tpl}}`:
+3. **Replace component template** using `templates/component-display.html.tpl`:
    ```html
    <mat-card>
      <mat-card-header>
@@ -3916,7 +3909,7 @@ The creation process varies based on component `type`:
    </mat-card>
    ```
 
-4. **Replace component styles** using `{{template:component-display.scss.tpl}}`:
+4. **Replace component styles** using `templates/component-display.scss.tpl`:
    ```scss
    @use '@angular/material' as mat;
 
@@ -3963,7 +3956,7 @@ The creation process varies based on component `type`:
    pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
    ```
 
-2. **Replace component TypeScript file** using `{{template:component-container.ts.tpl}}`:
+2. **Replace component TypeScript file** using `templates/component-container.ts.tpl`:
    ```typescript
    import { Component, inject } from '@angular/core';
    import { CommonModule } from '@angular/common';
@@ -3999,7 +3992,7 @@ The creation process varies based on component `type`:
    }
    ```
 
-3. **Replace component template** using `{{template:component-container.html.tpl}}`:
+3. **Replace component template** using `templates/component-container.html.tpl`:
    ```html
    <mat-card>
      <mat-card-header>
@@ -4027,7 +4020,7 @@ The creation process varies based on component `type`:
    </mat-card>
    ```
 
-4. **Replace component styles** using `{{template:component-container.scss.tpl}}`:
+4. **Replace component styles** using `templates/component-container.scss.tpl`:
    ```scss
    @use '@angular/material' as mat;
 
@@ -4064,7 +4057,7 @@ The creation process varies based on component `type`:
    pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
    ```
 
-2. **Replace component TypeScript file** using `{{template:component-dialog.ts.tpl}}`:
+2. **Replace component TypeScript file** using `templates/component-dialog.ts.tpl`:
    ```typescript
    import { Component, inject } from '@angular/core';
    import { CommonModule } from '@angular/common';
@@ -4106,7 +4099,7 @@ The creation process varies based on component `type`:
    }
    ```
 
-3. **Replace component template** using `{{template:component-dialog.html.tpl}}`:
+3. **Replace component template** using `templates/component-dialog.html.tpl`:
    ```html
    <h2 mat-dialog-title>{{ data.title }}</h2>
 
@@ -4122,7 +4115,7 @@ The creation process varies based on component `type`:
    </mat-dialog-actions>
    ```
 
-4. **Replace component styles** using `{{template:component-dialog.scss.tpl}}`:
+4. **Replace component styles** using `templates/component-dialog.scss.tpl`:
    ```scss
    @use '@angular/material' as mat;
 
@@ -4277,9 +4270,9 @@ Procedure-level inputs:
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md)
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
 ### Templates
 
@@ -4518,6 +4511,7 @@ Optional dependencies:
 ---
 name: ng-complex-component
 description: Create, modify, or delete Angular Material complex components with theme mixins, nested child components, content projection, and CDK overlay integration
+when_to_use: Use when build_app dispatches a complex-component procedure node, or when a user runs /ng-complex-component to scaffold a Material component requiring theme mixins, content projection, child components, or CDK overlay integration.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4719,9 +4713,9 @@ Procedure-level inputs:
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md)
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
 ### Templates
 
@@ -4827,6 +4821,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: ng-reactive-form
 description: Create, modify, or delete Angular Material reactive forms with typed FormGroup, FormBuilder scaffolding, Material form fields, server-side validation error handling, and comprehensive specs
+when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /ng-reactive-form to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4912,7 +4907,7 @@ Procedure-level inputs:
      - `Date` fields → `Validators.required`
      - Optional fields → omit `Validators.required`
 
-4. **Generate TypeScript file** using `{{template:reactive-form.ts.tpl}}`:
+4. **Generate TypeScript file** using `templates/reactive-form.ts.tpl`:
    - Create `<formName>.component.ts` with:
      - `@Component` decorator with `standalone: true`
      - Typed form interface:
@@ -4990,7 +4985,7 @@ Procedure-level inputs:
      - `{{RESOURCE_NAME_PASCAL}}` → e.g., `User` (if resource provided)
      - `{{SERVICE_NAME_PASCAL}}` → e.g., `UsersService` (if resource provided)
 
-5. **Generate HTML template** using `{{template:reactive-form.html.tpl}}`:
+5. **Generate HTML template** using `templates/reactive-form.html.tpl`:
    - Create `<formName>.component.html` with:
      - Wrap form in `<mat-card>` with header and actions
      - `<mat-card-header>` with title (e.g., "Create User" or "Edit User")
@@ -5023,7 +5018,7 @@ Procedure-level inputs:
        </button>
        ```
 
-6. **Generate SCSS file** using `{{template:component.scss.tpl}}`:
+6. **Generate SCSS file** using `templates/component.scss.tpl`:
    - Create `<formName>.component.scss` with:
      - `:host` selector with `display: block;`
      - Material theme token usage
@@ -5250,9 +5245,9 @@ Procedure-level inputs:
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
-{{context:../../shared/angular-material-patterns.md}}
-{{context:../../shared/openapi-integration.md}}
+See [angular-conventions.md](../shared/angular-conventions.md)
+See [angular-material-patterns.md](../shared/angular-material-patterns.md)
+See [openapi-integration.md](../shared/openapi-integration.md)
 
 ### Supporting Files
 
@@ -5419,6 +5414,7 @@ Output:
 ---
 name: ng-page
 description: Create, modify, or delete Angular Material pages with lazy standalone routing, sidenav navigation, and authenticated route guard support
+when_to_use: Use when build_app dispatches a page procedure node, or when a user runs /ng-page to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -5585,15 +5581,15 @@ Remove a page and clean up routing and navigation references.
 
 ### Context Files
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — Material design patterns for table pages, sidenav shells, card forms, dialogs, and snackbars.
 
-Context references use the document's `{{context:...}}` inclusion syntax and follow the same relative skill-path convention used by the other sections in this document. For example, `../../shared/angular-material-patterns.md` resolves to the shared `angular-material-patterns.md` context file in the sibling `shared/` skill context area.
+Each shared file is referenced by a standard markdown link with a one-level-up relative path (e.g. `../shared/angular-material-patterns.md`). The shared files live at `.claude/skills/shared/`, sibling to each skill directory.
 
 ### Supporting Files
 
 - `templates/list-page.ts.tpl` — Standalone Angular Material list-page TypeScript scaffold
 - `templates/list-page.html.tpl` — Angular Material list-page template with table and loading state
-- `context/angular-material-patterns.md` — Repo-facing supporting-file label for the same shared Material context referenced above via `{{context:../../shared/angular-material-patterns.md}}`
+- `../shared/angular-material-patterns.md` — Repo-facing path for the same shared Material context referenced above.
 
 List-page templates act as the canonical scaffold for page generation. Detail, dashboard, and workflow pages are fully supported by the mode definitions above. Those non-list page types are generated from the documented mode rules and shared context even when dedicated template files are not listed separately in this section.
 
@@ -5684,6 +5680,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 ---
 name: ng-site
 description: Orchestrate Angular Material site generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure
+when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /ng-site to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -5835,9 +5832,9 @@ Procedure-level inputs:
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
-{{context:../../shared/angular-material-patterns.md}}
-{{context:../../shared/openapi-integration.md}}
+See [angular-conventions.md](../shared/angular-conventions.md)
+See [angular-material-patterns.md](../shared/angular-material-patterns.md)
+See [openapi-integration.md](../shared/openapi-integration.md)
 
 ### Supporting Files
 

@@ -226,3 +226,33 @@ SKILLS, and wrappers together.
 
 Add audit logging, health checks, generator verification, and staging smoke
 tests.
+
+---
+
+## 12. Architecture Alignment: Tools, Hooks, Skills, Plugins
+
+**Status: Not started**
+
+Incorporate the architectural recommendations captured in
+`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` into implementation planning and design
+docs.
+
+- Convert deterministic construction and contract operations currently treated
+  as SKILL/script responsibilities into explicit tool contracts (for example:
+  schema export, schema diff, contract validation, and Angular/client generation
+  wrappers).
+- Add lifecycle enforcement points as hooks for gates and mandatory side
+  effects (for example: breaking-change gate, migration-triggered schema export,
+  pre-construction contract validation, post-run verification logging,
+  session-stop archiving/audit).
+- Define packaging boundaries for reusable capability bundles (plugin-oriented
+  grouping), including:
+  - djng Angular construction capability bundle
+  - ngdj scaffold capability bundle
+  - contract lifecycle capability bundle
+- Document primitive-selection policy (Skill vs Tool vs Hook vs Plugin) in
+  architecture/requirements docs so new capabilities are categorized
+  consistently.
+- Derive a phased implementation plan with acceptance criteria for the above,
+  including test and verification coverage updates where behavior moves from
+  AI-guided flow to deterministic tool/hook enforcement.

@@ -7,11 +7,11 @@
 This document defines the baseline requirements for the full-stack application
 platform and the governed construction model that the integration targets.
 
-The terms `djng` and `ngdj` use the definitions in `ARCHITECTURE.md`
+The terms `djng` and `ngdj` use the definitions in [ARCHITECTURE.md]
 §§ 2.5-2.6.
 
 The terms `SKILLS` and `SKILLS-based construction` use the definitions in
-`ARCHITECTURE.md` §§ 2.14-2.15.
+`ARCHITECTURE.md` §§ 2.14-2.15 (see [Claude Skills]).
 
 The term `the agent` uses the definition in `ARCHITECTURE.md` §2.16.
 
@@ -19,8 +19,8 @@ Related architectural context: see `ARCHITECTURE.md` §§ 1, 3, and 7.
 
 ### 1.2. Business Problem Being Solved
 
-Organizations need a repeatable way to connect Django, Django REST Framework
-(DRF), and Angular Material into a single full-stack application without
+Organizations need a repeatable way to connect [Django], [DRF - Django REST Framework]
+(DRF), and [Angular Material] into a single full-stack application without
 manual glue work between backend contracts, frontend generation, and
 user-facing UI assembly.
 
@@ -41,12 +41,12 @@ These requirements are derived from and must remain aligned with
 
 This document does not define the internal subsystem design or authoring
 process for SKILLS; those subjects are covered separately in
-`GENERATE_SKILLS.md` and `SKILL_AUTHORING_PLAN.md`.
+[GENERATE_SKILLS.md] and [SKILL_AUTHORING_PLAN.md].
 
 This document also does not define the detailed app-builder command contract,
 change-set structure, build-plan serialization, or scenario-by-scenario test
 examples. Those are covered separately in
-`APP_BUILDER_REQUIREMENTS.md` and `TEST_EXAMPLES.md`.
+[APP_BUILDER_REQUIREMENTS.md] and [TEST_EXAMPLES.md].
 
 **Out of initial release scope:**
 
@@ -73,7 +73,7 @@ examples. Those are covered separately in
 Framework (DRF), and Angular Material.
 
 The system context is a production-ready full-stack business application in
-which Django is the primary backend framework, DRF is the API layer, Angular
+which Django is the primary backend framework, DRF is the API layer, [Angular]
 is the single-page application frontend, Angular Material is the design system
 and component library, and OpenAPI is the contract source of truth for CRM-
 facing functionality.
@@ -125,10 +125,10 @@ External dependencies and services include:
 
 - Swagger Studio / SwaggerHub-style authoring flow for designing or updating
   the OpenAPI specification before export
-- versioned OpenAPI schema artifacts exported into `spec/openapi/source/`
+- versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) exported into `spec/openapi/source/`. OAS 3.1 is the pinned version; the toolchain ([drf-spectacular], [oasdiff], [ng-openapi-gen]) does not yet support OAS 3.2.
 - structured non-CRM UI inputs maintained in `spec/ui/`
-- `oasdiff` for OpenAPI schema diffing and change detection
-- `ng-openapi-gen` where Angular-native client generation is required
+- [oasdiff] for OpenAPI schema diffing and change detection
+- [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
 - a web browser as the primary client environment
 - an email delivery service when account or workflow notifications are enabled
 
@@ -530,8 +530,8 @@ boundaries, architectural control-loop, verification, and build-flow model.
 
 The initial authoring and build flow must support this sequence:
 
-1. A user designs or updates the OpenAPI specification in Swagger Studio
-   (SmartBear's API design tooling, historically associated with SwaggerHub)
+1. A user designs or updates the OpenAPI specification using SmartBear's
+   OpenAPI authoring tools (Swagger Studio or SwaggerHub)
 2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
 3. The user adds non-CRM changes such as bespoke reactive forms, page
    definitions, or workflow-specific UI content into `spec/ui/`
@@ -930,12 +930,80 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the [Claude Agent SDK - Python] (implementation repository: [Claude Agent SDK - Python - GitHub]). | `ARCHITECTURE.md` §2.16 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
 | **SKILLS-based construction** | The construction model in which the agent runs each procedure as a guided agent session, using SKILLS to carry out generation, modification, and integration work. | `ARCHITECTURE.md` §2.15 |
 
 ### B. References diagrams
 
+```mermaid
+flowchart LR
+  subgraph Inputs[Inputs]
+    OAS[OpenAPI contract]
+    UI[Non-CRM UI inputs]
+  end
+
+  subgraph Control[Governed construction]
+    DJNG[djng]
+    AGENT[Agent + SKILLS]
+    NGDJ[ngdj]
+  end
+
+  subgraph Output[Generated app]
+    APP[Django + Angular application]
+  end
+
+  OAS --> DJNG
+  UI --> DJNG
+  DJNG --> AGENT --> NGDJ --> APP
+```
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Djng as djng
+  participant OAS as Contract validation
+  participant UI as UI validation
+  participant Ngdj as ngdj
+  participant App as Generated app
+
+  User->>Djng: Trigger build
+  Djng->>OAS: Validate and diff OpenAPI
+  Djng->>UI: Validate non-CRM inputs
+  Djng->>Ngdj: Generate and assemble frontend outputs
+  Ngdj->>App: Materialize the app
+  App-->>User: Report stage-specific result
+```
+
 ### C. Examples
 
+- [TEST_EXAMPLES.md] — scenario definitions and expected outputs.
+- [spec/examples/01_simple_crm/] — runnable example workspace with schema,
+  UI, and build artifacts.
+- [spec/openapi/source/example.openapi.json] — example OpenAPI source input.
+- [spec/ui/example.ui.json] — example non-CRM UI input.
+
 ### D. References
+
+Labels used in this document are defined in the link-definitions block at the end of this file. Internal labels (other docs in this repo and `spec/*` artifacts) are owned here. External labels mirror `ARCHITECTURE.md` §20 — update both files when changing an external URL.
+
+<!-- External URLs below mirror ARCHITECTURE.md §20 — update both files when changing an external URL. -->
+[ARCHITECTURE.md]: ARCHITECTURE.md
+[APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
+[GENERATE_SKILLS.md]: GENERATE_SKILLS.md
+[SKILL_AUTHORING_PLAN.md]: SKILL_AUTHORING_PLAN.md
+[TEST_EXAMPLES.md]: TEST_EXAMPLES.md
+[spec/examples/01_simple_crm/]: ../spec/examples/01_simple_crm/
+[spec/openapi/source/example.openapi.json]: ../spec/openapi/source/example.openapi.json
+[spec/ui/example.ui.json]: ../spec/ui/example.ui.json
+[Django]: https://www.djangoproject.com/
+[DRF - Django REST Framework]: https://www.django-rest-framework.org/
+[Angular]: https://angular.dev/
+[Angular Material]: https://material.angular.dev/
+[OpenAPI 3.1 Specification]: https://spec.openapis.org/oas/v3.1.0.html
+[oasdiff]: https://www.oasdiff.com/
+[ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
+[ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
+[Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
+[Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
+[Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview

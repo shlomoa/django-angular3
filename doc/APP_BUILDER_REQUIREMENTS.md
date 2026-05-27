@@ -119,7 +119,7 @@ Breaking schema changes detected. Review the oasdiff report before proceeding.
 Re-run with --acknowledge-breaking to continue.
 ```
 
-This matches the contract normalization requirement in `REQUIREMENTS.md`.
+This matches the contract normalization requirement in `REQUIREMENTS.md` §4.1.
 
 ### Generated app config change detection
 
@@ -210,7 +210,7 @@ edges. The graph encodes the following SKILLS dependency chain:
 2  ng-app         (depends on 1)
 3  ng-api         (depends on 2)
 4  ng-data-service (depends on 3)
-5  ng-small-field  (depends on 2)
+5  ng-field-component (depends on 2)
 6  ng-form-field   (depends on 2)
 7  ng-component    (depends on 2)
 8  ng-complex-component (depends on 2)
