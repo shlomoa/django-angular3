@@ -128,7 +128,7 @@ External dependencies and services include:
 - versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) exported into `spec/openapi/source/`. OAS 3.1 is the pinned version; the toolchain ([drf-spectacular], [oasdiff], [ng-openapi-gen]) does not yet support OAS 3.2.
 - structured non-CRM UI inputs maintained in `spec/ui/`
 - [oasdiff] for OpenAPI schema diffing and change detection
-- [ng-openapi-gen] where Angular-native client generation is required
+- [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
 - a web browser as the primary client environment
 - an email delivery service when account or workflow notifications are enabled
 
@@ -1002,7 +1002,8 @@ Labels used in this document are defined in the link-definitions block at the en
 [Angular Material]: https://material.angular.dev/
 [OpenAPI 3.1 Specification]: https://spec.openapis.org/oas/v3.1.0.html
 [oasdiff]: https://www.oasdiff.com/
-[ng-openapi-gen]: https://github.com/cyclosproject/ng-openapi-gen
+[ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
+[ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
 [Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
 [Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
