@@ -140,14 +140,14 @@ by A2). Phase 3 ratified this ordering in sub-step 3.5.
 | 3 | 1 | **M1+M3** | Critical | ✅ verified | Single product-name cleanup across master pair (resolved by 1+2 cascade); grep confirms no remaining `Claude Code API` / `Claude Code Python SDK` in primary docs | both | A1, R2 |
 | 4 | 1 | **X1** | Critical | ✅ applied | Skill #5 name mismatch (`ng-small-field` → `ng-field-component`) | `APP_BUILDER_REQUIREMENTS.md` line 213 | — |
 | 5 | 1 | **G1** | Critical | ✅ applied | `{{context:...}}` / `{{template:...}}` syntax removed (3 meta-doc rewrites + 3 surgical inline fixes + 3 context replace_all + 19 template replace_all + 1 leftover template-section preamble) | `GENERATE_SKILLS.md` §"Dynamic Context Injection" + canonical template + shared-context preamble + all 11 skill sections | — |
-| 6 | 2 | **A2** | High | pending | ARCH §2.14 best-practices page used as formal SKILLS definition; add [Claude Code Skills] + [Claude Agent SDK Skills] labels | `ARCHITECTURE.md` lines 73–76, 657 | — |
-| 7 | 2 | **R3** | High | pending | REQ `[Claude Skills]` link-def (cascade from A2) | `REQUIREMENTS.md` lines 14, 1007, 1026 | A2 |
+| 6 | 2 | **A2** | High | ✅ applied | ARCH §2.14 body cites [Claude Code Skills] + [Claude Agent SDK Skills] + [Claude Skills Best Practices]; §20 [Claude Skills] URL rebound to `.../overview` + 3 new labels added | `ARCHITECTURE.md` lines 73–76, 656 | — |
+| 7 | 2 | **R3** | High | ✅ applied | REQ Appendix D + link-defs `[Claude Skills]` URL → `.../overview` | `REQUIREMENTS.md` lines 1007, 1026 | A2 |
 | 8 | 3 | **R4** | High | pending | `[ng-openapi-gen]` URL differs between ARCH and REQ | `ARCHITECTURE.md` line 653 | — |
 | 9 | 3 | **R1** | High | pending | REQ has two competing reference structures (Appendix D + link-defs) | `REQUIREMENTS.md` lines 988–1007, 1009–1026 | — |
-| 10 | 2 | **G4** | High | pending | `openapi-integration.md` shared context violates `oasdiff` boundary | `GENERATE_SKILLS.md` line 295 + `skill_creation/shared/openapi-integration.md` | — |
+| 10 | 2 | **G4** | High | ✅ applied | `openapi-integration.md` oasdiff bullet rewritten in `GENERATE_SKILLS.md` line 291 and in `skill_creation/shared/openapi-integration.md` — now states `build_app` runs oasdiff before invocation; skills consume ChangeSet | `GENERATE_SKILLS.md` line 291 + `skill_creation/shared/openapi-integration.md` | — |
 | 11 | 3 | **G2** | High | pending | "Three Loading Levels" auto-injection model is inaccurate | `GENERATE_SKILLS.md` lines 65–85 | A2 |
-| 12 | 2 | **G3** | High | pending | Canonical YAML frontmatter incomplete; lacks dual-mode guidance | `GENERATE_SKILLS.md` lines 41–55 | A2 |
-| 13 | 2 | **G6** | High | pending | 11 skill descriptions lack `when_to_use` trigger language | `GENERATE_SKILLS.md` 11 skill YAML blocks | G3 (template) |
+| 12 | 2 | **G3** | High | ✅ applied | Canonical YAML frontmatter at line 41 + at line 137 both expanded with `when_to_use`, `agent`, and updated description guidance; dual-mode requirement note added after the first canonical block | `GENERATE_SKILLS.md` lines 41–55 + 137–149 | A2 |
+| 13 | 2 | **G6** | High | ✅ applied | All 11 skill YAML blocks gained a `when_to_use:` line with explicit `build_app` dispatch + CLI invocation triggers (verified grep `^when_to_use:` = 13 total = 11 skills + 2 canonical templates) | `GENERATE_SKILLS.md` 11 skill YAML blocks | G3 (template) |
 | 14 | 4 | **G5** | Medium | pending | "auto-invoked" language implies wrong invocation model | `GENERATE_SKILLS.md` lines 23, 1871 | — |
 | 15 | 3 | **G8** | Medium | pending | Skill Architecture section makes claims without referencing master-pair formal sources | `GENERATE_SKILLS.md` lines 21–234 (intro) | A2 |
 | 16 | 4 | **M2** | Medium | pending | URL-def duplication between ARCH §20 and REQ link-defs — add sync-note | `REQUIREMENTS.md` line ~1009 | — |
@@ -170,7 +170,7 @@ G3, G6, G8} (with G3→G6 inner edge), {R4, A3}. 14 independent patches.
 | 1 — Master pair | `completed` | 11 actionable findings, 0 deferred. |
 | 2 — Downstream pair | `completed` | 10 actionable findings (1 APP_BUILDER + 8 GENERATE_SKILLS + 1 cross-pair X1). 2 Critical, 4 High, 2 Medium, 2 Low. |
 | 3 — Consolidated register | `completed` | All sub-steps 3.1–3.6 completed. §5 ordering ratified and signed off. 21 patches across 4 docs (+ 1 shared-context file via G4). 3 cascade groups, 14 independent patches. |
-| 4 — Apply patches | `in_progress` | Tier 1 (Critical) applied: A1, R2, X1, G1 + M1+M3 verification ✓. Tier 2 (`A2`, `R3`, `G3`, `G6`, `G4`) is next — awaiting user direction. Side finding during Tier 1: `doc/TEST_EXAMPLES.md` lines 569–570 still use the old `ng-small-field` name (out of scope but stale). |
+| 4 — Apply patches | `in_progress` | Tier 1 (Critical) applied: A1, R2, X1, G1 + M1+M3 verification ✓. Tier 2 (skill-authoring unblockers) applied: A2, R3, G3, G6, G4 ✓. Tier 3 (`R4`, `R1`, `G2`, `G8`) is next — awaiting user direction. Outstanding side finding: `doc/TEST_EXAMPLES.md` lines 569–570 still use the old `ng-small-field` name (out of scope but stale). |
 
 ## 7. Open questions
 

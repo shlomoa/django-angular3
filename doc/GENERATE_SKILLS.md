@@ -41,9 +41,11 @@ Every `SKILL.md` file begins with YAML frontmatter that defines skill metadata:
 ```yaml
 ---
 name: <skill-name>
-description: <brief description of skill purpose>
+description: <capability statement, third person, no I/you>
+when_to_use: <"Use when build_app dispatches X, or when a user runs /<skill-name> to do Y">
 user-invocable: false
 context: fork
+agent: <subagent type if context: fork is set; usually general-purpose, Explore, or Plan>
 allowed-tools:
   - Read
   - Write
@@ -53,6 +55,8 @@ allowed-tools:
   - Glob
 ---
 ```
+
+**Dual-mode requirement.** These skills are used both by direct CLI invocation (a user types `/<skill-name>` in Claude Code) and by `build_app` via the Claude Agent SDK (`query(skills=[...], allowedTools=[...])`). The `allowed-tools` frontmatter field is honored by the CLI but **not** by the SDK — `build_app` must mirror the same tool list in its `query()` `allowedTools` option. The canonical tool list per skill in this document is the source of truth for both surfaces. See `ARCHITECTURE.md` §2.14 references to [Claude Code Skills] and [Claude Agent SDK Skills] for the authoritative field reference.
 
 ### Field Definitions
 
@@ -136,9 +140,11 @@ Every `SKILL.md` file follows this structure:
 ```markdown
 ---
 name: <skill-name>
-description: <brief description>
+description: <capability statement, third person, no I/you>
+when_to_use: <"Use when build_app dispatches X, or when a user runs /<skill-name> to do Y">
 user-invocable: false
 context: fork
+agent: <subagent type>
 allowed-tools:
   - Read
   - Write
@@ -288,7 +294,7 @@ See [angular-conventions.md](../shared/angular-conventions.md) — when this ski
 
 **Contents**:
 
-- **oasdiff — schema diff and change detection**: Run `oasdiff` against the previous and current OpenAPI schema before any generation step. Breaking changes reported by `oasdiff` must be acknowledged or resolved before generation proceeds.
+- **oasdiff — schema diff and change detection**: `oasdiff` is run by `build_app` during the Change Derivation phase, before any skill is invoked. Skills receive the resulting `ChangeSet` as procedure input (see `APP_BUILDER_REQUIREMENTS.md` §"Change Derivation"). Skills must **not** re-run `oasdiff`.
 - **ng-openapi-gen output paths**: Generated files are placed in `src/app/api/` by default. The output directory is configured in `ng-openapi-gen.json` at the workspace root.
 - **Service naming**: Each OpenAPI tag produces one Angular service named `<Tag>ApiService` (e.g., tag `Users` → `UsersApiService`). Import from `src/app/api/services/<tag>-api.service.ts`.
 - **Import patterns**: Models are imported from `src/app/api/models/<model-name>.ts`. The barrel export at `src/app/api/models.ts` re-exports all models.
@@ -1025,6 +1031,7 @@ The mode to apply to each object is determined by running `oasdiff` against the 
 ---
 name: ng-workspace
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
+when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /ng-workspace to scaffold or update an Angular workspace from django-angular3.json.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -1443,6 +1450,7 @@ Procedure-level input: `confirmDelete: true`
 ---
 name: ng-app
 description: Manage Angular Material application within a workspace - create app structure with Material theme, modify providers and routing, or delete app
+when_to_use: Use when build_app dispatches an app-creation, app-modification, or app-deletion procedure node, or when a user runs /ng-app to scaffold or update an Angular Material application inside an existing workspace.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -1864,7 +1872,8 @@ Optional dependencies:
 ```yaml
 ---
 name: ng-api
-description: Generate Angular API clients from OpenAPI specifications using ng-openapi-gen. Auto-invoked when the outer agent detects a need to generate or regenerate API service layer code from an OpenAPI schema.
+description: Generate TypeScript API client code from an OpenAPI specification using ng-openapi-gen.
+when_to_use: Use when build_app dispatches an api-generation procedure node (initial generation or schema-change regeneration), or when a user runs /ng-api to regenerate API clients after OpenAPI schema changes.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2116,6 +2125,7 @@ Cleaned and regenerated API client code
 ---
 name: ng-data-service
 description: Create, modify, or delete Angular data services that wrap generated `<Resource>ApiService` clients with typed `Observable` methods, snack-bar feedback, and focused unit tests.
+when_to_use: Use when build_app dispatches a data-service procedure node for a resource that has generated <Resource>ApiService code, or when a user runs /ng-data-service to wrap a generated API client with typed Observables and snack-bar feedback.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2327,6 +2337,7 @@ Output:
 ---
 name: ng-field-component
 description: Create, modify, or delete Angular Material small field-level components with typed input/output signals, Material imports, and ARIA accessibility
+when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /ng-field-component to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2949,6 +2960,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: ng-form-field
 description: Create, modify, or delete Angular Material form field components implementing ControlValueAccessor for seamless reactive forms integration with validation and error handling
+when_to_use: Use when build_app dispatches a form-field-component procedure node, or when a user runs /ng-form-field to scaffold a Material form-field component that implements ControlValueAccessor for reactive forms.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3791,6 +3803,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: ng-component
 description: Create, modify, or delete Angular Material components (display, container, or dialog types) with standalone architecture and Material theming
+when_to_use: Use when build_app dispatches a component procedure node for display, container, or dialog types, or when a user runs /ng-component to scaffold a standalone Angular Material component.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4514,6 +4527,7 @@ Optional dependencies:
 ---
 name: ng-complex-component
 description: Create, modify, or delete Angular Material complex components with theme mixins, nested child components, content projection, and CDK overlay integration
+when_to_use: Use when build_app dispatches a complex-component procedure node, or when a user runs /ng-complex-component to scaffold a Material component requiring theme mixins, content projection, child components, or CDK overlay integration.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4823,6 +4837,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: ng-reactive-form
 description: Create, modify, or delete Angular Material reactive forms with typed FormGroup, FormBuilder scaffolding, Material form fields, server-side validation error handling, and comprehensive specs
+when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /ng-reactive-form to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -5415,6 +5430,7 @@ Output:
 ---
 name: ng-page
 description: Create, modify, or delete Angular Material pages with lazy standalone routing, sidenav navigation, and authenticated route guard support
+when_to_use: Use when build_app dispatches a page procedure node, or when a user runs /ng-page to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -5680,6 +5696,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 ---
 name: ng-site
 description: Orchestrate Angular Material site generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure
+when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /ng-site to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
 user-invocable: false
 context: fork
 allowed-tools:

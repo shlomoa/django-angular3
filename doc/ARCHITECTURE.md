@@ -72,6 +72,8 @@ carries out the assigned construction work guided by the specified SKILL(s).
 ### 2.14 [SKILLS][Claude Skills]
 Bounded AI skills that guide the agent within each guided agent session. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
 
+The formal skill format is defined by Anthropic: see [Claude Skills] for the conceptual overview, [Claude Code Skills] for the CLI-facing reference (extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] for SDK-side discovery and invocation. Authoring guidance is at [Claude Skills Best Practices].
+
 SKILLS are a core architectural subsystem of `django-angular3`. Their subsystem architecture is defined in `doc/GENERATE_SKILLS.md`, and their implementation and authoring plan is defined in `doc/SKILL_AUTHORING_PLAN.md`. This document defines the role of SKILLS in the overall architecture and does not restate their internal design.
 
 ### 2.15 SKILLS-based construction
@@ -653,7 +655,10 @@ Key actors and terms. Full definitions are in §2.
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
 [Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
-[Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#evaluation-and-iteration
+[Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
+[Claude Code Skills]: https://code.claude.com/docs/en/skills
+[Claude Agent SDK Skills]: https://code.claude.com/docs/en/agent-sdk/skills
+[Claude Skills Best Practices]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
 [oasdiff]: https://www.oasdiff.com/
 [oasdiff-github]: https://github.com/oasdiff/oasdiff
 [DRF - Django REST Framework]: https://www.django-rest-framework.org/

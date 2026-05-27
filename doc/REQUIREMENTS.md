@@ -1004,7 +1004,7 @@ sequenceDiagram
 | `[ng-openapi-gen]` | `https://github.com/cyclosproject/ng-openapi-gen` | External web reference |
 | `[Claude Agent SDK - Python]` | `https://platform.claude.com/docs/en/agent-sdk/python` | External web reference |
 | `[Claude Agent SDK - Python - GitHub]` | `https://github.com/anthropics/claude-agent-sdk-python` | External web reference |
-| `[Claude Skills]` | `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#evaluation-and-iteration` | External web reference |
+| `[Claude Skills]` | `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview` | External web reference |
 
 [ARCHITECTURE.md]: ARCHITECTURE.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
@@ -1023,4 +1023,4 @@ sequenceDiagram
 [ng-openapi-gen]: https://github.com/cyclosproject/ng-openapi-gen
 [Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
 [Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
-[Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#evaluation-and-iteration
+[Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview

@@ -820,10 +820,32 @@ explicit direction to begin and per-patch approval per the operating rules.
 |---|---|---|---|
 | `ng-small-field` references in `doc/TEST_EXAMPLES.md` (lines 569–570) | Low–Medium | `doc/TEST_EXAMPLES.md` | Test examples cite the old skill name. Out of scope for this validation but is now stale and would mislead anyone reading test examples. Suggest adding to a "scope expansion" follow-up. |
 
-### Tier 2 — Unblock skill authoring  ·  `pending`
+### Tier 2 — Unblock skill authoring  ·  `completed`
 
-Patches in this tier (in apply order): **A2**, **R3**, **G3**, **G6**, **G4**.
+| Finding | File(s) edited | Edits made |
+|---|---|---|
+| **A2** | `doc/ARCHITECTURE.md` | (a) §2.14 body gained a new paragraph citing [Claude Skills] (conceptual overview), [Claude Code Skills] (CLI-facing reference), [Claude Agent SDK Skills] (SDK-side reference), [Claude Skills Best Practices] (authoring guidance); (b) §20 line 656 `[Claude Skills]` URL rebound from `.../best-practices#evaluation-and-iteration` to `.../overview`, plus three new labels added: `[Claude Code Skills]` → `https://code.claude.com/docs/en/skills`, `[Claude Agent SDK Skills]` → `https://code.claude.com/docs/en/agent-sdk/skills`, `[Claude Skills Best Practices]` → `https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices`. |
+| **R3** | `doc/REQUIREMENTS.md` | (a) Appendix D row 1007 `[Claude Skills]` URL → `.../overview`; (b) link-defs row 1026 same URL change. |
+| **G3** | `doc/GENERATE_SKILLS.md` | Both canonical YAML frontmatter templates (one at line 41–55 in §"YAML Frontmatter"; one at line 137–149 in §"Canonical SKILL.md Template Structure") rewritten to include `when_to_use`, `agent`, and revised description guidance. A new "Dual-mode requirement" note added after the first template explaining that `allowed-tools` is honored by CLI but ignored by SDK — `build_app` must mirror in `query()` `allowedTools`. |
+| **G4** | `doc/GENERATE_SKILLS.md` + `skill_creation/shared/openapi-integration.md` | Both `oasdiff` bullets rewritten. New text: *"`oasdiff` is run by `build_app` during the Change Derivation phase, before any skill is invoked. Skills receive the resulting `ChangeSet` as procedure input (see `APP_BUILDER_REQUIREMENTS.md` §'Change Derivation'). Skills must **not** re-run `oasdiff`."* This aligns the shared context with APP_BUILDER FR-1's boundary. |
+| **G6** | `doc/GENERATE_SKILLS.md` | All 11 skill YAML blocks gained a `when_to_use:` line directly after `description:`, with a unique trigger statement covering both `build_app` dispatch and direct CLI invocation. ng-api also had its description rewritten to remove "Auto-invoked when the outer agent detects" wording (resolves part of G5 ahead of schedule). Verified `^when_to_use:` grep = 13 (11 skills + 2 canonical templates from G3). |
 
-### Tiers 3–6  ·  `pending`
+### Tier 2 — Verifications  ·  `completed`
+
+| Verification | Result |
+|---|---|
+| Grep for `best-practices#evaluation-and-iteration` in `doc/` | ✓ Only `doc/documents_refresh.md` contains this string (intentional — documenting the fix). Master pair and downstream docs are clean. |
+| Grep for "Run `oasdiff` against the previous" in `doc/` | ✓ Same — only `doc/documents_refresh.md`. The corrupting boundary text is gone from `GENERATE_SKILLS.md` and `skill_creation/shared/openapi-integration.md`. |
+| Grep for `^when_to_use:` in `doc/GENERATE_SKILLS.md` | ✓ 13 occurrences (11 skills + 2 canonical templates), matching the expected count. |
+
+### Bonus during Tier 2
+
+The G6 ng-api description rewrite removed the "Auto-invoked when the outer agent detects" wording, which was part of finding **G5**. That portion of G5 is therefore resolved early. G5's other reference (line 23 in §"Skill Architecture" preamble: "designed to be auto-invoked by an outer Claude API agent pipeline") remains and is still scheduled for Tier 4.
+
+### Tier 3 — Documentation correctness  ·  `pending`
+
+Patches in this tier (in apply order): **R4**, **R1**, **G2**, **G8**.
+
+### Tiers 4–6  ·  `pending`
 
 See [document_validate_plan.md §5](document_validate_plan.md) for the full ordering with Tier column.
