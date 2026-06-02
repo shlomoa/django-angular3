@@ -7,6 +7,10 @@ This folder is intentionally skill-specific. It is the working set for the
 SKILLS subset of the broader AI automation model; it is not the planning or
 execution workspace for TOOLS, HOOKS, or PLUGINS.
 
+No sibling `tools_creation/` workspace is defined today. Tool candidates are
+still tracked at the design and analysis level in `doc/` rather than as a
+split, step-by-step authoring program comparable to the eleven skills.
+
 `doc/GENERATE_AI_AUTOMATIONS.md` remains the original design specification. These files are
 the operational source for planning, implementing, and verifying one skill at a
 time. If a split file appears incomplete or inconsistent with
@@ -18,6 +22,11 @@ For the umbrella automation model and primitive-selection policy, use
 `doc/REQUIREMENTS.md`, and `doc/APP_BUILDER_REQUIREMENTS.md`. Use this folder
 only when the task is specifically about authoring, reviewing, or verifying a
 skill.
+
+Create a sibling folder such as `tools_creation/` only if tool work reaches
+the same level of dedicated authoring cadence: named tool specifications,
+shared authoring guidance, review workflow, and split working files that are
+easier to manage separately than in `doc/`.
 
 ## Layout
 

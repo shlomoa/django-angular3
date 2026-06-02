@@ -75,6 +75,27 @@ per-capability detail used for SKILLS. Tool-contract design is derived from
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` and is expected to flow into the
 architecture and app-builder documents.
 
+### Criteria for a future `tools_creation/` workspace
+
+Do not create a sibling `tools_creation/` folder just to mirror
+`skill_creation/`. Introduce it only when tool work becomes a dedicated
+authoring stream with its own operational cadence.
+
+Use the following criteria:
+
+- there are named tool contracts to author, not only candidate ideas or
+  analysis notes
+- tool work has shared authoring guidance distinct from skill authoring
+- multiple tool specifications need split working files because keeping them
+  only in `doc/` is becoming unwieldy
+- tool implementation and verification are being reviewed as a coherent track
+  rather than as scattered notes attached to skill work
+- the shared material across tools is large enough to justify a dedicated
+  working set and folder structure
+
+Until those conditions are met, keep tool planning and design detail in the
+umbrella documentation under `doc/`.
+
 ## Hooks
 
 Use HOOKS for deterministic lifecycle enforcement points that must run whether

@@ -2,6 +2,11 @@
 
 All skills in this document follow the **Agent Skills** format — reusable capabilities designed to be auto-invoked by an outer Claude API agent pipeline.
 
+This file describes the architecture of the SKILLS primitive only. It does not
+define TOOLS, HOOKS, or PLUGINS as automation primitives; those belong to the
+broader AI automation model described in `doc/GENERATE_AI_AUTOMATIONS.md` and
+related architecture documents.
+
 ## Directory Structure
 
 Each skill lives in its own directory under `.claude/skills/`:
@@ -40,7 +45,7 @@ allowed-tools:
 - **`description`**: Brief description used by outer agent for skill matching and invocation
 - **`user-invocable`**: Always `false` for these skills — invoked by outer agent, not by users directly
 - **`context`**: Always `fork` — each skill execution runs in an isolated context
-- **`allowed-tools`**: List of Claude Code tools the skill is permitted to use during execution
+- **`allowed-tools`**: List of Claude Code tools the skill is permitted to use during execution. This field governs what a SKILL may call; it is not itself the definition of the broader TOOLS primitive.
 
 ## Three Loading Levels
 
@@ -98,7 +103,7 @@ Skills are invoked by an **outer agent**, not by users:
 4. **Result Handoff**: Skill completes and returns results to outer agent
 5. **Continuation**: Outer agent may invoke additional skills or return final results to user
 
-**Key Principle**: Skills are designed as composable units that can be chained together by the outer agent to accomplish complex tasks.
+**Key Principle**: Skills are designed as composable units that can be chained together by the outer agent to accomplish complex tasks. In the broader automation model, they are one execution primitive alongside deterministic TOOLS, enforced HOOKS, and packaging-oriented PLUGINS.
 
 ## Canonical SKILL.md Template Structure
 

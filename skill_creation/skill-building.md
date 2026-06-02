@@ -2,6 +2,11 @@
 
 To create a skill from scratch with the skill-creator, I need roughly four things from you. Only the first two are required upfront; the rest can be built together.
 
+This guide is for creating the SKILLS subset of the broader AI automation
+model. It is not the intake guide for TOOLS, HOOKS, or PLUGINS; keep those
+concerns in the umbrella design docs unless a separate authoring workflow is
+introduced for them.
+
 **1. Intent — required, conversational**
 
 Three short answers:
@@ -13,9 +18,9 @@ Free-form prose is fine; I'll ask follow-ups to fill the gaps.
 
 **2. Domain detail — required, format flexible**
 
-Whatever a competent practitioner would need to do the task by hand. Concretely: the input shape (file paths, schemas, structured data, free text), the output shape (exact format, extensions, naming, directory layout), conventions or style rules the output must follow, edge cases (missing input, conflicts, partial state), and dependencies on other skills or artifacts.
+Whatever a competent practitioner would need to do the task by hand. Concretely: the input shape (file paths, schemas, structured data, free text), the output shape (exact format, extensions, naming, directory layout), conventions or style rules the output must follow, edge cases (missing input, conflicts, partial state), and dependencies on other skills, deterministic tool outputs, or prior generated artifacts.
 
-The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `doc/GENERATE_AI_AUTOMATIONS.md` is exactly this kind of input — a structured spec.
+The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `doc/GENERATE_AI_AUTOMATIONS.md` is exactly this kind of input for the broader automation model, while `doc/SKILL_AUTHORING_PLAN.md` and this folder narrow that input to the skills subset.
 
 **3. Bundled resources — optional**
 
