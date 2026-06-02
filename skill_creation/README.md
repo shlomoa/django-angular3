@@ -1,13 +1,23 @@
 # Skill Creation Working Set
 
-This folder splits `doc/GENERATE_SKILLS.md` into smaller working files for the
+This folder splits `doc/GENERATE_AI_AUTOMATIONS.md` into smaller working files for the
 skill authoring cadence described in `doc/SKILL_AUTHORING_PLAN.md`.
 
-`doc/GENERATE_SKILLS.md` remains the original design specification. These files are
+This folder is intentionally skill-specific. It is the working set for the
+SKILLS subset of the broader AI automation model; it is not the planning or
+execution workspace for TOOLS, HOOKS, or PLUGINS.
+
+`doc/GENERATE_AI_AUTOMATIONS.md` remains the original design specification. These files are
 the operational source for planning, implementing, and verifying one skill at a
 time. If a split file appears incomplete or inconsistent with
-`doc/GENERATE_SKILLS.md`, resolve the discrepancy against `doc/GENERATE_SKILLS.md` and
+`doc/GENERATE_AI_AUTOMATIONS.md`, resolve the discrepancy against `doc/GENERATE_AI_AUTOMATIONS.md` and
 then update the split file.
+
+For the umbrella automation model and primitive-selection policy, use
+`doc/GENERATE_AI_AUTOMATIONS.md`, `doc/ARCHITECTURE.md`,
+`doc/REQUIREMENTS.md`, and `doc/APP_BUILDER_REQUIREMENTS.md`. Use this folder
+only when the task is specifically about authoring, reviewing, or verifying a
+skill.
 
 ## Layout
 

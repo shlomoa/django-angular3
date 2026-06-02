@@ -11,8 +11,9 @@ generated app:
 - **Deterministic commands**: produce correct-by-construction outputs without
   iteration — schema extraction from DRF models, direct ngdj wrapper calls,
   and similar bounded operations.
-- **`build_app`**: the SKILLS-based orchestration command that drives
-  change-detected construction of the generated app.
+- **`build_app`**: the mixed AI-automation orchestration command that drives
+  change-detected construction of the generated app through SKILLS, TOOLS, and
+  enforced HOOK/gate behavior.
 
 `build_app` is invoked as:
 
@@ -34,19 +35,32 @@ python manage.py build_app <config> [options]
 - **CRM**: Compares the current OpenAPI schema against the previous schema using `oasdiff`.
 - **Non-CRM**: Compares the current `<project>.project.json` against the previous one using an equivalent config diff function. ⚠️ The config diff function is not yet defined — it depends on the `<project>.project.json` schema being finalised first. See `TODO.md`.
 
-Produces a typed `ChangeSet` and maps it to the set of SKILLS that must be invoked and in what mode.
+Produces a typed `ChangeSet` and maps it to the automations required for the
+run, including which SKILL sessions must be invoked and in what mode.
+
+In the mixed automation model, change derivation also determines which
+deterministic tool procedures and gate procedures are required before or around
+the AI-guided SKILL sessions.
 
 **Procedure graph construction**: Translates the change derivation output into
 a directed graph of procedures. Each procedure represents a unit of
-construction work. The graph encodes the SKILLS dependency chain and ordering
-constraints derived from the ChangeSet (delete before create at the same
-dependency level).
+construction work. The graph encodes the ordering and dependency constraints
+for deterministic tool procedures, AI-guided SKILL sessions, verification
+procedures, and enforced gate boundaries derived from the ChangeSet (delete
+before create at the same dependency level).
 
 **Procedure execution**: `build_app` traverses the procedure graph in dependency
-order. For each procedure node, it makes a Claude Agent SDK call with
-the specified SKILL(s) enabled, the procedure inputs as the prompt, and the
-working directory set to the generated app workspace. The agent carries out the
-construction work within each guided agent session.
+order. For each procedure node, it executes the node according to its kind:
+
+- **Tool procedure**: run a deterministic tool contract with structured inputs
+  and outputs.
+- **SKILL session procedure**: make a Claude Agent SDK call with the specified
+  SKILL(s) enabled, the procedure inputs as the prompt, and the working
+  directory set to the generated app workspace.
+- **Gate / HOOK boundary**: enforce a mandatory blocking check or lifecycle
+  side effect before downstream work continues.
+- **Verification procedure**: run required verification steps that confirm the
+  generated app is in a correct and consistent state.
 
 ---
 
@@ -70,7 +84,7 @@ are not required for normal operation.
 | Input | Flag | Notes |
 |---|---|---|
 | Output format | `--output-format json\|yaml\|text` | `[DEBUG]` Format for the emitted procedure graph. Default: `json`. |
-| Dry run | `--dry-run` | `[DEBUG]` Emit the procedure graph without invoking any SKILLS or writing to disk. |
+| Dry run | `--dry-run` | `[DEBUG]` Emit the procedure graph without invoking any automations or writing to disk. |
 | Graph output path | `--output <dir>` | `[DEBUG]` Write the procedure graph to `<dir>/procedure-graph.<ext>`. Default: `build/`. |
 | Force mode | `--force start-from-scratch` | Override change detection; treat as start-from-scratch regardless of diff. |
 
@@ -164,12 +178,31 @@ The builder produces a `ChangeSet` object:
 
 ---
 
-## Change-to-SKILLS Mapping
+## Change-to-Automations Mapping
 
-Change derivation maps each change type to the set of SKILLS to invoke, using
-the dependency order defined in `GENERATE_SKILLS.md`.
+Change derivation maps each change type to the automations that must run,
+using the dependency order and primitive-selection policy defined in
+`GENERATE_AI_AUTOMATIONS.md`.
 
-### Schema change → SKILLS
+### Deterministic procedures and enforced gates
+
+The mixed model distinguishes deterministic procedures and enforced gates from
+the AI-guided SKILL sessions that perform generative construction work.
+
+| Construction concern | Primitive | Role in `build_app` |
+|---|---|---|
+| Schema export from DRF | TOOL | Produce the current OpenAPI artifact as a deterministic build input |
+| OpenAPI validation | TOOL | Validate the schema before downstream construction continues |
+| Schema diff / change detection | TOOL | Produce the structured schema-change inputs used to derive the `ChangeSet` |
+| Breaking-change stop condition | GATE / HOOK boundary | Block downstream construction until breaking changes are acknowledged or resolved |
+| Deterministic Angular/client generation wrappers | TOOL | Run bounded generation operations that do not require AI judgment |
+| Verification logging / cleanup | GATE / HOOK boundary | Enforce mandatory post-run or lifecycle side effects |
+
+The detailed per-resource mapping below remains most explicit for the
+AI-guided SKILL subset, but it is now framed within this broader automation
+model.
+
+### Schema change → AI-guided SKILL sessions
 
 | Schema change type | SKILLS invoked | Notes |
 |---|---|---|
@@ -180,7 +213,7 @@ the dependency order defined in `GENERATE_SKILLS.md`.
 | `replace-things` | Same as remove-things for removed resources, then add-things for new resources | Order: remove first, then add |
 | `breaking` | Blocked — see Breaking change gate above | |
 
-### Config change → SKILLS
+### Config change → AI-guided SKILL sessions
 
 | `<project>.project.json` change | SKILL | Mode |
 |---|---|---|
@@ -200,10 +233,19 @@ the dependency order defined in `GENERATE_SKILLS.md`.
 
 ## Procedure Graph
 
-Procedure graph construction translates the change-to-SKILLS mapping into a
-directed acyclic graph of procedures. Each node in the graph is a procedure:
-a SKILL name, invocation mode, reason, SDK inputs, and its dependency
-edges. The graph encodes the following SKILLS dependency chain:
+Procedure graph construction translates the change-to-automations mapping into
+a directed acyclic graph of procedures. Each node in the graph is a procedure
+with a node kind, a reason, node-specific inputs, and dependency edges.
+
+Supported procedure kinds in the target model are:
+
+- `tool` — deterministic callable operation
+- `skill-session` — guided agent session using one or more SKILLS
+- `gate` — enforced blocking check or lifecycle boundary
+- `verification` — mandatory verification step
+
+Within that broader graph, the current AI-guided construction subset encodes
+the following SKILLS dependency chain:
 
 ```
 1  ng-workspace   (foundation)
@@ -222,7 +264,9 @@ edges. The graph encodes the following SKILLS dependency chain:
 SKILLS not triggered by any change in the current run are omitted from the
 graph. Procedures that invoke a SKILL in delete mode for removed resources
 precede procedures that invoke in create/add mode for new resources at the
-same dependency level.
+same dependency level. Deterministic tool procedures and gate procedures may
+precede, surround, or follow the SKILL-session subset as required by the
+construction stage.
 
 The final node(s) in the graph are always verification procedures. Verification
 is `build_app`'s responsibility: it is not a separate command and is not
@@ -240,7 +284,19 @@ consistent state after all construction procedures have completed.
   "change_set": { ... },
   "procedures": [
     {
+      "id": "oasdiff-diff",
+      "kind": "tool",
+      "tool": "oasdiff_diff",
+      "reason": "Schema change detection is required before downstream construction",
+      "inputs": {
+        "current_schema": "path/to/current-schema.yaml",
+        "previous_schema": "path/to/previous-schema.yaml"
+      },
+      "depends_on": []
+    },
+    {
       "id": "ng-api-create-Order",
+      "kind": "skill-session",
       "skill": "ng-api",
       "mode": "create",
       "reason": "New resource 'Order' added to schema",
@@ -251,10 +307,11 @@ consistent state after all construction procedures have completed.
         "project_config": "path/to/<project>.project.json",
         "previous_project_config": "path/to/previous-<project>.project.json"
       },
-      "depends_on": []
+      "depends_on": ["oasdiff-diff"]
     },
     {
       "id": "ng-data-service-create-Order",
+      "kind": "skill-session",
       "skill": "ng-data-service",
       "mode": "create",
       "reason": "New resource 'Order' requires data service",
@@ -278,19 +335,21 @@ consistent state after all construction procedures have completed.
   is included.
 - The graph is deterministic: the same inputs always produce the same graph.
 - Procedures not triggered by any change in the current run are omitted.
-- `build_app` traverses the graph in dependency order, running each procedure
-  as a guided agent session via the Claude Agent SDK.
+- `build_app` traverses the graph in dependency order, executing each
+  procedure according to its node kind.
+- Tool procedures, gate procedures, and verification procedures are first-class
+  graph elements, not implicit side notes around SKILL sessions.
 
 ---
 
 ## Durable Artifacts
 
 The durable artifact of each `build_app` run is the set of generated application
-files produced by the guided agent sessions:
+files produced by the mixed automation flow:
 
 | Artifact | Format | Storage path |
 |---|---|---|
-| Generated application files — Angular source files accumulated across guided agent sessions (components, services, API clients, routes, configuration) | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root (from `django-angular3.json`) |
+| Generated application files — Angular source files accumulated across tool procedures, guided agent sessions, and related verification-controlled construction steps (components, services, API clients, routes, configuration) | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root (from `django-angular3.json`) |
 
 The following internal artifacts are produced for `[DEBUG]` and validation
 purposes only:
@@ -317,14 +376,18 @@ purposes only:
 ### FR-2: Procedure graph generation
 
 - The procedure graph must be deterministic for the same inputs.
-- The graph must encode the SKILLS dependency chain as dependency edges.
+- The graph must encode the dependency ordering of the mixed automation model,
+  including deterministic tool procedures, AI-guided SKILL sessions,
+  verification procedures, and enforced gate boundaries.
+- The graph must encode the SKILLS dependency chain as dependency edges within
+  the SKILL-session subset.
 - Each procedure must include a `reason` for its inclusion.
 - Procedures not triggered by any change in the current run must be omitted.
 
 ### FR-3: Dry run `[DEBUG]`
 
-- `--dry-run` must emit the procedure graph without invoking any SKILLS or
-  executing any SDK calls.
+- `--dry-run` must emit the procedure graph without invoking any automations,
+  including deterministic tool procedures or SDK-driven SKILL sessions.
 - The emitted graph must be inspectable and human-readable.
 
 ### FR-4: Breaking change gate
@@ -336,26 +399,34 @@ purposes only:
 ### FR-5: Start-from-scratch mode
 
 - `--force start-from-scratch` overrides change detection and schedules all
-  SKILLS in dependency order.
+  required automation procedures for a full build, including deterministic
+  prerequisite procedures and all SKILL-session procedures in dependency order.
 
 ### FR-6: Config-only changes
 
 - When the schema has not changed (`no-change`) but the config has changed,
-  only config-derived SKILLS are included in the procedure graph.
-- Schema-derived SKILLS are not re-run unless triggered by a schema change.
+  only config-derived SKILL-session procedures are included in the
+  construction subset of the procedure graph.
+- Schema-derived SKILL-session procedures are not re-run unless triggered by a
+  schema change.
 
 ### FR-7: Combined changes
 
 - When both schema and config change, schema-derived procedures are ordered
   before config-derived procedures at the same dependency level.
 
-### FR-8: Procedure graph traversal and SDK invocation
+### FR-8: Procedure graph traversal and automation execution
 
 - `build_app` must traverse the procedure graph in dependency order.
-- For each procedure node, `build_app` must make a Claude Agent SDK call
+- For each `skill-session` node, `build_app` must make a Claude Agent SDK call
   with the specified SKILL(s) enabled, the procedure inputs as the prompt, and
   the working directory set to the generated app workspace (`angular.output` from
   `django-angular3.json`).
+- For each `tool` node, `build_app` must execute the corresponding
+  deterministic tool contract with structured inputs and outputs.
+- For each `gate` node or equivalent enforced boundary, `build_app` must apply
+  the required blocking check or lifecycle side effect before downstream
+  procedures continue.
 
 ---
 
@@ -379,12 +450,15 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 | Term | Definition | See |
 |---|---|---|
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `ARCHITECTURE.md` §2, `GENERATE_AI_AUTOMATIONS.md` |
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. The subject of this document. | §Purpose |
 | **the agent** | The agentic orchestrator bundled in `djng`. Driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
-| **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Each node is a guided agent session. | §Procedure Graph |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
+| **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | `GENERATE_AI_AUTOMATIONS.md` |
+| **HOOKS / gates** | Deterministic lifecycle-triggered or blocking automations that enforce gates, logging, cleanup, and other mandatory side effects. | `GENERATE_AI_AUTOMATIONS.md` |
+| **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Nodes may represent tool procedures, guided agent sessions, gate procedures, or verification procedures. | §Procedure Graph |
 | **guided agent session** | A single Claude Agent SDK call in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
 | **ChangeSet** | The typed record of schema and config changes produced by change derivation, used to construct the procedure graph. | §Change Derivation |
 | **`<project>.project.json`** | The generated app's configuration file. Defines the UI artifacts (pages, components, forms) used for non-CRM change detection. Name is a placeholder — schema and final name are TBD. | `TODO.md` MR1 |

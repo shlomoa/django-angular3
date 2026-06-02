@@ -17,7 +17,7 @@ Each example consists of:
 - **Django app name / Angular app name**: `shop` — all six examples use the same
   primary app. None of the schema or config changes replace the app itself;
   they evolve the schema and UI configuration within the same `shop` app.
-- The expected build plan (ordered skill steps)
+- The expected build plan / ordered procedure sequence
 - The aspect of the solution it demonstrates
 
 Examples are located under `spec/examples/<example-name>/` and can be run via:
@@ -33,8 +33,9 @@ django-admin build_app spec/examples/<example-name>/django-angular3.json \
 
 ## Example 1: Simple CRM — Start from Scratch
 
-**Demonstrates**: Full pipeline from a cold start. All 11 skills invoked in
-order. Baseline for verifying the complete skill chain.
+**Demonstrates**: Full pipeline from a cold start. The skill-session subset
+invokes all 11 skills in dependency order. Baseline for verifying the
+complete automation chain.
 
 ### Scenario
 
@@ -507,7 +508,9 @@ field. Steps include:
 ## Example 4: Config Change — Add Page (No Schema Change)
 
 **Demonstrates**: Config-only change path. Schema is identical to Example 1.
-Only config-derived skills run. Uses `add-things` on the config side.
+Only config-derived automation procedures run. In the current examples, that
+means the config-derived skill procedures. Uses `add-things` on the config
+side.
 
 > ⚠️ This example is blocked by `TODO.md` item 1. The `<project>.project.json`
 > file name and schema are not yet defined; neither the config diff function

@@ -1,7 +1,15 @@
-Create a solution based on claude code and claude skills to build and maintain Angular applications
+Design the AI automation subsystem used by `djng` to build and maintain
+Angular applications.
 
-* Create skills to build and modify angular objects
-* Generate build commands from an Open API schema
+This document defines how `djng` uses four automation primitives together:
+
+- **SKILLS** for AI-guided construction and integration work
+- **TOOLS** for deterministic callable operations
+- **HOOKS** for lifecycle enforcement and mandatory side effects
+- **PLUGINS** for packaging and distributing coherent capability bundles
+
+It also specifies the detailed SKILL catalog used for the AI-guided layer of
+Angular construction and integration.
 
 # Glossary
 
@@ -9,22 +17,86 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 | Term | Definition | See |
 |---|---|---|
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md`, `ARCHITECTURE.md` |
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `ARCHITECTURE.md` §2.14 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. One primitive family in the automation model defined here. | `ARCHITECTURE.md` §2.14 |
+| **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
+| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
+| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
 | **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
 
 ---
 
-# Skill Architecture
+# AI Automation Architecture
+
+This document defines the automation subsystem at four primitive levels. The
+detailed item-by-item specifications in this file are currently most complete
+for SKILLS, while TOOLS, HOOKS, and PLUGINS are defined here through
+boundaries, selection policy, and architectural responsibilities.
+
+## Primitive families
+
+- **SKILLS** handle AI-guided generation, modification, and integration work
+  that requires judgment, iteration, or code authoring.
+- **TOOLS** handle deterministic commands, validations, file operations, and
+  other bounded capabilities that the agent can call directly.
+- **HOOKS** handle deterministic lifecycle enforcement points that must run
+  regardless of agent choice.
+- **PLUGINS** package coherent bundles of SKILLS, TOOLS, HOOKS, and related
+  agent capabilities for reuse and distribution.
+
+## Primitive-selection policy
+
+Use the following policy when deciding which automation primitive to apply:
+
+| If the work… | Use |
+|---|---|
+| Requires AI judgment, iteration, or multi-step code authoring | **SKILL** |
+| Is a single deterministic command, API call, validation, or file operation | **TOOL** |
+| Must always run at a lifecycle event regardless of agent choice | **HOOK** |
+| Is a reusable bundle of capabilities intended for distribution | **PLUGIN** |
+| Is deterministic and must be guaranteed at a lifecycle event | **HOOK** wrapping a **TOOL** |
+
+This policy is distilled from `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` and is the
+selection rule for the automation model described in this document.
+
+## Tools
+
+Use TOOLS for deterministic operations that do not require AI judgment. In the
+`djng` architecture, this includes schema export, schema diff, contract
+validation, Angular/client generation wrappers, and similar bounded
+construction operations.
+
+This document does not yet define individual tool contracts in the same
+per-capability detail used for SKILLS. Tool-contract design is derived from
+`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` and is expected to flow into the
+architecture and app-builder documents.
+
+## Hooks
+
+Use HOOKS for deterministic lifecycle enforcement points that must run whether
+or not the agent would choose to do so. In the `djng` architecture, this
+includes breaking-change gates, migration-triggered schema export,
+pre-construction contract validation, post-generation verification logging, and
+session-stop cleanup and audit behavior.
+
+## Plugins
+
+Use PLUGINS to package coherent bundles of SKILLS, TOOLS, and HOOKS for reuse
+or distribution. In the `djng` architecture, candidate bundles include the
+djng Angular construction capability, the ngdj scaffold capability, and the
+contract lifecycle capability.
+
+## Skills
 
 The formal skill format used here is defined by Anthropic — see `ARCHITECTURE.md` §20: [Claude Skills] (conceptual overview), [Claude Code Skills] (CLI-side reference: extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] (SDK-side discovery and invocation). This section describes the project-specific application of that format; for the authoritative skill-format reference, consult the upstream documents.
 
-All skills in this document follow the **Agent Skills** format — reusable capabilities invoked explicitly by `build_app` via the Claude Agent SDK `query(skills=[...])` option, or by users via `/<skill-name>` in the Claude Code CLI.
+All skill specifications in this document follow the **Agent Skills** format — reusable capabilities invoked explicitly by `build_app` via the Claude Agent SDK `query(skills=[...])` option, or by users via `/<skill-name>` in the Claude Code CLI.
 
-## Directory Structure
+### Directory Structure
 
 Each skill lives in its own directory under `.claude/skills/`:
 
@@ -36,7 +108,7 @@ Each skill lives in its own directory under `.claude/skills/`:
   examples/         # Optional example files demonstrating usage
 ```
 
-## YAML Frontmatter
+### YAML Frontmatter
 
 Every `SKILL.md` file begins with YAML frontmatter that defines skill metadata:
 
@@ -60,7 +132,7 @@ allowed-tools:
 
 **Dual-mode requirement.** These skills are used both by direct CLI invocation (a user types `/<skill-name>` in Claude Code) and by `build_app` via the Claude Agent SDK (`query(skills=[...], allowedTools=[...])`). The `allowed-tools` frontmatter field is honored by the CLI but **not** by the SDK — `build_app` must mirror the same tool list in its `query()` `allowedTools` option. The canonical tool list per skill in this document is the source of truth for both surfaces. See `ARCHITECTURE.md` §2.14 references to [Claude Code Skills] and [Claude Agent SDK Skills] for the authoritative field reference.
 
-### Field Definitions
+#### Field Definitions
 
 - **`name`**: Unique identifier for the skill (matches directory name)
 - **`description`**: Brief description used by outer agent for skill matching and invocation
@@ -68,17 +140,17 @@ allowed-tools:
 - **`context`**: Always `fork` — each skill execution runs in an isolated context
 - **`allowed-tools`**: List of Claude Code tools the skill is permitted to use during execution
 
-## Skill loading model
+### Skill loading model
 
 At session start, the skill loader preloads only the YAML frontmatter (`name`, `description`, `when_to_use`) of every discovered SKILL.md into the model's context. When a skill is invoked — by the user typing `/<name>` in CLI mode, or by `build_app` selecting it via `query(skills=[...])` in SDK mode — the SKILL.md body loads. Supporting files (shared references, templates, scripts) live on the filesystem and are read by Claude on demand via the Read tool when SKILL.md links to them. Scripts are executed via Bash; their source is never loaded as context.
 
 **Token strategy.** Keep SKILL.md body under ~500 lines (per [Claude Skills Best Practices]). Move detailed reference material into separate files in the same skill directory and link to them. Files that Claude does not need to read incur no token cost.
 
-## Progressive disclosure of supporting files
+### Progressive disclosure of supporting files
 
 Per the formal skill format ([Claude Code Skills], [Claude Agent SDK Skills]), SKILL.md preloads only its YAML frontmatter (`name`, `description`, optionally `when_to_use`) into the session at startup. The body of SKILL.md loads when the skill is invoked. Supporting files (shared references, templates, scripts) live on the filesystem and are read on demand by Claude via the Read tool when SKILL.md links to them. Scripts in `scripts/` are executed via Bash; their source is never loaded as context.
 
-### Referencing supporting files
+#### Referencing supporting files
 
 Use standard markdown links from SKILL.md to point at supporting files. Keep references one level deep so Claude reads them in full (deeply nested references can lead to partial reads):
 
@@ -90,14 +162,14 @@ See [angular-conventions.md](../shared/angular-conventions.md) — read this bef
 Use the template at `templates/component.ts.tpl` — read and adapt for the output file.
 ```
 
-### Dynamic context injection (CLI only)
+#### Dynamic context injection (CLI only)
 
 For dynamic context injected at load time, the Claude Code CLI supports shell-command interpolation via the `` !`<command>` `` syntax. The Claude Agent SDK does not perform this preprocessing — under SDK invocation, Claude must use the Bash tool explicitly when shell output is needed inline.
 
-## Invocation Model
+### Invocation Model
 
-SKILLS are used by the agent within guided agent sessions, not invoked by users
-directly:
+Within the broader automation model, SKILLS are used by the agent within
+guided agent sessions, not invoked by users directly:
 
 1. **Procedure graph construction**: `build_app` derives a procedure graph from
    schema and config changes. Each node specifies which SKILL(s) apply and what
@@ -110,16 +182,16 @@ directly:
 3. **Next procedure**: `build_app` proceeds to the next procedure node in
    dependency order until all procedures are complete.
 
-**Key Principle**: SKILLS are composable knowledge units. Multiple SKILLS may be
-enabled for a single guided agent session when a procedure composes capabilities
-from several skills.
+**Key Principle**: SKILLS are composable knowledge units within the broader
+automation model. Multiple SKILLS may be enabled for a single guided agent
+session when a procedure composes capabilities from several skills.
 
 **Implementation note**: Higher-level documents (`APP_BUILDER_REQUIREMENTS.md`,
 `ARCHITECTURE.md`) use the abstract term "Claude Agent SDK call" to describe a
 guided agent session. In the Claude Agent SDK, this is implemented as a `query()`
 call. This document uses `query()` to refer to that concrete function.
 
-## Canonical SKILL.md Template Structure
+### Canonical SKILL.md Template Structure
 
 Every `SKILL.md` file follows this structure:
 
@@ -220,9 +292,12 @@ Brief examples demonstrating typical usage patterns.
 
 This canonical structure ensures consistency across all 11 skills and provides clear guidance for both outer agent invocation and skill implementation.
 
-# Shared Context Files
+# Skill Shared Context Files
 
-Shared context files are reference documents stored in `.claude/skills/shared/` that multiple skills read on demand. They eliminate duplication by centralising conventions, patterns, and integration rules that apply across many skills.
+Shared context files are reference documents stored in `.claude/skills/shared/`
+that multiple skills read on demand. They eliminate duplication by
+centralising conventions, patterns, and integration rules that apply across
+many skills in the skill layer of the broader automation model.
 
 Each skill references a shared file using a standard markdown link with a one-level-up relative path. From inside a skill directory at `.claude/skills/<skill-name>/SKILL.md`:
 
@@ -293,7 +368,7 @@ See [angular-conventions.md](../shared/angular-conventions.md) — when this ski
 - Angular Material page generation
 - Angular Material site generation
 
-# Templates
+# Skill Templates
 
 Template files are reusable Angular code scaffolds stored in `.claude/skills/<skill-name>/templates/` that skills reference during code generation. Each template provides a complete, working example following the conventions defined in the Shared Context Files section.
 
@@ -991,9 +1066,10 @@ export class {{RESOURCE_NAME_PASCAL}}Service {
 }
 ```
 
-# Skills
+# Skills Catalog
 
-Section will break down the "skills" requirement into the different skills.
+This section breaks down the skills subset of the automation model into the
+different skills.
 
 Each skill will include:
 - A building script(s).
@@ -5955,7 +6031,7 @@ Free-form prose is fine; I'll ask follow-ups to fill the gaps.
 
 Whatever a competent practitioner would need to do the task by hand. Concretely: the input shape (file paths, schemas, structured data, free text), the output shape (exact format, extensions, naming, directory layout), conventions or style rules the output must follow, edge cases (missing input, conflicts, partial state), and dependencies on other skills or artifacts.
 
-The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `GENERATE_SKILLS.md` is exactly this kind of input — a structured spec.
+The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `GENERATE_AI_AUTOMATIONS.md` is exactly this kind of input — a structured spec.
 
 **3. Bundled resources — optional**
 

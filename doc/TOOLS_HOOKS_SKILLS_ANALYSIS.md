@@ -214,5 +214,5 @@ Use this table when deciding which primitive to apply to a new capability in `dj
 [Claude Plugins]: https://code.claude.com/docs/en/plugins  
 [Claude Tool Use]: https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview  
 [ARCHITECTURE.md]: ARCHITECTURE.md  
-[GENERATE_SKILLS.md]: GENERATE_SKILLS.md  
+[GENERATE_AI_AUTOMATIONS.md]: GENERATE_AI_AUTOMATIONS.md  
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md  

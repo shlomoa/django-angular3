@@ -38,21 +38,26 @@ wrappers needed to materialize the required Angular-side outputs.
 
 ---
 
-## 3. Revise and Finalize GENERATE_SKILLS.md
+## 3. Revise and Finalize GENERATE_AI_AUTOMATIONS.md
 
 **Status: In progress**
 
-Revise and finalize `GENERATE_SKILLS.md` with the complete set of SKILLS needed
-for bounded construction and integration.
+Revise and finalize `GENERATE_AI_AUTOMATIONS.md` as the design specification
+for the complete AI automation model needed for bounded construction and
+integration, covering SKILLS, TOOLS, HOOKS, and PLUGINS.
 
-- Revise the `skill_creation` folder content to reflect the complete set of
-  SKILLS, with detailed descriptions and example prompts for each.
-- Keep SKILL dependencies, shared context expectations, templates, and
-  invocation boundaries aligned with `doc/GENERATE_SKILLS.md`.
-- Keep SKILL format, author-time vs run-time input handling, and wrapper
-  execution boundaries aligned with `doc/SKILL_AUTHORING_PLAN.md`.
-- `GENERATE_SKILLS.md` revised (Invocation Model, Glossary). `skill_creation`
-  content and complete SKILLS set not yet finalized.
+- Revise `doc/GENERATE_AI_AUTOMATIONS.md` to define primitive boundaries and
+  selection policy across SKILLS, TOOLS, HOOKS, and PLUGINS.
+- Keep the `skill_creation` folder aligned with the skills subset of
+  `doc/GENERATE_AI_AUTOMATIONS.md`, with detailed descriptions and example
+  prompts for each SKILL.
+- Keep SKILL dependencies, shared context expectations, templates, invocation
+  boundaries, and mixed automation execution-model references aligned with
+  `doc/GENERATE_AI_AUTOMATIONS.md`, `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md`, and
+  `doc/SKILL_AUTHORING_PLAN.md`.
+- `GENERATE_AI_AUTOMATIONS.md` revised (Invocation Model, Glossary). Broader AI
+  automation framing and corresponding `skill_creation` alignment not yet
+  finalized.
 
 ---
 
@@ -235,7 +240,8 @@ tests.
 
 Incorporate the architectural recommendations captured in
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` into implementation planning and design
-docs.
+docs. This item feeds item 3 so `doc/GENERATE_AI_AUTOMATIONS.md` becomes the
+umbrella design spec for the full automation model rather than SKILLS alone.
 
 - Convert deterministic construction and contract operations currently treated
   as SKILL/script responsibilities into explicit tool contracts (for example:

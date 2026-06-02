@@ -10,8 +10,9 @@ platform and the governed construction model that the integration targets.
 The terms `djng` and `ngdj` use the definitions in [ARCHITECTURE.md]
 §§ 2.5-2.6.
 
-The terms `SKILLS` and `SKILLS-based construction` use the definitions in
-`ARCHITECTURE.md` §§ 2.14-2.15 (see [Claude Skills]).
+The terms `AI automations`, `SKILLS`, `TOOLS`, `HOOKS`, `PLUGINS`, and
+`AI-automation-based construction` use the definitions in
+`ARCHITECTURE.md` §§ 2.14-2.15 and §19 (see [Claude Skills]).
 
 The term `the agent` uses the definition in `ARCHITECTURE.md` §2.16.
 
@@ -40,8 +41,9 @@ These requirements are derived from and must remain aligned with
 `ARCHITECTURE.md`.
 
 This document does not define the internal subsystem design or authoring
-process for SKILLS; those subjects are covered separately in
-[GENERATE_SKILLS.md] and [SKILL_AUTHORING_PLAN.md].
+process for AI automations; those subjects are covered separately in
+[GENERATE_AI_AUTOMATIONS.md]. `SKILL_AUTHORING_PLAN.md` remains the
+skills-specific authoring sub-plan within that broader automation model.
 
 This document also does not define the detailed app-builder command contract,
 change-set structure, build-plan serialization, or scenario-by-scenario test
@@ -508,11 +510,22 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - `ngdj` must provide the Angular-side commands, schematics, templates, and
   assembly actions consumed by governed construction, including generation
   from contract-derived and non-CRM inputs
-- Governed construction must be carried out by the agent, with each
-  construction procedure shaped by one or more SKILLS
+- Governed construction must be carried out by the agent through the governed
+  AI automation model, using SKILLS for AI-guided construction work, TOOLS for
+  deterministic bounded operations, and HOOKS for lifecycle gates or mandatory
+  side effects
 - Governed construction must be driven by an agentically orchestrated procedure
-  graph derived from change detection, with each procedure producing output
-  directly into the generated app workspace
+  graph derived from change detection, with procedure kinds broad enough to
+  represent AI-guided SKILL sessions, deterministic TOOL procedures,
+  verification procedures, and enforced gate boundaries, and with each
+  procedure producing or validating output directly in relation to the
+  generated app workspace
+- Primitive selection must follow an explicit policy: deterministic work must
+  prefer TOOL contracts, AI-guided generation or repair work may use SKILLS,
+  and mandatory lifecycle enforcement must not rely on optional agent behavior
+  where a HOOK or gate is required
+- Related automations may be packaged as PLUGINS, but those packaging
+  boundaries must preserve the ownership split between `djng` and `ngdj`
 - Governed construction must support iterative inspection, repair, retry, and
   refinement when emitted outputs are incomplete, inconsistent, or invalid,
   and must continue until deterministic acceptance conditions are satisfied or
@@ -903,16 +916,16 @@ The governed construction flow must support and correctly handle each of the
 following scenario classes:
 
 - **Start from scratch**: a cold-start build with no previous state, invoking
-  the full skill chain from workspace creation through app assembly and
+  the full automation chain from workspace creation through app assembly and
   verification
 - **Schema evolution — add**: an incremental schema change that adds a
-  resource; only the required skills run and existing workspace, app, and
-  components are preserved
+  resource; only the required automation procedures run, and existing
+  workspace, app, and components are preserved
 - **Schema evolution — breaking change blocked**: a breaking schema change is
   detected by `oasdiff`; construction halts before emitting a plan, and the
   explicit acknowledgement path must be available to unblock and resume
 - **Config-only change**: a structured UI input change with no schema change;
-  only config-derived skills run
+  only config-derived automation procedures run
 - **Combined schema and config change**: both the contract and the non-CRM
   input source change in the same build; both change paths activate and
   interleave correctly
@@ -927,12 +940,16 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 | Term | Definition | See |
 |---|---|---|
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, SKILLS, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `ARCHITECTURE.md` §19, `GENERATE_AI_AUTOMATIONS.md` |
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the [Claude Agent SDK - Python] (implementation repository: [Claude Agent SDK - Python - GitHub]). | `ARCHITECTURE.md` §2.16 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_SKILLS.md` |
-| **SKILLS-based construction** | The construction model in which the agent runs each procedure as a guided agent session, using SKILLS to carry out generation, modification, and integration work. | `ARCHITECTURE.md` §2.15 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
+| **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | `GENERATE_AI_AUTOMATIONS.md` |
+| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | `GENERATE_AI_AUTOMATIONS.md` |
+| **PLUGINS** | Packaging units that bundle related automations, templates, or supporting assets without changing the primitive responsibilities themselves. | `GENERATE_AI_AUTOMATIONS.md` |
+| **AI-automation-based construction** | The construction model in which the agent executes each procedure through the appropriate governed primitive or combination of primitives, using SKILLS for AI-guided work, TOOLS for deterministic operations, and HOOKS for enforced lifecycle behavior. | `ARCHITECTURE.md` §2.15 |
 
 ### B. References diagrams
 
@@ -945,7 +962,7 @@ flowchart LR
 
   subgraph Control[Governed construction]
     DJNG[djng]
-    AGENT[Agent + SKILLS]
+    AGENT[Agent + AI automations]
     NGDJ[ngdj]
   end
 
@@ -990,7 +1007,7 @@ Labels used in this document are defined in the link-definitions block at the en
 <!-- External URLs below mirror ARCHITECTURE.md §20 — update both files when changing an external URL. -->
 [ARCHITECTURE.md]: ARCHITECTURE.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
-[GENERATE_SKILLS.md]: GENERATE_SKILLS.md
+[GENERATE_AI_AUTOMATIONS.md]: GENERATE_AI_AUTOMATIONS.md
 [SKILL_AUTHORING_PLAN.md]: SKILL_AUTHORING_PLAN.md
 [TEST_EXAMPLES.md]: TEST_EXAMPLES.md
 [spec/examples/01_simple_crm/]: ../spec/examples/01_simple_crm/
