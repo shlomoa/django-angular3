@@ -70,10 +70,29 @@ Use TOOLS for deterministic operations that do not require AI judgment. In the
 validation, Angular/client generation wrappers, and similar bounded
 construction operations.
 
-This document does not yet define individual tool contracts in the same
-per-capability detail used for SKILLS. Tool-contract design is derived from
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` and is expected to flow into the
-architecture and app-builder documents.
+Per-capability tool contracts for the deterministic operations identified in
+`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` are defined in the
+[Tool Contracts Catalog](#tool-contracts-catalog) below. Each contract follows
+the same fixed shape — **name, inputs, outputs, error behavior, allowed
+invocation context** — so the agent, the procedure-graph builder, and a future
+MCP exposure layer all see the same surface.
+
+### Tool contract shape
+
+Every tool contract in this document **MUST** specify:
+
+| Field | Meaning |
+|---|---|
+| **Name** | The stable identifier the agent uses to call the tool. Matches the `tool` field of a `tool` procedure node in the procedure graph (see `APP_BUILDER_REQUIREMENTS.md` §Procedure Graph). |
+| **Purpose** | One-sentence statement of what the tool does. Must be deterministic — no AI judgment inside the operation. |
+| **Inputs** | Typed table of input keys, required/optional status, type, default, and description. Inputs are passed as a single structured object. |
+| **Outputs** | Typed table of output keys returned on success. Outputs are returned as a single structured object so the agent and downstream tools can read them without parsing free-form text. |
+| **Error behavior** | The exit-code or exception contract on failure, the structured error fields returned, and the failure categories the caller must distinguish (e.g. `invalid_input`, `missing_dependency`, `external_tool_failed`, `output_invalid`). |
+| **Allowed invocation context** | Which automation primitives are permitted to invoke this tool: `build_app` (as a `tool` procedure), `HOOK` (as the wrapped action of a lifecycle hook), agent (as a direct callable inside a guided agent session), or CLI (as a `django-admin` command). |
+| **Implementation reference** | Pointer to the concrete code or external CLI that backs the contract today, so the contract and the implementation can be kept aligned. |
+
+Contracts are normative. An implementation that deviates from a documented
+contract is a bug in the implementation, not in the contract.
 
 ### Criteria for a future `tools_creation/` workspace
 
@@ -95,6 +114,308 @@ Use the following criteria:
 
 Until those conditions are met, keep tool planning and design detail in the
 umbrella documentation under `doc/`.
+
+## Tool Contracts Catalog
+
+This catalog defines the deterministic tool contracts referenced from
+`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §2 and from `APP_BUILDER_REQUIREMENTS.md`
+§Change-to-Automations Mapping. Each entry follows the
+[tool contract shape](#tool-contract-shape) defined above.
+
+The contracts are grouped by lifecycle stage so the procedure-graph order is
+visually obvious: **contract lifecycle** (export → validate → diff) precedes
+**Angular generation wrappers** (`ng-openapi-gen`, `ngdj_*`).
+
+### Contract lifecycle tools
+
+#### 1. `export_schema` — schema extraction trigger
+
+**Name**: `export_schema`
+
+**Purpose**: Generate the current OpenAPI 3.1 schema from the configured DRF
+project (via `drf-spectacular`) and persist it as a durable, versioned artifact
+at the path declared by `openapi.source` in `django-angular3.json`. Rotates any
+existing schema to its `.previous` counterpart before writing.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. |
+| `format` | no | `"json"` \| `"yaml"` | `"json"` | Serialization format for the exported schema. |
+| `dry_run` | no | boolean | `false` | When `true`, compute and report the destination and would-be-archived previous path, but do not modify disk. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `destination` | string (path) | Absolute path to the freshly written current schema (`openapi.source`). |
+| `previous_path` | string (path) \| null | Absolute path of the archived previous schema if one existed before the run, otherwise `null`. |
+| `format` | `"json"` \| `"yaml"` | Format the schema was rendered in. |
+| `bytes_written` | integer | Size of the written schema artifact in bytes. Omitted on `dry_run`. |
+| `schema_changed` | boolean | `true` if the new schema differs from the rotated previous, `false` if they are byte-identical, `null` when there was no previous schema. |
+
+**Error behavior**: Non-zero exit (CLI) / raised `ToolError` (programmatic).
+Returns a structured error object `{ category, message, details }` where
+`category` is one of:
+
+- `invalid_input` — config path missing, malformed JSON, or required keys
+  absent.
+- `missing_dependency` — `drf-spectacular` not installed.
+- `external_tool_failed` — DRF schema generation raised an exception.
+- `output_invalid` — generated bytes failed sanity checks (empty document,
+  missing `openapi` key).
+
+The destination file is **never** left in a partially written state: on any
+failure after rotation, the rotation is reversed so the previous schema is
+restored.
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure preceding
+schema-derived skill sessions); HOOK (PostToolUse on `makemigrations`, per
+`TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2); CLI
+(`django-admin export_schema <config>`).
+
+**Implementation reference**:
+`django_angular3/management/commands/export_schema.py`;
+`django_angular3.config.get_previous_schema_path()`.
+
+#### 2. `validate_openapi_schema` — contract validation
+
+**Name**: `validate_openapi_schema`
+
+**Purpose**: Validate that a given OpenAPI artifact is a syntactically valid
+OAS 3.1 document and conforms to the structural constraints required by
+downstream Angular generation. Returns a structured pass/fail report — never a
+free-form text blob.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `schema` | yes | string (path) | — | Absolute path to the OpenAPI artifact to validate (typically the output of `export_schema`). |
+| `format` | no | `"json"` \| `"yaml"` \| `"auto"` | `"auto"` | How to parse the artifact. `auto` infers from extension. |
+| `ruleset` | no | string (path) \| `"default"` | `"default"` | Optional path to a custom validation ruleset (e.g. a Spectral ruleset). |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `valid` | boolean | `true` if the artifact passes all checks. |
+| `errors` | array of `{ code, message, path, severity }` | Structural or specification-conformance errors. Empty when `valid` is `true`. |
+| `warnings` | array of `{ code, message, path }` | Non-blocking lint findings. |
+| `openapi_version` | string | The `openapi` field value detected in the artifact. |
+| `resource_count` | integer | Number of distinct resource schemas detected in `components.schemas`. |
+
+**Error behavior**:
+
+- Validation failures (`valid: false`) are **not** treated as tool errors:
+  the tool returns its structured report and exits zero. The procedure-graph
+  caller (`build_app`) — or a PreToolUse hook — decides whether to halt.
+- A non-zero exit / raised `ToolError` is reserved for `category` values:
+  `invalid_input` (schema path missing or unreadable),
+  `missing_dependency` (validator binary not installed),
+  `external_tool_failed` (validator crashed),
+  `output_invalid` (validator returned an unparseable report).
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure after
+`export_schema` and before any generation procedure); HOOK (PreToolUse on
+`ng_openapi_gen` and `ngdj_*` tools, per `TOOLS_HOOKS_SKILLS_ANALYSIS.md`
+§3.5); agent (callable inside a guided agent session that needs to re-verify a
+hand-edited schema). Not a user-facing CLI command in the current release.
+
+**Implementation reference**: planned wrapper over an OpenAPI 3.1 validator
+(e.g. `spectral lint`) invoked from `django_angular3/validation.py`. Contract
+must be honoured regardless of the chosen backing validator.
+
+#### 3. `oasdiff_diff` — schema diff and change detection
+
+**Name**: `oasdiff_diff`
+
+**Purpose**: Run `oasdiff` against the current and previous OpenAPI artifacts
+and return a structured diff result that the procedure-graph builder consumes
+to derive the `ChangeSet`. The agent does not parse raw `oasdiff` output.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `current_schema` | yes | string (path) | — | Absolute path to the current OpenAPI artifact. |
+| `previous_schema` | yes | string (path) | — | Absolute path to the previous OpenAPI artifact. |
+| `report_path` | no | string (path) | `build/oasdiff-report.json` | Path where the raw `oasdiff` report is also archived for human inspection. |
+| `format` | no | `"json"` \| `"yaml"` \| `"text"` | `"json"` | Format used for the archived raw report. The structured return value is always JSON-shaped. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `schema_changed` | boolean | `true` if any difference is detected. |
+| `breaking` | array of `{ resource, path, code, message }` | Breaking changes detected by `oasdiff`. Empty when no breaking changes. |
+| `non_breaking` | array of `{ resource, path, code, message }` | Non-breaking changes detected. |
+| `affected_resources` | array of string | Distinct resource names touched across both `breaking` and `non_breaking`. |
+| `change_type` | `"no-change"` \| `"add-things"` \| `"remove-things"` \| `"replace-things"` \| `"breaking"` | Pre-classified change type matching the values defined in `APP_BUILDER_REQUIREMENTS.md` §Change Classification Summary. |
+| `report_path` | string (path) | Where the raw `oasdiff` artifact was archived. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+A successful `oasdiff` invocation that reports breaking changes is **not** an
+error — it returns the populated `breaking` array with exit zero. The
+breaking-change gate (HOOK or `build_app`) interprets the structured output.
+
+**Allowed invocation context**: `build_app` (as the `tool` procedure feeding
+the `ChangeSet`); HOOK (wrapped by the PreToolUse breaking-change gate from
+`TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.1); agent (read-only diagnostic use inside
+a guided agent session that needs to re-inspect a diff).
+
+**Implementation reference**: `django_angular3/tools.py:ensure_oasdiff()` for
+binary acquisition; planned `django_angular3.diff` wrapper that calls
+`oasdiff` with the contract above and post-processes its JSON output.
+
+### Angular generation wrapper tools
+
+#### 4. `ng_openapi_gen` — typed Angular client generation
+
+**Name**: `ng_openapi_gen`
+
+**Purpose**: Run `ng-openapi-gen` against the current OpenAPI artifact inside
+the generated Angular workspace to produce typed Angular API clients. Wraps
+the existing `ng_openapi_gen` djng management command so the agent and
+procedure graph see a structured tool contract instead of raw CLI output.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. The schema location and `angular.output` workspace are read from this file. |
+| `schema` | no | string (path) | value of `openapi.source` from `config` | Override path to the OpenAPI artifact to consume. |
+| `generator_config` | no | string (path) | derived from `config` | Override path to the `ng-openapi-gen` configuration JSON. |
+| `dry_run` | no | boolean | `false` | When `true`, compute the generator command line and the expected output directory but do not invoke `ng-openapi-gen`. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `output_dir` | string (path) | Absolute path of the directory where generated client files were written. |
+| `generated_files` | array of string (path) | All files written by this invocation, relative to `output_dir`. |
+| `client_count` | integer | Number of distinct generated client classes. |
+| `generator_version` | string | Version string reported by `ng-openapi-gen`. |
+| `command` | string | The exact command line invoked (for audit and debug). |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+
+- `missing_dependency` covers the case where the generated workspace has not
+  installed `ng-openapi-gen` locally. Per the repository principle, the tool
+  **must not** download Angular packages at runtime: it instead surfaces a
+  `missing_dependency` error directing the user to run the workspace install
+  step.
+- `output_invalid` is returned when the generator exits zero but writes no
+  files or produces files that fail a TypeScript parse smoke check.
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure invoked
+after `validate_openapi_schema` and before the `ng-api` skill session); agent
+(inside the `ng-api` guided agent session when the SKILL needs to regenerate
+the client during refinement). Not a HOOK target — generation is always
+explicit. CLI (`django-admin ng_openapi_gen <config>`).
+
+**Implementation reference**:
+`django_angular3/management/commands/ng_openapi_gen.py`;
+`django_angular3/angular.py`.
+
+#### 5. `ngdj_create_workspace` — Angular workspace scaffold wrapper
+
+**Name**: `ngdj_create_workspace`
+
+**Purpose**: Invoke the `ngdj` Angular workspace schematic to scaffold a fresh
+workspace at `angular.output`. Wraps the existing `ng_new` djng management
+command behind the structured tool contract used by the procedure graph.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. `angular.output`, `project.name`, and the `angular.workspace.*` keys are read from this file. |
+| `dry_run` | no | boolean | `false` | When `true`, compute and report the planned command line but do not create the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `workspace_path` | string (path) | Absolute path to the created workspace root. |
+| `package_manager` | `"npm"` \| `"yarn"` \| `"pnpm"` | Package manager configured for the workspace. |
+| `angular_version` | string | Angular CLI version that performed the scaffold. |
+| `command` | string | The exact command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError`. Categories:
+
+- `invalid_input` — `angular.output` already contains a non-empty workspace,
+  or `project.name` is not a valid Angular workspace identifier.
+- `missing_dependency` — required package manager binary is not on `PATH`.
+- `external_tool_failed` — `ng new` exited non-zero.
+- `output_invalid` — the scaffold completed but `angular.json` is missing.
+
+**Allowed invocation context**: `build_app` (as the foundational `tool`
+procedure before the `ng-workspace` skill session, when the workspace does not
+yet exist); CLI (`django-admin ng_new <config>`). Not invocable from a HOOK —
+workspace creation must be an explicit graph node.
+
+**Implementation reference**:
+`django_angular3/management/commands/ng_new.py`;
+`django_angular3/angular.py`.
+
+#### 6. `ngdj_create_app` — Angular application scaffold wrapper
+
+**Name**: `ngdj_create_app`
+
+**Purpose**: Invoke the `ngdj add` / `ng_gen_app` schematic to add the primary
+Angular application into an existing workspace. Wraps the existing
+`ng_gen_app` djng management command.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. `app.name`, `angular.output`, and the `angular.app.*` keys are read from this file. |
+| `dry_run` | no | boolean | `false` | When `true`, compute and report the planned command line but do not modify the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `app_path` | string (path) | Absolute path to the generated Angular application directory inside the workspace. |
+| `app_name` | string | Name of the Angular application produced. |
+| `command` | string | The exact command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError`. Categories:
+
+- `invalid_input` — `angular.output` does not contain an Angular workspace, or
+  an application with the same name already exists.
+- `missing_dependency` — `ngdj` schematic package not installed in the
+  workspace.
+- `external_tool_failed` — schematic invocation exited non-zero.
+- `output_invalid` — the schematic completed but the expected app directory
+  is missing.
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure between the
+`ng-workspace` and `ng-app` skill sessions, when the application does not yet
+exist); CLI (`django-admin ng_gen_app <config>`). Not invocable from a HOOK.
+
+**Implementation reference**:
+`django_angular3/management/commands/ng_gen_app.py`;
+`django_angular3/management/commands/ng_add.py`.
+
+### Contract compliance
+
+- The procedure-graph builder in `build_app` MUST emit a `tool` node whose
+  `tool` field equals one of the **Name** values above when scheduling a
+  deterministic operation. Free-form `Bash` invocations of these capabilities
+  outside the `tool` node mechanism are not permitted.
+- HOOKS that need to perform any of the operations above MUST do so by
+  invoking the corresponding tool contract — not by calling the underlying
+  binary directly — so error categories and structured outputs remain uniform
+  across automation primitives.
+- New deterministic capabilities added to `djng` MUST be documented here using
+  the [tool contract shape](#tool-contract-shape) before they may appear as a
+  `tool` procedure in the graph.
 
 ## Hooks
 

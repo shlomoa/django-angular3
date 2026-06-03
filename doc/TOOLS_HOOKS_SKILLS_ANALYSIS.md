@@ -12,6 +12,22 @@ It provides:
    'scripts' that are better served by Tools (& Plugins), Hooks, or Plugins
    respectively, with reasoning for each recommendation.
 
+## Implementation status
+
+The Tools recommendations in §2 below have been promoted into explicit,
+normative tool contracts. See `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts
+Catalog for the per-capability contracts (name, inputs, outputs, error
+behavior, allowed invocation context) covering:
+
+- `export_schema` — §2.1 of this document
+- `oasdiff_diff` — §2.2 of this document
+- `ng_openapi_gen` — §2.3 of this document
+- `ngdj_create_workspace`, `ngdj_create_app` — §2.4 of this document
+- `validate_openapi_schema` — §2.5 of this document
+
+The Hooks and Plugins recommendations in §3 and §4 remain analysis-stage and
+have not yet been promoted into per-capability contracts.
+
 References used:
 - https://code.claude.com/docs/en/skills
 - https://code.claude.com/docs/en/hooks-guide

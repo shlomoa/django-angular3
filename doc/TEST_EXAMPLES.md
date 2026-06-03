@@ -362,18 +362,35 @@ components:
 
 ### Expected build plan steps (ordered)
 
-1. `ng-workspace` — create workspace `simple_crm`
-2. `ng-app` — generate Angular Material application `simple_crm`
-3. `ng-api` — generate API client from `schema.yaml`
-4. `ng-data-service` — generate data services for `Customer`, `Product`
-5. `ng-component` — generate list component for `Customer`
-6. `ng-component` — generate detail component for `Customer`
-7. `ng-component` — generate list component for `Product`
-8. `ng-reactive-form` — generate edit form for `Customer`
-9. `ng-page` — generate `customer-list` page
-10. `ng-page` — generate `customer-detail` page
-11. `ng-page` — generate `product-list` page
-12. `ng-site` — assemble site with navigation
+Deterministic tool procedures (see `GENERATE_AI_AUTOMATIONS.md` §Tool
+Contracts Catalog) precede the SKILL sessions:
+
+1. `export_schema` *(tool)* — produce the current OpenAPI artifact at
+   `openapi.source`
+2. `validate_openapi_schema` *(tool)* — validate the freshly exported schema
+3. `ngdj_create_workspace` *(tool)* — scaffold the Angular workspace at
+   `angular.output`
+4. `ng-workspace` *(skill)* — apply Angular Material workspace conventions on
+   the scaffolded workspace `simple_crm`
+5. `ngdj_create_app` *(tool)* — add the Angular application `simple_crm` into
+   the workspace
+6. `ng-app` *(skill)* — finalize the Angular Material application `simple_crm`
+7. `ng_openapi_gen` *(tool)* — generate the typed Angular API client from
+   `schema.yaml`
+8. `ng-api` *(skill)* — integrate the generated API client
+9. `ng-data-service` *(skill)* — generate data services for `Customer`,
+   `Product`
+10. `ng-component` *(skill)* — generate list component for `Customer`
+11. `ng-component` *(skill)* — generate detail component for `Customer`
+12. `ng-component` *(skill)* — generate list component for `Product`
+13. `ng-reactive-form` *(skill)* — generate edit form for `Customer`
+14. `ng-page` *(skill)* — generate `customer-list` page
+15. `ng-page` *(skill)* — generate `customer-detail` page
+16. `ng-page` *(skill)* — generate `product-list` page
+17. `ng-site` *(skill)* — assemble site with navigation
+18. *(verification)* — terminal verification procedure (per
+    `APP_BUILDER_REQUIREMENTS.md` FR-10) consuming the structured outputs of
+    the tool procedures above
 
 ---
 
@@ -447,8 +464,18 @@ Example 1's `schema.yaml`.
 
 ### Expected build plan steps
 
-1. `ng-api` — regenerate API client (new `Order` endpoints)
-2. `ng-data-service` — generate data service for `Order`
+Deterministic tool procedures precede the schema-derived SKILL sessions:
+
+1. `export_schema` *(tool)* — re-export the schema; archive previous version
+2. `validate_openapi_schema` *(tool)* — validate the new schema
+3. `oasdiff_diff` *(tool)* — produce the structured diff feeding the
+   `ChangeSet` above (`change_type: add-things`, no breaking changes)
+4. `ng_openapi_gen` *(tool)* — regenerate the typed Angular API client to
+   include the new `Order` endpoints
+5. `ng-api` *(skill)* — integrate the regenerated API client (new `Order`
+   endpoints)
+6. `ng-data-service` *(skill)* — generate data service for `Order`
+7. *(verification)* — terminal verification procedure (per FR-10)
 
 No workspace, app, or existing component steps — they are not affected.
 
@@ -483,6 +510,11 @@ Example 1's schema with `email` removed from `Customer.required` and
 
 ### Expected builder output
 
+The breaking-change gate is fed by the `oasdiff_diff` tool contract (see
+`GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog). `oasdiff_diff` itself
+exits zero and returns its structured `breaking` array; the gate procedure
+consumes that output and halts the run:
+
 ```
 Breaking schema changes detected:
   - Customer: required property 'email' removed (breaking)
@@ -491,7 +523,8 @@ Review the oasdiff report at build/oasdiff-report.json before proceeding.
 Re-run with --acknowledge-breaking to continue.
 ```
 
-Exit code: non-zero (e.g., 2).
+Exit code: non-zero (e.g., 2). This exit code is distinct from the tool
+failure exit code required by `APP_BUILDER_REQUIREMENTS.md` FR-9.
 
 ### With `--acknowledge-breaking`
 
