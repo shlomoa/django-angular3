@@ -187,16 +187,22 @@ using the dependency order and primitive-selection policy defined in
 ### Deterministic procedures and enforced gates
 
 The mixed model distinguishes deterministic procedures and enforced gates from
-the AI-guided SKILL sessions that perform generative construction work.
+the AI-guided SKILL sessions that perform generative construction work. Each
+deterministic procedure invokes a tool contract defined in
+`doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. The contract names
+listed in the **Tool contract** column are the exact values the procedure
+graph emits in the `tool` field of a `tool` node.
 
-| Construction concern | Primitive | Role in `build_app` |
-|---|---|---|
-| Schema export from DRF | TOOL | Produce the current OpenAPI artifact as a deterministic build input |
-| OpenAPI validation | TOOL | Validate the schema before downstream construction continues |
-| Schema diff / change detection | TOOL | Produce the structured schema-change inputs used to derive the `ChangeSet` |
-| Breaking-change stop condition | GATE / HOOK boundary | Block downstream construction until breaking changes are acknowledged or resolved |
-| Deterministic Angular/client generation wrappers | TOOL | Run bounded generation operations that do not require AI judgment |
-| Verification logging / cleanup | GATE / HOOK boundary | Enforce mandatory post-run or lifecycle side effects |
+| Construction concern | Primitive | Tool contract | Role in `build_app` |
+|---|---|---|---|
+| Schema export from DRF | TOOL | `export_schema` | Produce the current OpenAPI artifact as a deterministic build input |
+| OpenAPI validation | TOOL | `validate_openapi_schema` | Validate the schema before downstream construction continues |
+| Schema diff / change detection | TOOL | `oasdiff_diff` | Produce the structured schema-change inputs used to derive the `ChangeSet` |
+| Breaking-change stop condition | GATE / HOOK boundary | (consumes `oasdiff_diff` output) | Block downstream construction until breaking changes are acknowledged or resolved |
+| Angular workspace scaffold | TOOL | `ngdj_create_workspace` | Create the Angular workspace before the `ng-workspace` skill session |
+| Angular application scaffold | TOOL | `ngdj_create_app` | Add the primary Angular application before the `ng-app` skill session |
+| Typed Angular client generation | TOOL | `ng_openapi_gen` | Generate the typed Angular API client before the `ng-api` skill session |
+| Verification logging / cleanup | GATE / HOOK boundary | (consumes tool outputs) | Enforce mandatory post-run or lifecycle side effects |
 
 The detailed per-resource mapping below remains most explicit for the
 AI-guided SKILL subset, but it is now framed within this broader automation
@@ -423,10 +429,53 @@ purposes only:
   the working directory set to the generated app workspace (`angular.output` from
   `django-angular3.json`).
 - For each `tool` node, `build_app` must execute the corresponding
-  deterministic tool contract with structured inputs and outputs.
+  deterministic tool contract with structured inputs and outputs. The `tool`
+  field of the node MUST equal one of the contract names defined in
+  `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog
+  (`export_schema`, `validate_openapi_schema`, `oasdiff_diff`,
+  `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app`).
 - For each `gate` node or equivalent enforced boundary, `build_app` must apply
   the required blocking check or lifecycle side effect before downstream
   procedures continue.
+
+### FR-9: Tool procedure failure handling
+
+- `build_app` must treat every tool procedure as honouring the contract shape
+  defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Tool contract shape:
+  structured inputs, structured outputs, and a structured error object with a
+  `category` in
+  `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+- When a tool procedure returns a non-success result, `build_app` must:
+  1. Halt traversal at the failed node and refuse to start any procedure that
+     depends on it.
+  2. Emit the failed procedure's `id`, `tool`, error `category`, error
+     `message`, and any structured `details` to stdout and to the run's
+     durable artifact log.
+  3. Exit with a non-zero status code distinct from the breaking-change exit
+     code so callers can distinguish "tool failed" from "breaking changes
+     blocked the run".
+- Tool procedures whose outputs include a `valid: false` report (notably
+  `validate_openapi_schema`) are not themselves errors; the procedure-graph
+  builder is responsible for translating such reports into the appropriate
+  downstream gate or halt.
+- `build_app` must not silently retry a failed tool procedure. Retry, if any,
+  must be explicit (re-running the command).
+
+### FR-10: Terminal verification procedure
+
+- The procedure graph must always terminate in one or more verification
+  procedures, as already required by §Procedure Graph.
+- The terminal verification procedures must consume the structured outputs of
+  the deterministic tool procedures listed in FR-8 (for example, the
+  `generated_files` array returned by `ng_openapi_gen`) so that verification
+  is based on the recorded results of construction rather than on a separate
+  filesystem rescan.
+- A run is reported as successful only when every terminal verification
+  procedure reports success. A failed terminal verification procedure follows
+  the failure-handling rules of FR-9.
+- ⚠️ The specific verification procedures and their acceptance criteria are
+  still tracked under `TODO.md`; FR-10 defines the contract those procedures
+  must satisfy once they are specified.
 
 ---
 
