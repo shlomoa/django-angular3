@@ -25,8 +25,19 @@ behavior, allowed invocation context) covering:
 - `ngdj_create_workspace`, `ngdj_create_app` — §2.4 of this document
 - `validate_openapi_schema` — §2.5 of this document
 
-The Hooks and Plugins recommendations in §3 and §4 remain analysis-stage and
-have not yet been promoted into per-capability contracts.
+The Hooks recommendations in §3 below have been promoted into explicit,
+normative hook contracts. See `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts
+Catalog for the per-capability contracts (name, trigger event, deterministic
+action, failure behavior, allowed wrapped tools) covering:
+
+- `pre-construction` — §3.5 of this document (contract validation gate)
+- `migration-triggered` — §3.2 of this document (OpenAPI schema re-extraction)
+- `breaking-change` — §3.1 of this document (gate on schema diff)
+- `post-generation` — §3.3 of this document (verification logging)
+- `session-stop` — §3.4 of this document (archiving and audit cleanup)
+
+The Plugins recommendations in §4 remain analysis-stage and have not yet been
+promoted into per-capability contracts.
 
 References used:
 - https://code.claude.com/docs/en/skills
@@ -123,6 +134,8 @@ instructions.
 
 ### 3.1 Breaking-Change Gate (PreToolUse on schema-diff tool)
 
+**Promoted contract**: [`breaking-change`](GENERATE_AI_AUTOMATIONS.md#3-breaking-change--gate-on-schema-diff) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.1 stage 2, §11.1, §11.2 |
@@ -132,6 +145,8 @@ instructions.
 | **Hook action** | Read `oasdiff` output; if `breaking` is non-empty and not acknowledged, print an error message and exit non-zero to block the tool invocation. |
 
 ### 3.2 Migration-Triggered Schema Extraction
+
+**Promoted contract**: [`migration-triggered`](GENERATE_AI_AUTOMATIONS.md#2-migration-triggered--openapi-schema-re-extraction) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
 
 | | |
 |---|---|
@@ -143,6 +158,8 @@ instructions.
 
 ### 3.3 Post-Generation Verification Logging
 
+**Promoted contract**: [`post-generation`](GENERATE_AI_AUTOMATIONS.md#4-post-generation--verification-logging) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.2, §7.3, §14.3 |
@@ -153,6 +170,8 @@ instructions.
 
 ### 3.4 Session-End Cleanup and Audit (Stop)
 
+**Promoted contract**: [`session-stop`](GENERATE_AI_AUTOMATIONS.md#5-session-stop--archiving-and-audit-cleanup) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.2, §7.4 |
@@ -162,6 +181,8 @@ instructions.
 | **Hook action** | Archive `build/procedure-graph.*` to `build/history/<timestamp>/`; write session summary to `build/session-log.json`. |
 
 ### 3.5 Pre-Construction Contract Validation Gate
+
+**Promoted contract**: [`pre-construction`](GENERATE_AI_AUTOMATIONS.md#1-pre-construction--contract-validation-gate) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
 
 | | |
 |---|---|

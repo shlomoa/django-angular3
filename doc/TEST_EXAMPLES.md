@@ -510,10 +510,12 @@ Example 1's schema with `email` removed from `Customer.required` and
 
 ### Expected builder output
 
-The breaking-change gate is fed by the `oasdiff_diff` tool contract (see
-`GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog). `oasdiff_diff` itself
-exits zero and returns its structured `breaking` array; the gate procedure
-consumes that output and halts the run:
+The breaking-change gate is implemented by the `breaking-change` hook
+contract (see `GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog), fed by
+the `oasdiff_diff` tool contract (see `GENERATE_AI_AUTOMATIONS.md` §Tool
+Contracts Catalog). `oasdiff_diff` itself exits zero and returns its
+structured `breaking` array; the `breaking-change` `PreToolUse` hook
+consumes that output and halts the run with its dedicated exit code:
 
 ```
 Breaking schema changes detected:
