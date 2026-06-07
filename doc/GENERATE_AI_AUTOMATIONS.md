@@ -428,10 +428,10 @@ session-stop cleanup and audit behavior.
 Per-capability hook contracts for the lifecycle enforcement points identified
 in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3 are defined in the
 [Hook Contracts Catalog](#hook-contracts-catalog) below. Each contract follows
-the same fixed shape — **name, trigger event, deterministic action, failure
-behavior, allowed wrapped tools** — so the procedure-graph builder, the
-`build_app` traversal, and a future Claude Code `settings.json` exposure layer
-all see the same surface.
+the same fixed shape — **name, purpose, trigger event, deterministic action,
+failure behavior, allowed wrapped tools, implementation reference** — so the
+procedure-graph builder, the `build_app` traversal, and a future Claude Code
+`settings.json` exposure layer all see the same surface.
 
 ### Hook contract shape
 
@@ -449,6 +449,44 @@ Every hook contract in this document **MUST** specify:
 
 Contracts are normative. An implementation that deviates from a documented
 contract is a bug in the implementation, not in the contract.
+
+#### Shape rationale
+
+The seven fields are derived directly from the Claude Code hooks execution
+model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/docs/claude-code/hooks)):
+
+- **Name** and **Trigger event** map one-to-one onto Claude Code's
+  `settings.json` hook registration. Each entry under a lifecycle event key
+  (`PreToolUse`, `PostToolUse`, `Stop`) requires a stable identifier and an
+  explicit event-plus-matcher declaration. Separating the *name* (the catalog
+  key used in `gate` nodes and `settings.json` keys) from the *trigger event*
+  (the runtime event that fires it) lets multiple hooks share the same event
+  without name collision and lets the catalog be queried by either dimension.
+- **Purpose** is required so that consumers of the catalog — the
+  procedure-graph builder, `build_app` reviewers, and future plugin authors —
+  can verify at a glance what invariant a hook enforces without reading the
+  implementation. It also makes the *deterministic* constraint explicit: a
+  one-sentence purpose that requires AI judgment signals a misclassification
+  (the capability belongs in a SKILL, not a HOOK).
+- **Deterministic action** and **Allowed wrapped tools** constrain the hook's
+  blast radius together. The action describes *what* the hook does step by
+  step; the allowed-tools list declares *which tools* the hook may scope itself
+  to via Claude Code's `matcher` field. Both fields are needed to validate a
+  hook against its contract without executing it, and to detect if an
+  implementation silently broadens its matcher beyond the catalogued boundary.
+- **Failure behavior** captures Claude Code's exit-code protocol: `Pre*` hooks
+  use exit code `2` to block the wrapped tool (Claude Code surfaces the stderr
+  message as the block reason and does not invoke the tool); `Post*` hooks that
+  exit non-zero record a structured error but cannot undo the already-completed
+  tool action; `Stop` hooks that exit non-zero may warn but must not abort the
+  session abruptly. Documenting exit codes, message destinations, and
+  halt-vs-warn semantics per hook prevents each implementer from inventing
+  their own convention and enables automated compliance checks.
+- **Implementation reference** links the normative contract to the concrete
+  backing artifact (script path, planned ticket, or external CLI) so that drift
+  between the spec and the code is detectable during review. Without this
+  field, a contract can become unanchored documentation with no path back to
+  the running system.
 
 ## Hook Contracts Catalog
 
