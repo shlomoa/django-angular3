@@ -441,9 +441,9 @@ Every hook contract in this document **MUST** specify:
 |---|---|
 | **Name** | The stable identifier the hook is registered under. Matches the `hook` field of a `gate` (or equivalent enforced-boundary) procedure node in the procedure graph, and the script/handler key in a Claude Code `settings.json` lifecycle event. |
 | **Purpose** | One-sentence statement of the lifecycle enforcement the hook guarantees. Must be deterministic — no AI judgment inside the hook itself. |
-| **Trigger event** | The lifecycle event that fires the hook. One of the Claude Code events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) and, when applicable, the specific tool name(s) it is scoped to. Tool names referenced here MUST match a contract in the [Tool Contracts Catalog](#tool-contracts-catalog) or an explicitly-named external command. |
+| **Trigger event** | The lifecycle event that fires the hook. One of the Claude Code lifecycle events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) with, when applicable, the specific tool name(s) it is scoped to — these same events govern the hook when it runs inside a Claude Code agent session. The same hook also serves as a `build_app` procedure-graph enforcement point: `Pre*` hooks become blocking `gate` nodes before the wrapped tool, `Post*` hooks become verification nodes after it, and `Stop` hooks execute at session teardown. Tool names referenced here MUST match a contract in the [Tool Contracts Catalog](#tool-contracts-catalog) or an explicitly-named external command. |
 | **Deterministic action** | Step-by-step description of what the hook does on the trigger event. The action must be reproducible — same inputs always produce the same outcome and side effects. When the hook performs a deterministic operation that already has a tool contract above, it MUST invoke that contract by name rather than calling the underlying binary directly. |
-| **Failure behavior** | What the hook does when its check fails or its action errors. MUST specify: the exit code returned (zero = allow, non-zero = block for `Pre*` hooks; non-zero = log for `Post*`/`Stop` hooks), the structured message written to stderr or to the durable artifact log, and whether the hook's failure halts the agent session, blocks the wrapped tool, or only records an audit entry. |
+| **Failure behavior** | What the hook does when its check fails or its action errors. MUST specify: the exit code returned and the resulting runtime consequence — `Pre*` hooks exit non-zero (exit code `2` in the Claude Code model) to **block** the wrapped tool; `Post*` hooks exit non-zero to **halt traversal** (no further procedure-graph nodes run; the wrapped tool's result is preserved but downstream procedures are aborted); `Stop` hooks exit non-zero to **warn only** (the session-stop outcome is unaffected). Also MUST specify the structured message written to stderr or to the durable artifact log. |
 | **Allowed wrapped tools** | The tool contract names (from the [Tool Contracts Catalog](#tool-contracts-catalog)) or external commands the hook may scope itself to. Hooks MUST NOT silently apply themselves to tools outside this list. |
 | **Implementation reference** | Pointer to the concrete script or planned implementation that backs the contract, so the contract and the implementation can be kept aligned. |
 
@@ -455,13 +455,18 @@ contract is a bug in the implementation, not in the contract.
 The seven fields are derived directly from the Claude Code hooks execution
 model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/docs/claude-code/hooks)):
 
-- **Name** and **Trigger event** map one-to-one onto Claude Code's
-  `settings.json` hook registration. Each entry under a lifecycle event key
-  (`PreToolUse`, `PostToolUse`, `Stop`) requires a stable identifier and an
-  explicit event-plus-matcher declaration. Separating the *name* (the catalog
-  key used in `gate` nodes and `settings.json` keys) from the *trigger event*
-  (the runtime event that fires it) lets multiple hooks share the same event
-  without name collision and lets the catalog be queried by either dimension.
+- **Name** and **Trigger event** have a dual role. In a Claude Code agent
+  session, each entry under a lifecycle event key (`PreToolUse`, `PostToolUse`,
+  `Stop`) in `settings.json` requires a stable identifier and an explicit
+  event-plus-matcher declaration (see [Hooks reference — Claude Code
+  docs](https://docs.anthropic.com/en/docs/claude-code/hooks)). In a
+  `build_app` run the *same* lifecycle family determines the node type in the
+  procedure graph: `Pre*` → blocking `gate` node before the wrapped tool,
+  `Post*` → verification node after it, `Stop` → teardown node. Separating the
+  *name* (catalog key used in both `gate` nodes and `settings.json`) from the
+  *trigger event* (the runtime event that fires it) lets multiple hooks share
+  the same event without name collision and lets the catalog be validated
+  against both execution contexts.
 - **Purpose** is required so that consumers of the catalog — the
   procedure-graph builder, `build_app` reviewers, and future plugin authors —
   can verify at a glance what invariant a hook enforces without reading the
@@ -474,13 +479,20 @@ model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/
   to via Claude Code's `matcher` field. Both fields are needed to validate a
   hook against its contract without executing it, and to detect if an
   implementation silently broadens its matcher beyond the catalogued boundary.
-- **Failure behavior** captures Claude Code's exit-code protocol: `Pre*` hooks
-  use exit code `2` to block the wrapped tool (Claude Code surfaces the stderr
-  message as the block reason and does not invoke the tool); `Post*` hooks that
-  exit non-zero record a structured error but cannot undo the already-completed
-  tool action; `Stop` hooks that exit non-zero may warn but must not abort the
-  session abruptly. Documenting exit codes, message destinations, and
-  halt-vs-warn semantics per hook prevents each implementer from inventing
+- **Failure behavior** captures the runtime consequence of a non-zero hook
+  exit, which differs by lifecycle family. Per the Claude Code hooks model
+  ([Hooks reference](https://docs.anthropic.com/en/docs/claude-code/hooks)):
+  `Pre*` hooks exit code `2` causes the agent to **block the wrapped tool** —
+  Claude Code surfaces the stderr message as the block reason and does not
+  invoke the tool. `Post*` hooks that exit non-zero cause the agent to **halt
+  further processing** — the already-completed tool action is preserved, but
+  downstream steps are aborted and the error is surfaced to the caller. `Stop`
+  hooks that exit non-zero produce a **warning only** — the session-stop
+  outcome is not changed. The `build_app` FR-9a requirements mirror this
+  exactly: `Pre*` failure blocks the wrapped tool procedure; `Post*` failure
+  halts traversal (no further graph nodes run); `Stop` failure appends a
+  warning to the session log. Documenting exit codes, message destinations, and
+  block/halt/warn semantics per hook prevents each implementer from inventing
   their own convention and enables automated compliance checks.
 - **Implementation reference** links the normative contract to the concrete
   backing artifact (script path, planned ticket, or external CLI) so that drift
