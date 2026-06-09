@@ -719,7 +719,7 @@ unconditionally.
 
 **Deterministic action**:
 
-1. Compute a session timestamp `YYYYMMDDTHHMMSSZ`.
+1. Read a stable session timestamp `YYYYMMDDTHHMMSSZ` from a durable location (e.g. `build/session-timestamp.txt`); if missing, compute it and persist it so retries reuse the same value.
 2. Move (not copy) `build/procedure-graph.*`, `build/oasdiff-report.json`,
    `build/verification.log`, and `build/hook-log.jsonl` into
    `build/history/<timestamp>/`. Missing artifacts are silently skipped.
