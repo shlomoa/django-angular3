@@ -750,11 +750,12 @@ registered under the `Stop` key of the project's Claude Code
 
 ### Contract compliance
 
-- The procedure-graph builder in `build_app` MUST emit a `gate` (or
-  equivalent enforced-boundary) node whose `hook` field equals one of the
-  **Name** values above when scheduling a lifecycle enforcement procedure.
-  Ad-hoc `Bash` invocations of the actions above outside the hook/gate
-  mechanism are not permitted.
+- The procedure-graph builder in `build_app` MUST emit an enforced-boundary
+  procedure whose `hook` field equals one of the **Name** values above (a `gate`
+  node for `Pre*` hooks, a `verification` node for `Post*` hooks, and a
+  session-teardown step for `Stop`).
+  Ad-hoc `Bash` invocations of the actions above outside the hook mechanism are
+  not permitted.
 - HOOKS that need to perform a deterministic operation also covered by the
   [Tool Contracts Catalog](#tool-contracts-catalog) MUST do so by invoking
   the corresponding tool contract — not by calling the underlying binary
