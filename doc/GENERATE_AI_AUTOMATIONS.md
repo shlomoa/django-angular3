@@ -573,9 +573,9 @@ described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 
 **Trigger event**: `PostToolUse` scoped to any tool invocation that runs
 `python manage.py makemigrations` (e.g. a `bash` tool call detected by the
-`makemigrations` substring in its command), and a filesystem watch hook on
-the configured Django apps' `migrations/` directories for non-tool migration
-file creation.
+`makemigrations` substring in its command). Non-tool migration file creation
+should be handled by a separate watcher mechanism (not part of this hook
+contract).
 
 **Deterministic action**:
 
