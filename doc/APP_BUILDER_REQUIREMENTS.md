@@ -444,12 +444,15 @@ purposes only:
   `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog
   (`export_schema`, `validate_openapi_schema`, `oasdiff_diff`,
   `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app`).
-- For each `gate` node or equivalent enforced boundary, `build_app` must apply
-  the required blocking check or lifecycle side effect before downstream
-  procedures continue. The `hook` field of the node MUST equal one of the
-  contract names defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts
-  Catalog (`pre-construction`, `migration-triggered`, `breaking-change`,
-  `post-generation`, `session-stop`).
+- For each enforced-boundary hook procedure, `build_app` must apply the
+  required blocking check or lifecycle side effect before downstream procedures
+  continue, using the node-kind mapping defined in
+  `doc/GENERATE_AI_AUTOMATIONS.md` §Hook contract shape (`Pre*` → `gate`,
+  `Post*` → `verification`, `Stop` → session teardown). The node `hook` field
+  MUST match the contract names valid for that mapping:
+  `gate` nodes (`pre-construction`, `breaking-change`), `verification` nodes
+  (`migration-triggered`, `post-generation`), and session teardown
+  (`session-stop`).
 
 ### FR-9: Tool procedure failure handling
 
