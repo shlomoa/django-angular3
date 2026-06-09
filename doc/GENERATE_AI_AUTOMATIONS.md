@@ -439,7 +439,7 @@ Every hook contract in this document **MUST** specify:
 
 | Field | Meaning |
 |---|---|
-| **Name** | The stable identifier the hook is registered under. Matches the `hook` field of an enforced-boundary procedure node in the procedure graph (e.g. `gate` for `Pre*` hooks, `verification` for `Post*` hooks), and the script/handler key in a Claude Code `settings.json` lifecycle event. |
+| **Name** | The stable identifier the hook is registered under. Matches the `hook` field of a `gate` node in the procedure graph and the script/handler key in a Claude Code `settings.json` lifecycle event. |
 | **Purpose** | One-sentence statement of the lifecycle enforcement the hook guarantees. Must be deterministic — no AI judgment inside the hook itself. |
 | **Trigger event** | The lifecycle event that fires the hook. One of the Claude Code lifecycle events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) with, when applicable, the specific tool name(s) it is scoped to — these same events govern the hook when it runs inside a Claude Code agent session. The same hook also serves as a `build_app` procedure-graph enforcement point: `Pre*` hooks become blocking `gate` nodes before the wrapped tool, `Post*` hooks become verification nodes after it, and `Stop` hooks execute at session teardown. Tool names referenced here MUST match a contract in the [Tool Contracts Catalog](#tool-contracts-catalog) or an explicitly-named external command. |
 | **Deterministic action** | Step-by-step description of what the hook does on the trigger event. The action must be reproducible — same inputs always produce the same outcome and side effects. When the hook performs a deterministic operation that already has a tool contract above, it MUST invoke that contract by name rather than calling the underlying binary directly. |
@@ -574,15 +574,13 @@ described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 
 **Trigger event**: `PostToolUse` scoped to any tool invocation that runs
 `python manage.py makemigrations` (e.g. a `bash` tool call detected by the
-`makemigrations` substring in its command). Non-tool migration file creation
-should be handled by a separate watcher mechanism (not part of this hook
-contract).
+`makemigrations` substring in its command).
 
 **Deterministic action**:
 
 1. Enumerate the migration files added or modified during the wrapped tool
-   call (`git status --porcelain` against `migrations/` is sufficient since
-   the workspace is git-controlled per `ARCHITECTURE.md`).
+   call by listing the contents of each app's `migrations/` directory and
+   comparing against the pre-call snapshot captured by the hook runner.
 2. If the set is non-empty, invoke the `export_schema` tool contract with
    the project's `django-angular3.json` config path.
 3. Append a `{ hook: "migration-triggered", migrations: [...], destination,
