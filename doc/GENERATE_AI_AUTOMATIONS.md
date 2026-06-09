@@ -723,10 +723,10 @@ unconditionally.
 2. Move (not copy) `build/procedure-graph.*`, `build/oasdiff-report.json`,
    `build/verification.log`, and `build/hook-log.jsonl` into
    `build/history/<timestamp>/`. Missing artifacts are silently skipped.
-3. Write a session summary
+3. Write (or update) a session summary
    `{ hook: "session-stop", timestamp, schema_version, procedures_completed,
    procedures_failed, hook_failures, exit_code }` to
-   `build/session-log.json` (append to the JSON array on disk).
+   `build/session-log.json` (append to the JSON array on disk only if an entry for this `timestamp` does not already exist).
 4. Exit 0.
 
 **Failure behavior**:
