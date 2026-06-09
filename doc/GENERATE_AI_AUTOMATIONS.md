@@ -636,9 +636,10 @@ procedure graph.
    to `build/hook-log.jsonl` and exit 0.
 4. Otherwise, write a structured error
    `{ hook: "breaking-change", category: "breaking_changes_unacknowledged",
-   breaking: [...] }` to stderr and to `build/hook-log.jsonl`, and exit
-   non-zero with the dedicated breaking-change exit code defined in
-   `APP_BUILDER_REQUIREMENTS.md` FR-4.
+   breaking: [...] }` to stderr and to `build/hook-log.jsonl`, and exit `2` to
+   block the wrapped tool in Claude Code. In `build_app`, exit non-zero with the
+   dedicated breaking-change exit code defined in `APP_BUILDER_REQUIREMENTS.md`
+   FR-4.
 
 **Failure behavior**:
 
