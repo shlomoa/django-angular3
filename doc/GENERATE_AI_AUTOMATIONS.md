@@ -762,7 +762,7 @@ registered under the `Stop` key of the project's Claude Code
   directly — so error categories and structured outputs remain uniform.
 - New lifecycle enforcement points added to `djng` MUST be documented here
   using the [hook contract shape](#hook-contract-shape) before they may
-  appear as a `gate` procedure in the graph or be registered in any
+  appear as an enforced-boundary procedure in the graph or be registered in any
   project's Claude Code `settings.json`.
 
 ## Plugins
