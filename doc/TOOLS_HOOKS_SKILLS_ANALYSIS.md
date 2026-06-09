@@ -189,8 +189,8 @@ instructions.
 | **Location in ARCHITECTURE.md** | §7.1 stage 2, §11.1 |
 | **Current approach** | "The exported schema should be stored as a durable build artifact so downstream agent-chain stages can consume it deterministically" and "Contract changes should be reviewed as part of normal API change management" |
 | **Why a Hook is better** | A `PreToolUse` hook on any Angular generation tool can validate that the OpenAPI schema file exists, is valid OAS 3.1, and has been exported since the last model change. This makes the validation gate happen automatically before any generation step, rather than relying on the agent to decide to validate first. |
-| **Hook event** | `PreToolUse` on `ng-openapi-gen`, `validate_openapi_schema`, or `ngdj_*` tools |
-| **Hook action** | Check schema file exists and modification timestamp is newer than last migration; if not, exit non-zero and print a descriptive error. |
+| **Hook event** | `PreToolUse` on `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app`, and future `ngdj_*` generation tools |
+| **Hook action** | Check schema file exists and modification timestamp is newer than last migration; invoke `validate_openapi_schema`; if any check fails, exit non-zero and print a descriptive error. |
 
 ---
 
