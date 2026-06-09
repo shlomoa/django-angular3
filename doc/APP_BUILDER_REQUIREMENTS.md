@@ -189,20 +189,25 @@ using the dependency order and primitive-selection policy defined in
 The mixed model distinguishes deterministic procedures and enforced gates from
 the AI-guided SKILL sessions that perform generative construction work. Each
 deterministic procedure invokes a tool contract defined in
-`doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. The contract names
-listed in the **Tool contract** column are the exact values the procedure
-graph emits in the `tool` field of a `tool` node.
+`doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. Each enforced gate
+invokes a hook contract defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook
+Contracts Catalog. The contract names listed in the **Tool contract** and
+**Hook contract** columns are the exact values the procedure graph emits in
+the `tool` field of a `tool` node and the `hook` field of a `gate` node.
 
-| Construction concern | Primitive | Tool contract | Role in `build_app` |
-|---|---|---|---|
-| Schema export from DRF | TOOL | `export_schema` | Produce the current OpenAPI artifact as a deterministic build input |
-| OpenAPI validation | TOOL | `validate_openapi_schema` | Validate the schema before downstream construction continues |
-| Schema diff / change detection | TOOL | `oasdiff_diff` | Produce the structured schema-change inputs used to derive the `ChangeSet` |
-| Breaking-change stop condition | GATE / HOOK boundary | (consumes `oasdiff_diff` output) | Block downstream construction until breaking changes are acknowledged or resolved |
-| Angular workspace scaffold | TOOL | `ngdj_create_workspace` | Create the Angular workspace before the `ng-workspace` skill session |
-| Angular application scaffold | TOOL | `ngdj_create_app` | Add the primary Angular application before the `ng-app` skill session |
-| Typed Angular client generation | TOOL | `ng_openapi_gen` | Generate the typed Angular API client before the `ng-api` skill session |
-| Verification logging / cleanup | GATE / HOOK boundary | (consumes tool outputs) | Enforce mandatory post-run or lifecycle side effects |
+| Construction concern | Primitive | Tool contract | Hook contract | Role in `build_app` |
+|---|---|---|---|---|
+| Schema export from DRF | TOOL | `export_schema` | — | Produce the current OpenAPI artifact as a deterministic build input |
+| Migration-driven schema refresh | HOOK | (wraps `export_schema`) | `migration-triggered` | Re-export the schema automatically whenever a new Django migration file appears |
+| OpenAPI validation | TOOL | `validate_openapi_schema` | — | Validate the schema before downstream construction continues |
+| Pre-construction contract validation gate | HOOK | (wraps `validate_openapi_schema`) | `pre-construction` | Block any Angular generation tool until the schema exists, is valid OAS 3.1, and is at least as fresh as the latest migration |
+| Schema diff / change detection | TOOL | `oasdiff_diff` | — | Produce the structured schema-change inputs used to derive the `ChangeSet` |
+| Breaking-change stop condition | HOOK | (consumes `oasdiff_diff` output) | `breaking-change` | Block downstream construction until breaking changes are acknowledged or resolved |
+| Angular workspace scaffold | TOOL | `ngdj_create_workspace` | — | Create the Angular workspace before the `ng-workspace` skill session |
+| Angular application scaffold | TOOL | `ngdj_create_app` | — | Add the primary Angular application before the `ng-app` skill session |
+| Typed Angular client generation | TOOL | `ng_openapi_gen` | — | Generate the typed Angular API client before the `ng-api` skill session |
+| Post-generation verification logging | HOOK | (consumes generation-tool outputs) | `post-generation` | Run a structural check after each generation tool and append a pass/fail entry to `build/verification.log` |
+| Session-end archiving and audit | HOOK | (no wrapped tool) | `session-stop` | Archive durable artifacts and write a session summary when the agent session ends |
 
 The detailed per-resource mapping below remains most explicit for the
 AI-guided SKILL subset, but it is now framed within this broader automation
@@ -401,6 +406,11 @@ purposes only:
 - When oasdiff detects breaking changes, the builder must stop, print the
   oasdiff report summary, and exit with a non-zero code.
 - Breaking changes must only be bypassed with `--acknowledge-breaking`.
+- The gate MUST be implemented by the `breaking-change` hook contract defined
+  in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog. The hook
+  consumes the structured output of the `oasdiff_diff` tool procedure and is
+  the single point of enforcement — the builder MUST NOT re-implement the
+  gate logic outside the hook.
 
 ### FR-5: Start-from-scratch mode
 
@@ -436,7 +446,10 @@ purposes only:
   `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app`).
 - For each `gate` node or equivalent enforced boundary, `build_app` must apply
   the required blocking check or lifecycle side effect before downstream
-  procedures continue.
+  procedures continue. The `hook` field of the node MUST equal one of the
+  contract names defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts
+  Catalog (`pre-construction`, `migration-triggered`, `breaking-change`,
+  `post-generation`, `session-stop`).
 
 ### FR-9: Tool procedure failure handling
 
@@ -460,6 +473,34 @@ purposes only:
   downstream gate or halt.
 - `build_app` must not silently retry a failed tool procedure. Retry, if any,
   must be explicit (re-running the command).
+
+### FR-9a: Hook procedure execution and failure handling
+
+- `build_app` must treat every `gate` (or equivalent enforced-boundary)
+  procedure as honouring the contract shape defined in
+  `doc/GENERATE_AI_AUTOMATIONS.md` §Hook contract shape: a stable hook
+  **Name**, a `Pre*` / `Post*` / `Stop` **trigger event**, a deterministic
+  **action**, and a documented **failure behavior**.
+- When a `Pre*` hook procedure (`pre-construction`, `breaking-change`) returns
+  a non-zero exit, `build_app` must:
+  1. Block the wrapped tool procedure and refuse to start any procedure that
+     depends on the wrapped tool's output.
+  2. Emit the failed hook's `Name`, exit code, and the structured error
+     fields the hook wrote to stderr / `build/hook-log.jsonl`.
+  3. Exit with the hook-failure exit code dedicated to that hook contract
+     (the `breaking-change` exit code defined in FR-4 for that hook, and a
+     distinct hook-failure exit code — distinct from FR-4 and FR-9 — for
+     every other hook).
+- When a `Post*` hook procedure (`migration-triggered`, `post-generation`)
+  returns a non-zero exit, `build_app` must halt traversal at that point (so
+  the failure cannot be silently swallowed), record the hook's structured
+  error, and exit with the hook-failure exit code above. The wrapped tool's
+  result is preserved on disk; the hook does not roll it back.
+- A `Stop` hook procedure (`session-stop`) MUST NOT change the session exit
+  code — it can only append warnings to the session log. `build_app` must
+  still surface any non-zero `session-stop` exit as a post-session warning.
+- `build_app` must not silently retry a failed hook procedure. Retry, if
+  any, must be explicit (re-running the command).
 
 ### FR-10: Terminal verification procedure
 

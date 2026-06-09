@@ -25,8 +25,20 @@ behavior, allowed invocation context) covering:
 - `ngdj_create_workspace`, `ngdj_create_app` — §2.4 of this document
 - `validate_openapi_schema` — §2.5 of this document
 
-The Hooks and Plugins recommendations in §3 and §4 remain analysis-stage and
-have not yet been promoted into per-capability contracts.
+The Hooks recommendations in §3 below have been promoted into explicit,
+normative hook contracts. See `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts
+Catalog for the per-capability contracts (name, purpose, trigger event,
+deterministic action, failure behavior, allowed wrapped tools, implementation
+reference) covering:
+
+- `pre-construction` — §3.5 of this document (contract validation gate)
+- `migration-triggered` — §3.2 of this document (OpenAPI schema re-extraction)
+- `breaking-change` — §3.1 of this document (gate on schema diff)
+- `post-generation` — §3.3 of this document (verification logging)
+- `session-stop` — §3.4 of this document (archiving and audit cleanup)
+
+The Plugins recommendations in §4 remain analysis-stage and have not yet been
+promoted into per-capability contracts.
 
 References used:
 - https://code.claude.com/docs/en/skills
@@ -123,6 +135,8 @@ instructions.
 
 ### 3.1 Breaking-Change Gate (PreToolUse on schema-diff tool)
 
+**Promoted contract**: [`breaking-change`](GENERATE_AI_AUTOMATIONS.md#3-breaking-change--gate-on-schema-diff) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog. The contract is authoritative; the table below is historical analysis and may not match the promoted hook surface.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.1 stage 2, §11.1, §11.2 |
@@ -133,15 +147,19 @@ instructions.
 
 ### 3.2 Migration-Triggered Schema Extraction
 
+**Promoted contract**: [`migration-triggered`](GENERATE_AI_AUTOMATIONS.md#2-migration-triggered--openapi-schema-re-extraction) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §11.2 |
 | **Current approach** | "Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction" — currently an architectural rule with no specified enforcement mechanism |
 | **Why a Hook is better** | A `PostToolUse` hook on the `makemigrations` tool (or a `UserPromptSubmit` hook that detects new migration files) can automatically trigger `export_schema` whenever a new migration is detected. This removes the human or agent responsibility of remembering to re-export. |
 | **Hook event** | `PostToolUse` on `makemigrations` call or file-watch hook on `migrations/` directory |
-| **Hook action** | If new `.py` migration files are detected, invoke `export_schema` and update the schema path in `django-angular3.json`. |
+| **Hook action** | If new `.py` migration files are detected, invoke `export_schema` to re-export and rotate the schema artifact; append a status record to `build/hook-log.jsonl` and exit 0 so downstream `breaking-change` and `pre-construction` hooks act on the rotated schema. |
 
 ### 3.3 Post-Generation Verification Logging
+
+**Promoted contract**: [`post-generation`](GENERATE_AI_AUTOMATIONS.md#4-post-generation--verification-logging) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
 
 | | |
 |---|---|
@@ -153,6 +171,8 @@ instructions.
 
 ### 3.4 Session-End Cleanup and Audit (Stop)
 
+**Promoted contract**: [`session-stop`](GENERATE_AI_AUTOMATIONS.md#5-session-stop--archiving-and-audit-cleanup) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.2, §7.4 |
@@ -163,13 +183,15 @@ instructions.
 
 ### 3.5 Pre-Construction Contract Validation Gate
 
+**Promoted contract**: [`pre-construction`](GENERATE_AI_AUTOMATIONS.md#1-pre-construction--contract-validation-gate) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.1 stage 2, §11.1 |
 | **Current approach** | "The exported schema should be stored as a durable build artifact so downstream agent-chain stages can consume it deterministically" and "Contract changes should be reviewed as part of normal API change management" |
 | **Why a Hook is better** | A `PreToolUse` hook on any Angular generation tool can validate that the OpenAPI schema file exists, is valid OAS 3.1, and has been exported since the last model change. This makes the validation gate happen automatically before any generation step, rather than relying on the agent to decide to validate first. |
-| **Hook event** | `PreToolUse` on `ng-openapi-gen`, `validate_openapi_schema`, or `ngdj_*` tools |
-| **Hook action** | Check schema file exists and modification timestamp is newer than last migration; if not, exit non-zero and print a descriptive error. |
+| **Hook event** | `PreToolUse` on `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app`, and future `ngdj_*` generation tools |
+| **Hook action** | Check schema file exists and modification timestamp is newer than last migration; invoke `validate_openapi_schema`; if any check fails, exit non-zero and print a descriptive error. |
 
 ---
 
