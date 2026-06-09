@@ -154,7 +154,7 @@ instructions.
 | **Current approach** | "Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction" — currently an architectural rule with no specified enforcement mechanism |
 | **Why a Hook is better** | A `PostToolUse` hook on the `makemigrations` tool (or a `UserPromptSubmit` hook that detects new migration files) can automatically trigger `export_schema` whenever a new migration is detected. This removes the human or agent responsibility of remembering to re-export. |
 | **Hook event** | `PostToolUse` on `makemigrations` call or file-watch hook on `migrations/` directory |
-| **Hook action** | If new `.py` migration files are detected, invoke `export_schema` and update the schema path in `django-angular3.json`. |
+| **Hook action** | If new `.py` migration files are detected, invoke `export_schema` to re-export and rotate the schema artifact; append a status record to `build/hook-log.jsonl` and exit 0 so downstream `breaking-change` and `pre-construction` hooks act on the rotated schema. |
 
 ### 3.3 Post-Generation Verification Logging
 
