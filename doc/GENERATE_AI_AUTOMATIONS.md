@@ -544,10 +544,11 @@ generation procedure.
 - If the schema file is missing, stale, or `validate_openapi_schema` returns
   `valid: false`, write a structured error
   `{ hook: "pre-construction", category, message, schema_path, ... }` to
-  stderr **and** to `build/hook-log.jsonl`, and exit non-zero.
-- A non-zero exit blocks the wrapped tool invocation and halts the
-  `build_app` run with the dedicated hook-failure exit code (distinct from
-  both `breaking-change` block and from FR-9 tool-failure exit codes).
+  stderr **and** to `build/hook-log.jsonl`, and exit `2` to block the wrapped
+  tool in Claude Code.
+- In `build_app`, hook failure MUST halt the run with this hook’s dedicated
+  hook-failure exit code (distinct from the `breaking-change` exit code and
+  from FR-9 tool-failure exit codes).
 - The hook MUST NOT attempt to auto-repair (e.g. it does not invoke
   `export_schema` itself); auto-extraction is the responsibility of the
   `migration-triggered` hook.
