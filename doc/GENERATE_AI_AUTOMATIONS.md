@@ -772,6 +772,329 @@ or distribution. In the `djng` architecture, candidate bundles include the
 djng Angular construction capability, the ngdj scaffold capability, and the
 contract lifecycle capability.
 
+Per-capability plugin contracts for the bundles identified in
+`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §4 are defined in the
+[Plugin Contracts Catalog](#plugin-contracts-catalog) below. Each contract
+follows the same fixed shape — **name, purpose, bundled SKILLS, bundled TOOLS,
+bundled HOOKS, distribution, versioning, dependencies, installation, and
+implementation reference** — so consumers of a plugin can see at a glance what
+it contains, where it ships from, and how it is brought into a project.
+
+### Plugin contract shape
+
+Every plugin contract in this document **MUST** specify:
+
+| Field | Meaning |
+|---|---|
+| **Name** | The stable identifier the plugin is published under. Matches the `name` field of the [Claude Code plugin manifest](https://code.claude.com/docs/en/plugins) (`.claude-plugin/plugin.json`) and the identifier used in any plugin-marketplace listing. |
+| **Purpose** | One-sentence statement of the coherent capability the plugin packages. The purpose MUST identify a single domain (Angular construction, Angular scaffold, contract lifecycle) so two plugins never claim the same scope. |
+| **Bundled SKILLS** | The exact list of SKILL names (matching the `name` of each `SKILL.md` frontmatter in this document) that the plugin ships under its `skills/` subdirectory. A plugin MAY ship zero skills; if so, this field is `none` and the plugin packages only TOOLS, HOOKS, or MCP server configuration. |
+| **Bundled TOOLS** | The exact list of tool contract names (from the [Tool Contracts Catalog](#tool-contracts-catalog)) that the plugin exposes, together with the MCP server or `allowed-tools` configuration that the plugin registers under its `mcp-servers/` subdirectory. A plugin MAY ship zero tools. |
+| **Bundled HOOKS** | The exact list of hook contract names (from the [Hook Contracts Catalog](#hook-contracts-catalog)) that the plugin registers under its `hooks/` subdirectory, together with the lifecycle event each hook is scoped to. A plugin MAY ship zero hooks. |
+| **Distribution** | How the plugin is shipped: the repository (or repositories) that own the source artifacts, the published package (npm package, Python distribution, plugin-marketplace entry, or in-repo `.claude-plugin/` directory), and the channel through which consumers obtain it. |
+| **Versioning** | The semantic-versioning policy the plugin follows, including which upstream packages (e.g. `django-angular3`, `angular-django2`, `oasdiff`) its version is coupled to and how breaking-change bumps are signalled. Matches the `version` field of the Claude Code plugin manifest. |
+| **Dependencies** | Other plugins, MCP servers, CLI binaries, or runtime packages that MUST be present for the plugin's bundled SKILLS / TOOLS / HOOKS to function. Dependencies are declared explicitly so installation is deterministic and so a plugin cannot silently rely on capabilities outside its catalog entry. |
+| **Installation** | The single command (or single sequence of commands) a consumer runs to install the plugin into a Claude Code project, plus any post-install configuration step the plugin requires (for example a registration entry in the project's `settings.json`). |
+| **Implementation reference** | Pointer to the concrete plugin source (repository path, planned ticket, or external package) that backs the contract today, so the contract and the implementation can be kept aligned. |
+
+Contracts are normative. A plugin that ships SKILLS, TOOLS, or HOOKS not
+listed in its catalog entry — or that omits a listed entry — is a bug in the
+plugin, not in the contract.
+
+#### Shape rationale
+
+The fields are derived from the Claude Code plugin model
+([Claude Code Plugins][Claude Plugins]) and from the responsibilities a
+plugin assumes in the `djng` architecture:
+
+- **Name**, **Versioning**, and **Distribution** anchor the plugin to its
+  published artifact. A consumer needs to know which name to install, which
+  version maps to which combination of bundled capabilities, and where the
+  artifact ships from, before any of the bundled SKILLS / TOOLS / HOOKS can be
+  invoked.
+- **Bundled SKILLS**, **Bundled TOOLS**, and **Bundled HOOKS** make the plugin
+  contents explicit and verifiable. Each item in these lists MUST appear in the
+  corresponding catalog (Skills Catalog, [Tool Contracts Catalog](#tool-contracts-catalog),
+  [Hook Contracts Catalog](#hook-contracts-catalog)) so that the plugin's
+  surface area can be audited without reading its source. This prevents two
+  plugins from silently shipping divergent copies of the same SKILL or HOOK.
+- **Purpose** enforces the single-domain rule from the
+  [Primitive-selection policy](#primitive-selection-policy): a plugin that
+  claims more than one domain has either accidentally taken on a second
+  capability or should be split. Stating the purpose in one sentence forces
+  that scoping decision into the contract.
+- **Dependencies** and **Installation** make the activation footprint
+  deterministic. A consumer who reads the contract can predict exactly which
+  CLIs, MCP servers, or upstream packages must be installed alongside the
+  plugin, and what command brings the plugin into a project. Without these
+  fields, plugins can rely on implicit environment assumptions that break on a
+  fresh machine.
+- **Implementation reference** links the normative contract to the concrete
+  backing artifact (repository path, in-tree `.claude-plugin/` directory, or
+  external package) so drift between the spec and the shipped plugin is
+  detectable during review.
+
+## Plugin Contracts Catalog
+
+This catalog defines the plugin contracts referenced from
+`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §4. Each entry follows the
+[plugin contract shape](#plugin-contract-shape) defined above.
+
+The contracts are grouped by domain so the procedure-graph and project-setup
+relationships are visually obvious: **construction-side plugins** (`djng`
+Angular construction, `ngdj` scaffold) drive generation, and the
+**contract-side plugin** (contract lifecycle) governs the OpenAPI boundary
+between Django and Angular.
+
+### Construction-side plugins
+
+#### 1. `djng-angular-construction` — Angular construction bundle
+
+**Name**: `djng-angular-construction`
+
+**Purpose**: Package the full djng Angular construction capability — all
+Angular SKILLS, the construction-side TOOLS, and the construction-time HOOKS —
+as a single Claude Code plugin so that any project using `django-angular3` can
+install the same coherent generation surface in one step.
+
+**Bundled SKILLS** (from the [Skills Catalog](#skills-catalog) in this document):
+
+| Skill name | Role |
+|---|---|
+| `ng-workspace` | Generate the Angular workspace shell. |
+| `ng-app` | Generate the Angular application inside the workspace. |
+| `ng-api` | Generate the OpenAPI-derived API integration layer. |
+| `ng-data-service` | Generate typed data services for resource collections. |
+| `ng-field-component` | Generate reusable form field components. |
+| `ng-form-field` | Generate `ControlValueAccessor`-backed form-field boilerplate. |
+| `ng-component` | Generate standalone Angular Material components. |
+| `ng-complex-component` | Generate composite components built from simpler ones. |
+| `ng-reactive-form` | Generate typed reactive `FormGroup<>` flows. |
+| `ng-page` | Generate routed page components (lists, details). |
+| `ng-site` | Generate the top-level site shell and route tree. |
+
+**Bundled TOOLS** (from the [Tool Contracts Catalog](#tool-contracts-catalog)):
+
+| Tool name | Role inside the plugin |
+|---|---|
+| `ng_openapi_gen` | Wrap workspace-local `ng-openapi-gen` for typed-client generation. |
+| `validate_openapi_schema` | Provide the schema-validation callable used by both SKILLS and the wrapped HOOK. |
+
+The plugin ships these tools under `mcp-servers/` as a single MCP server
+configuration that exposes the two contract names.
+
+**Bundled HOOKS** (from the [Hook Contracts Catalog](#hook-contracts-catalog)):
+
+| Hook name | Lifecycle event | Role inside the plugin |
+|---|---|---|
+| `pre-construction` | `PreToolUse` on `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app` | Block any construction tool until the OpenAPI schema is present and valid. |
+| `post-generation` | `PostToolUse` on the construction tools above | Write structured verification logs after each generation step. |
+| `session-stop` | `Stop` | Archive `build/procedure-graph.*` and write the session summary. |
+
+**Distribution**: Source artifacts live in this repository
+(`django-angular3`). The plugin is shipped as an in-tree `.claude-plugin/`
+directory plus, once published, a Claude Code plugin-marketplace entry under
+the same name. Consumers obtain it either by cloning `django-angular3` and
+referencing the local plugin path or via the marketplace listing.
+
+**Versioning**: Semantic versioning coupled to the `django-angular3` Python
+package version. A major bump in `django-angular3` MUST be accompanied by a
+major bump of `djng-angular-construction`. Breaking changes to any bundled
+SKILL / TOOL / HOOK contract surface are signalled by a major bump regardless
+of the upstream Python package version.
+
+**Dependencies**:
+
+- `django-angular3` Python package installed in the project's virtualenv (for
+  the `export_schema` and `validate-project` `django-admin` commands the
+  bundled SKILLS and HOOKS invoke).
+- `contract-lifecycle` plugin (§3 below) — the `pre-construction` hook
+  bundled here depends on `validate_openapi_schema` and on the lifecycle
+  artifacts the `contract-lifecycle` plugin guarantees.
+- A workspace-local install of `ng-openapi-gen` (resolved via `pnpm exec`,
+  consistent with the project principle that Angular tooling MUST NOT download
+  packages at runtime).
+
+**Installation**: From a Claude Code project root,
+`/plugin install djng-angular-construction` (marketplace install) or
+`/plugin add ./path/to/django-angular3/.claude-plugin/djng-angular-construction`
+(local install). After install, no additional `settings.json` registration is
+required: the bundled hooks declare their own lifecycle events via the plugin
+manifest.
+
+**Implementation reference**: Planned `.claude-plugin/djng-angular-construction/`
+directory in this repository, sourcing its skills from the existing skill
+specifications in this document (§Skills Catalog), its tools from
+`django_angular3/management/commands/`, and its hooks from the
+`pre-construction`, `post-generation`, and `session-stop` entries in the
+[Hook Contracts Catalog](#hook-contracts-catalog).
+
+#### 2. `ngdj-scaffold` — Angular schematics bundle
+
+**Name**: `ngdj-scaffold`
+
+**Purpose**: Package the `ngdj` (Angular-side) scaffold capability — the
+Angular workspace, application, feature, and component schematics — as a
+Claude Code plugin so the agent can call `ngdj` operations through structured
+tool calls rather than raw `Bash` invocations.
+
+**Bundled SKILLS**: none. `ngdj`'s scaffold operations are deterministic and
+belong in TOOLS, not SKILLS; the AI-guided generation work that surrounds
+them is owned by `djng-angular-construction` (§1) instead.
+
+**Bundled TOOLS** (from the [Tool Contracts Catalog](#tool-contracts-catalog)):
+
+| Tool name | Role inside the plugin |
+|---|---|
+| `ngdj_create_workspace` | Wrap the `ngdj` workspace-creation schematic. |
+| `ngdj_create_app` | Wrap the `ngdj` application-creation schematic. |
+
+Future `ngdj_*` schematic wrappers (e.g. `ngdj_add_feature`,
+`ngdj_add_component`, `ngdj_run_schematic`) MUST be added to this list as
+their tool contracts are promoted into the
+[Tool Contracts Catalog](#tool-contracts-catalog), and MUST NOT be shipped by
+this plugin before that promotion. The plugin ships the wrapped tools under
+`mcp-servers/` as an MCP server configuration pointing at the `ngdj` CLI.
+
+**Bundled HOOKS**: none. The lifecycle gates that protect `ngdj` invocations
+(`pre-construction`, `post-generation`) are bundled inside
+`djng-angular-construction` (§1) so they apply uniformly to every
+construction tool regardless of which scaffold plugin actually backs the
+call. `ngdj-scaffold` MUST NOT ship its own copies of those hooks.
+
+**Distribution**: Source artifacts live in the `angular-django2` repository
+(the `ngdj` npm package). The plugin is shipped as a `.claude-plugin/`
+directory inside that repository plus, once published, a Claude Code
+plugin-marketplace entry under the same name.
+
+**Versioning**: Semantic versioning coupled to the `angular-django2` npm
+package version. A major bump in `angular-django2` MUST be accompanied by a
+major bump of `ngdj-scaffold`. Because `ngdj` schematics define the input
+shape of the bundled tool contracts, any schematic argument change that is
+not backward-compatible is a breaking change for this plugin.
+
+**Dependencies**:
+
+- `angular-django2` (`ngdj`) npm package installed as a workspace-local
+  dependency of the generated app, invoked via `pnpm exec` (Angular tooling
+  MUST NOT download packages at runtime).
+- Node.js and `pnpm` available on the host running the construction agent.
+- `djng-angular-construction` plugin (§1) for the lifecycle hooks that gate
+  the bundled tools; `ngdj-scaffold` is not safe to use without those gates.
+
+**Installation**: From a Claude Code project root,
+`/plugin install ngdj-scaffold` (marketplace install). The `angular-django2`
+npm package must already be installed in the workspace (`pnpm add -D
+angular-django2`) before the plugin's tools can succeed.
+
+**Implementation reference**: Planned `.claude-plugin/ngdj-scaffold/` directory
+in the `angular-django2` repository, sourcing its tool wrappers from the
+`ngdj_create_workspace` and `ngdj_create_app` contracts in the
+[Tool Contracts Catalog](#tool-contracts-catalog) and its MCP server
+configuration from the `ngdj` CLI entry point.
+
+### Contract-side plugins
+
+#### 3. `contract-lifecycle` — OpenAPI contract bundle
+
+**Name**: `contract-lifecycle`
+
+**Purpose**: Package the export → validate → diff → gate lifecycle for the
+OpenAPI contract as a self-contained Claude Code plugin so teams working only
+on the backend contract layer can install it without pulling in the full
+Angular construction stack.
+
+**Bundled SKILLS**: none. The contract lifecycle is fully deterministic; AI
+judgment is not required between export, validate, diff, and gate.
+
+**Bundled TOOLS** (from the [Tool Contracts Catalog](#tool-contracts-catalog)):
+
+| Tool name | Role inside the plugin |
+|---|---|
+| `export_schema` | Trigger OpenAPI schema extraction from DRF. |
+| `validate_openapi_schema` | Validate that the exported schema is well-formed OAS 3.1. |
+| `oasdiff_diff` | Run `oasdiff` and return structured diff output (`breaking`, `non_breaking`, `schema_changed`). |
+
+The plugin ships these tools under `mcp-servers/` as a single MCP server
+configuration that exposes the three contract names. The future
+`oasdiff_changelog` tool contract MUST be added to this list when it is
+promoted into the [Tool Contracts Catalog](#tool-contracts-catalog).
+
+**Bundled HOOKS** (from the [Hook Contracts Catalog](#hook-contracts-catalog)):
+
+| Hook name | Lifecycle event | Role inside the plugin |
+|---|---|---|
+| `migration-triggered` | `PostToolUse` on Django migration commands | Re-export the OpenAPI schema whenever models change. |
+| `breaking-change` | `PreToolUse` on `oasdiff_diff` consumers | Block downstream construction tools when `oasdiff_diff` reports breaking changes. |
+
+The `pre-construction` hook is NOT bundled here even though it invokes
+`validate_openapi_schema`: that hook is scoped to construction-side tools
+(`ng_openapi_gen`, `ngdj_*`) and therefore belongs to
+`djng-angular-construction` (§1). `contract-lifecycle` provides the tool the
+hook depends on, not the hook itself.
+
+**Distribution**: Source artifacts live in this repository
+(`django-angular3`). The plugin is shipped as an in-tree `.claude-plugin/`
+directory plus, once published, a Claude Code plugin-marketplace entry under
+the same name. It is published independently of `djng-angular-construction` so
+backend-only projects can install it on its own.
+
+**Versioning**: Semantic versioning coupled to the `django-angular3` Python
+package version for `export_schema` and `validate_openapi_schema`, and
+additionally pinned to a tested `oasdiff` CLI major version for `oasdiff_diff`.
+A breaking change in either upstream MUST be reflected as a major bump of
+`contract-lifecycle`.
+
+**Dependencies**:
+
+- `django-angular3` Python package installed in the project's virtualenv (for
+  the `export_schema` and `validate-project` `django-admin` commands the
+  bundled tools and hooks invoke).
+- `oasdiff` CLI binary available on the host `PATH`.
+- No dependency on `djng-angular-construction` or `ngdj-scaffold`:
+  `contract-lifecycle` is the lowest layer of the plugin stack and MUST be
+  installable on its own.
+
+**Installation**: From a Claude Code project root,
+`/plugin install contract-lifecycle` (marketplace install) or
+`/plugin add ./path/to/django-angular3/.claude-plugin/contract-lifecycle`
+(local install). The `oasdiff` binary must be installed separately (the
+plugin does not bundle it, per the project principle that tooling MUST NOT
+download packages at runtime).
+
+**Implementation reference**: Planned `.claude-plugin/contract-lifecycle/`
+directory in this repository, sourcing its tools from
+`django_angular3/management/commands/export_schema.py` and the
+`oasdiff_diff` / `validate_openapi_schema` contracts in the
+[Tool Contracts Catalog](#tool-contracts-catalog), and its hooks from the
+`migration-triggered` and `breaking-change` entries in the
+[Hook Contracts Catalog](#hook-contracts-catalog).
+
+### Contract compliance
+
+- A plugin MUST ship exactly the SKILLS, TOOLS, and HOOKS listed in its
+  catalog entry — no more and no less. A plugin found to bundle an
+  un-catalogued capability, or to omit a listed one, is a bug in the plugin
+  and MUST be corrected before release.
+- Every SKILL listed in a plugin's `Bundled SKILLS` field MUST appear in the
+  [Skills Catalog](#skills-catalog); every TOOL listed in `Bundled TOOLS`
+  MUST appear in the [Tool Contracts Catalog](#tool-contracts-catalog);
+  every HOOK listed in `Bundled HOOKS` MUST appear in the
+  [Hook Contracts Catalog](#hook-contracts-catalog). Plugins MUST NOT
+  introduce new capability contracts inline.
+- Two plugins MUST NOT bundle the same HOOK contract under the same lifecycle
+  event. When two domains both need a deterministic enforcement point, the
+  hook belongs to the plugin that owns the scoped tool, and the other plugin
+  declares the first as a dependency. The split of the `pre-construction`
+  hook into `djng-angular-construction` (§1) — even though it invokes a tool
+  bundled by `contract-lifecycle` (§3) — is the canonical example.
+- New plugin bundles added to `djng` MUST be documented here using the
+  [plugin contract shape](#plugin-contract-shape) before they may be
+  published to a Claude Code plugin marketplace, listed in this catalog, or
+  recommended in `doc/ARCHITECTURE.md` or `doc/APP_BUILDER_REQUIREMENTS.md`.
+
+[Claude Plugins]: https://code.claude.com/docs/en/plugins
+
 ## Skills
 
 The formal skill format used here is defined by Anthropic — see `ARCHITECTURE.md` §20: [Claude Skills] (conceptual overview), [Claude Code Skills] (CLI-side reference: extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] (SDK-side discovery and invocation). This section describes the project-specific application of that format; for the authoritative skill-format reference, consult the upstream documents.
