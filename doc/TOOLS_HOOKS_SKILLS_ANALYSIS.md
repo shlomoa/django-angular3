@@ -27,8 +27,9 @@ behavior, allowed invocation context) covering:
 
 The Hooks recommendations in §3 below have been promoted into explicit,
 normative hook contracts. See `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts
-Catalog for the per-capability contracts (name, trigger event, deterministic
-action, failure behavior, allowed wrapped tools) covering:
+Catalog for the per-capability contracts (name, purpose, trigger event,
+deterministic action, failure behavior, allowed wrapped tools, implementation
+reference) covering:
 
 - `pre-construction` — §3.5 of this document (contract validation gate)
 - `migration-triggered` — §3.2 of this document (OpenAPI schema re-extraction)
