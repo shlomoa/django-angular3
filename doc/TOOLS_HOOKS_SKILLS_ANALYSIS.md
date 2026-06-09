@@ -134,7 +134,7 @@ instructions.
 
 ### 3.1 Breaking-Change Gate (PreToolUse on schema-diff tool)
 
-**Promoted contract**: [`breaking-change`](GENERATE_AI_AUTOMATIONS.md#3-breaking-change--gate-on-schema-diff) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog.
+**Promoted contract**: [`breaking-change`](GENERATE_AI_AUTOMATIONS.md#3-breaking-change--gate-on-schema-diff) in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog. The contract is authoritative; the table below is historical analysis and may not match the promoted hook surface.
 
 | | |
 |---|---|
