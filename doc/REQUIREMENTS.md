@@ -131,6 +131,7 @@ External dependencies and services include:
 - structured non-CRM UI inputs maintained in `spec/ui/`
 - [oasdiff] for OpenAPI schema diffing and change detection
 - [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
+- [datamodel-code-generator] (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]) for the contract-first use case: generating the Django data model from an existing OpenAPI Schema, using djng-owned custom Django templates, when no Django model exists yet (see [ARCHITECTURE.md] §§ 2.22 and 11.2)
 - a web browser as the primary client environment
 - an email delivery service when account or workflow notifications are enabled
 
@@ -536,6 +537,12 @@ boundaries, architectural control-loop, verification, and build-flow model.
   contract, configuration, and structured inputs against their previously
   accepted state; work derivation must not assume a clean-slate context unless
   no previous state exists
+- The platform must support a contract-first backend origination mode (see
+  [ARCHITECTURE.md] §§ 2.22 and 11.2) alongside the model-first mode: when no
+  Django data model exists yet, the Django data model must be generatable from
+  an existing OpenAPI Schema using [datamodel-code-generator] with djng-owned
+  custom Django templates, after which DRF elaboration and the model-first
+  steady state apply
 - Any backend data model change that produces a Django migration must trigger
   OpenAPI schema re-extraction before the contract normalization stage proceeds
 
@@ -1021,6 +1028,9 @@ Labels used in this document are defined in the link-definitions block at the en
 [oasdiff]: https://www.oasdiff.com/
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
+[datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/
+[datamodel-code-generator-github]: https://github.com/koxudaxi/datamodel-code-generator
+[datamodel-code-generator-playground]: https://datamodel-code-generator.koxudaxi.dev/playground/
 [Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
 [Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
 [Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
