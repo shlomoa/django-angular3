@@ -118,6 +118,27 @@ In `django-angular3.json`:
 - `app.name` — names the primary Django app **and** the Angular application
   generated inside that workspace. Both share this name by convention.
 
+### 2.22 model-first and contract-first backend origination
+
+Two distinct ways the backend data model and its OpenAPI contract come into
+existence. They are alternative origination paths, not competing sources of
+truth.
+
+- **Model-first (DRF-first):** a Django data model already exists. DRF
+  elaboration produces the API, and the OpenAPI contract is *exported from* the
+  DRF layer via [drf-spectacular]. This is the steady-state mode once a backend
+  exists.
+- **Contract-first (OpenAPI-first):** no Django data model exists yet. An
+  existing [OpenAPI contract][OpenAPI 3.1 Specification] is the origination
+  input, and the Django data model is *generated from* it using
+  [datamodel-code-generator] driven by djng-owned custom Django templates. DRF
+  elaboration (serializers, views, authentication, permissions) is then layered
+  on the generated model.
+
+Both modes converge on the same invariant: once a backend exists, the OpenAPI
+contract is the source of truth for CRM-facing functionality (§11.1). See §11.2
+for the generation toolchain and §17 for the corresponding decision.
+
 ---
 
 ## 3. Toolchain Design
@@ -126,7 +147,8 @@ In `django-angular3.json`:
 
 |Input|Description|
 |:-|:-|
-|DRF model|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions|
+|DRF model (model-first)|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions. Origination input in the model-first mode (§2.22)|
+|OpenAPI Schema (contract-first)|An existing OpenAPI Schema used as the backend origination input when no Django model exists yet; the Django data model is generated from it (§2.22, §11.2)|
 |Project configuration|A json file describing the project, apps, UI parts, and other configuration details|
 |Non-CRM Angular content|Bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata defined in a separate structured input source|
 
@@ -520,6 +542,18 @@ It should not own:
 
 ### 11.2 Generation Toolchain
 
+- Backend origination follows one of two modes (see §2.22):
+  - **Model-first:** an existing Django model is the starting point; the OpenAPI
+    contract is exported from DRF via [drf-spectacular].
+  - **Contract-first:** no Django model exists yet; the Django data model is
+    generated from an existing OpenAPI Schema using [datamodel-code-generator]
+    driven by djng-owned custom Django templates (`--custom-template-dir`).
+    [datamodel-code-generator]'s native outputs are Pydantic, dataclasses,
+    `TypedDict`, and `msgspec` models; Django model emission is a deliberate
+    custom-template capability owned and maintained by djng. DRF elaboration
+    (serializers, views, authentication, permissions) is layered on the
+    generated model, after which the backend proceeds in model-first steady
+    state with the OpenAPI contract as the source of truth (§11.1).
 - Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction via [drf-spectacular].
 - Run the schema diff and change detection tool:
   - Run it after exporting the OpenAPI schema from DRF.
@@ -630,6 +664,7 @@ switch environments.
 - Contract validation and `oasdiff`-based change detection are required before downstream construction continues.
 - [oasdiff] is the OpenAPI schema diff and change detection tool (source: [oasdiff-github]).
 - [ng-openapi-gen] is the Angular client OpenAPI code-generation tool (source: [ng-openapi-gen-github]).
+- [datamodel-code-generator] is the contract-first backend generator (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]). For the use case where no Django model exists yet, it generates the Django data model from an existing OpenAPI Schema using djng-owned custom Django templates. This is the inverse origination path to the model-first [drf-spectacular] export; see §2.22.
 - Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold
@@ -668,6 +703,9 @@ Key actors and terms. Full definitions are in §2.
 [django-angular3-github]: https://github.com/shlomoa/django-angular3
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
+[datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/
+[datamodel-code-generator-github]: https://github.com/koxudaxi/datamodel-code-generator
+[datamodel-code-generator-playground]: https://datamodel-code-generator.koxudaxi.dev/playground/
 [Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
 [Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
 [Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
