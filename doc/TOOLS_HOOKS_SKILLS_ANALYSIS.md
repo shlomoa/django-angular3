@@ -37,8 +37,15 @@ reference) covering:
 - `post-generation` — §3.3 of this document (verification logging)
 - `session-stop` — §3.4 of this document (archiving and audit cleanup)
 
-The Plugins recommendations in §4 remain analysis-stage and have not yet been
-promoted into per-capability contracts.
+The Plugins recommendations in §4 below have been promoted into explicit,
+normative plugin contracts. See `doc/GENERATE_AI_AUTOMATIONS.md` §Plugin
+Contracts Catalog for the per-capability contracts (name, purpose, bundled
+SKILLS / TOOLS / HOOKS, distribution, versioning, dependencies, installation,
+implementation reference) covering:
+
+- `djng-angular-construction` — §4.1 of this document
+- `ngdj-scaffold` — §4.2 of this document
+- `contract-lifecycle` — §4.3 of this document
 
 References used:
 - https://code.claude.com/docs/en/skills
@@ -203,6 +210,8 @@ that are natural candidates for packaging as **Plugins**.
 
 ### 4.1 djng Angular Construction Plugin
 
+**Promoted contract**: [`djng-angular-construction`](GENERATE_AI_AUTOMATIONS.md#1-djng-angular-construction--angular-construction-bundle) in `doc/GENERATE_AI_AUTOMATIONS.md` §Plugin Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §2.5, §2.14, §3.3, §3.5 |
@@ -212,6 +221,8 @@ that are natural candidates for packaging as **Plugins**.
 
 ### 4.2 ngdj Angular Scaffold Plugin
 
+**Promoted contract**: [`ngdj-scaffold`](GENERATE_AI_AUTOMATIONS.md#2-ngdj-scaffold--angular-schematics-bundle) in `doc/GENERATE_AI_AUTOMATIONS.md` §Plugin Contracts Catalog.
+
 | | |
 |---|---|
 | **Location in ARCHITECTURE.md** | §2.6, §3.4 |
@@ -220,6 +231,8 @@ that are natural candidates for packaging as **Plugins**.
 | **Plugin contents** | Tools: `ngdj_create_workspace`, `ngdj_create_app`, `ngdj_add_feature`, `ngdj_add_component`, `ngdj_run_schematic`; MCP config pointing to the `ngdj` CLI MCP server. |
 
 ### 4.3 Contract Lifecycle Plugin
+
+**Promoted contract**: [`contract-lifecycle`](GENERATE_AI_AUTOMATIONS.md#3-contract-lifecycle--openapi-contract-bundle) in `doc/GENERATE_AI_AUTOMATIONS.md` §Plugin Contracts Catalog.
 
 | | |
 |---|---|
