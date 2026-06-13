@@ -50,18 +50,109 @@ boundaries, selection policy, and architectural responsibilities.
 
 ## Primitive-selection policy
 
-Use the following policy when deciding which automation primitive to apply:
+This section is the **normative selection rule** for the four primitive
+families. Every new capability added to the `djng`/`ngdj` automation subsystem
+**MUST** be classified through this policy before implementation begins, so
+that capabilities are categorized consistently and the boundaries between
+SKILLS, TOOLS, HOOKS, and PLUGINS remain stable as the system grows.
+
+The policy is distilled from `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §1
+(comparison table and key distinctions). When this document and the analysis
+document disagree, this section is authoritative.
+
+### Decision axes
+
+Classify the candidate capability along the following four axes. The answers
+together determine the primitive (or composition of primitives).
+
+| Axis | Question | Implication |
+|---|---|---|
+| **Determinism** | Does the operation always produce the same structured result for the same inputs, with no AI judgment in its body? | Deterministic → **TOOL** or **HOOK**. Non-deterministic → **SKILL**. |
+| **AI involvement** | Does carrying out the work require interpreting intent, iterating on artifacts, or authoring/modifying code? | High AI involvement → **SKILL**. None → **TOOL** or **HOOK**. |
+| **Invocation binding** | Is the operation invoked on demand by the agent, or must it run automatically at a lifecycle event regardless of agent choice? | Agent-chosen → **SKILL** or **TOOL**. Lifecycle-bound and mandatory → **HOOK**. |
+| **Distribution** | Is the unit a single capability, or a coherent bundle of SKILLS / TOOLS / HOOKS intended for reuse across projects or teams? | Single capability → primitive itself. Bundle → **PLUGIN**. |
+
+A capability is a **SKILL** only if it scores non-deterministic on the first
+axis and high AI involvement on the second. A capability is a **HOOK** only if
+it must run at a defined lifecycle event without the agent choosing to invoke
+it. A **PLUGIN** is never a substitute for one of the other three primitives;
+it is a packaging unit that contains them.
+
+### Selection table
 
 | If the work… | Use |
 |---|---|
 | Requires AI judgment, iteration, or multi-step code authoring | **SKILL** |
-| Is a single deterministic command, API call, validation, or file operation | **TOOL** |
+| Is a single deterministic command, API call, validation, or file operation the agent calls on demand | **TOOL** |
 | Must always run at a lifecycle event regardless of agent choice | **HOOK** |
-| Is a reusable bundle of capabilities intended for distribution | **PLUGIN** |
 | Is deterministic and must be guaranteed at a lifecycle event | **HOOK** wrapping a **TOOL** |
+| Is a reusable bundle of SKILLS, TOOLS, and/or HOOKS intended for distribution | **PLUGIN** |
 
-This policy is distilled from `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` and is the
-selection rule for the automation model described in this document.
+### Application procedure for new capabilities
+
+When a new capability is proposed:
+
+1. State the capability as a single-sentence purpose, including its inputs,
+   its outputs, and the lifecycle stage at which it is needed.
+2. Answer the four decision-axis questions above. Record the answers in the
+   capability's design note or issue.
+3. Read the resulting primitive off the selection table.
+4. If the answers indicate a deterministic operation that must also be
+   guaranteed at a lifecycle event, apply the composite rule: implement the
+   deterministic body once as a **TOOL** (with a contract in the
+   [Tool Contracts Catalog](#tool-contracts-catalog)) and wrap it from a
+   **HOOK** (with a contract in the [Hook Contracts Catalog](#hook-contracts-catalog)).
+   Do not duplicate the deterministic body inside the hook script.
+5. If the capability is being introduced together with related capabilities
+   that are intended for cross-project reuse, also register the bundle as a
+   **PLUGIN** in the [Plugin Contracts Catalog](#plugin-contracts-catalog).
+   A PLUGIN never replaces the per-capability contracts of its contents.
+6. Author the per-capability contract in the matching catalog section using
+   the contract shape defined for that primitive (tool contract shape, hook
+   contract shape, plugin contract shape).
+
+### Tie-breakers
+
+The following rules resolve common ambiguous cases:
+
+- **"It looks deterministic but currently relies on the agent to fill in
+  defaults."** If the defaults can be expressed as typed inputs and the body
+  is deterministic, classify it as a **TOOL** and lift the defaults into its
+  input contract. Do not classify it as a **SKILL** to preserve agent-supplied
+  defaults.
+- **"It is deterministic and we want it to always run before construction."**
+  Use a **HOOK** wrapping a **TOOL**. The deterministic logic lives in the
+  TOOL contract; the HOOK guarantees execution at the lifecycle event.
+- **"It is multi-step and partly deterministic, partly AI-guided."** Decompose
+  into a **SKILL** that orchestrates the AI-guided portion and one or more
+  **TOOLS** for the deterministic portions. Do not let a SKILL contain
+  deterministic logic that has a stable input/output contract — extract that
+  logic into a TOOL.
+- **"It is conceptually one bundle but has only one capability inside."** Do
+  not introduce a **PLUGIN** until at least two related primitives are bundled
+  together for reuse. A single SKILL or TOOL is not a PLUGIN.
+- **"It is a script we want to ship."** A standalone script is not a
+  primitive. Classify what it *does* using the axes above and register it as
+  the matching primitive (typically a **TOOL** or a **HOOK**).
+
+### Worked examples
+
+The following classifications already follow this policy and serve as
+reference cases for new work.
+
+| Capability | Determinism | AI involvement | Lifecycle-bound | Primitive |
+|---|---|---|---|---|
+| `export_schema` (OpenAPI extraction) | Yes | None | No (agent-called) | **TOOL** — see [Tool Contracts Catalog](#tool-contracts-catalog) |
+| `oasdiff_diff` (schema diff) | Yes | None | No | **TOOL** |
+| `ng_openapi_gen` (typed Angular client generation) | Yes | None | No | **TOOL** wrapper |
+| `pre-construction` contract validation gate | Yes | None | Yes (must run before construction) | **HOOK** wrapping the `validate_openapi_schema` TOOL |
+| `breaking-change` gate on schema diff | Yes | None | Yes | **HOOK** wrapping the `oasdiff_diff` TOOL |
+| Generating an Angular feature page from an OpenAPI resource | No | High | No | **SKILL** |
+| Authoring a non-CRM reactive form from a structured UI definition | No | High | No | **SKILL** |
+| `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** containing related SKILLS, TOOLS, and HOOKS |
+
+When classifying a new capability, prefer matching it to one of the rows
+above by analogy before proposing a new pattern.
 
 ## Tools
 

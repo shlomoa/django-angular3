@@ -81,6 +81,8 @@ SKILLS are one primitive family within the broader AI automation subsystem of `d
 ### 2.15 AI-automation-based construction
 A construction model in which bounded AI automations are the execution units for generating, modifying, validating, and integrating application building blocks. In this model, SKILLS provide AI-guided generation and integration behavior, TOOLS provide deterministic bounded operations, HOOKS enforce lifecycle gates and mandatory side effects, and PLUGINS package coherent capability bundles for reuse. This model allows controlled generative freedom while keeping construction within architectural, contract-defined, and validation-defined boundaries.
 
+The normative selection rule for classifying a new capability as a SKILL, TOOL, HOOK, or PLUGIN is defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Primitive-selection policy. New capabilities added to the automation subsystem MUST be classified through that policy before implementation begins.
+
 ### 2.16 agent
 The agentic orchestrator in this architecture, bundled in `djng`. It consumes
 change requirements, configuration files, and contract-derived inputs, derives a
