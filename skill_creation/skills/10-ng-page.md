@@ -8,6 +8,7 @@
 ---
 name: ng-page
 description: Create, modify, or delete Angular Material pages with lazy standalone routing, sidenav navigation, and authenticated route guard support
+when_to_use: Use when build_app dispatches a page procedure node, or when a user runs /ng-page to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
 user-invocable: false
 context: fork
 allowed-tools:

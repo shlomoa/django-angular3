@@ -40,7 +40,7 @@ wrappers needed to materialize the required Angular-side outputs.
 
 ## 3. Revise and Finalize GENERATE_AI_AUTOMATIONS.md
 
-**Status: In progress**
+**Status: Substantially complete**
 
 Revise and finalize `GENERATE_AI_AUTOMATIONS.md` as the design specification
 for the complete AI automation model needed for bounded construction and
@@ -55,9 +55,11 @@ integration, covering SKILLS, TOOLS, HOOKS, and PLUGINS.
   boundaries, and mixed automation execution-model references aligned with
   `doc/GENERATE_AI_AUTOMATIONS.md`, `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md`, and
   `doc/SKILL_AUTHORING_PLAN.md`.
-- `GENERATE_AI_AUTOMATIONS.md` revised (Invocation Model, Glossary). Broader AI
-  automation framing and corresponding `skill_creation` alignment not yet
-  finalized.
+- `GENERATE_AI_AUTOMATIONS.md` now carries normative per-capability catalogs for
+  all four primitives (Tool Contracts, Hook Contracts, Plugin Contracts, Skills)
+  alongside the primitive-selection policy; the umbrella framing no longer
+  treats SKILLS as the only detailed family. `skill_creation` skill frontmatter
+  (`description`, `when_to_use`) is aligned with the authoritative SKILLS subset.
 
 ---
 

@@ -4,6 +4,7 @@
 ---
 name: ng-field-component
 description: Create, modify, or delete Angular Material small field-level components with typed input/output signals, Material imports, and ARIA accessibility
+when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /ng-field-component to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
 user-invocable: false
 context: fork
 allowed-tools:

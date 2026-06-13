@@ -4,6 +4,7 @@
 ---
 name: ng-app
 description: Manage Angular Material application within a workspace - create app structure with Material theme, modify providers and routing, or delete app
+when_to_use: Use when build_app dispatches an app-creation, app-modification, or app-deletion procedure node, or when a user runs /ng-app to scaffold or update an Angular Material application inside an existing workspace.
 user-invocable: false
 context: fork
 allowed-tools:

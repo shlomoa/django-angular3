@@ -4,6 +4,7 @@
 ---
 name: ng-data-service
 description: Create, modify, or delete Angular data services that wrap generated `<Resource>ApiService` clients with typed `Observable` methods, snack-bar feedback, and focused unit tests.
+when_to_use: Use when build_app dispatches a data-service procedure node for a resource that has generated <Resource>ApiService code, or when a user runs /ng-data-service to wrap a generated API client with typed Observables and snack-bar feedback.
 user-invocable: false
 context: fork
 allowed-tools:

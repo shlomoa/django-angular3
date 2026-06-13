@@ -3,7 +3,8 @@
 ```yaml
 ---
 name: ng-api
-description: Generate Angular API clients from OpenAPI specifications using ng-openapi-gen. Auto-invoked when the outer agent detects a need to generate or regenerate API service layer code from an OpenAPI schema.
+description: Generate TypeScript API client code from an OpenAPI specification using ng-openapi-gen.
+when_to_use: Use when build_app dispatches an api-generation procedure node (initial generation or schema-change regeneration), or when a user runs /ng-api to regenerate API clients after OpenAPI schema changes.
 user-invocable: false
 context: fork
 allowed-tools:

@@ -8,6 +8,7 @@
 ---
 name: ng-complex-component
 description: Create, modify, or delete Angular Material complex components with theme mixins, nested child components, content projection, and CDK overlay integration
+when_to_use: Use when build_app dispatches a complex-component procedure node, or when a user runs /ng-complex-component to scaffold a Material component requiring theme mixins, content projection, child components, or CDK overlay integration.
 user-invocable: false
 context: fork
 allowed-tools:
