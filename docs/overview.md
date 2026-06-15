@@ -11,18 +11,6 @@ contract-first Django REST Framework and Angular Material integration.
 - Hosts the SKILL and TOOL contracts that orchestrate Angular workspace
   generation via `angular-django2` (ngdj) schematics.
 
-## Automation naming layers
-
-The toolchain uses four distinct naming layers (see `doc/ARCHITECTURE.md §2.23`
-for the authoritative definition):
-
-| Layer | Example | Stability |
-|---|---|---|
-| CLI wrapper commands | `ng_workspace`, `ng_openapi_gen` | Frozen — never renamed |
-| TOOL contracts | `angular_workspace_scaffold`, `openapi_schema_export` | Stable API |
-| SKILL names | `angular-workspace-foundation`, `angular-api-integration` | Stable API |
-| Concern keys | `angular.workspace`, `contract.schema-export` | Internal |
-
 ## Installation
 
 ```bash
