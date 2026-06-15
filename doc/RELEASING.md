@@ -6,22 +6,49 @@ stages or publish from a dirty or un-verified working tree.
 
 ---
 
+## Assumptions
+
+- You are running **Python 3.11 or later**. Check with `python --version`.
+- **Git** is installed and your local `main` is up to date with `origin/main`.
+- You have already completed the normal contributor workflow (all tests pass,
+  all linting is clean) on the commit you intend to release.
+- The GitHub repository is configured for **PyPI Trusted Publishing**: the
+  `deploy.yml` workflow is authorised to publish to PyPI via OIDC — no API
+  tokens or stored credentials are required.
+
+---
+
 ## Prerequisites
 
+These are one-time or per-environment setup steps. If you have already done
+them in your current environment you can skip to stage 1.
+
+**System tools**
+
+- Python 3.11+ with `pip`
+- Git with write access to `shlomoa/django-angular3` on GitHub
+- A browser to create the GitHub release and monitor Actions
+
+**Python environment**
+
 ```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+
 python -m pip install --upgrade build
 python -m pip install -e .[dev]    # ruff and other dev tooling
 python -m pip install -e .[docs]   # Sphinx and doc dependencies
 ```
 
-You need:
-- write access to the `shlomoa/django-angular3` GitHub repository
-- the PyPI project configured for Trusted Publishing from this repository (one-time
-  setup on pypi.org — no API tokens or stored credentials required)
+**GitHub / PyPI access**
 
-Publishing to PyPI is fully automated via `.github/workflows/deploy.yml` using
-[PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC). It
-triggers automatically when a GitHub Release is published.
+- Write access to the `shlomoa/django-angular3` GitHub repository (to push
+  tags and publish releases)
+- The PyPI Trusted Publishing link is already configured — no further PyPI
+  account setup is required for normal releases
 
 ---
 

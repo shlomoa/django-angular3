@@ -1,15 +1,38 @@
 # Contributing
 
-## Development setup
+## Assumptions
 
-Install the project from source with dev tooling:
+- You are running **Python 3.11 or later**. Check with `python --version`.
+- You have **Git** installed and configured with your GitHub identity.
+- You have cloned the repository and your working directory is the repo root.
+- No Node.js, Angular CLI, or other frontend tooling is required to contribute
+  to this repository. It is a Python-only package.
+
+## Prerequisites
+
+Before running any of the commands below, create and activate a virtual
+environment:
+
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+```
+
+Then install the package with dev tooling:
 
 ```bash
 python -m pip install -e .[dev]
 ```
 
-This installs `ruff` for linting and formatting. If you also want YAML support
-for OpenAPI or UI definition files:
+## Development setup
+
+Install the project from source with dev tooling already covered in
+[Prerequisites](#prerequisites) above.
+
+If you also want YAML support for OpenAPI or UI definition files:
 
 ```bash
 python -m pip install -e .[dev,yaml]
