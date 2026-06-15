@@ -27,6 +27,33 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
 | **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
 | **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
+| **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
+
+---
+
+# Automation Naming Crosswalk
+
+This table is the single source of truth mapping every construction concern to
+its name in each of the four automation naming layers (see `ARCHITECTURE.md`
+§2.23). Use it when authoring procedure graphs, hook contracts, plugin
+manifests, or skill files to ensure each layer uses the correct name.
+
+| Concern key | CLI wrapper | TOOL contract | SKILL name | HOOKs |
+|---|---|---|---|---|
+| `angular.workspace` | `ng_workspace` | `angular_workspace_scaffold` | `angular-workspace-foundation` | `pre-construction`, `post-generation` |
+| `angular.app` | `ng_gen_app` | `angular_app_scaffold` | `angular-app-composition` | `pre-construction`, `post-generation` |
+| `angular.api-client` | `ng_openapi_gen` | `angular_api_client_generate` | `angular-api-integration` | `pre-construction`, `post-generation` |
+| `angular.data-service` | — | — | `angular-data-service-composition` | — |
+| `angular.field-component` | — | — | `angular-field-component-composition` | — |
+| `angular.form-field` | — | — | `angular-form-field-composition` | — |
+| `angular.component` | — | — | `angular-component-composition` | — |
+| `angular.complex-component` | — | — | `angular-complex-component-composition` | — |
+| `angular.reactive-form` | — | — | `angular-reactive-form-composition` | — |
+| `angular.page` | — | — | `angular-page-composition` | — |
+| `angular.site` | — | — | `angular-site-composition` | — |
+| `contract.schema-export` | `export_schema` | `openapi_schema_export` | — | `migration-triggered` |
+| `contract.schema-validate` | — | `validate_openapi_schema` | — | `pre-construction` (wraps) |
+| `contract.schema-diff` | — | `oasdiff_diff` | — | `breaking-change` |
 
 ---
 
@@ -142,9 +169,9 @@ reference cases for new work.
 
 | Capability | Determinism | AI involvement | Lifecycle-bound | Primitive |
 |---|---|---|---|---|
-| `export_schema` (OpenAPI extraction) | Yes | None | No (agent-called) | **TOOL** — see [Tool Contracts Catalog](#tool-contracts-catalog) |
+| `openapi_schema_export` (OpenAPI extraction) | Yes | None | No (agent-called) | **TOOL** — see [Tool Contracts Catalog](#tool-contracts-catalog) |
 | `oasdiff_diff` (schema diff) | Yes | None | No | **TOOL** |
-| `ng_openapi_gen` (typed Angular client generation) | Yes | None | No | **TOOL** wrapper |
+| `angular_api_client_generate` (typed Angular client generation) | Yes | None | No | **TOOL** wrapper |
 | `pre-construction` contract validation gate | Yes | None | Yes (must run before construction) | **HOOK** wrapping the `validate_openapi_schema` TOOL |
 | `breaking-change` gate on schema diff | Yes | None | Yes | **HOOK** wrapping the `oasdiff_diff` TOOL |
 | Generating an Angular feature page from an OpenAPI resource | No | High | No | **SKILL** |
@@ -219,9 +246,9 @@ visually obvious: **contract lifecycle** (export → validate → diff) precedes
 
 ### Contract lifecycle tools
 
-#### 1. `export_schema` — schema extraction trigger
+#### 1. `openapi_schema_export` — schema extraction trigger
 
-**Name**: `export_schema`
+**Name**: `openapi_schema_export`
 
 **Purpose**: Generate the current OpenAPI 3.1 schema from the configured DRF
 project (via `drf-spectacular`) and persist it as a durable, versioned artifact
@@ -283,7 +310,7 @@ free-form text blob.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `schema` | yes | string (path) | — | Absolute path to the OpenAPI artifact to validate (typically the output of `export_schema`). |
+| `schema` | yes | string (path) | — | Absolute path to the OpenAPI artifact to validate (typically the output of `openapi_schema_export`). |
 | `format` | no | `"json"` \| `"yaml"` \| `"auto"` | `"auto"` | How to parse the artifact. `auto` infers from extension. |
 | `ruleset` | no | string (path) \| `"default"` | `"default"` | Optional path to a custom validation ruleset (e.g. a Spectral ruleset). |
 
@@ -309,8 +336,9 @@ free-form text blob.
   `output_invalid` (validator returned an unparseable report).
 
 **Allowed invocation context**: `build_app` (as a `tool` procedure after
-`export_schema` and before any generation procedure); HOOK (PreToolUse on
-`ng_openapi_gen` and `ngdj_*` tools, per `TOOLS_HOOKS_SKILLS_ANALYSIS.md`
+`openapi_schema_export` and before any generation procedure); HOOK (PreToolUse on
+`angular_api_client_generate`, `angular_workspace_scaffold`, and
+`angular_app_scaffold`, per `TOOLS_HOOKS_SKILLS_ANALYSIS.md`
 §3.5); agent (callable inside a guided agent session that needs to re-verify a
 hand-edited schema). Not a user-facing CLI command in the current release.
 
@@ -363,9 +391,9 @@ binary acquisition; planned `django_angular3.diff` wrapper that calls
 
 ### Angular generation wrapper tools
 
-#### 4. `ng_openapi_gen` — typed Angular client generation
+#### 4. `angular_api_client_generate` — typed Angular client generation
 
-**Name**: `ng_openapi_gen`
+**Name**: `angular_api_client_generate`
 
 **Purpose**: Run `ng-openapi-gen` against the current OpenAPI artifact inside
 the generated Angular workspace to produce typed Angular API clients. Wraps
@@ -403,8 +431,8 @@ procedure graph see a structured tool contract instead of raw CLI output.
   files or produces files that fail a TypeScript parse smoke check.
 
 **Allowed invocation context**: `build_app` (as a `tool` procedure invoked
-after `validate_openapi_schema` and before the `ng-api` skill session); agent
-(inside the `ng-api` guided agent session when the SKILL needs to regenerate
+after `validate_openapi_schema` and before the `angular-api-integration` skill session); agent
+(inside the `angular-api-integration` guided agent session when the SKILL needs to regenerate
 the client during refinement). Not a HOOK target — generation is always
 explicit. CLI (`django-admin ng_openapi_gen <config>`).
 
@@ -412,9 +440,9 @@ explicit. CLI (`django-admin ng_openapi_gen <config>`).
 `django_angular3/management/commands/ng_openapi_gen.py`;
 `django_angular3/angular.py`.
 
-#### 5. `ngdj_create_workspace` — Angular workspace scaffold wrapper
+#### 5. `angular_workspace_scaffold` — Angular workspace scaffold wrapper
 
-**Name**: `ngdj_create_workspace`
+**Name**: `angular_workspace_scaffold`
 
 **Purpose**: Invoke the `ngdj` Angular workspace schematic to scaffold a fresh
 workspace at `angular.output`. Wraps the existing `ng_new` djng management
@@ -445,7 +473,7 @@ command behind the structured tool contract used by the procedure graph.
 - `output_invalid` — the scaffold completed but `angular.json` is missing.
 
 **Allowed invocation context**: `build_app` (as the foundational `tool`
-procedure before the `ng-workspace` skill session, when the workspace does not
+procedure before the `angular-workspace-foundation` skill session, when the workspace does not
 yet exist); CLI (`django-admin ng_new <config>`). Not invocable from a HOOK —
 workspace creation must be an explicit graph node.
 
@@ -453,9 +481,9 @@ workspace creation must be an explicit graph node.
 `django_angular3/management/commands/ng_new.py`;
 `django_angular3/angular.py`.
 
-#### 6. `ngdj_create_app` — Angular application scaffold wrapper
+#### 6. `angular_app_scaffold` — Angular application scaffold wrapper
 
-**Name**: `ngdj_create_app`
+**Name**: `angular_app_scaffold`
 
 **Purpose**: Invoke the `ngdj add` / `ng_gen_app` schematic to add the primary
 Angular application into an existing workspace. Wraps the existing
@@ -487,7 +515,7 @@ Angular application into an existing workspace. Wraps the existing
   is missing.
 
 **Allowed invocation context**: `build_app` (as a `tool` procedure between the
-`ng-workspace` and `ng-app` skill sessions, when the application does not yet
+`angular-workspace-foundation` and `angular-app-composition` skill sessions, when the application does not yet
 exist); CLI (`django-admin ng_gen_app <config>`). Not invocable from a HOOK.
 
 **Implementation reference**:
@@ -616,8 +644,8 @@ Angular generation tool is allowed to run. Implements the gate described in
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.5.
 
 **Trigger event**: `PreToolUse` scoped to the Angular generation tools
-`ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app` (and any future
-`ngdj_*` tool contract). Also runs as the very first `gate` procedure of every
+`angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`
+(and any future generation tool contracts). Also runs as the very first `gate` procedure of every
 `build_app` invocation, before the procedure-graph traversal reaches any
 generation procedure.
 
@@ -641,11 +669,11 @@ generation procedure.
   hook-failure exit code (distinct from the `breaking-change` exit code and
   from FR-9 tool-failure exit codes).
 - The hook MUST NOT attempt to auto-repair (e.g. it does not invoke
-  `export_schema` itself); auto-extraction is the responsibility of the
+  `openapi_schema_export` itself); auto-extraction is the responsibility of the
   `migration-triggered` hook.
 
-**Allowed wrapped tools**: `ng_openapi_gen`, `ngdj_create_workspace`,
-`ngdj_create_app`, future `ngdj_*` generation tools.
+**Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
+`angular_app_scaffold`, future generation tools.
 
 **Implementation reference**: planned shell script
 `hooks/pre-construction.sh`, registered under the `PreToolUse` key of the
@@ -672,7 +700,7 @@ described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 1. Enumerate the migration files added or modified during the wrapped tool
    call by listing the contents of each app's `migrations/` directory and
    comparing against the pre-call snapshot captured by the hook runner.
-2. If the set is non-empty, invoke the `export_schema` tool contract with
+2. If the set is non-empty, invoke the `openapi_schema_export` tool contract with
    the project's `django-angular3.json` config path.
 3. Append a `{ hook: "migration-triggered", migrations: [...], destination,
    previous_path, schema_changed }` record to `build/hook-log.jsonl`.
@@ -681,7 +709,7 @@ described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 
 **Failure behavior**:
 
-- If `export_schema` returns a non-success error object, write
+- If `openapi_schema_export` returns a non-success error object, write
   `{ hook: "migration-triggered", category, message, details }` to stderr
   and to `build/hook-log.jsonl`, and exit non-zero.
 - A non-zero exit does **not** roll back the `makemigrations` result (the
@@ -694,7 +722,7 @@ described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 
 **Implementation reference**: planned shell script
 `hooks/migration-triggered.sh`, registered under the `PostToolUse` key of
-the project's Claude Code `settings.json`. Wraps `export_schema` via its
+the project's Claude Code `settings.json`. Wraps `openapi_schema_export` via its
 tool contract.
 
 #### 3. `breaking-change` — gate on schema diff
@@ -707,8 +735,9 @@ reports breaking changes, unless the run was started with
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.1 and the FR-4 builder behavior in
 `doc/APP_BUILDER_REQUIREMENTS.md`.
 
-**Trigger event**: `PreToolUse` scoped to `ng_openapi_gen` and any
-`ngdj_*` generation tool. Also runs as the `gate` procedure that consumes
+**Trigger event**: `PreToolUse` scoped to `angular_api_client_generate`,
+`angular_workspace_scaffold`, `angular_app_scaffold`, and any future generation
+tool. Also runs as the `gate` procedure that consumes
 the structured output of the `oasdiff_diff` `tool` procedure in the
 procedure graph.
 
@@ -739,8 +768,8 @@ procedure graph.
 - The hook MUST NOT consume `oasdiff` raw CLI output directly; it consumes
   only the structured contract output of `oasdiff_diff`.
 
-**Allowed wrapped tools**: `ng_openapi_gen`, `ngdj_create_workspace`,
-`ngdj_create_app`, future `ngdj_*` generation tools.
+**Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
+`angular_app_scaffold`, future generation tools.
 
 **Implementation reference**: planned shell script
 `hooks/breaking-change.sh`, registered under the `PreToolUse` key of the
@@ -758,18 +787,18 @@ recorded to a machine-readable log, regardless of whether the agent would
 choose to re-inspect the output. Implements the enforcement described in
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.3.
 
-**Trigger event**: `PostToolUse` scoped to `ng_openapi_gen`,
-`ngdj_create_workspace`, `ngdj_create_app`, and any future `ngdj_*`
+**Trigger event**: `PostToolUse` scoped to `angular_api_client_generate`,
+`angular_workspace_scaffold`, `angular_app_scaffold`, and any future
 generation tool contract.
 
 **Deterministic action**:
 
 1. Read the wrapped tool's structured output (e.g. the `generated_files`
-   array returned by `ng_openapi_gen`) from the run's artifact location.
+   array returned by `angular_api_client_generate`) from the run's artifact location.
 2. Run a lightweight structural check appropriate to the wrapped tool:
-   - For `ng_openapi_gen`: `tsc --noEmit` in the generated app workspace
+   - For `angular_api_client_generate`: `tsc --noEmit` in the generated app workspace
      (`angular.output`).
-   - For `ngdj_create_workspace` / `ngdj_create_app`: assert the expected
+   - For `angular_workspace_scaffold` / `angular_app_scaffold`: assert the expected
      workspace/app directories and files exist on disk.
 3. Append a verification entry
    `{ hook: "post-generation", tool, pass: bool, details, generated_files,
@@ -787,8 +816,8 @@ generation tool contract.
   responsibility of a subsequent guided agent session per
   `ARCHITECTURE.md` §7.2.
 
-**Allowed wrapped tools**: `ng_openapi_gen`, `ngdj_create_workspace`,
-`ngdj_create_app`, future `ngdj_*` generation tools.
+**Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
+`angular_app_scaffold`, future generation tools.
 
 **Implementation reference**: planned shell script
 `hooks/post-generation.sh`, registered under the `PostToolUse` key of the
@@ -952,23 +981,23 @@ install the same coherent generation surface in one step.
 
 | Skill name | Role |
 |---|---|
-| `ng-workspace` | Generate the Angular workspace shell. |
-| `ng-app` | Generate the Angular application inside the workspace. |
-| `ng-api` | Generate the OpenAPI-derived API integration layer. |
-| `ng-data-service` | Generate typed data services for resource collections. |
-| `ng-field-component` | Generate reusable form field components. |
-| `ng-form-field` | Generate `ControlValueAccessor`-backed form-field boilerplate. |
-| `ng-component` | Generate standalone Angular Material components. |
-| `ng-complex-component` | Generate composite components built from simpler ones. |
-| `ng-reactive-form` | Generate typed reactive `FormGroup<>` flows. |
-| `ng-page` | Generate routed page components (lists, details). |
-| `ng-site` | Generate the top-level site shell and route tree. |
+| `angular-workspace-foundation` | Generate the Angular workspace shell. |
+| `angular-app-composition` | Generate the Angular application inside the workspace. |
+| `angular-api-integration` | Generate the OpenAPI-derived API integration layer. |
+| `angular-data-service-composition` | Generate typed data services for resource collections. |
+| `angular-field-component-composition` | Generate reusable form field components. |
+| `angular-form-field-composition` | Generate `ControlValueAccessor`-backed form-field boilerplate. |
+| `angular-component-composition` | Generate standalone Angular Material components. |
+| `angular-complex-component-composition` | Generate composite components built from simpler ones. |
+| `angular-reactive-form-composition` | Generate typed reactive `FormGroup<>` flows. |
+| `angular-page-composition` | Generate routed page components (lists, details). |
+| `angular-site-composition` | Generate the top-level site shell and route tree. |
 
 **Bundled TOOLS** (from the [Tool Contracts Catalog](#tool-contracts-catalog)):
 
 | Tool name | Role inside the plugin |
 |---|---|
-| `ng_openapi_gen` | Wrap workspace-local `ng-openapi-gen` for typed-client generation. |
+| `angular_api_client_generate` | Wrap workspace-local `ng-openapi-gen` for typed-client generation. |
 | `validate_openapi_schema` | Provide the schema-validation callable used by both SKILLS and the wrapped HOOK. |
 
 The plugin ships these tools under `mcp-servers/` as a single MCP server
@@ -978,7 +1007,7 @@ configuration that exposes the two contract names.
 
 | Hook name | Lifecycle event | Role inside the plugin |
 |---|---|---|
-| `pre-construction` | `PreToolUse` on `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app` | Block any construction tool until the OpenAPI schema is present and valid. |
+| `pre-construction` | `PreToolUse` on `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold` | Block any construction tool until the OpenAPI schema is present and valid. |
 | `post-generation` | `PostToolUse` on the construction tools above | Write structured verification logs after each generation step. |
 | `session-stop` | `Stop` | Archive `build/procedure-graph.*` and write the session summary. |
 
@@ -1037,8 +1066,8 @@ them is owned by `djng-angular-construction` (§1) instead.
 
 | Tool name | Role inside the plugin |
 |---|---|
-| `ngdj_create_workspace` | Wrap the `ngdj` workspace-creation schematic. |
-| `ngdj_create_app` | Wrap the `ngdj` application-creation schematic. |
+| `angular_workspace_scaffold` | Wrap the `ngdj` workspace-creation schematic. |
+| `angular_app_scaffold` | Wrap the `ngdj` application-creation schematic. |
 
 Future `ngdj_*` schematic wrappers (e.g. `ngdj_add_feature`,
 `ngdj_add_component`, `ngdj_run_schematic`) MUST be added to this list as
@@ -1080,7 +1109,7 @@ angular-django2`) before the plugin's tools can succeed.
 
 **Implementation reference**: Planned `.claude-plugin/ngdj-scaffold/` directory
 in the `angular-django2` repository, sourcing its tool wrappers from the
-`ngdj_create_workspace` and `ngdj_create_app` contracts in the
+`angular_workspace_scaffold` and `angular_app_scaffold` contracts in the
 [Tool Contracts Catalog](#tool-contracts-catalog) and its MCP server
 configuration from the `ngdj` CLI entry point.
 
@@ -1102,7 +1131,7 @@ judgment is not required between export, validate, diff, and gate.
 
 | Tool name | Role inside the plugin |
 |---|---|
-| `export_schema` | Trigger OpenAPI schema extraction from DRF. |
+| `openapi_schema_export` | Trigger OpenAPI schema extraction from DRF. |
 | `validate_openapi_schema` | Validate that the exported schema is well-formed OAS 3.1. |
 | `oasdiff_diff` | Run `oasdiff` and return structured diff output (`breaking`, `non_breaking`, `schema_changed`). |
 
@@ -1120,7 +1149,8 @@ promoted into the [Tool Contracts Catalog](#tool-contracts-catalog).
 
 The `pre-construction` hook is NOT bundled here even though it invokes
 `validate_openapi_schema`: that hook is scoped to construction-side tools
-(`ng_openapi_gen`, `ngdj_*`) and therefore belongs to
+(`angular_api_client_generate`, `angular_workspace_scaffold`,
+`angular_app_scaffold`) and therefore belongs to
 `djng-angular-construction` (§1). `contract-lifecycle` provides the tool the
 hook depends on, not the hook itself.
 
@@ -2020,7 +2050,7 @@ export class AppComponent {
 
 ## Template 6: Service + `catchError` + `MatSnackBar`
 
-**File**: `service.ts.tpl` (intended resource path for the `ng-data-service` skill template)
+**File**: `service.ts.tpl` (intended resource path for the `angular-data-service-composition` skill template)
 
 **Used by**:
 - Angular data model Service (skill 4)
@@ -2181,15 +2211,15 @@ The mode to apply to each object is determined by running `oasdiff` against the 
 
 ## Angular Material workspace boiler plate
 
-**Skill Name**: `ng-workspace`
+**Skill Name**: `angular-workspace-foundation`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-workspace
+name: angular-workspace-foundation
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
-when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /ng-workspace to scaffold or update an Angular workspace from django-angular3.json.
+when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2204,7 +2234,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-workspace` skill manages the creation, modification, and deletion of Angular workspaces configured with Angular Material, following modern Angular conventions (standalone components, signals, SCSS theming). This is the foundation skill that must be executed before any app-level or component-level skills can be invoked.
+The `angular-workspace-foundation` skill manages the creation, modification, and deletion of Angular workspaces configured with Angular Material, following modern Angular conventions (standalone components, signals, SCSS theming). This is the foundation skill that must be executed before any app-level or component-level skills can be invoked.
 
 ### Inputs
 
@@ -2350,7 +2380,7 @@ After successful execution, the workspace directory contains:
 
 Update an existing workspace with configuration changes, package updates, or new tooling.
 
-> **Note**: `build_app` does not trigger `ng-workspace` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
+> **Note**: `build_app` does not trigger `angular-workspace-foundation` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
 
 #### Input Requirements
 
@@ -2458,7 +2488,7 @@ This skill references the following shared context files:
 
 #### Template Files
 
-This skill does not use template files directly, as it relies on Angular CLI schematics for code generation. However, it configures the workspace to use the templates defined in the Templates section when subsequent skills (like `ng-component` or `ng-page`) are invoked.
+This skill does not use template files directly, as it relies on Angular CLI schematics for code generation. However, it configures the workspace to use the templates defined in the Templates section when subsequent skills (like `angular-component-composition` or `angular-page-composition`) are invoked.
 
 ### Validation
 
@@ -2548,8 +2578,8 @@ After modifying a workspace, verify:
 **No skill dependencies**: This is the foundational skill. All other Angular skills depend on this skill being executed first to create the workspace.
 
 **Dependent skills** (must have workspace before using):
-- `ng-app` — Angular Material app boiler plate
-- `ng-api-gen` — Angular API generation
+- `angular-app-composition` — Angular Material app boiler plate
+- `angular-api-integration` — Angular API generation
 - All component, form, page, and site generation skills
 
 ### Examples
@@ -2604,9 +2634,9 @@ Procedure-level input: `confirmDelete: true`
 
 ```yaml
 ---
-name: ng-app
+name: angular-app-composition
 description: Manage Angular Material application within a workspace - create app structure with Material theme, modify providers and routing, or delete app
-when_to_use: Use when build_app dispatches an app-creation, app-modification, or app-deletion procedure node, or when a user runs /ng-app to scaffold or update an Angular Material application inside an existing workspace.
+when_to_use: Use when build_app dispatches an app-creation, app-modification, or app-deletion procedure node, or when a user runs /angular-app-composition to scaffold or update an Angular Material application inside an existing workspace.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2665,7 +2695,7 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
    - Create barrel exports (`index.ts`) in each directory
 
 4. **Wire Angular Material theme**
-   - Angular Material is already installed at the workspace level by `ng-workspace`.
+   - Angular Material is already installed at the workspace level by `angular-workspace-foundation`.
    - Update `projects/<project.name>/src/styles.scss` with app-level theme configuration using Edit tool:
      ```scss
      @use '@angular/material' as mat;
@@ -3027,9 +3057,9 @@ Optional dependencies:
 
 ```yaml
 ---
-name: ng-api
+name: angular-api-integration
 description: Generate TypeScript API client code from an OpenAPI specification using ng-openapi-gen.
-when_to_use: Use when build_app dispatches an api-generation procedure node (initial generation or schema-change regeneration), or when a user runs /ng-api to regenerate API clients after OpenAPI schema changes.
+when_to_use: Use when build_app dispatches an api-generation procedure node (initial generation or schema-change regeneration), or when a user runs /angular-api-integration to regenerate API clients after OpenAPI schema changes.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3279,9 +3309,9 @@ Cleaned and regenerated API client code
 
 ```yaml
 ---
-name: ng-data-service
+name: angular-data-service-composition
 description: Create, modify, or delete Angular data services that wrap generated `<Resource>ApiService` clients with typed `Observable` methods, snack-bar feedback, and focused unit tests.
-when_to_use: Use when build_app dispatches a data-service procedure node for a resource that has generated <Resource>ApiService code, or when a user runs /ng-data-service to wrap a generated API client with typed Observables and snack-bar feedback.
+when_to_use: Use when build_app dispatches a data-service procedure node for a resource that has generated <Resource>ApiService code, or when a user runs /angular-data-service-composition to wrap a generated API client with typed Observables and snack-bar feedback.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3296,7 +3326,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-data-service` skill manages handwritten Angular data services that sit on top of generated `*ApiService` clients from the `ng-api` skill. It creates or updates a resource-specific service that centralises API calls, wraps errors with `catchError`, reports failures through `MatSnackBar`, preserves typed `Observable<>` return values, and maintains a matching unit spec.
+The `angular-data-service-composition` skill manages handwritten Angular data services that sit on top of generated `*ApiService` clients from the `angular-api-integration` skill. It creates or updates a resource-specific service that centralises API calls, wraps errors with `catchError`, reports failures through `MatSnackBar`, preserves typed `Observable<>` return values, and maintains a matching unit spec.
 
 ### Inputs
 
@@ -3308,7 +3338,7 @@ Procedure-level input (provided by `build_app` when invoking this skill):
 - `resource_name` (string): Resource name used to resolve the generated `<Resource>ApiService` and related model types
 
 **Resource Mapping**:
-- `resource_name` maps to `<Resource>ApiService` generated by the `ng-api` skill
+- `resource_name` maps to `<Resource>ApiService` generated by the `angular-api-integration` skill
 - Service file names follow Angular conventions such as `features/<resource>/services/<resource>.service.ts`
 - Shared services that are reused across features may instead live in `core/services/<resource>.service.ts`
 
@@ -3428,7 +3458,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 1. **Generated API service missing**:
    - Error: `<Resource>ApiService` cannot be resolved
-   - Resolution: Run the `ng-api` skill first, then retry this skill
+   - Resolution: Run the `angular-api-integration` skill first, then retry this skill
 
 2. **Wrong service placement**:
    - Error: Service created in a feature folder but needed across the application
@@ -3445,8 +3475,8 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 ### Dependencies
 
 **Required Skills**:
-- `ng-workspace` for the Angular workspace structure
-- `ng-api` for the generated `<Resource>ApiService` dependency
+- `angular-workspace-foundation` for the Angular workspace structure
+- `angular-api-integration` for the generated `<Resource>ApiService` dependency
 
 **Required Tools/Libraries**:
 - Angular workspace with TypeScript configuration
@@ -3491,9 +3521,9 @@ Output:
 
 ```yaml
 ---
-name: ng-field-component
+name: angular-field-component-composition
 description: Create, modify, or delete Angular Material small field-level components with typed input/output signals, Material imports, and ARIA accessibility
-when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /ng-field-component to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
+when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /angular-field-component-composition to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4114,9 +4144,9 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 
 ```yaml
 ---
-name: ng-form-field
+name: angular-form-field-composition
 description: Create, modify, or delete Angular Material form field components implementing ControlValueAccessor for seamless reactive forms integration with validation and error handling
-when_to_use: Use when build_app dispatches a form-field-component procedure node, or when a user runs /ng-form-field to scaffold a Material form-field component that implements ControlValueAccessor for reactive forms.
+when_to_use: Use when build_app dispatches a form-field-component procedure node, or when a user runs /angular-form-field-composition to scaffold a Material form-field component that implements ControlValueAccessor for reactive forms.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4951,15 +4981,15 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 
 ## Angular component generation
 
-**Skill Name**: `ng-component`
+**Skill Name**: `angular-component-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-component
+name: angular-component-composition
 description: Create, modify, or delete Angular Material components (display, container, or dialog types) with standalone architecture and Material theming
-when_to_use: Use when build_app dispatches a component procedure node for display, container, or dialog types, or when a user runs /ng-component to scaffold a standalone Angular Material component.
+when_to_use: Use when build_app dispatches a component procedure node for display, container, or dialog types, or when a user runs /angular-component-composition to scaffold a standalone Angular Material component.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4974,7 +5004,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-component` skill manages the creation, modification, and deletion of Angular components within an existing Angular Material application. Components are generated following modern Angular conventions (standalone components, signals, Material Design patterns) and can be one of three types: **display** (presentational with Material layout), **container** (smart component with service injection and Observable data binding), or **dialog** (Material dialog with data injection and action buttons). This skill should be used after the workspace and application have been created.
+The `angular-component-composition` skill manages the creation, modification, and deletion of Angular components within an existing Angular Material application. Components are generated following modern Angular conventions (standalone components, signals, Material Design patterns) and can be one of three types: **display** (presentational with Material layout), **container** (smart component with service injection and Observable data binding), or **dialog** (Material dialog with data injection and action buttons). This skill should be used after the workspace and application have been created.
 
 ### Inputs
 
@@ -5543,14 +5573,14 @@ Common errors and their resolution strategies:
 
 Required prerequisites before executing this skill:
 
-1. **Angular Material workspace boilerplate** (Skill 1 - ng-workspace) — Workspace must exist
-2. **Angular Material app boilerplate** (Skill 2 - ng-app) — Application must exist before creating components
+1. **Angular Material workspace boilerplate** (Skill 1 - angular-workspace-foundation) — Workspace must exist
+2. **Angular Material app boilerplate** (Skill 2 - angular-app-composition) — Application must exist before creating components
 3. **Angular CLI** — Must be installed and accessible
 4. **Angular Material** — Must be installed in the target application
 
 Optional dependencies:
 
-- **Angular API generation** (Skill 3 - ng-api-gen) — If component needs to consume API services
+- **Angular API generation** (Skill 3 - angular-api-integration) — If component needs to consume API services
 - **Angular data model Service** (Skill 4) — If container component needs data service injection
 
 ### Examples
@@ -5675,15 +5705,15 @@ Optional dependencies:
 
 ## Angular Material complex component generation
 
-**Skill Name**: `ng-complex-component`
+**Skill Name**: `angular-complex-component-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-complex-component
+name: angular-complex-component-composition
 description: Create, modify, or delete Angular Material complex components with theme mixins, nested child components, content projection, and CDK overlay integration
-when_to_use: Use when build_app dispatches a complex-component procedure node, or when a user runs /ng-complex-component to scaffold a Material component requiring theme mixins, content projection, child components, or CDK overlay integration.
+when_to_use: Use when build_app dispatches a complex-component procedure node, or when a user runs /angular-complex-component-composition to scaffold a Material component requiring theme mixins, content projection, child components, or CDK overlay integration.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -5698,7 +5728,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-complex-component` skill manages Angular Material components that go beyond a single standalone component scaffold. It is used when a component needs one or more advanced composition features: a dedicated theme mixin, nested child components, typed content projection slots, or CDK overlay behavior. The skill keeps the component aligned with the simpler `ng-component` conventions while expanding the generated structure to cover public API documentation, theming integration, and multi-file component composition.
+The `angular-complex-component-composition` skill manages Angular Material components that go beyond a single standalone component scaffold. It is used when a component needs one or more advanced composition features: a dedicated theme mixin, nested child components, typed content projection slots, or CDK overlay behavior. The skill keeps the component aligned with the simpler `angular-component-composition` conventions while expanding the generated structure to cover public API documentation, theming integration, and multi-file component composition.
 
 ### Inputs
 
@@ -5959,9 +5989,9 @@ Common errors and their resolution strategies:
 
 Required prerequisites before executing this skill:
 
-1. **Angular Material workspace boilerplate** (Skill 1 - ng-workspace)
-2. **Angular Material app boilerplate** (Skill 2 - ng-app)
-3. **Angular component generation** (Skill 7 - ng-component) conventions should already be understood and available for reuse
+1. **Angular Material workspace boilerplate** (Skill 1 - angular-workspace-foundation)
+2. **Angular Material app boilerplate** (Skill 2 - angular-app-composition)
+3. **Angular component generation** (Skill 7 - angular-component-composition) conventions should already be understood and available for reuse
 
 ### Examples
 
@@ -5987,13 +6017,13 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 }
 ```
 
-## ng-reactive-form
+## Angular reactive form generation
 
 ```yaml
 ---
-name: ng-reactive-form
+name: angular-reactive-form-composition
 description: Create, modify, or delete Angular Material reactive forms with typed FormGroup, FormBuilder scaffolding, Material form fields, server-side validation error handling, and comprehensive specs
-when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /ng-reactive-form to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
+when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /angular-reactive-form-composition to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -6008,7 +6038,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-reactive-form` skill manages Angular reactive form components that use typed `FormGroup<>` interfaces, `FormBuilder` for control creation, Angular Material form fields (`MatFormField`), and integrate with data services for submission. These forms implement loading states with `MatProgressBar`, handle server-side validation errors by calling `setErrors()` on individual controls, wire submit actions to data service methods, and provide cancel handlers for navigation or output events. Forms can operate in create mode (empty initial values), edit mode (pre-populated from resource), or both modes (dynamic based on route parameters).
+The `angular-reactive-form-composition` skill manages Angular reactive form components that use typed `FormGroup<>` interfaces, `FormBuilder` for control creation, Angular Material form fields (`MatFormField`), and integrate with data services for submission. These forms implement loading states with `MatProgressBar`, handle server-side validation errors by calling `setErrors()` on individual controls, wire submit actions to data service methods, and provide cancel handlers for navigation or output events. Forms can operate in create mode (empty initial values), edit mode (pre-populated from resource), or both modes (dynamic based on route parameters).
 
 ### Inputs
 
@@ -6024,7 +6054,7 @@ Procedure-level inputs:
   - `edit` — Form for editing existing resources (pre-populated from resource)
   - `both` — Form supporting both create and edit based on route parameters or input
 - `resourceName` (string, optional): Name of the resource this form operates on. If provided, the skill will:
-  - Inspect generated API models from `ng-api` output to derive field types
+  - Inspect generated API models from `angular-api-integration` output to derive field types
   - Create typed `FormGroup<>` interface matching the model structure
   - Wire submit to corresponding data service method (e.g., `createUser()`, `updateUser()`)
   - If not provided, form fields must be manually specified
@@ -6054,8 +6084,8 @@ Procedure-level inputs:
    - Validate `formName` follows naming conventions (lowercase, hyphenated)
    - Check form component doesn't already exist at `targetPath/<formName>/`
    - If `resourceName` is provided:
-     - Verify generated API models exist from `ng-api` skill output
-     - Verify corresponding data service exists from `ng-data-service` skill
+     - Verify generated API models exist from `angular-api-integration` skill output
+     - Verify corresponding data service exists from `angular-data-service-composition` skill
      - Extract field names and types from the resource model
 
 2. **Determine target directory**:
@@ -6461,11 +6491,11 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 1. **Generated model not found**:
    - Error: Cannot resolve resource model for form field derivation
-   - Resolution: Run `ng-api` skill first to generate OpenAPI models, then retry
+   - Resolution: Run `angular-api-integration` skill first to generate OpenAPI models, then retry
 
 2. **Data service missing**:
    - Error: Cannot inject data service for submit integration
-   - Resolution: Run `ng-data-service` skill to create service wrapper, then retry
+   - Resolution: Run `angular-data-service-composition` skill to create service wrapper, then retry
 
 3. **Form control type mismatch**:
    - Error: TypeScript compilation fails due to form control type not matching model field type
@@ -6578,15 +6608,15 @@ Output:
 
 ## Angular Material page generation
 
-**Skill Name**: `ng-page`
+**Skill Name**: `angular-page-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-page
+name: angular-page-composition
 description: Create, modify, or delete Angular Material pages with lazy standalone routing, sidenav navigation, and authenticated route guard support
-when_to_use: Use when build_app dispatches a page procedure node, or when a user runs /ng-page to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
+when_to_use: Use when build_app dispatches a page procedure node, or when a user runs /angular-page-composition to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -6601,7 +6631,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-page` skill manages top-level Angular Material pages inside an existing feature area. It covers page scaffolding, route registration, optional sidenav navigation, and page-specific layout patterns for common application screens. Use this skill after the Angular workspace and app exist, and after supporting skills such as data services, shared components, and reactive forms are available when the requested page depends on them.
+The `angular-page-composition` skill manages top-level Angular Material pages inside an existing feature area. It covers page scaffolding, route registration, optional sidenav navigation, and page-specific layout patterns for common application screens. Use this skill after the Angular workspace and app exist, and after supporting skills such as data services, shared components, and reactive forms are available when the requested page depends on them.
 
 ### Inputs
 
@@ -6790,7 +6820,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
    - Resolution: import and register the correct `CanActivate` guard in the route entry
 
 3. **Workflow page missing reactive form dependencies**:
-   - Resolution: run the `ng-reactive-form` skill first for the required step forms (see Dependencies below), then retry page generation
+   - Resolution: run the `angular-reactive-form-composition` skill first for the required step forms (see Dependencies below), then retry page generation
 
 ### Dependencies
 
@@ -6844,15 +6874,15 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 
 ## Angular Material site generation
 
-**Skill Name**: `ng-site`
+**Skill Name**: `angular-site-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-site
+name: angular-site-composition
 description: Orchestrate Angular Material site generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure
-when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /ng-site to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
+when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /angular-site-composition to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -6867,14 +6897,14 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-site` skill coordinates complete Angular Material site generation for an application that already has an Angular workspace and app scaffold available. It acts as an orchestrator across app shell creation, route setup, OpenAPI client generation, page generation, reactive form generation, Material theming, and application-wide auth wiring. Use this skill when the agent needs to build or reshape the overall site structure rather than a single page or form in isolation.
+The `angular-site-composition` skill coordinates complete Angular Material site generation for an application that already has an Angular workspace and app scaffold available. It acts as an orchestrator across app shell creation, route setup, OpenAPI client generation, page generation, reactive form generation, Material theming, and application-wide auth wiring. Use this skill when the agent needs to build or reshape the overall site structure rather than a single page or form in isolation.
 
 ### Inputs
 
 Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
 - `project.name`: Application name within the workspace
-- `openapi.source`: Path to the OpenAPI source used by `ng-api` for client generation
+- `openapi.source`: Path to the OpenAPI source used by `angular-api-integration` for client generation
 
 Procedure-level inputs:
 - **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/ui/`, used to discover pages, navigation structure, and forms
@@ -6899,7 +6929,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - Read `angular.output` and `project.name` from `django-angular3.json`
    - Confirm `angular.output` exists and contains `angular.json`
    - Confirm the target Angular application already exists in the workspace
-   - If either the workspace or application is missing, stop and instruct the caller to run `ng-workspace` first and then `ng-app`
+   - If either the workspace or application is missing, stop and instruct the caller to run `angular-workspace-foundation` first and then `angular-app-composition`
 
 2. **Read UI spec when provided**
    - If `uiSpecPath` is supplied, read `spec/ui/` (or the supplied equivalent) to determine:
@@ -6915,17 +6945,17 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - Create or update the root route configuration in `app.routes.ts`
    - Ensure the shell exposes a stable place for feature navigation and authenticated child routes
 
-4. **Invoke `ng-api` when an OpenAPI source is available**
-   - If `openapi.source` is present in `django-angular3.json`, pass through to `ng-api` and generate or refresh Angular API clients before page or form generation
+4. **Invoke `angular-api-integration` when an OpenAPI source is available**
+   - If `openapi.source` is present in `django-angular3.json`, pass through to `angular-api-integration` and generate or refresh Angular API clients before page or form generation
    - Reuse the generated models and services as the typed foundation for resource-backed pages and forms
 
-5. **Invoke `ng-page` for each site page**
-   - For every page discovered from the UI spec, invoke `ng-page` in sequence
-   - If no UI spec exists, invoke `ng-page` for the default page set
+5. **Invoke `angular-page-composition` for each site page**
+   - For every page discovered from the UI spec, invoke `angular-page-composition` in sequence
+   - If no UI spec exists, invoke `angular-page-composition` for the default page set
    - Pass through page type, route path, feature ownership, authentication needs, and navigation metadata
 
-6. **Invoke `ng-reactive-form` for each form definition**
-   - For every form discovered in the UI spec, invoke `ng-reactive-form`
+6. **Invoke `angular-reactive-form-composition` for each form definition**
+   - For every form discovered in the UI spec, invoke `angular-reactive-form-composition`
    - Prefer generated OpenAPI models when available
    - Attach generated forms to the relevant workflow or detail pages after form generation completes
 
@@ -6994,7 +7024,7 @@ Procedure-level inputs:
 
 **Process**:
 1. Confirm the target application exists in the workspace
-2. Remove the site by invoking the equivalent `ng-app` delete flow for the application
+2. Remove the site by invoking the equivalent `angular-app-composition` delete flow for the application
 3. Remove site-level files that are unique to the app, including shell, routes, theme, guards, and interceptors if they are not shared elsewhere
 4. Confirm the workspace remains valid after app removal
 
@@ -7013,7 +7043,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 - `templates/app-shell.ts.tpl` — Root site shell template used for `app.component.ts` generation with `MatSidenav` layout
 - `context/angular-conventions.md` — Angular standalone application and DI conventions for app shell and route orchestration
 - `context/angular-material-patterns.md` — Material sidenav, toolbar, navigation, and theme guidance used by the generated site shell
-- `context/openapi-integration.md` — OpenAPI client generation and usage guidance for `ng-api`-driven pages and forms
+- `context/openapi-integration.md` — OpenAPI client generation and usage guidance for `angular-api-integration`-driven pages and forms
 
 ### Validation
 
@@ -7041,16 +7071,16 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 **Common Errors**:
 
 1. **Workspace or app missing**:
-   - Resolution: run `ng-workspace` first, then `ng-app`, before invoking `ng-site`
+   - Resolution: run `angular-workspace-foundation` first, then `angular-app-composition`, before invoking `angular-site-composition`
 
 2. **UI spec missing or incomplete**:
    - Resolution: fall back to defaults or stop and request a valid `spec/ui/` source when page/form inference is required
 
 3. **OpenAPI source unavailable**:
-   - Resolution: skip `ng-api` orchestration when no OpenAPI source is provided, or request a valid source path before generating resource-backed pages/forms
+   - Resolution: skip `angular-api-integration` orchestration when no OpenAPI source is provided, or request a valid source path before generating resource-backed pages/forms
 
 4. **Dependent page or form skill unavailable**:
-   - Resolution: ensure `ng-page` and `ng-reactive-form` are available before site orchestration, then retry the failed step
+   - Resolution: ensure `angular-page-composition` and `angular-reactive-form-composition` are available before site orchestration, then retry the failed step
 
 5. **Auth or interceptor wiring fails compile validation**:
    - Resolution: review route guard imports, HTTP provider registration, and CSRF header handling before rerunning validation
@@ -7088,9 +7118,9 @@ Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`,
 1. Verify the workspace and app already exist
 2. Read `spec/ui/` to discover pages and forms
 3. Create the Material app shell and root routes
-4. Invoke `ng-api`
-5. Invoke `ng-page` for each discovered page
-6. Invoke `ng-reactive-form` for each discovered form
+4. Invoke `angular-api-integration`
+5. Invoke `angular-page-composition` for each discovered page
+6. Invoke `angular-reactive-form-composition` for each discovered form
 7. Wire theme, `AuthGuard`, CSRF interceptor, and compile validation
 
 **Example 2: Modify site navigation**

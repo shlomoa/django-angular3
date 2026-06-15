@@ -141,6 +141,59 @@ Both modes converge on the same invariant: once a backend exists, the OpenAPI
 contract is the source of truth for CRM-facing functionality (§11.1). See §11.2
 for the generation toolchain and §17 for the corresponding decision.
 
+### 2.23 Automation naming layers
+
+Four distinct naming layers appear in the `djng`/`ngdj` automation subsystem.
+Each layer has a different owner, stability contract, and purpose. Keeping them
+separate prevents name collision between the CLI surface, the agent API, and
+the AI-guided session API.
+
+- **Concern key** — A stable, dot-namespaced semantic identifier for a
+  construction concern. Used in planning and documentation only; never appears
+  in filenames, code identifiers, or command names. The canonical concern keys
+  are:
+
+  *Angular construction:*
+
+  | Concern key | Construction concern |
+  |---|---|
+  | `angular.workspace` | Workspace scaffold and configuration |
+  | `angular.app` | Application scaffold |
+  | `angular.api-client` | Typed API client generation from OpenAPI |
+  | `angular.data-service` | Data service layer |
+  | `angular.field-component` | Reusable form field components |
+  | `angular.form-field` | CVA-backed form field boilerplate |
+  | `angular.component` | Standalone components |
+  | `angular.complex-component` | Composite/complex components |
+  | `angular.reactive-form` | Typed reactive forms |
+  | `angular.page` | Routed page components |
+  | `angular.site` | Site shell and route tree |
+
+  *Contract lifecycle:*
+
+  | Concern key | Construction concern |
+  |---|---|
+  | `contract.schema-export` | OpenAPI schema extraction from DRF |
+  | `contract.schema-validate` | Schema validation (OAS 3.1 conformance) |
+  | `contract.schema-diff` | Schema diff and change detection |
+- **CLI wrapper command** — The Django management command name for a `djng`
+  wrapper (e.g. `ng_workspace`, `ng_openapi_gen`, `export_schema`). Frozen:
+  these names are part of the public operator interface and MUST NOT be renamed
+  without a deprecation cycle.
+- **TOOL contract** — The deterministic operation name exposed to the agent and
+  the procedure graph (e.g. `angular_workspace_scaffold`,
+  `angular_api_client_generate`, `openapi_schema_export`). Defined in
+  `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. The `tool` field
+  of every `tool` procedure node MUST equal one of these names.
+- **SKILL name** — The AI-guided session name passed to `build_app`'s
+  `query(skills=[...])` call (e.g. `angular-workspace-foundation`,
+  `angular-app-composition`, `angular-api-integration`). Defined in
+  `doc/GENERATE_AI_AUTOMATIONS.md` §Skills Catalog. The `skill` field of every
+  `skill-session` procedure node MUST equal one of these names.
+
+The complete mapping of all four layers for every construction concern is
+maintained in `doc/GENERATE_AI_AUTOMATIONS.md` §Automation Naming Crosswalk.
+
 ---
 
 ## 3. Toolchain Design

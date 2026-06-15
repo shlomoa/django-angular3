@@ -13,13 +13,13 @@ from ...tools import ensure_oasdiff
 def _command_for_skill(skill: str, mode: str) -> str:
     """Maps a skill + mode pair to the corresponding management command name."""
     overrides = {
-        ("ng-workspace", "create"): "ng_new",
-        ("ng-workspace", "modify"): "ng_workspace_modify",
-        ("ng-workspace", "delete"): "ng_workspace_delete",
-        ("ng-app", "create"): "ng_gen_app",
-        ("ng-app", "modify"): "ng_gen_app",
-        ("ng-api", "create"): "ng_openapi_gen",
-        ("ng-api", "modify"): "ng_openapi_gen",
+        ("angular-workspace-foundation", "create"): "ng_workspace",
+        ("angular-workspace-foundation", "modify"): "ng_workspace_modify",
+        ("angular-workspace-foundation", "delete"): "ng_workspace_delete",
+        ("angular-app-composition", "create"): "ng_gen_app",
+        ("angular-app-composition", "modify"): "ng_gen_app",
+        ("angular-api-integration", "create"): "ng_openapi_gen",
+        ("angular-api-integration", "modify"): "ng_openapi_gen",
     }
     return overrides.get((skill, mode), skill.replace("-", "_"))
 
@@ -99,7 +99,7 @@ class Command(BaseCommand):
                     return json.loads(e.stdout)
             except json.JSONDecodeError:
                 pass
-            raise CommandError(f"oasdiff failed: {e.stderr}")
+            raise CommandError(f"oasdiff failed: {e.stderr}") from e
             
     def _extract_resources(self, path_list: list[str], path_dict: dict[str, Any]) -> set[str]:
         """Extracts base resource names from OpenAPI paths like '/api/v1/customers/' -> 'customers'."""
@@ -157,7 +157,7 @@ class Command(BaseCommand):
             prev_cfg = load_project_config(previous_config_path)
             curr_cfg = load_project_config(current_config_path)
         except ConfigError as e:
-            raise CommandError(f"Config load failed: {e}")
+            raise CommandError(f"Config load failed: {e}") from e
             
         if prev_cfg.project_name != curr_cfg.project_name:
             return {"type": "replace-things"} # project rename implies scratch 
@@ -175,7 +175,7 @@ class Command(BaseCommand):
         try:
             current_config = load_project_config(config_path)
         except ConfigError as exc:
-            raise CommandError(str(exc))
+            raise CommandError(str(exc)) from exc
 
         current_schema_path: Path = current_config.openapi_source
         if not current_schema_path:
@@ -194,7 +194,7 @@ class Command(BaseCommand):
         try:
             ensure_oasdiff()
         except RuntimeError as e:
-            raise CommandError(str(e))
+            raise CommandError(str(e)) from e
 
         change_set: dict[str, Any] = {
             "schema": {
@@ -244,7 +244,7 @@ class Command(BaseCommand):
                 break_json: list[dict[str, Any]] = json.loads(break_result.stdout) if break_result.stdout.strip() else []
                 if break_json:
                     schema_changes["breaking"] = True
-            except Exception:
+            except json.JSONDecodeError:
                 pass
 
             if schema_changes["breaking"] and not options["acknowledge_breaking"]:
@@ -365,7 +365,4 @@ class Command(BaseCommand):
         
         out_file = out_dir / f"build-plan.{ext}"
         out_file.write_text(plan_str, encoding="utf-8")
-        if not callable(getattr(self.style, 'SUCCESS', None)):
-            self.stdout.write(f"Build plan written to {out_file}")
-        else:
-            self.stdout.write(self.style.SUCCESS(f"Build plan written to {out_file}"))
+        self.stdout.write(f"Build plan written to {out_file}")

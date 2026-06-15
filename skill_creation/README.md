@@ -41,17 +41,17 @@ skill_creation/
     openapi-integration.md
     templates.md
   skills/
-    01-ng-workspace.md
-    02-ng-app.md
-    03-ng-api.md
-    04-ng-data-service.md
-    05-ng-field-component.md
-    06-ng-form-field.md
-    07-ng-component.md
-    08-ng-complex-component.md
-    09-ng-reactive-form.md
-    10-ng-page.md
-    11-ng-site.md
+    01-angular-workspace-foundation.md
+    02-angular-app-composition.md
+    03-angular-api-integration.md
+    04-angular-data-service-composition.md
+    05-angular-field-component-composition.md
+    06-angular-form-field-composition.md
+    07-angular-component-composition.md
+    08-angular-complex-component-composition.md
+    09-angular-reactive-form-composition.md
+    10-angular-page-composition.md
+    11-angular-site-composition.md
 ```
 
 ## Use

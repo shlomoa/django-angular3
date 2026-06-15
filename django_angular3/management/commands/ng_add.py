@@ -15,5 +15,5 @@ class Command(AngularBaseCommand):
             help="Package to add (defaults to setting: ng_add_package).",
         )
 
-    def get_plan_options(self, options: dict[str, object]) -> dict[str, object]:
+    def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {"package": options.get("package")}

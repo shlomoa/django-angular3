@@ -1,12 +1,12 @@
 ## Angular component generation
 
-**Skill Name**: `ng-component`
+**Skill Name**: `angular-component-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-component
+name: angular-component-composition
 description: Create, modify, or delete Angular Material components (display, container, or dialog types) with standalone architecture and Material theming
 user-invocable: false
 context: fork
@@ -22,7 +22,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-component` skill manages the creation, modification, and deletion of Angular components within an existing Angular Material application. Components are generated following modern Angular conventions (standalone components, signals, Material Design patterns) and can be one of three types: **display** (presentational with Material layout), **container** (smart component with service injection and Observable data binding), or **dialog** (Material dialog with data injection and action buttons). This skill should be used after the workspace and application have been created.
+The `angular-component-composition` skill manages the creation, modification, and deletion of Angular components within an existing Angular Material application. Components are generated following modern Angular conventions (standalone components, signals, Material Design patterns) and can be one of three types: **display** (presentational with Material layout), **container** (smart component with service injection and Observable data binding), or **dialog** (Material dialog with data injection and action buttons). This skill should be used after the workspace and application have been created.
 
 ### Inputs
 
@@ -718,4 +718,3 @@ Optional dependencies:
 // Output: Component deleted. Manual cleanup needed in:
 //   - src/app/pages/dashboard/dashboard.component.html (remove <app-old-widget>)
 ```
-

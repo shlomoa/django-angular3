@@ -1,12 +1,12 @@
 ## Angular Material complex component generation
 
-**Skill Name**: `ng-complex-component`
+**Skill Name**: `angular-complex-component-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-complex-component
+name: angular-complex-component-composition
 description: Create, modify, or delete Angular Material complex components with theme mixins, nested child components, content projection, and CDK overlay integration
 user-invocable: false
 context: fork
@@ -22,7 +22,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-complex-component` skill manages Angular Material components that go beyond a single standalone component scaffold. It is used when a component needs one or more advanced composition features: a dedicated theme mixin, nested child components, typed content projection slots, or CDK overlay behavior. The skill keeps the component aligned with the simpler `ng-component` conventions while expanding the generated structure to cover public API documentation, theming integration, and multi-file component composition.
+The `angular-complex-component-composition` skill manages Angular Material components that go beyond a single standalone component scaffold. It is used when a component needs one or more advanced composition features: a dedicated theme mixin, nested child components, typed content projection slots, or CDK overlay behavior. The skill keeps the component aligned with the simpler `angular-component-composition` conventions while expanding the generated structure to cover public API documentation, theming integration, and multi-file component composition.
 
 ### Inputs
 
@@ -305,4 +305,3 @@ Required prerequisites before executing this skill:
   "features": ["cdk-overlay"]
 }
 ```
-

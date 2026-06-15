@@ -1,6 +1,6 @@
 # Open Items — djng/ngdj
 
-Generated: 2026-05-12. Items are ordered by implementation sequence. Status is
+Generated: 2026-06-14. Items are ordered by implementation sequence. Status is
 shown for each item.
 
 ---
@@ -32,8 +32,15 @@ discrete governed construction stage (currently absent from §4.2.2; covered by
 Derive the complete set of `angular-django2` capabilities and `djng` command
 wrappers needed to materialize the required Angular-side outputs.
 
-- Wrappers implemented: `ng_new`, `ng_add`, `ng_config`, `ng_gen_app`,
-  `ng_openapi_gen`, `ng_build`, `ng_workspace_delete`, `ng_workspace_modify`.
+- Wrappers implemented: `ng_new`, `ng_workspace`, `ng_add`, `ng_config`,
+  `ng_gen_app`, `ng_openapi_gen`, `ng_build`, `ng_workspace_delete`,
+  `ng_workspace_modify`.
+- `ng_workspace` now represents the upstream-aligned empty-workspace bootstrap
+  flow: `ng new` + workspace defaults + `ng add angular-django2` +
+  `ng generate angular-django2:ng-workspace`.
+- Broader repository docs under `doc/` still need wording alignment where they
+  describe workspace creation as `ng_new`-first rather than the composite
+  `ng_workspace` flow.
 - Complete derivation aligned with all 11 SKILLS not yet done.
 
 ---
@@ -83,8 +90,10 @@ Implement the `djng` generator app entry points and the governed wrappers around
 `ngdj` actions used for workspace, app, contract-derived, and non-CRM
 construction.
 
-- All wrappers implemented. Non-CRM construction wrappers depend on item 1
-  (MR1).
+- All current workspace/app/contract wrappers implemented, including the
+  explicit `ng_workspace` bootstrap wrapper aligned with the upstream
+  `angular-django2:ng-workspace` schematic. Non-CRM construction wrappers
+  depend on item 1 (MR1).
 
 ---
 
@@ -98,6 +107,8 @@ build-plan emission from current and previous schema/config inputs.
 - Schema change detection, classification (start-from-scratch, add-things,
   remove-things, replace-things, breaking), and plan emission implemented in
   `build_app.py`.
+- Start-from-scratch workspace steps now emit `ng_workspace` so build plans use
+  the same upstream-aligned workspace bootstrap contract as the CLI wrappers.
 - Config change detection covers only project rename; pages, components, and
   forms change detection not implemented (blocked by item 1).
 - Plan currently emits CLI command strings. Must be replaced with SDK call

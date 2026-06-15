@@ -197,15 +197,15 @@ the `tool` field of a `tool` node and the `hook` field of a `gate` node.
 
 | Construction concern | Primitive | Tool contract | Hook contract | Role in `build_app` |
 |---|---|---|---|---|
-| Schema export from DRF | TOOL | `export_schema` | — | Produce the current OpenAPI artifact as a deterministic build input |
-| Migration-driven schema refresh | HOOK | (wraps `export_schema`) | `migration-triggered` | Re-export the schema automatically whenever a new Django migration file appears |
+| Schema export from DRF | TOOL | `openapi_schema_export` | — | Produce the current OpenAPI artifact as a deterministic build input |
+| Migration-driven schema refresh | HOOK | (wraps `openapi_schema_export`) | `migration-triggered` | Re-export the schema automatically whenever a new Django migration file appears |
 | OpenAPI validation | TOOL | `validate_openapi_schema` | — | Validate the schema before downstream construction continues |
 | Pre-construction contract validation gate | HOOK | (wraps `validate_openapi_schema`) | `pre-construction` | Block any Angular generation tool until the schema exists, is valid OAS 3.1, and is at least as fresh as the latest migration |
 | Schema diff / change detection | TOOL | `oasdiff_diff` | — | Produce the structured schema-change inputs used to derive the `ChangeSet` |
 | Breaking-change stop condition | HOOK | (consumes `oasdiff_diff` output) | `breaking-change` | Block downstream construction until breaking changes are acknowledged or resolved |
-| Angular workspace scaffold | TOOL | `ngdj_create_workspace` | — | Create the Angular workspace before the `ng-workspace` skill session |
-| Angular application scaffold | TOOL | `ngdj_create_app` | — | Add the primary Angular application before the `ng-app` skill session |
-| Typed Angular client generation | TOOL | `ng_openapi_gen` | — | Generate the typed Angular API client before the `ng-api` skill session |
+| Angular workspace scaffold | TOOL | `angular_workspace_scaffold` | — | Create the Angular workspace before the `angular-workspace-foundation` skill session |
+| Angular application scaffold | TOOL | `angular_app_scaffold` | — | Add the primary Angular application before the `angular-app-composition` skill session |
+| Typed Angular client generation | TOOL | `angular_api_client_generate` | — | Generate the typed Angular API client before the `angular-api-integration` skill session |
 | Post-generation verification logging | HOOK | (consumes generation-tool outputs) | `post-generation` | Run a structural check after each generation tool and append a pass/fail entry to `build/verification.log` |
 | Session-end archiving and audit | HOOK | (no wrapped tool) | `session-stop` | Archive durable artifacts and write a session summary when the agent session ends |
 
@@ -219,8 +219,8 @@ model.
 |---|---|---|
 | `start-from-scratch` | 1, 2, 3, 4, then config-derived SKILLS | Full pipeline |
 | `no-change` | None (schema-derived) | Config-derived SKILLS still run if config changed |
-| `add-things` | 3 (`ng-api`), 4 (`ng-data-service`) for new resources, then component/page SKILLS for new resources | Existing workspace and app untouched |
-| `remove-things` | 3 (`ng-api`), 4 (`ng-data-service`) in delete mode, component/page SKILLS for removed resources in delete mode | |
+| `add-things` | 3 (`angular-api-integration`), 4 (`angular-data-service-composition`) for new resources, then component/page SKILLS for new resources | Existing workspace and app untouched |
+| `remove-things` | 3 (`angular-api-integration`), 4 (`angular-data-service-composition`) in delete mode, component/page SKILLS for removed resources in delete mode | |
 | `replace-things` | Same as remove-things for removed resources, then add-things for new resources | Order: remove first, then add |
 | `breaking` | Blocked — see Breaking change gate above | |
 
@@ -228,19 +228,19 @@ model.
 
 | `<project>.project.json` change | SKILL | Mode |
 |---|---|---|
-| Page added | 10 (`ng-page`) | create |
-| Page modified | 10 (`ng-page`) | modify |
-| Page removed | 10 (`ng-page`) | delete |
-| Standalone component added | 7 (`ng-component`) | create |
-| Standalone component modified | 7 (`ng-component`) | modify |
-| Standalone component removed | 7 (`ng-component`) | delete |
-| Complex component added | 8 (`ng-complex-component`) | create |
-| Complex component modified | 8 (`ng-complex-component`) | modify |
-| Complex component removed | 8 (`ng-complex-component`) | delete |
-| Reactive form added | 9 (`ng-reactive-form`) | create |
-| Reactive form modified | 9 (`ng-reactive-form`) | modify |
-| Reactive form removed | 9 (`ng-reactive-form`) | delete |
-| Site navigation changed | 11 (`ng-site`) | modify |
+| Page added | 10 (`angular-page-composition`) | create |
+| Page modified | 10 (`angular-page-composition`) | modify |
+| Page removed | 10 (`angular-page-composition`) | delete |
+| Standalone component added | 7 (`angular-component-composition`) | create |
+| Standalone component modified | 7 (`angular-component-composition`) | modify |
+| Standalone component removed | 7 (`angular-component-composition`) | delete |
+| Complex component added | 8 (`angular-complex-component-composition`) | create |
+| Complex component modified | 8 (`angular-complex-component-composition`) | modify |
+| Complex component removed | 8 (`angular-complex-component-composition`) | delete |
+| Reactive form added | 9 (`angular-reactive-form-composition`) | create |
+| Reactive form modified | 9 (`angular-reactive-form-composition`) | modify |
+| Reactive form removed | 9 (`angular-reactive-form-composition`) | delete |
+| Site navigation changed | 11 (`angular-site-composition`) | modify |
 
 ## Procedure Graph
 
@@ -259,17 +259,17 @@ Within that broader graph, the current AI-guided construction subset encodes
 the following SKILLS dependency chain:
 
 ```
-1  ng-workspace   (foundation)
-2  ng-app         (depends on 1)
-3  ng-api         (depends on 2)
-4  ng-data-service (depends on 3)
-5  ng-field-component (depends on 2)
-6  ng-form-field   (depends on 2)
-7  ng-component    (depends on 2)
-8  ng-complex-component (depends on 2)
-9  ng-reactive-form (depends on 2, 6; optionally 4)
-10 ng-page         (depends on 2; composes 4, 7, 8, 9)
-11 ng-site         (composes 2–10)
+1  angular-workspace-foundation   (foundation)
+2  angular-app-composition         (depends on 1)
+3  angular-api-integration         (depends on 2)
+4  angular-data-service-composition (depends on 3)
+5  angular-field-component-composition (depends on 2)
+6  angular-form-field-composition   (depends on 2)
+7  angular-component-composition    (depends on 2)
+8  angular-complex-component-composition (depends on 2)
+9  angular-reactive-form-composition (depends on 2, 6; optionally 4)
+10 angular-page-composition         (depends on 2; composes 4, 7, 8, 9)
+11 angular-site-composition         (composes 2–10)
 ```
 
 SKILLS not triggered by any change in the current run are omitted from the
@@ -306,9 +306,9 @@ consistent state after all construction procedures have completed.
       "depends_on": []
     },
     {
-      "id": "ng-api-create-Order",
+      "id": "angular-api-integration-create-Order",
       "kind": "skill-session",
-      "skill": "ng-api",
+      "skill": "angular-api-integration",
       "mode": "create",
       "reason": "New resource 'Order' added to schema",
       "inputs": {
@@ -321,9 +321,9 @@ consistent state after all construction procedures have completed.
       "depends_on": ["oasdiff-diff"]
     },
     {
-      "id": "ng-data-service-create-Order",
+      "id": "angular-data-service-composition-create-Order",
       "kind": "skill-session",
-      "skill": "ng-data-service",
+      "skill": "angular-data-service-composition",
       "mode": "create",
       "reason": "New resource 'Order' requires data service",
       "inputs": {
@@ -333,7 +333,7 @@ consistent state after all construction procedures have completed.
         "project_config": "path/to/<project>.project.json",
         "previous_project_config": "path/to/previous-<project>.project.json"
       },
-      "depends_on": ["ng-api-create-Order"]
+      "depends_on": ["angular-api-integration-create-Order"]
     }
   ]
 }
@@ -442,8 +442,11 @@ purposes only:
   deterministic tool contract with structured inputs and outputs. The `tool`
   field of the node MUST equal one of the contract names defined in
   `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog
-  (`export_schema`, `validate_openapi_schema`, `oasdiff_diff`,
-  `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app`).
+  (`openapi_schema_export`, `validate_openapi_schema`, `oasdiff_diff`,
+  `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`).
+  TOOL contract names are one of the four automation naming layers defined in
+  `doc/ARCHITECTURE.md` §2.23; they are distinct from the CLI wrapper command
+  names that share similar spellings.
 - For each `gate` node or equivalent enforced boundary, `build_app` must apply
   the required blocking check or lifecycle side effect before downstream
   procedures continue. The `hook` field of the node MUST equal one of the
@@ -508,7 +511,7 @@ purposes only:
   procedures, as already required by §Procedure Graph.
 - The terminal verification procedures must consume the structured outputs of
   the deterministic tool procedures listed in FR-8 (for example, the
-  `generated_files` array returned by `ng_openapi_gen`) so that verification
+the `generated_files` array returned by `angular_api_client_generate`) so that verification
   is based on the recorded results of construction rather than on a separate
   filesystem rescan.
 - A run is reported as successful only when every terminal verification

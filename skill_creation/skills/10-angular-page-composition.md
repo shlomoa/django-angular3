@@ -1,12 +1,12 @@
 ## Angular Material page generation
 
-**Skill Name**: `ng-page`
+**Skill Name**: `angular-page-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-page
+name: angular-page-composition
 description: Create, modify, or delete Angular Material pages with lazy standalone routing, sidenav navigation, and authenticated route guard support
 user-invocable: false
 context: fork
@@ -22,7 +22,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-page` skill manages top-level Angular Material pages inside an existing feature area. It covers page scaffolding, route registration, optional sidenav navigation, and page-specific layout patterns for common application screens. Use this skill after the Angular workspace and app exist, and after supporting skills such as data services, shared components, and reactive forms are available when the requested page depends on them.
+The `angular-page-composition` skill manages top-level Angular Material pages inside an existing feature area. It covers page scaffolding, route registration, optional sidenav navigation, and page-specific layout patterns for common application screens. Use this skill after the Angular workspace and app exist, and after supporting skills such as data services, shared components, and reactive forms are available when the requested page depends on them.
 
 ### Inputs
 
@@ -208,7 +208,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
    - Resolution: import and register the correct `CanActivate` guard in the route entry
 
 3. **Workflow page missing reactive form dependencies**:
-   - Resolution: run the `ng-reactive-form` skill first for the required step forms (see Dependencies below), then retry page generation
+   - Resolution: run the `angular-reactive-form-composition` skill first for the required step forms (see Dependencies below), then retry page generation
 
 ### Dependencies
 
@@ -259,4 +259,3 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 2. Register the route with `loadComponent`
 3. Add `CanActivate` guard reference for authenticated checkout access
 4. Validate that the route is reachable and the app still compiles
-

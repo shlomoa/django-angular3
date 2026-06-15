@@ -365,29 +365,29 @@ components:
 Deterministic tool procedures (see `GENERATE_AI_AUTOMATIONS.md` §Tool
 Contracts Catalog) precede the SKILL sessions:
 
-1. `export_schema` *(tool)* — produce the current OpenAPI artifact at
+1. `openapi_schema_export` *(tool)* — produce the current OpenAPI artifact at
    `openapi.source`
 2. `validate_openapi_schema` *(tool)* — validate the freshly exported schema
-3. `ngdj_create_workspace` *(tool)* — scaffold the Angular workspace at
+3. `angular_workspace_scaffold` *(tool)* — scaffold the Angular workspace at
    `angular.output`
-4. `ng-workspace` *(skill)* — apply Angular Material workspace conventions on
+4. `angular-workspace-foundation` *(skill)* — apply Angular Material workspace conventions on
    the scaffolded workspace `simple_crm`
-5. `ngdj_create_app` *(tool)* — add the Angular application `simple_crm` into
+5. `angular_app_scaffold` *(tool)* — add the Angular application `simple_crm` into
    the workspace
-6. `ng-app` *(skill)* — finalize the Angular Material application `simple_crm`
-7. `ng_openapi_gen` *(tool)* — generate the typed Angular API client from
+6. `angular-app-composition` *(skill)* — finalize the Angular Material application `simple_crm`
+7. `angular_api_client_generate` *(tool)* — generate the typed Angular API client from
    `schema.yaml`
-8. `ng-api` *(skill)* — integrate the generated API client
-9. `ng-data-service` *(skill)* — generate data services for `Customer`,
+8. `angular-api-integration` *(skill)* — integrate the generated API client
+9. `angular-data-service-composition` *(skill)* — generate data services for `Customer`,
    `Product`
-10. `ng-component` *(skill)* — generate list component for `Customer`
-11. `ng-component` *(skill)* — generate detail component for `Customer`
-12. `ng-component` *(skill)* — generate list component for `Product`
-13. `ng-reactive-form` *(skill)* — generate edit form for `Customer`
-14. `ng-page` *(skill)* — generate `customer-list` page
-15. `ng-page` *(skill)* — generate `customer-detail` page
-16. `ng-page` *(skill)* — generate `product-list` page
-17. `ng-site` *(skill)* — assemble site with navigation
+10. `angular-component-composition` *(skill)* — generate list component for `Customer`
+11. `angular-component-composition` *(skill)* — generate detail component for `Customer`
+12. `angular-component-composition` *(skill)* — generate list component for `Product`
+13. `angular-reactive-form-composition` *(skill)* — generate edit form for `Customer`
+14. `angular-page-composition` *(skill)* — generate `customer-list` page
+15. `angular-page-composition` *(skill)* — generate `customer-detail` page
+16. `angular-page-composition` *(skill)* — generate `product-list` page
+17. `angular-site-composition` *(skill)* — assemble site with navigation
 18. *(verification)* — terminal verification procedure (per
     `APP_BUILDER_REQUIREMENTS.md` FR-10) consuming the structured outputs of
     the tool procedures above
@@ -466,15 +466,15 @@ Example 1's `schema.yaml`.
 
 Deterministic tool procedures precede the schema-derived SKILL sessions:
 
-1. `export_schema` *(tool)* — re-export the schema; archive previous version
+1. `openapi_schema_export` *(tool)* — re-export the schema; archive previous version
 2. `validate_openapi_schema` *(tool)* — validate the new schema
 3. `oasdiff_diff` *(tool)* — produce the structured diff feeding the
    `ChangeSet` above (`change_type: add-things`, no breaking changes)
-4. `ng_openapi_gen` *(tool)* — regenerate the typed Angular API client to
+4. `angular_api_client_generate` *(tool)* — regenerate the typed Angular API client to
    include the new `Order` endpoints
-5. `ng-api` *(skill)* — integrate the regenerated API client (new `Order`
+5. `angular-api-integration` *(skill)* — integrate the regenerated API client (new `Order`
    endpoints)
-6. `ng-data-service` *(skill)* — generate data service for `Order`
+6. `angular-data-service-composition` *(skill)* — generate data service for `Order`
 7. *(verification)* — terminal verification procedure (per FR-10)
 
 No workspace, app, or existing component steps — they are not affected.
@@ -533,10 +533,10 @@ failure exit code required by `APP_BUILDER_REQUIREMENTS.md` FR-9.
 Builder proceeds. ChangeSet type becomes `remove-things` for the `email`
 field. Steps include:
 
-1. `ng-api` — regenerate API client
-2. `ng-data-service` — update `Customer` data service
-3. `ng-reactive-form` — update customer edit form (remove `email` field)
-4. `ng-component` — update customer detail component (remove `email` display)
+1. `angular-api-integration` — regenerate API client
+2. `angular-data-service-composition` — update `Customer` data service
+3. `angular-reactive-form-composition` — update customer edit form (remove `email` field)
+4. `angular-component-composition` — update customer detail component (remove `email` display)
 
 ---
 
@@ -604,9 +604,9 @@ Example 1's `<project>.project.json` (the state before this change).
 
 ### Expected build plan steps
 
-1. `ng-field-component` — generate `customer-summary` component
-2. `ng-field-component` — generate `product-summary` component
-3. `ng-page` — generate `dashboard` page
+1. `angular-field-component-composition` — generate `customer-summary` component
+2. `angular-field-component-composition` — generate `product-summary` component
+3. `angular-page-composition` — generate `dashboard` page
 
 ---
 
@@ -644,10 +644,10 @@ Starting from Example 2's state (Customer, Product, Order):
 
 ### Expected build plan steps (order matters)
 
-1. `ng-api` — regenerate API client (new `Invoice` endpoints) ← schema step
-2. `ng-data-service` — generate `Invoice` data service ← schema step
-3. `ng-component` — generate `Invoice` list component ← schema step
-4. `ng-page` — generate `invoice-list` page ← config step (depends on step 3)
+1. `angular-api-integration` — regenerate API client (new `Invoice` endpoints) ← schema step
+2. `angular-data-service-composition` — generate `Invoice` data service ← schema step
+3. `angular-component-composition` — generate `Invoice` list component ← schema step
+4. `angular-page-composition` — generate `invoice-list` page ← config step (depends on step 3)
 
 ---
 
@@ -671,15 +671,15 @@ the same dependency level.
 
 ### Expected build plan steps
 
-1. `ng-data-service` — delete `Product` data service
-2. `ng-component` — delete `Product` list and detail components
-3. `ng-page` — delete `product-list` page
-4. `ng-site` — update navigation (remove Products link)
-5. `ng-api` — regenerate API client (no Product endpoints; new Supplier endpoints)
-6. `ng-data-service` — generate `Supplier` data service
-7. `ng-component` — generate `Supplier` list component
-8. `ng-page` — generate `supplier-list` page
-9. `ng-site` — update navigation (add Suppliers link)
+1. `angular-data-service-composition` — delete `Product` data service
+2. `angular-component-composition` — delete `Product` list and detail components
+3. `angular-page-composition` — delete `product-list` page
+4. `angular-site-composition` — update navigation (remove Products link)
+5. `angular-api-integration` — regenerate API client (no Product endpoints; new Supplier endpoints)
+6. `angular-data-service-composition` — generate `Supplier` data service
+7. `angular-component-composition` — generate `Supplier` list component
+8. `angular-page-composition` — generate `supplier-list` page
+9. `angular-site-composition` — update navigation (add Suppliers link)
 
 ---
 

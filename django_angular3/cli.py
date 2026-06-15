@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from .angular import AngularCommandError, execute_invocations, format_invocations, plan_angular_command
+from .angular import AngularCommandError, execute_invocations, format_invocations, resolve_angular_command
 from .build import create_build_plan, write_build_plan
 from .config import ConfigError, load_project_config
 from .validation import validate_openapi_file, validate_project_config, validate_ui_file
@@ -51,7 +51,19 @@ def build_parser() -> argparse.ArgumentParser:
     ng_new.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the Angular command plan instead of invoking Angular tooling.",
+        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+    )
+
+    ng_workspace = subparsers.add_parser(
+        "ng_workspace", help="Bootstrap the configured Angular workspace with angular-django2."
+    )
+    ng_workspace.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
+    ng_workspace.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
     ng_config = subparsers.add_parser("ng_config", help="Configure Angular workspace defaults.")
@@ -61,7 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_config.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the Angular command plan instead of invoking Angular tooling.",
+        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
     ng_build = subparsers.add_parser("ng_build", help="Build the configured Angular application.")
@@ -71,7 +83,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_build.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the Angular command plan instead of invoking Angular tooling.",
+        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
     ng_gen_app = subparsers.add_parser(
@@ -84,7 +96,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_gen_app.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the Angular command plan instead of invoking Angular tooling.",
+        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
     ng_openapi_gen = subparsers.add_parser(
@@ -96,7 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_openapi_gen.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the Angular command plan instead of invoking Angular tooling.",
+        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
     ng_add = subparsers.add_parser("ng_add", help="Run ng add for an Angular package.")
@@ -109,7 +121,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_add.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the Angular command plan instead of invoking Angular tooling.",
+        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
     return parser
@@ -155,7 +167,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"Wrote build plan to {plan_path}")
         return 0
 
-    if args.command in {"ng_new", "ng_config", "ng_build", "ng_gen_app", "ng_openapi_gen", "ng_add"}:
+    if args.command in {
+        "ng_new",
+        "ng_workspace",
+        "ng_config",
+        "ng_build",
+        "ng_gen_app",
+        "ng_openapi_gen",
+        "ng_add",
+    }:
         plan_options = {}
         if args.command == "ng_gen_app":
             plan_options["app_name"] = args.app_name
@@ -182,7 +202,7 @@ def _run_angular_command(
     command_name: str, path: str | Path | None, *, dry_run: bool, **options: str | None
 ) -> int:
     try:
-        invocations = plan_angular_command(command_name, path, **options)
+        invocations = resolve_angular_command(command_name, path, **options)
     except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1

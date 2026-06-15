@@ -4,6 +4,8 @@
 
 Project website: <https://djangoangular.com/>
 
+Documentation: <https://django-angular3.readthedocs.io/>
+
 Related docs:
 - `doc/ARCHITECTURE.md` — architecture, integration boundaries, and design decisions
 - `TODO.md` — implementation sequencing, delivery roadmap, and open items
@@ -54,7 +56,7 @@ CLI. Run the CLI directly for the bundled project config:
 ```bash
 django-admin validate-project django-angular3.json
 django-admin build django-angular3.json --output build
-django-admin ng_new django-angular3.json --dry-run
+django-admin ng_workspace django-angular3.json --dry-run
 ```
 
 The standalone CLI keeps the existing validation/build subcommands in
@@ -118,29 +120,40 @@ The current settings surface and defaults are:
 
 Legacy `npm_executable` and `npx_executable` overrides are still accepted and
 mapped to `pnpm_executable` for compatibility with older settings modules.
-Commands are only executed when the planned django-angular3 command name is in
+Commands are only executed when the resolved django-angular3 command name is in
 `command_allowlist`. The default allowlist only permits `ng_openapi_gen`.
 
 Once installed, Django and the standalone CLI expose the same Angular command
-planning flow:
+resolution flow:
 
 ```bash
 ./manage.py ng_new django-angular3.json --dry-run
+./manage.py ng_workspace django-angular3.json --dry-run
 ./manage.py ng_config django-angular3.json --dry-run
+./manage.py ng_add django-angular3.json --dry-run
 ./manage.py ng_gen_app django-angular3.json --dry-run
 ./manage.py ng_openapi_gen django-angular3.json --dry-run
 ./manage.py ng_build django-angular3.json --dry-run
 ```
 
 - `ng_new` creates an empty Angular workspace
+- `ng_workspace` runs the upstream-aligned workspace bootstrap flow: `ng new`, workspace defaults, `ng add angular-django2`, and `ng generate angular-django2:ng-workspace`
 - `ng_config` applies workspace defaults such as package manager, style, and routing
+- `ng_add` installs and registers the configured Angular schematic package
 - `ng_gen_app` generates an Angular application inside the configured workspace
 - `ng_openapi_gen` runs a locally installed `ng-openapi-gen` for the configured OpenAPI source
 
-`ng_openapi_gen` is planned with `pnpm exec`, so it only uses dependencies that
+`ng_openapi_gen` resolves to `pnpm exec`, so it only uses dependencies that
 are already installed in the Angular workspace. It does not download and
 execute packages at runtime.
 - `ng_build` builds the configured Angular application
+
+> **Naming note**: The `ng_*` command names (e.g. `ng_workspace`, `ng_openapi_gen`) are the
+> **frozen CLI wrapper layer** — stable entry points that never change. The automation subsystem
+> uses two separate layers with distinct names: **TOOL contracts** are deterministic
+> agent-callable operations (e.g. `angular_workspace_scaffold`, `openapi_schema_export`) and
+> **SKILL names** are AI-guided session identifiers (e.g. `angular-workspace-foundation`,
+> `angular-api-integration`). See `doc/ARCHITECTURE.md §2.23` for the authoritative definition.
 
 If you want these commands to execute instead of only dry-run, configure the
 command allowlist to include the django-angular3 commands you want to permit.

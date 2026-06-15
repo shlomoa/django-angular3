@@ -39,6 +39,11 @@ Repository = "https://github.com/shlomoa/django-angular3"
 
 [project.optional-dependencies]
 yaml = ["PyYAML>=6.0"]
+docs = [
+  "sphinx>=8.0",
+  "furo>=2024.1.29",
+  "myst-parser>=3.0",
+]
 
 [project.scripts]
 django-angular3 = "django_angular3.cli:main"

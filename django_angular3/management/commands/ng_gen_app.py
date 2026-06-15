@@ -15,5 +15,5 @@ class Command(AngularBaseCommand):
             help="Optional Angular application name. Defaults to project.name from config.",
         )
 
-    def get_plan_options(self, options: dict[str, object]) -> dict[str, object]:
+    def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {"app_name": options.get("app_name")}
