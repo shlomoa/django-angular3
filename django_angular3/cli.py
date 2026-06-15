@@ -124,6 +124,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
+    install_tutorial = subparsers.add_parser(
+        "install-tutorial",
+        help="Install the simple_crm tutorial project to a local directory.",
+    )
+    install_tutorial.add_argument(
+        "dest",
+        nargs="?",
+        default="simple_crm",
+        help="Destination directory (default: simple_crm).",
+    )
+
     return parser
 
 
@@ -166,6 +177,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         plan_path = write_build_plan(plan, args.output)
         print(f"Wrote build plan to {plan_path}")
         return 0
+
+    if args.command == "install-tutorial":
+        return _run_install_tutorial(args.dest)
 
     if args.command in {
         "ng_new",
@@ -218,6 +232,31 @@ def _run_angular_command(
         return 1
 
     print(f"Executed {len(invocations)} command(s).")
+    return 0
+
+
+def _run_install_tutorial(dest: str) -> int:
+    import shutil
+
+    src = Path(__file__).parent / "examples" / "01_simple_crm"
+    dest_path = Path(dest)
+
+    if dest_path.exists():
+        print(f"Error: destination '{dest_path}' already exists.", file=sys.stderr)
+        return 1
+
+    shutil.copytree(
+        src,
+        dest_path,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+    )
+    print(f"Tutorial project installed to '{dest_path}'.")
+    print()
+    print("Next steps:")
+    print(f"  cd {dest_path}")
+    print("  python manage.py migrate")
+    print("  python manage.py createsuperuser")
+    print("  python manage.py runserver")
     return 0
 
 

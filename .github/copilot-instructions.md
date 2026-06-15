@@ -101,29 +101,6 @@ for meta-tool development and CI in this repo, where a full Django project
 configuration is not required. When writing skills, documentation, or
 requirements for the generated app, use `django-admin <command>`.
 
-#### Core local commands
-
-```bash
-python -m pip install -e .[dev]
-python -m pip install -e .[dev,yaml]
-python -m unittest discover -s tests -p "test*.py"
-django-admin validate-project django-angular3.json
-django-admin build django-angular3.json --dry-run
-django-admin build_app django-angular3.json --dry-run
-```
-
-Preview Angular wrapper commands through djng rather than invoking Angular
-tooling directly:
-
-```bash
-django-admin ng_new django-angular3.json --dry-run
-django-admin ng_add django-angular3.json --dry-run
-django-admin ng_config django-angular3.json --dry-run
-django-admin ng_gen_app django-angular3.json --dry-run
-django-admin ng_openapi_gen django-angular3.json --dry-run
-django-admin ng_build django-angular3.json --dry-run
-```
-
 #### Development and test cycles
 
 - **`djng`**: unit tests for services, permissions, and model behavior; API

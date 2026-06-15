@@ -113,8 +113,8 @@ build-plan emission from current and previous schema/config inputs.
   forms change detection not implemented (blocked by item 1).
 - Plan currently emits CLI command strings. Must be replaced with SDK call
   specs (procedure graph) once item 8 is underway.
-- `spec/examples/` input files do not yet exist (see item 9); behavior cannot
-  be verified against `doc/TEST_EXAMPLES.md` scenarios until they are created.
+- Example 1 input files now exist at `django_angular3/examples/01_simple_crm/` (see item 9);
+  examples 2–6 still need their own input files before scenarios 2–6 can be verified.
 
 ---
 
@@ -171,22 +171,22 @@ advances to the next node regardless.
 Add automated verification across contract checks, construction-output checks,
 integration checks, and test-based verification.
 
-### 9.1 `spec/examples/` Input Files Missing
+### 9.1 Example Input Files
 
-The six scenarios in `doc/TEST_EXAMPLES.md` reference input files under
-`spec/examples/<example-name>/` that do not exist. The examples cannot be run
-even with `--dry-run` until the input files are created.
+The six scenarios in `doc/TEST_EXAMPLES.md` require input files for each example.
+Example 1 is now bundled in the package at `django_angular3/examples/01_simple_crm/`.
+Examples 2–6 still need their input files under `spec/examples/<example-name>/`.
 
-| Example | Files needed | Blocked by |
+| Example | Location | Status |
 |---|---|---|
-| 1 Simple CRM | `schema.yaml`, `django-angular3.json`, `ui.json` | — |
-| 2 Add Resource | `schema.yaml`, `django-angular3.json` | Example 1 files |
-| 3 Breaking Change | `schema.yaml`, `django-angular3.json` | Example 1 files |
-| 4 Config Change | `django-angular3.json` with inline `ui.pages`/`ui.components` | Item 1 (MR1) |
-| 5 Combined | `schema.yaml`, `django-angular3.json` | Example 2 files |
-| 6 Replace Resource | `schema.yaml`, `django-angular3.json` | Example 2 files |
+| 1 Simple CRM | `django_angular3/examples/01_simple_crm/` | ✓ exists |
+| 2 Add Resource | `spec/examples/02-add-order/` | missing |
+| 3 Breaking Change | `spec/examples/03-breaking-change/` | missing |
+| 4 Config Change | `spec/examples/04-add-dashboard/` | missing; blocked by item 1 (MR1) |
+| 5 Combined | `spec/examples/05-combined-change/` | missing |
+| 6 Replace Resource | `spec/examples/06-replace-resource/` | missing |
 
-Examples 1, 2, 3, 5, and 6 are unblocked. Example 4 depends on item 1.
+Example 1 is runnable. Examples 2, 3, 5, and 6 are unblocked pending their files. Example 4 depends on item 1.
 
 ### 9.2 E2E Verification Specification Missing
 
