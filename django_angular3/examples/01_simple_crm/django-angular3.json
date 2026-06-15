@@ -4,7 +4,7 @@
   "openapi": { "source": "schema.yaml" },
   "ui": { "source": "ui.json" },
   "angular": {
-    "output": "build/examples/01_simple_crm",
+    "output": "build/angular",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
   }
 }

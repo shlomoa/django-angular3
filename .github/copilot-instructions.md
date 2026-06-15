@@ -1,43 +1,41 @@
 # django-angular3 Repo Instructions
 
-Read [these instructions](https://github.com/shlomoa/internal/blob/main/github/copilot-instructions.md)
+The source of truth for the general instructions is the private
+`shlomoa/internal` repository. The file is not publicly accessible via HTTPS.
+Fetch it using the GitHub CLI:
 
-The linked document is the source of truth for the general instructions used in
-this repository.
+**bash / macOS / Linux:**
+
+```bash
+gh api repos/shlomoa/internal/contents/github/copilot-instructions.md \
+  --jq '.content' \
+  | python -c "import base64,sys; sys.stdout.buffer.write(base64.b64decode(sys.stdin.read()))"
+```
+
+**PowerShell (Windows):**
+
+```powershell
+$encoded = gh api repos/shlomoa/internal/contents/github/copilot-instructions.md --jq '.content'
+[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encoded))
+```
 
 ## Repo specific
 
 ### Two-Package Architecture
 
-The djng/ngdj toolchain is split across two complementary packages:
-
-- **djng** (`django-angular3`, this repo): Python CLI, Angular command wrappers,
-	validation, and build-plan generation. Also hosts the Claude skills that
-	orchestrate generated-app setup.
-- **ngdj** (`angular-django2`, `C:\Users\shlom\source\repos\shlomoa\angular-django2`):
-	Angular schematics collection. Installed into a generated app workspace via
-	`ng add angular-django2`. Requirements for ngdj are derived from djng
-	development and from skill authoring — they flow outward, not inward.
+See `doc/ARCHITECTURE.md` §2.5 (djng), §2.6 (ngdj), §3.3–3.4 for the authoritative
+description of the two-package split and each package's responsibilities.
 
 ### Terminology
 
 Use these terms consistently in all code, docs, and skills:
 
-- **djng**: the `django-angular3` meta-tool — this repository.
-- **ngdj**: the `angular-django2` companion Angular npm package.
+- **djng**: the `django-angular3` meta-tool — this repository. See `doc/ARCHITECTURE.md` §2.5.
+- **ngdj**: the `angular-django2` companion Angular npm package. See `doc/ARCHITECTURE.md` §2.6.
 - **generated app** or **app**: the full-stack application produced by using
 	djng and ngdj together. This is not this repository.
-- **Automation naming layers**: the four distinct naming layers in the
-	djng/ngdj automation subsystem. Each has a different stability contract:
-	- `ng_*` commands (e.g. `ng_workspace`, `ng_openapi_gen`) are the **frozen
-	  CLI wrapper** layer — stable command-line entry points, never renamed.
-	- **TOOL contracts** (e.g. `angular_workspace_scaffold`) are deterministic
-	  agent-callable operations exposed via MCP.
-	- **SKILL names** (e.g. `angular-workspace-foundation`) are AI-guided
-	  session identifiers for guided agent sessions.
-	- **Concern keys** (e.g. `angular.workspace`) are internal routing
-	  identifiers used in build plans.
-	Authoritative definition: `doc/ARCHITECTURE.md` §2.23.
+- **Automation naming layers**: four distinct naming layers in the djng/ngdj
+	 automation subsystem. Authoritative definition: `doc/ARCHITECTURE.md` §2.23.
 
 ### Config file convention
 
@@ -45,18 +43,8 @@ See `doc/` for authoritative definitions of configuration files and their roles.
 
 ### Project overview
 
-`django-angular3` (djng) is the Python half of a two-package toolchain for
-contract-first Django REST Framework and Angular Material integration. It works
-alongside `angular-django2` (ngdj), the companion Angular schematics package.
-Together they produce generated full-stack applications.
-
-The current repository is a Python-only scaffold: it validates project
-configuration, OpenAPI inputs, and structured UI definition files, and it can
-emit deterministic build plans or plan Angular CLI wrapper commands via Python
-wrappers that ngdj schematics then execute.
-
-Preserve the reusable Django app shape. Do not assume this repository already
-contains a full Django project or Angular workspace.
+See `README.md` for the project overview and `doc/ARCHITECTURE.md` §3.3 for
+the authoritative description of djng's role in the toolchain.
 
 ### Repository Map
 
@@ -74,20 +62,7 @@ contains a full Django project or Angular workspace.
 
 ### Django Project vs Django App
 
-A **Django project** is the root configuration container: it holds `settings.py`,
-the root `urls.py`, `wsgi.py`/`asgi.py`, and `manage.py`. There is exactly one
-project per deployed application.
-
-A **Django app** is a self-contained module within a project that owns a specific
-domain: its own models, views, serializers, admin registrations, and migrations.
-A project can contain one or more apps. The app name is domain-driven (e.g.
-`shop`, `accounts`, `inventory`) and is distinct from the project name.
-
-In the djng/ngdj toolchain:
-- `project.name` in `django-angular3.json` names the Django project and the
-	Angular workspace.
-- `app.name` names the primary Django app **and** the Angular application
-	generated inside that workspace. They share the same name by convention.
+See `doc/ARCHITECTURE.md` §2.21 for the authoritative definition.
 
 ### Project principles
 
@@ -125,29 +100,6 @@ This repository also ships a **standalone CLI** (`django-angular3` entry point)
 for meta-tool development and CI in this repo, where a full Django project
 configuration is not required. When writing skills, documentation, or
 requirements for the generated app, use `django-admin <command>`.
-
-#### Core local commands
-
-```bash
-python -m pip install -e .
-python -m pip install -e .[yaml]
-python -m unittest discover -s tests -p "test*.py"
-django-admin validate-project django-angular3.json
-django-admin build django-angular3.json --dry-run
-django-admin build_app django-angular3.json --dry-run
-```
-
-Preview Angular wrapper commands through djng rather than invoking Angular
-tooling directly:
-
-```bash
-django-admin ng_new django-angular3.json --dry-run
-django-admin ng_add django-angular3.json --dry-run
-django-admin ng_config django-angular3.json --dry-run
-django-admin ng_gen_app django-angular3.json --dry-run
-django-admin ng_openapi_gen django-angular3.json --dry-run
-django-admin ng_build django-angular3.json --dry-run
-```
 
 #### Development and test cycles
 

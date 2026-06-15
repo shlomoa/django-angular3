@@ -20,7 +20,9 @@ Each example consists of:
 - The expected build plan / ordered procedure sequence
 - The aspect of the solution it demonstrates
 
-Examples are located under `spec/examples/<example-name>/` and can be run via:
+Example 1 is bundled in the package under `django_angular3/examples/01_simple_crm/` and
+can be installed locally via `django-angular3 install-tutorial`. Future examples follow the
+`spec/examples/<example-name>/` convention and can be run via:
 
 ```bash
 django-admin build_app spec/examples/<example-name>/django-angular3.json \
@@ -343,7 +345,7 @@ components:
 {
   "project": { "name": "simple_crm" },
   "app": { "name": "shop" },
-  "openapi": { "source": "spec/examples/01_simple_crm/schema.yaml" },
+  "openapi": { "source": "schema.yaml" },
   "angular": {
     "output": "build/examples/01_simple_crm",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
@@ -691,36 +693,36 @@ sequentially to verify each use case:
 ```bash
 # Example 1: start from scratch
 django-admin build_app \
-  spec/examples/01_simple_crm/django-angular3.json \
+  django_angular3/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
 # Example 2: add resource (schema change only; previous project config passed to confirm no-change)
 # Note: --previous-project-config path uses a placeholder name pending TODO.md item 1
 django-admin build_app \
   spec/examples/02-add-order/django-angular3.json \
-  --previous-schema spec/examples/01_simple_crm/schema.yaml \
-  --previous-project-config spec/examples/01_simple_crm/simple_crm.project.json \
+  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
+  --previous-project-config django_angular3/examples/01_simple_crm/simple_crm.project.json \
   --dry-run
 
 # Example 3: breaking change blocked
 django-admin build_app \
   spec/examples/03-breaking-change/django-angular3.json \
-  --previous-schema spec/examples/01_simple_crm/schema.yaml \
+  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
   --dry-run
 # Expected: non-zero exit, no plan emitted
 
 # Example 3b: breaking change acknowledged
 django-admin build_app \
   spec/examples/03-breaking-change/django-angular3.json \
-  --previous-schema spec/examples/01_simple_crm/schema.yaml \
+  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
   --acknowledge-breaking \
   --dry-run
 
 # Example 4: config-only change (blocked by TODO.md item 1 — illustrative only)
 django-admin build_app \
   spec/examples/04-add-dashboard/django-angular3.json \
-  --previous-schema spec/examples/01_simple_crm/schema.yaml \
-  --previous-project-config spec/examples/01_simple_crm/simple_crm.project.json \
+  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
+  --previous-project-config django_angular3/examples/01_simple_crm/simple_crm.project.json \
   --dry-run
 
 # Example 5: combined schema + config (config side blocked by TODO.md item 1 — illustrative only)

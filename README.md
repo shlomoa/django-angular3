@@ -19,50 +19,19 @@ It allows you to:
 
 ## Requirements
 
-To use this package as intended, your application should have:
-
-- a Django REST framework backend
-- an OpenAPI specification exported from that backend
-- an Angular Material frontend for the user-facing product
-- a separate input source for non-CRM UI definitions
-- a routing model where Angular owns the user-facing route tree
-- a deployment model where Django serves backend services and Angular serves the
-  user-facing SPA
+See [doc/REQUIREMENTS.md](doc/REQUIREMENTS.md) for the full requirements.
 
 ## Installation
 
-Install from source:
-
 ```bash
-python -m pip install -e .
+pip install django-angular3
 ```
 
-If you want YAML support for OpenAPI or UI definition files:
+To install from a local clone:
 
 ```bash
-python -m pip install -e .[yaml]
+pip install -e /path/to/django-angular3/
 ```
-
-For reusable-app style test runs, use either:
-
-```bash
-python runtests.py
-python -m django test tests --settings=tests.test_settings
-```
-
-The current scaffold includes a Django app-style package surface and a direct
-CLI. Run the CLI directly for the bundled project config:
-
-```bash
-django-admin validate-project django-angular3.json
-django-admin build django-angular3.json --output build
-django-admin ng_workspace django-angular3.json --dry-run
-```
-
-The standalone CLI keeps the existing validation/build subcommands in
-kebab-case and uses the same `ng_` snake_case names as the Django management
-commands for the Angular wrappers. The examples above show the supported
-subcommand names as they exist today.
 
 ## Django app integration
 
@@ -277,6 +246,7 @@ available at <https://djangoangular.com/>.
 Current project documents:
 
 - [Contributing](CONTRIBUTING.md)
+- [Releasing](doc/RELEASING.md)
 - [Requirements](doc/REQUIREMENTS.md)
 - [Architecture](doc/ARCHITECTURE.md)
 
