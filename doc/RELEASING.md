@@ -10,6 +10,7 @@ stages or publish from a dirty or un-verified working tree.
 
 ```bash
 python -m pip install --upgrade build
+python -m pip install -e .[dev]    # ruff and other dev tooling
 python -m pip install -e .[docs]   # Sphinx and doc dependencies
 ```
 

@@ -39,14 +39,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build pytest django djangorestframework django-filter drf-spectacular PyYAML
-        # Install the package itself in editable mode
-        pip install -e .
-        
+        pip install -e .[yaml]
+        pip install build pytest
+
     - name: Run tests
-      run: |
-        # Adjust test command based on how your tests are run
-        python runtests.py || pytest tests/
+      run: python -m unittest discover -s tests -p 'test*.py'
         
     - name: Build package
       run: |
