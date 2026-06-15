@@ -47,6 +47,12 @@ implementation reference) covering:
 - `ngdj-scaffold` — §4.2 of this document
 - `contract-lifecycle` — §4.3 of this document
 
+The recommendations in §§2–4 are sequenced into an ordered, acceptance-gated
+implementation plan in `doc/phased_implementation_plan.md`. That plan maps each
+Tool, Hook, and Plugin contract to a phase with dependencies, acceptance
+criteria, and the test/verification coverage that moves with behaviour as it
+shifts from AI-guided SKILL flow to deterministic tool/hook enforcement.
+
 References used:
 - https://code.claude.com/docs/en/skills
 - https://code.claude.com/docs/en/hooks-guide
@@ -267,3 +273,4 @@ Use this table when deciding which primitive to apply to a new capability in `dj
 [ARCHITECTURE.md]: ARCHITECTURE.md  
 [GENERATE_AI_AUTOMATIONS.md]: GENERATE_AI_AUTOMATIONS.md  
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md  
+[phased_implementation_plan.md]: phased_implementation_plan.md  
