@@ -4,6 +4,8 @@
 
 Project website: <https://djangoangular.com/>
 
+Documentation: <https://django-angular3.readthedocs.io/>
+
 Related docs:
 - `doc/ARCHITECTURE.md` — architecture, integration boundaries, and design decisions
 - `TODO.md` — implementation sequencing, delivery roadmap, and open items
