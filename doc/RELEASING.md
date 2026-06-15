@@ -59,8 +59,7 @@ ruff check django_angular3 tests
 ruff format --check django_angular3 tests
 ```
 
-If ruff is not installed, run `pip install -e .[dev]` first. Fix any reported
-issues, commit, and re-run the test suite before continuing.
+Fix any reported issues, commit, and re-run the test suite before continuing.
 
 ---
 
