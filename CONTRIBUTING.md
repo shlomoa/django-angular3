@@ -56,7 +56,14 @@ CI is configured in `.github/workflows/`:
 - `deploy.yml` — builds and publishes the package to PyPI via Trusted
   Publishing when a GitHub Release is published.
 
-Run the local validation and test commands above before opening a pull request.
+Before opening a pull request, run linting and the test suite locally to
+catch issues before CI does:
+
+```bash
+ruff check django_angular3 tests
+ruff format django_angular3 tests
+python -m unittest discover -s tests -p 'test*.py'
+```
 
 ## Releasing
 
