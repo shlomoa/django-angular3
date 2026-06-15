@@ -2,7 +2,7 @@
 
 ```yaml
 ---
-name: ng-app
+name: angular-app-composition
 description: Manage Angular Material application within a workspace - create app structure with Material theme, modify providers and routing, or delete app
 user-invocable: false
 context: fork
@@ -62,7 +62,7 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
    - Create barrel exports (`index.ts`) in each directory
 
 4. **Wire Angular Material theme**
-   - Angular Material is already installed at the workspace level by `ng-workspace`.
+   - Angular Material is already installed at the workspace level by `angular-workspace-foundation`.
    - Update `projects/<project.name>/src/styles.scss` with app-level theme configuration using Edit tool:
      ```scss
      @use '@angular/material' as mat;

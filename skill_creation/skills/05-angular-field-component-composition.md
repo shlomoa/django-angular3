@@ -2,7 +2,7 @@
 
 ```yaml
 ---
-name: ng-field-component
+name: angular-field-component-composition
 description: Create, modify, or delete Angular Material small field-level components with typed input/output signals, Material imports, and ARIA accessibility
 user-invocable: false
 context: fork
@@ -617,4 +617,3 @@ Dependent skills (use this skill before):
 4. Verify compilation succeeds
 
 **Output**: Component deleted successfully
-

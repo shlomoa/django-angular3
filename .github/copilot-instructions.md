@@ -27,6 +27,17 @@ Use these terms consistently in all code, docs, and skills:
 - **ngdj**: the `angular-django2` companion Angular npm package.
 - **generated app** or **app**: the full-stack application produced by using
 	djng and ngdj together. This is not this repository.
+- **Automation naming layers**: the four distinct naming layers in the
+	djng/ngdj automation subsystem. Each has a different stability contract:
+	- `ng_*` commands (e.g. `ng_workspace`, `ng_openapi_gen`) are the **frozen
+	  CLI wrapper** layer — stable command-line entry points, never renamed.
+	- **TOOL contracts** (e.g. `angular_workspace_scaffold`) are deterministic
+	  agent-callable operations exposed via MCP.
+	- **SKILL names** (e.g. `angular-workspace-foundation`) are AI-guided
+	  session identifiers for guided agent sessions.
+	- **Concern keys** (e.g. `angular.workspace`) are internal routing
+	  identifiers used in build plans.
+	Authoritative definition: `doc/ARCHITECTURE.md` §2.23.
 
 ### Config file convention
 
@@ -54,7 +65,7 @@ contains a full Django project or Angular workspace.
 - `django_angular3/config.py`: project config loading and normalization.
 - `django_angular3/validation.py`: OpenAPI, UI, and project config validation.
 - `django_angular3/build.py`: deterministic build plan creation and writing.
-- `django_angular3/angular.py`: Angular command planning and execution helpers.
+- `django_angular3/angular.py`: Angular command resolution and execution helpers.
 - `django_angular3/settings.py`: Django setting defaults and compatibility.
 - `tests/`: unittest test suite.
 - `spec/openapi/`: source OpenAPI examples and generator configs.

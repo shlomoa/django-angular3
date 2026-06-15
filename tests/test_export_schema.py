@@ -4,12 +4,12 @@ from __future__ import annotations
 import io
 import json
 import os
-import shutil
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from django_angular3.config import get_previous_schema_path, load_project_config
+from django_angular3.management.commands.build_app import _command_for_skill
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -266,6 +266,9 @@ class ExportSchemaCommandTests(unittest.TestCase):
         finally:
             if previous_path.exists():
                 previous_path.unlink()
+
+    def test_build_app_uses_ng_workspace_command_for_workspace_create_steps(self) -> None:
+        self.assertEqual(_command_for_skill("angular-workspace-foundation", "create"), "ng_workspace")
 
 
 if __name__ == "__main__":

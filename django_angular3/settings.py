@@ -5,7 +5,7 @@ from typing import Any
 
 
 class AngularCommandError(RuntimeError):
-    """Raised when an Angular command cannot be planned or executed."""
+    """Raised when an Angular command cannot be resolved or executed."""
 
 
 _is_win = os.name == "nt"
@@ -25,14 +25,14 @@ DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
 
 
 class AngularSettings(SimpleNamespace):
-    """Configuration values used to plan and run Angular-related commands.
+    """Configuration values used to resolve and run Angular-related commands.
 
     Attributes:
         config_path (str): Default project config path.
         node_executable (str): Node executable name or path.
         pnpm_executable (str): pnpm executable name or path.
         ng_executable (str): Angular CLI executable name or path.
-        command_allowlist (tuple[str, ...]): Allowed django-angular3 command names.
+        command_allowlist (tuple[str, ...]): Allowed resolved django-angular3 command names.
         package_manager (str): Angular package manager setting.
         build_configuration (str): Angular build configuration name.
         style (str): Default Angular stylesheet format.

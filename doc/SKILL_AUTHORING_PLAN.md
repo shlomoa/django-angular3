@@ -221,7 +221,7 @@ incrementally as each skill reveals what it actually needs to read; it is not
 refreshed up-front and not deferred to a separate post-skills task.
 
 The Angular workspace fixture used to verify generated skills end-to-end is
-created when the first skill that needs it (`ng-workspace`) reaches its
+created when the first skill that needs it (`angular-workspace-foundation`) reaches its
 Verification phase. There is no fixture today.
 
 Open questions that surface during a skill's Plan phase are recorded in this
@@ -233,7 +233,7 @@ resolution is captured in the skill itself.
 Document cascade complete. `APP_BUILDER_REQUIREMENTS.md`, `GENERATE_AI_AUTOMATIONS.md`,
 and this document have been revised and aligned. This document now serves as
 the skills-specific sub-plan under the broader AI automation model. The next
-action is to begin the Plan phase for `ng-workspace`.
+action is to begin the Plan phase for `angular-workspace-foundation`.
 
 ---
 

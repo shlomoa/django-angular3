@@ -2,7 +2,7 @@
 
 ```yaml
 ---
-name: ng-form-field
+name: angular-form-field-composition
 description: Create, modify, or delete Angular Material form field components implementing ControlValueAccessor for seamless reactive forms integration with validation and error handling
 user-invocable: false
 context: fork
@@ -838,4 +838,3 @@ Dependent skills (use this skill before):
 4. Verify compilation succeeds
 
 **Output**: Form field component deleted successfully
-

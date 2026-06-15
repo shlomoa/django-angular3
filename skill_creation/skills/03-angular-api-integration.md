@@ -2,7 +2,7 @@
 
 ```yaml
 ---
-name: ng-api
+name: angular-api-integration
 description: Generate Angular API clients from OpenAPI specifications using ng-openapi-gen. Auto-invoked when the outer agent detects a need to generate or regenerate API service layer code from an OpenAPI schema.
 user-invocable: false
 context: fork
@@ -271,4 +271,3 @@ Process:
 Output:
 Cleaned and regenerated API client code
 ```
-

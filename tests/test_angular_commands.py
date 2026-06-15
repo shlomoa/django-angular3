@@ -87,6 +87,33 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
 
+    def test_ng_workspace_dry_run_bootstraps_workspace_with_ngdj_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli("ng_workspace", str(CONFIG_PATH), "--dry-run")
+
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(len(plan), 6)
+        self.assertEqual(
+            plan[0]["argv"],
+            [
+                ng,
+                "new",
+                "django-angular3-scaffold",
+                "--defaults",
+                "--skip-git",
+                "--skip-install",
+                "--no-create-application",
+                "--package-manager=pnpm",
+                "--directory=angular",
+            ],
+        )
+        self.assertEqual(
+            plan[-1]["argv"],
+            [ng, "generate", "angular-django2:ng-workspace", "django-angular3-scaffold"],
+        )
+
     def test_ng_config_dry_run_prints_workspace_configuration_commands(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_config", str(CONFIG_PATH), "--dry-run")
 
@@ -211,6 +238,7 @@ class AngularManagementCommandTests(unittest.TestCase):
     def test_management_commands_support_dry_run(self) -> None:
         cases = (
             ("ng_new", {}),
+            ("ng_workspace", {}),
             ("ng_config", {}),
             ("ng_build", {}),
             ("ng_gen_app", {"app_name": "portal"}),
