@@ -2,16 +2,17 @@
 
 ## Development setup
 
-Install the project from source:
+Install the project from source with dev tooling:
 
 ```bash
-python -m pip install -e .
+python -m pip install -e .[dev]
 ```
 
-If you want YAML support for OpenAPI or UI definition files:
+This installs `ruff` for linting and formatting. If you also want YAML support
+for OpenAPI or UI definition files:
 
 ```bash
-python -m pip install -e .[yaml]
+python -m pip install -e .[dev,yaml]
 ```
 
 ## Local validation and build checks
@@ -36,8 +37,28 @@ Run the existing test suite with explicit discovery:
 python -m unittest discover -s tests -p 'test*.py'
 ```
 
+## Linting and formatting
+
+```bash
+ruff check django_angular3 tests
+ruff format django_angular3 tests
+```
+
+Ruff is configured in `pyproject.toml` under `[tool.ruff]`. Both checks are
+enforced by CI and must pass before a pull request can merge.
+
 ## CI/CD
 
-This repository does not currently include checked-in CI/CD workflow files.
-Until that changes, contributors should run the local validation and test
-commands above before opening a pull request.
+CI is configured in `.github/workflows/`:
+
+- `build.yml` — runs ruff lint/format checks, then the test suite and package
+  build on every push and pull request to `main`.
+- `deploy.yml` — builds and publishes the package to PyPI via Trusted
+  Publishing when a GitHub Release is published.
+
+Run the local validation and test commands above before opening a pull request.
+
+## Releasing
+
+The full release process — version bumping, tagging, building, and publishing
+to PyPI via GitHub Actions — is documented in [doc/RELEASING.md](doc/RELEASING.md).

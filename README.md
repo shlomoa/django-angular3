@@ -277,6 +277,7 @@ available at <https://djangoangular.com/>.
 Current project documents:
 
 - [Contributing](CONTRIBUTING.md)
+- [Releasing](doc/RELEASING.md)
 - [Requirements](doc/REQUIREMENTS.md)
 - [Architecture](doc/ARCHITECTURE.md)
 
