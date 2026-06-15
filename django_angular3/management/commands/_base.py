@@ -4,7 +4,7 @@ import argparse
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...angular import AngularCommandError, execute_invocations, format_invocations, plan_angular_command
+from ...angular import AngularCommandError, execute_invocations, format_invocations, resolve_angular_command
 from ...config import ConfigError
 
 
@@ -18,18 +18,18 @@ class AngularBaseCommand(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the command plan instead of invoking Angular tooling.",
+            help="Print the resolved subprocess call list instead of invoking Angular tooling.",
         )
 
-    def get_plan_options(self, options: dict[str, object]) -> dict[str, object]:
+    def get_invocation_options(self, _options: dict[str, object]) -> dict[str, object]:
         return {}
 
     def handle(self, *args, **options) -> None:
         try:
-            invocations = plan_angular_command(
+            invocations = resolve_angular_command(
                 self.angular_command_name,
                 options.get("path"),
-                **self.get_plan_options(options),
+                **self.get_invocation_options(options),
             )
         except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
             raise CommandError(str(exc)) from exc
@@ -43,4 +43,4 @@ class AngularBaseCommand(BaseCommand):
         except AngularCommandError as exc:
             raise CommandError(str(exc)) from exc
 
-        self.stdout.write(self.style.SUCCESS(f"Executed {len(invocations)} command(s)."))
+        self.stdout.write(f"Executed {len(invocations)} command(s).")

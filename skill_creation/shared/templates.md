@@ -554,7 +554,7 @@ export class AppComponent {
 
 ## Template 6: Service + `catchError` + `MatSnackBar`
 
-**File**: `service.ts.tpl` (intended resource path for the `ng-data-service` skill template)
+**File**: `service.ts.tpl` (intended resource path for the `angular-data-service-composition` skill template)
 
 **Used by**:
 - Angular data model Service (skill 4)
@@ -695,4 +695,3 @@ export class {{RESOURCE_NAME_PASCAL}}Service {
   }
 }
 ```
-

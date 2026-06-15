@@ -19,10 +19,10 @@ normative tool contracts. See `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts
 Catalog for the per-capability contracts (name, inputs, outputs, error
 behavior, allowed invocation context) covering:
 
-- `export_schema` — §2.1 of this document
+- `openapi_schema_export` — §2.1 of this document
 - `oasdiff_diff` — §2.2 of this document
-- `ng_openapi_gen` — §2.3 of this document
-- `ngdj_create_workspace`, `ngdj_create_app` — §2.4 of this document
+- `angular_api_client_generate` — §2.3 of this document
+- `angular_workspace_scaffold`, `angular_app_scaffold` — §2.4 of this document
 - `validate_openapi_schema` — §2.5 of this document
 
 The Hooks recommendations in §3 below have been promoted into explicit,
@@ -120,7 +120,7 @@ functions the agent calls directly).
 | **Location in ARCHITECTURE.md** | §3.4 ngdj-o-1, §3.5 |
 | **Current approach** | Described as `ngdj` commands for managing and assembling the Angular application (workspace, project layout, application layout) |
 | **Why a Tool is better** | Workspace and application scaffold commands are deterministic schematics invocations. The agent only needs to call them with the right parameters. Exposing them as tools removes the need for a SKILL to manage how to invoke them and interpret their output. |
-| **Recommended form** | MCP tools for each `ngdj` command: `ngdj_create_workspace`, `ngdj_create_app`, `ngdj_add_feature`, returning structured result objects. |
+| **Recommended form** | MCP tools for each `ngdj` command: `angular_workspace_scaffold`, `angular_app_scaffold`, `ngdj_add_feature`, returning structured result objects. |
 
 ### 2.5 Contract Validation
 
@@ -160,9 +160,9 @@ instructions.
 |---|---|
 | **Location in ARCHITECTURE.md** | §11.2 |
 | **Current approach** | "Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction" — currently an architectural rule with no specified enforcement mechanism |
-| **Why a Hook is better** | A `PostToolUse` hook on the `makemigrations` tool (or a `UserPromptSubmit` hook that detects new migration files) can automatically trigger `export_schema` whenever a new migration is detected. This removes the human or agent responsibility of remembering to re-export. |
+| **Why a Hook is better** | A `PostToolUse` hook on the `makemigrations` tool (or a `UserPromptSubmit` hook that detects new migration files) can automatically trigger `openapi_schema_export` whenever a new migration is detected. This removes the human or agent responsibility of remembering to re-export. |
 | **Hook event** | `PostToolUse` on `makemigrations` call or file-watch hook on `migrations/` directory |
-| **Hook action** | If new `.py` migration files are detected, invoke `export_schema` to re-export and rotate the schema artifact; append a status record to `build/hook-log.jsonl` and exit 0 so downstream `breaking-change` and `pre-construction` hooks act on the rotated schema. |
+| **Hook action** | If new `.py` migration files are detected, invoke `openapi_schema_export` to re-export and rotate the schema artifact; append a status record to `build/hook-log.jsonl` and exit 0 so downstream `breaking-change` and `pre-construction` hooks act on the rotated schema. |
 
 ### 3.3 Post-Generation Verification Logging
 
@@ -197,7 +197,7 @@ instructions.
 | **Location in ARCHITECTURE.md** | §7.1 stage 2, §11.1 |
 | **Current approach** | "The exported schema should be stored as a durable build artifact so downstream agent-chain stages can consume it deterministically" and "Contract changes should be reviewed as part of normal API change management" |
 | **Why a Hook is better** | A `PreToolUse` hook on any Angular generation tool can validate that the OpenAPI schema file exists, is valid OAS 3.1, and has been exported since the last model change. This makes the validation gate happen automatically before any generation step, rather than relying on the agent to decide to validate first. |
-| **Hook event** | `PreToolUse` on `ng_openapi_gen`, `ngdj_create_workspace`, `ngdj_create_app`, and future `ngdj_*` generation tools |
+| **Hook event** | `PreToolUse` on `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`, and future generation tools |
 | **Hook action** | Check schema file exists and modification timestamp is newer than last migration; invoke `validate_openapi_schema`; if any check fails, exit non-zero and print a descriptive error. |
 
 ---
@@ -217,7 +217,7 @@ that are natural candidates for packaging as **Plugins**.
 | **Location in ARCHITECTURE.md** | §2.5, §2.14, §3.3, §3.5 |
 | **Current approach** | All construction capabilities (agent, SKILLS, `build_app` entry point, configuration) are bundled inside the `djng` repository but are not packaged in the Claude plugin format |
 | **Why a Plugin is better** | The full set of 11 Angular construction Skills, the schema and generation Tools (§2 above), and the validation/enforcement Hooks (§3 above) together form a complete, coherent capability that any `djng`-backed project needs. Packaging them as a Claude plugin enables: (a) installation with a single command, (b) versioning independent of the Django package, (c) reuse across multiple generated-app projects without copying files. |
-| **Plugin contents** | Skills: all 11 Angular SKILL.md files (`ng-workspace`, `ng-app`, `ng-api`, `ng-data-service`, `ng-field-component`, `ng-form-field`, `ng-component`, `ng-complex-component`, `ng-reactive-form`, `ng-page`, `ng-site`); Tools: `export_schema`, `oasdiff_diff`, `ng_openapi_gen`, `validate_openapi_schema`; Hooks: breaking-change gate (PreToolUse), migration-triggered extraction (PostToolUse), session cleanup (Stop). |
+| **Plugin contents** | Skills: all 11 Angular SKILL.md files (`angular-workspace-foundation`, `angular-app-composition`, `angular-api-integration`, `angular-data-service-composition`, `angular-field-component-composition`, `angular-form-field-composition`, `angular-component-composition`, `angular-complex-component-composition`, `angular-reactive-form-composition`, `angular-page-composition`, `angular-site-composition`); Tools: `openapi_schema_export`, `oasdiff_diff`, `angular_api_client_generate`, `validate_openapi_schema`; Hooks: breaking-change gate (PreToolUse), migration-triggered extraction (PostToolUse), session cleanup (Stop). |
 
 ### 4.2 ngdj Angular Scaffold Plugin
 
@@ -228,7 +228,7 @@ that are natural candidates for packaging as **Plugins**.
 | **Location in ARCHITECTURE.md** | §2.6, §3.4 |
 | **Current approach** | `ngdj` is a separate npm package providing Angular schematics and code generation templates, invoked by the agent as CLI commands |
 | **Why a Plugin is better** | `ngdj`'s workspace, application, and code generation commands could be exposed as a plugin containing MCP tools for each schematic. This would let the agent call `ngdj` capabilities through structured tool calls rather than raw `Bash` invocations, with typed inputs and outputs. The plugin would be installed once per project and could be versioned alongside `ngdj`. |
-| **Plugin contents** | Tools: `ngdj_create_workspace`, `ngdj_create_app`, `ngdj_add_feature`, `ngdj_add_component`, `ngdj_run_schematic`; MCP config pointing to the `ngdj` CLI MCP server. |
+| **Plugin contents** | Tools: `angular_workspace_scaffold`, `angular_app_scaffold`, `ngdj_add_feature`, `ngdj_add_component`, `ngdj_run_schematic`; MCP config pointing to the `ngdj` CLI MCP server. |
 
 ### 4.3 Contract Lifecycle Plugin
 
@@ -239,7 +239,7 @@ that are natural candidates for packaging as **Plugins**.
 | **Location in ARCHITECTURE.md** | §7.1 stages 1–2, §11.1, §11.2, §11.4 |
 | **Current approach** | Contract lifecycle operations (export, validate, diff, version) are distributed across `djng` commands, `oasdiff` CLI, and agent-session instructions |
 | **Why a Plugin is better** | The contract lifecycle forms a self-contained domain: export → validate → diff → version → gate. Packaging this domain as a plugin with its own tools and hooks makes the contract boundary explicit and reusable independently of the full Angular construction flow. Teams working only on the backend contract management layer could install this plugin without the full construction stack. |
-| **Plugin contents** | Tools: `export_schema`, `validate_openapi_schema`, `oasdiff_diff`, `oasdiff_changelog`; Hooks: breaking-change PreToolUse gate, migration-triggered PostToolUse extraction. |
+| **Plugin contents** | Tools: `openapi_schema_export`, `validate_openapi_schema`, `oasdiff_diff`, `oasdiff_changelog`; Hooks: breaking-change PreToolUse gate, migration-triggered PostToolUse extraction. |
 
 ---
 

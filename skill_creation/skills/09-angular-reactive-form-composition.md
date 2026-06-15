@@ -1,10 +1,10 @@
-## ng-reactive-form
+## Angular reactive form generation
 
 ```yaml
 ---
-name: ng-reactive-form
+name: angular-reactive-form-composition
 description: Create, modify, or delete Angular Material reactive forms with typed FormGroup, FormBuilder scaffolding, Material form fields, server-side validation error handling, and comprehensive specs
-when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /ng-reactive-form to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
+when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /angular-reactive-form-composition to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -19,7 +19,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-reactive-form` skill manages Angular reactive form components that use typed `FormGroup<>` interfaces, `FormBuilder` for control creation, Angular Material form fields (`MatFormField`), and integrate with data services for submission. These forms implement loading states with `MatProgressBar`, handle server-side validation errors by calling `setErrors()` on individual controls, wire submit actions to data service methods, and provide cancel handlers for navigation or output events. Forms can operate in create mode (empty initial values), edit mode (pre-populated from resource), or both modes (dynamic based on route parameters).
+The `angular-reactive-form-composition` skill manages Angular reactive form components that use typed `FormGroup<>` interfaces, `FormBuilder` for control creation, Angular Material form fields (`MatFormField`), and integrate with data services for submission. These forms implement loading states with `MatProgressBar`, handle server-side validation errors by calling `setErrors()` on individual controls, wire submit actions to data service methods, and provide cancel handlers for navigation or output events. Forms can operate in create mode (empty initial values), edit mode (pre-populated from resource), or both modes (dynamic based on route parameters).
 
 ### Inputs
 
@@ -32,7 +32,7 @@ The `ng-reactive-form` skill manages Angular reactive form components that use t
   - `edit` — Form for editing existing resources (pre-populated from resource)
   - `both` — Form supporting both create and edit based on route parameters or input
 - `resourceName` (string, optional): Name of the resource this form operates on. If provided, the skill will:
-  - Inspect generated API models from `ng-api` output to derive field types
+  - Inspect generated API models from `angular-api-integration` output to derive field types
   - Create typed `FormGroup<>` interface matching the model structure
   - Wire submit to corresponding data service method (e.g., `createUser()`, `updateUser()`)
   - If not provided, form fields must be manually specified
@@ -59,8 +59,8 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
    - Validate `formName` follows naming conventions (lowercase, hyphenated)
    - Check form component doesn't already exist at `targetPath/<formName>/`
    - If `resourceName` is provided:
-     - Verify generated API models exist from `ng-api` skill output
-     - Verify corresponding data service exists from `ng-data-service` skill
+     - Verify generated API models exist from `angular-api-integration` skill output
+     - Verify corresponding data service exists from `angular-data-service-composition` skill
      - Extract field names and types from the resource model
 
 2. **Determine target directory**:
@@ -462,11 +462,11 @@ Remove a reactive form component and clean up references (route configurations, 
 
 1. **Generated model not found**:
    - Error: Cannot resolve resource model for form field derivation
-   - Resolution: Run `ng-api` skill first to generate OpenAPI models, then retry
+   - Resolution: Run `angular-api-integration` skill first to generate OpenAPI models, then retry
 
 2. **Data service missing**:
    - Error: Cannot inject data service for submit integration
-   - Resolution: Run `ng-data-service` skill to create service wrapper, then retry
+   - Resolution: Run `angular-data-service-composition` skill to create service wrapper, then retry
 
 3. **Form control type mismatch**:
    - Error: TypeScript compilation fails due to form control type not matching model field type
@@ -580,4 +580,3 @@ Output:
 - Updated `product-edit.component.html`
 - Updated `product-edit.component.spec.ts`
 ```
-

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -22,9 +23,19 @@ class AngularInvocation:
         return {"argv": list(self.argv), "cwd": str(self.cwd)}
 
 
-def plan_angular_command(
+AngularInvocationBuilder = Callable[..., list[AngularInvocation]]
+
+
+def resolve_angular_command(
     command_name: str, config_path: str | Path | None = None, **options: Any
 ) -> list[AngularInvocation]:
+    """Resolve one logical djng command into an ordered list of subprocess calls.
+
+    This function does not execute Angular or Node tooling. It loads the
+    project configuration and Angular settings, chooses the matching command
+    builder, and returns the concrete ``AngularInvocation`` list that a dry run
+    can print or ``execute_invocations`` can later run.
+    """
     settings = load_angular_settings()
     config = load_project_config(config_path or settings.config_path)
 
@@ -36,12 +47,14 @@ def plan_angular_command(
 
 
 def format_invocations(invocations: list[AngularInvocation]) -> str:
+    """Serialize resolved subprocess calls for dry-run output."""
     return json.dumps([invocation.to_dict() for invocation in invocations], indent=2)
 
 
 def execute_invocations(
     invocations: list[AngularInvocation], settings: AngularSettings | None = None
 ) -> None:
+    """Run a previously resolved ordered list of subprocess calls."""
     active_settings = settings or load_angular_settings()
     for invocation in invocations:
         _ensure_command_is_allowed(invocation.command_name, active_settings)
@@ -75,6 +88,23 @@ def build_ng_new_invocations(
                 f"--directory={config.angular_output.name}",
             ),
             cwd=config.angular_output.parent,
+        )
+    ]
+
+
+def build_ng_workspace_schematic_invocations(
+    config: ProjectConfig, settings: AngularSettings, **_: Any
+) -> list[AngularInvocation]:
+    return [
+        AngularInvocation(
+            command_name="ng_workspace",
+            argv=(
+                settings.ng_executable,
+                "generate",
+                "angular-django2:ng-workspace",
+                config.project_name,
+            ),
+            cwd=config.angular_output,
         )
     ]
 
@@ -191,17 +221,37 @@ def build_ng_add_invocations(
     ]
 
 
+def build_ng_workspace_invocations(
+    config: ProjectConfig, settings: AngularSettings, **_: Any
+) -> list[AngularInvocation]:
+    """Create and bootstrap an Angular workspace with angular-django2 defaults."""
+    invocations = _relabel_invocations(build_ng_new_invocations(config, settings), "ng_workspace")
+    invocations.extend(_relabel_invocations(build_ng_config_invocations(config, settings), "ng_workspace"))
+    invocations.extend(_relabel_invocations(build_ng_add_invocations(config, settings), "ng_workspace"))
+    invocations.extend(build_ng_workspace_schematic_invocations(config, settings))
+    return invocations
+
+
 def build_ng_workspace_modify_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
-    """Updates config and reapplies the schematic package safely."""
-    invocations = build_ng_config_invocations(config, settings)
-    invocations.extend(build_ng_add_invocations(config, settings))
+    """Reapply workspace defaults, collection registration, and workspace scaffolding."""
+    invocations = _relabel_invocations(
+        build_ng_config_invocations(config, settings), "ng_workspace_modify"
+    )
+    invocations.extend(
+        _relabel_invocations(build_ng_add_invocations(config, settings), "ng_workspace_modify")
+    )
+    invocations.extend(
+        _relabel_invocations(
+            build_ng_workspace_schematic_invocations(config, settings), "ng_workspace_modify"
+        )
+    )
     return invocations
 
 
 def build_ng_workspace_delete_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, _settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     """Deletes the entire workspace folder using Python's native cross-platform shutil."""
     import sys
@@ -209,15 +259,16 @@ def build_ng_workspace_delete_invocations(
     
     return [
         AngularInvocation(
-            command_name="ng_rmdir",
+            command_name="ng_workspace_delete",
             argv=(sys.executable, "-c", py_code),
             cwd=config.angular_output.parent,
         )
     ]
 
 
-_COMMAND_BUILDERS = {
+_COMMAND_BUILDERS: dict[str, AngularInvocationBuilder] = {
     "ng_new": build_ng_new_invocations,
+    "ng_workspace": build_ng_workspace_invocations,
     "ng_config": build_ng_config_invocations,
     "ng_build": build_ng_build_invocations,
     "ng_gen_app": build_ng_gen_app_invocations,
@@ -230,6 +281,15 @@ _COMMAND_BUILDERS = {
 
 def _stringify_bool(value: bool) -> str:
     return "true" if value else "false"
+
+
+def _relabel_invocations(
+    invocations: list[AngularInvocation], command_name: str
+) -> list[AngularInvocation]:
+    return [
+        AngularInvocation(command_name=command_name, argv=invocation.argv, cwd=invocation.cwd)
+        for invocation in invocations
+    ]
 
 
 def _ensure_command_is_allowed(command_name: str, settings: AngularSettings) -> None:

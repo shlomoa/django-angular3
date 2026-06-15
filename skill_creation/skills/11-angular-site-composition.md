@@ -1,14 +1,14 @@
 ## Angular Material site generation
 
-**Skill Name**: `ng-site`
+**Skill Name**: `angular-site-composition`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-site
+name: angular-site-composition
 description: Orchestrate Angular Material site generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure
-when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /ng-site to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
+when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /angular-site-composition to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -23,7 +23,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-site` skill coordinates complete Angular Material site generation for an application that already has an Angular workspace and app scaffold available. It acts as an orchestrator across app shell creation, route setup, OpenAPI client generation, page generation, reactive form generation, Material theming, and application-wide auth wiring. Use this skill when the agent needs to build or reshape the overall site structure rather than a single page or form in isolation.
+The `angular-site-composition` skill coordinates complete Angular Material site generation for an application that already has an Angular workspace and app scaffold available. It acts as an orchestrator across app shell creation, route setup, OpenAPI client generation, page generation, reactive form generation, Material theming, and application-wide auth wiring. Use this skill when the agent needs to build or reshape the overall site structure rather than a single page or form in isolation.
 
 ### Inputs
 
@@ -31,7 +31,7 @@ The `ng-site` skill coordinates complete Angular Material site generation for an
 - **`workspacePath`** (string, required): Absolute path to the Angular workspace root
 - **`appName`** (string, optional): Angular application name when the workspace contains more than one app and for validation commands
 - **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/ui/`, used to discover pages, navigation structure, and forms
-- **`openapi_source_path`** (string, optional): Path to the OpenAPI source used by `ng-api` for client generation
+- **`openapi_source_path`** (string, optional): Path to the OpenAPI source used by `angular-api-integration` for client generation
 - **`defaults`** (object, optional): Fallback definitions to use when no UI spec is provided, such as default pages, route prefixes, or auth requirements
 
 ### Modes
@@ -53,7 +53,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 1. **Verify workspace and app exist before orchestration**
    - Confirm `workspacePath` exists and contains `angular.json`
    - Confirm the target Angular application already exists in the workspace
-   - If either the workspace or application is missing, stop and instruct the caller to run `ng-workspace` first and then `ng-app`
+   - If either the workspace or application is missing, stop and instruct the caller to run `angular-workspace-foundation` first and then `angular-app-composition`
 
 2. **Read UI spec when provided**
    - If `uiSpecPath` is supplied, read `spec/ui/` (or the supplied equivalent) to determine:
@@ -69,17 +69,17 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - Create or update the root route configuration in `app.routes.ts`
    - Ensure the shell exposes a stable place for feature navigation and authenticated child routes
 
-4. **Invoke `ng-api` when an OpenAPI source is available**
-   - If `openapi_source_path` is present, pass it through to `ng-api` as `openapi_source_path` and generate or refresh Angular API clients before page or form generation
+4. **Invoke `angular-api-integration` when an OpenAPI source is available**
+   - If `openapi_source_path` is present, pass it through to `angular-api-integration` as `openapi_source_path` and generate or refresh Angular API clients before page or form generation
    - Reuse the generated models and services as the typed foundation for resource-backed pages and forms
 
-5. **Invoke `ng-page` for each site page**
-   - For every page discovered from the UI spec, invoke `ng-page` in sequence
-   - If no UI spec exists, invoke `ng-page` for the default page set
+5. **Invoke `angular-page-composition` for each site page**
+   - For every page discovered from the UI spec, invoke `angular-page-composition` in sequence
+   - If no UI spec exists, invoke `angular-page-composition` for the default page set
    - Pass through page type, route path, feature ownership, authentication needs, and navigation metadata
 
-6. **Invoke `ng-reactive-form` for each form definition**
-   - For every form discovered in the UI spec, invoke `ng-reactive-form`
+6. **Invoke `angular-reactive-form-composition` for each form definition**
+   - For every form discovered in the UI spec, invoke `angular-reactive-form-composition`
    - Prefer generated OpenAPI models when available
    - Attach generated forms to the relevant workflow or detail pages after form generation completes
 
@@ -146,7 +146,7 @@ Remove the Angular application that owns the generated site from the workspace.
 
 **Process**:
 1. Confirm the target application exists in the workspace
-2. Remove the site by invoking the equivalent `ng-app` delete flow for the application
+2. Remove the site by invoking the equivalent `angular-app-composition` delete flow for the application
 3. Remove site-level files that are unique to the app, including shell, routes, theme, guards, and interceptors if they are not shared elsewhere
 4. Confirm the workspace remains valid after app removal
 
@@ -165,7 +165,7 @@ Remove the Angular application that owns the generated site from the workspace.
 - `templates/app-shell.ts.tpl` — Root site shell template used for `app.component.ts` generation with `MatSidenav` layout
 - `context/angular-conventions.md` — Angular standalone application and DI conventions for app shell and route orchestration
 - `context/angular-material-patterns.md` — Material sidenav, toolbar, navigation, and theme guidance used by the generated site shell
-- `context/openapi-integration.md` — OpenAPI client generation and usage guidance for `ng-api`-driven pages and forms
+- `context/openapi-integration.md` — OpenAPI client generation and usage guidance for `angular-api-integration`-driven pages and forms
 
 ### Validation
 
@@ -193,16 +193,16 @@ Remove the Angular application that owns the generated site from the workspace.
 **Common Errors**:
 
 1. **Workspace or app missing**:
-   - Resolution: run `ng-workspace` first, then `ng-app`, before invoking `ng-site`
+   - Resolution: run `angular-workspace-foundation` first, then `angular-app-composition`, before invoking `angular-site-composition`
 
 2. **UI spec missing or incomplete**:
    - Resolution: fall back to defaults or stop and request a valid `spec/ui/` source when page/form inference is required
 
 3. **OpenAPI source unavailable**:
-   - Resolution: skip `ng-api` orchestration when no OpenAPI source is provided, or request a valid source path before generating resource-backed pages/forms
+   - Resolution: skip `angular-api-integration` orchestration when no OpenAPI source is provided, or request a valid source path before generating resource-backed pages/forms
 
 4. **Dependent page or form skill unavailable**:
-   - Resolution: ensure `ng-page` and `ng-reactive-form` are available before site orchestration, then retry the failed step
+   - Resolution: ensure `angular-page-composition` and `angular-reactive-form-composition` are available before site orchestration, then retry the failed step
 
 5. **Auth or interceptor wiring fails compile validation**:
    - Resolution: review route guard imports, HTTP provider registration, and CSRF header handling before rerunning validation
@@ -241,9 +241,9 @@ Remove the Angular application that owns the generated site from the workspace.
 1. Verify the workspace and app already exist
 2. Read `spec/ui/` to discover pages and forms
 3. Create the Material app shell and root routes
-4. Invoke `ng-api`
-5. Invoke `ng-page` for each discovered page
-6. Invoke `ng-reactive-form` for each discovered form
+4. Invoke `angular-api-integration`
+5. Invoke `angular-page-composition` for each discovered page
+6. Invoke `angular-reactive-form-composition` for each discovered form
 7. Wire theme, `AuthGuard`, CSRF interceptor, and compile validation
 
 **Example 2: Modify site navigation**
@@ -262,4 +262,3 @@ Remove the Angular application that owns the generated site from the workspace.
 3. Re-run compile validation and dry-run build
 
 ---
-

@@ -1,14 +1,14 @@
 ## Angular Material workspace boiler plate
 
-**Skill Name**: `ng-workspace`
+**Skill Name**: `angular-workspace-foundation`
 
 ### YAML Frontmatter
 
 ```yaml
 ---
-name: ng-workspace
+name: angular-workspace-foundation
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
-when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /ng-workspace to scaffold or update an Angular workspace from django-angular3.json.
+when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -23,7 +23,7 @@ allowed-tools:
 
 ### Purpose
 
-The `ng-workspace` skill manages the creation, modification, and deletion of Angular workspaces configured with Angular Material, following modern Angular conventions (standalone components, signals, SCSS theming). This is the foundation skill that must be executed before any app-level or component-level skills can be invoked.
+The `angular-workspace-foundation` skill manages the creation, modification, and deletion of Angular workspaces configured with Angular Material, following modern Angular conventions (standalone components, signals, SCSS theming). This is the foundation skill that must be executed before any app-level or component-level skills can be invoked.
 
 ### Inputs
 
@@ -169,7 +169,7 @@ After successful execution, the workspace directory contains:
 
 Update an existing workspace with configuration changes, package updates, or new tooling.
 
-> **Note**: `build_app` does not trigger `ng-workspace` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
+> **Note**: `build_app` does not trigger `angular-workspace-foundation` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
 
 #### Input Requirements
 
@@ -277,7 +277,7 @@ This skill references the following shared context files:
 
 #### Template Files
 
-This skill does not use template files directly, as it relies on Angular CLI schematics for code generation. However, it configures the workspace to use the templates defined in the Templates section when subsequent skills (like `ng-component` or `ng-page`) are invoked.
+This skill does not use template files directly, as it relies on Angular CLI schematics for code generation. However, it configures the workspace to use the templates defined in the Templates section when subsequent skills (like `angular-component-composition` or `angular-page-composition`) are invoked.
 
 ### Validation
 
@@ -367,7 +367,7 @@ After modifying a workspace, verify:
 **No skill dependencies**: This is the foundational skill. All other Angular skills depend on this skill being executed first to create the workspace.
 
 **Dependent skills** (must have workspace before using):
-- `ng-app` — Angular Material app boiler plate
+- `angular-app-composition` — Angular Material app boiler plate
 - `ng-api-gen` — Angular API generation
 - All component, form, page, and site generation skills
 
@@ -420,4 +420,3 @@ Procedure-level input: `confirmDelete: true`
 4. Confirm deletion
 
 **Output**: Workspace deleted, backup saved to `/home/user/projects/my-shop-backup-20260425-153000.tar.gz`
-

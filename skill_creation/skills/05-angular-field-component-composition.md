@@ -2,9 +2,9 @@
 
 ```yaml
 ---
-name: ng-field-component
+name: angular-field-component-composition
 description: Create, modify, or delete Angular Material small field-level components with typed input/output signals, Material imports, and ARIA accessibility
-when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /ng-field-component to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
+when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /angular-field-component-composition to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
 user-invocable: false
 context: fork
 allowed-tools:
@@ -618,4 +618,3 @@ Dependent skills (use this skill before):
 4. Verify compilation succeeds
 
 **Output**: Component deleted successfully
-
