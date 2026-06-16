@@ -249,7 +249,8 @@ tests.
 
 ## 12. Architecture Alignment: Tools, Hooks, Skills, Plugins
 
-**Status: Not started**
+**Status: Planned — design alignment recorded in
+`doc/phased_implementation_plan.md`; implementation phases remain open.**
 
 Incorporate the architectural recommendations captured in
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` into implementation planning and design
@@ -275,3 +276,4 @@ umbrella design spec for the full automation model rather than SKILLS alone.
 - Derive a phased implementation plan with acceptance criteria for the above,
   including test and verification coverage updates where behavior moves from
   AI-guided flow to deterministic tool/hook enforcement.
+  See `doc/phased_implementation_plan.md`.

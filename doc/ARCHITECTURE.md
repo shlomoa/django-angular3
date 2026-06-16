@@ -403,6 +403,16 @@ This loop is part of the architecture, not an implementation accident. Convergen
 within each session, and the composition of all sessions, produce a correct
 working application.
 
+Local acceptance by a guided agent session is necessary but not sufficient for
+global correctness. A session can satisfy its own acceptance criteria while the
+composed generated app is still incorrect because of cross-session interface
+drift, stale backend-contract/client alignment, or runtime integration failure.
+The architecture therefore requires a distinct global acceptance gate after all
+guided sessions, deterministic tool procedures, and lifecycle hooks complete.
+That gate is owned by terminal verification procedures, not by any individual
+SKILL, and a run is a correct working application only when the global gate
+passes.
+
 ### 7.3 Verification categories
 
 Verification in this architecture occurs throughout construction and integration. The main categories are:
@@ -411,6 +421,12 @@ Verification in this architecture occurs throughout construction and integration
 - Construction-output verification: inspect generated and assembled outputs so they can be corrected, refined, or reused in later iterations.
 - Integration verification: verify alignment between backend behavior, generated integration artifacts, and frontend composition.
 - Test-based verification: use automated tests and smoke tests to verify expected behavior across backend, frontend, and composed application flows.
+
+Terminal verification applies these categories to the complete generated app.
+It consumes recorded construction results from deterministic tools and guided
+sessions, then fails the run if local procedure success does not compose into
+cross-SKILL interface consistency, backend-contract / Angular-client alignment,
+and runnable application flows.
 
 ### 7.4 Example Build Flow
 
