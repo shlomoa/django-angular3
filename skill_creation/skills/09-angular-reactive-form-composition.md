@@ -4,6 +4,7 @@
 ---
 name: angular-reactive-form-composition
 description: Create, modify, or delete Angular Material reactive forms with typed FormGroup, FormBuilder scaffolding, Material form fields, server-side validation error handling, and comprehensive specs
+when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /angular-reactive-form-composition to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
 user-invocable: false
 context: fork
 allowed-tools:

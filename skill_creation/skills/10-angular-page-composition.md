@@ -8,6 +8,7 @@
 ---
 name: angular-page-composition
 description: Create, modify, or delete Angular Material pages with lazy standalone routing, sidenav navigation, and authenticated route guard support
+when_to_use: Use when build_app dispatches a page procedure node, or when a user runs /angular-page-composition to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
 user-invocable: false
 context: fork
 allowed-tools:

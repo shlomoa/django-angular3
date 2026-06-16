@@ -8,6 +8,7 @@
 ---
 name: angular-site-composition
 description: Orchestrate Angular Material site generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure
+when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /angular-site-composition to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
 user-invocable: false
 context: fork
 allowed-tools:

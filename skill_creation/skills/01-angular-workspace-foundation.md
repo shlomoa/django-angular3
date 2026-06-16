@@ -8,6 +8,7 @@
 ---
 name: angular-workspace-foundation
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
+when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
 user-invocable: false
 context: fork
 allowed-tools:

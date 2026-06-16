@@ -8,6 +8,7 @@
 ---
 name: angular-component-composition
 description: Create, modify, or delete Angular Material components (display, container, or dialog types) with standalone architecture and Material theming
+when_to_use: Use when build_app dispatches a component procedure node for display, container, or dialog types, or when a user runs /angular-component-composition to scaffold a standalone Angular Material component.
 user-invocable: false
 context: fork
 allowed-tools:

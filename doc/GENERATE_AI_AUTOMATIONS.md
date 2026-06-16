@@ -59,10 +59,15 @@ manifests, or skill files to ensure each layer uses the correct name.
 
 # AI Automation Architecture
 
-This document defines the automation subsystem at four primitive levels. The
-detailed item-by-item specifications in this file are currently most complete
-for SKILLS, while TOOLS, HOOKS, and PLUGINS are defined here through
-boundaries, selection policy, and architectural responsibilities.
+This document defines the automation subsystem at four primitive levels. Each
+primitive family carries both an architectural boundary (selection policy and
+responsibilities) and a per-capability contract catalog: SKILLS in the
+[Skills Catalog](#skills-catalog), TOOLS in the
+[Tool Contracts Catalog](#tool-contracts-catalog), HOOKS in the
+[Hook Contracts Catalog](#hook-contracts-catalog), and PLUGINS in the
+[Plugin Contracts Catalog](#plugin-contracts-catalog). The selection policy
+below governs which family a new capability belongs to before it is added to
+any catalog.
 
 ## Primitive families
 

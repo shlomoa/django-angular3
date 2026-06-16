@@ -4,6 +4,7 @@
 ---
 name: angular-form-field-composition
 description: Create, modify, or delete Angular Material form field components implementing ControlValueAccessor for seamless reactive forms integration with validation and error handling
+when_to_use: Use when build_app dispatches a form-field-component procedure node, or when a user runs /angular-form-field-composition to scaffold a Material form-field component that implements ControlValueAccessor for reactive forms.
 user-invocable: false
 context: fork
 allowed-tools:
