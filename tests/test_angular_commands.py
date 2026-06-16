@@ -6,10 +6,17 @@ from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from django_angular3.angular import AngularInvocation, AngularCommandError, execute_invocations
+from django_angular3.angular import (
+    AngularCommandError,
+    AngularInvocation,
+    execute_invocations,
+)
 from django_angular3.cli import main
-from django_angular3.settings import AngularSettings, DEFAULT_ANGULAR_SETTINGS, load_angular_settings
-
+from django_angular3.settings import (
+    DEFAULT_ANGULAR_SETTINGS,
+    AngularSettings,
+    load_angular_settings,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "django-angular3.json"
@@ -31,13 +38,19 @@ class AngularCliCommandTests(unittest.TestCase):
             "package_manager": "npm",
         }
 
-        self.assertEqual(load_angular_settings(), AngularSettings(**DEFAULT_ANGULAR_SETTINGS))
         self.assertEqual(
-            load_angular_settings({"ng_executable": "ng.cmd", "package_manager": "npm"}),
+            load_angular_settings(), AngularSettings(**DEFAULT_ANGULAR_SETTINGS)
+        )
+        self.assertEqual(
+            load_angular_settings(
+                {"ng_executable": "ng.cmd", "package_manager": "npm"}
+            ),
             AngularSettings(**overridden_settings),
         )
 
-    def test_load_angular_settings_supports_legacy_package_executable_aliases(self) -> None:
+    def test_load_angular_settings_supports_legacy_package_executable_aliases(
+        self,
+    ) -> None:
         with_npx_alias = DEFAULT_ANGULAR_SETTINGS | {"pnpm_executable": "corepack-pnpm"}
         with_npm_alias = DEFAULT_ANGULAR_SETTINGS | {"pnpm_executable": "pnpm.cmd"}
 
@@ -65,7 +78,9 @@ class AngularCliCommandTests(unittest.TestCase):
         return exit_code, stdout.getvalue(), stderr.getvalue()
 
     def test_ng_new_dry_run_prints_empty_workspace_command(self) -> None:
-        exit_code, stdout, stderr = self.run_cli("ng_new", str(CONFIG_PATH), "--dry-run")
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_new", str(CONFIG_PATH), "--dry-run"
+        )
 
         ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
@@ -87,8 +102,12 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
 
-    def test_ng_workspace_dry_run_bootstraps_workspace_with_ngdj_schematic(self) -> None:
-        exit_code, stdout, stderr = self.run_cli("ng_workspace", str(CONFIG_PATH), "--dry-run")
+    def test_ng_workspace_dry_run_bootstraps_workspace_with_ngdj_schematic(
+        self,
+    ) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_workspace", str(CONFIG_PATH), "--dry-run"
+        )
 
         ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
@@ -111,11 +130,18 @@ class AngularCliCommandTests(unittest.TestCase):
         )
         self.assertEqual(
             plan[-1]["argv"],
-            [ng, "generate", "angular-django2:ng-workspace", "django-angular3-scaffold"],
+            [
+                ng,
+                "generate",
+                "angular-django2:ng-workspace",
+                "django-angular3-scaffold",
+            ],
         )
 
     def test_ng_config_dry_run_prints_workspace_configuration_commands(self) -> None:
-        exit_code, stdout, stderr = self.run_cli("ng_config", str(CONFIG_PATH), "--dry-run")
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_config", str(CONFIG_PATH), "--dry-run"
+        )
 
         ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
@@ -129,11 +155,18 @@ class AngularCliCommandTests(unittest.TestCase):
         )
         self.assertEqual(
             plan[2]["argv"],
-            [ng, "config", "schematics.@schematics/angular:application.routing", "true"],
+            [
+                ng,
+                "config",
+                "schematics.@schematics/angular:application.routing",
+                "true",
+            ],
         )
 
     def test_ng_build_dry_run_prints_project_build_command(self) -> None:
-        exit_code, stdout, stderr = self.run_cli("ng_build", str(CONFIG_PATH), "--dry-run")
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_build", str(CONFIG_PATH), "--dry-run"
+        )
 
         ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
@@ -155,11 +188,20 @@ class AngularCliCommandTests(unittest.TestCase):
         plan = json.loads(stdout)
         self.assertEqual(
             plan[0]["argv"],
-            [ng, "generate", "angular-django2:ng-app", "portal", "--style=scss", "--routing"],
+            [
+                ng,
+                "generate",
+                "angular-django2:ng-app",
+                "portal",
+                "--style=scss",
+                "--routing",
+            ],
         )
 
     def test_ng_openapi_gen_dry_run_uses_openapi_source(self) -> None:
-        exit_code, stdout, stderr = self.run_cli("ng_openapi_gen", str(CONFIG_PATH), "--dry-run")
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_openapi_gen", str(CONFIG_PATH), "--dry-run"
+        )
 
         pnpm = DEFAULT_ANGULAR_SETTINGS["pnpm_executable"]
         self.assertEqual(exit_code, 0)
@@ -177,7 +219,9 @@ class AngularCliCommandTests(unittest.TestCase):
         )
 
     def test_ng_add_dry_run_defaults_to_angular_django2(self) -> None:
-        exit_code, stdout, stderr = self.run_cli("ng_add", str(CONFIG_PATH), "--dry-run")
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_add", str(CONFIG_PATH), "--dry-run"
+        )
 
         ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
         self.assertEqual(exit_code, 0)
@@ -233,7 +277,9 @@ class AngularCliCommandTests(unittest.TestCase):
         run.assert_called_once_with(invocation.argv, cwd=invocation.cwd, check=True)
 
 
-@unittest.skipUnless(DJANGO_AVAILABLE, "Django is required for management command tests.")
+@unittest.skipUnless(
+    DJANGO_AVAILABLE, "Django is required for management command tests."
+)
 class AngularManagementCommandTests(unittest.TestCase):
     def test_management_commands_support_dry_run(self) -> None:
         cases = (
@@ -251,5 +297,11 @@ class AngularManagementCommandTests(unittest.TestCase):
                 from django.core.management import call_command
 
                 stdout = io.StringIO()
-                call_command(command_name, str(CONFIG_PATH), dry_run=True, stdout=stdout, **options)
+                call_command(
+                    command_name,
+                    str(CONFIG_PATH),
+                    dry_run=True,
+                    stdout=stdout,
+                    **options,
+                )
                 self.assertIn('"argv"', stdout.getvalue())

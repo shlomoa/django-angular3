@@ -39,11 +39,15 @@ def load_project_config(path: str | Path) -> ProjectConfig:
 
     root = config_path.parent
     project_name = _require_string(project, "name", section="project")
-    openapi_source = _resolve_path(root, _require_string(openapi, "source", section="openapi"))
+    openapi_source = _resolve_path(
+        root, _require_string(openapi, "source", section="openapi")
+    )
     ui_source = _resolve_path(root, _require_string(ui, "source", section="ui"))
     angular_output_value = angular.get("output", angular.get("package"))
     if not isinstance(angular_output_value, str) or not angular_output_value.strip():
-        raise ConfigError("Configuration value 'angular.output' must be a non-empty string.")
+        raise ConfigError(
+            "Configuration value 'angular.output' must be a non-empty string."
+        )
     angular_output = _resolve_path(root, angular_output_value)
 
     openapi_generator_config = _optional_path(
@@ -74,7 +78,9 @@ def _require_mapping(document: dict[str, Any], key: str) -> dict[str, Any]:
 def _require_string(document: dict[str, Any], key: str, *, section: str) -> str:
     value = document.get(key)
     if not isinstance(value, str) or not value.strip():
-        raise ConfigError(f"Configuration value '{section}.{key}' must be a non-empty string.")
+        raise ConfigError(
+            f"Configuration value '{section}.{key}' must be a non-empty string."
+        )
     return value
 
 

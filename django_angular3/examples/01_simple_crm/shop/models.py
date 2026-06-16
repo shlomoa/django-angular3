@@ -8,7 +8,7 @@ class Customer(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['id']
+        ordering = ["id"]
 
 
 class Product(models.Model):
@@ -17,4 +17,4 @@ class Product(models.Model):
     sku = models.CharField(max_length=100, blank=True)
 
     class Meta:
-        ordering = ['id']
+        ordering = ["id"]

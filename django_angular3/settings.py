@@ -41,12 +41,16 @@ class AngularSettings(SimpleNamespace):
     """
 
 
-def load_angular_settings(overrides: Mapping[str, object] | None = None) -> AngularSettings:
+def load_angular_settings(
+    overrides: Mapping[str, object] | None = None,
+) -> AngularSettings:
     data = DEFAULT_ANGULAR_SETTINGS.copy()
     data.update(_normalize_legacy_settings(_load_django_settings()))
     if overrides:
         data.update(_normalize_legacy_settings(overrides))
-    data["command_allowlist"] = _normalize_command_allowlist(data.get("command_allowlist"))
+    data["command_allowlist"] = _normalize_command_allowlist(
+        data.get("command_allowlist")
+    )
     return AngularSettings(**data)
 
 

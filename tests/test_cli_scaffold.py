@@ -1,6 +1,6 @@
-from pathlib import Path
 import shutil
 import unittest
+from pathlib import Path
 
 from django_angular3.build import create_build_plan, write_build_plan
 from django_angular3.config import load_project_config
@@ -11,13 +11,14 @@ from django_angular3.validation import (
     validate_ui_document,
 )
 
-
 ROOT = Path(__file__).resolve().parent.parent
 
 
 class ScaffoldTests(unittest.TestCase):
     def test_example_openapi_document_is_valid(self) -> None:
-        document = load_document(ROOT / "spec" / "openapi" / "source" / "example.openapi.json")
+        document = load_document(
+            ROOT / "spec" / "openapi" / "source" / "example.openapi.json"
+        )
         self.assertEqual(validate_openapi_document(document), [])
 
     def test_example_ui_document_is_valid(self) -> None:

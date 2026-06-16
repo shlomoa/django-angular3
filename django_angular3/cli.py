@@ -3,10 +3,15 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
-from .angular import AngularCommandError, execute_invocations, format_invocations, resolve_angular_command
+from .angular import (
+    AngularCommandError,
+    execute_invocations,
+    format_invocations,
+    resolve_angular_command,
+)
 from .build import create_build_plan, write_build_plan
 from .config import ConfigError, load_project_config
 from .validation import validate_openapi_file, validate_project_config, validate_ui_file
@@ -21,22 +26,31 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_openapi.add_argument("path", help="Path to the OpenAPI document.")
 
-    validate_ui = subparsers.add_parser("validate-ui", help="Validate a UI definition document.")
+    validate_ui = subparsers.add_parser(
+        "validate-ui", help="Validate a UI definition document."
+    )
     validate_ui.add_argument("path", help="Path to the UI definition document.")
 
     validate_project = subparsers.add_parser(
         "validate-project", help="Validate a django-angular3 project configuration."
     )
     validate_project.add_argument(
-        "path", nargs="?", default="django-angular3.json", help="Path to the project config."
+        "path",
+        nargs="?",
+        default="django-angular3.json",
+        help="Path to the project config.",
     )
 
     build = subparsers.add_parser(
         "build", help="Validate a project and emit a deterministic build plan."
     )
-    build.add_argument("path", nargs="?", default="django-angular3.json", help="Path to the config.")
     build.add_argument(
-        "--output", default="build", help="Directory where the build plan should be written."
+        "path", nargs="?", default="django-angular3.json", help="Path to the config."
+    )
+    build.add_argument(
+        "--output",
+        default="build",
+        help="Directory where the build plan should be written.",
     )
     build.add_argument(
         "--dry-run",
@@ -55,7 +69,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     ng_workspace = subparsers.add_parser(
-        "ng_workspace", help="Bootstrap the configured Angular workspace with angular-django2."
+        "ng_workspace",
+        help="Bootstrap the configured Angular workspace with angular-django2.",
     )
     ng_workspace.add_argument(
         "path", nargs="?", default=None, help="Path to the project config."
@@ -66,7 +81,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
-    ng_config = subparsers.add_parser("ng_config", help="Configure Angular workspace defaults.")
+    ng_config = subparsers.add_parser(
+        "ng_config", help="Configure Angular workspace defaults."
+    )
     ng_config.add_argument(
         "path", nargs="?", default=None, help="Path to the project config."
     )
@@ -76,7 +93,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
     )
 
-    ng_build = subparsers.add_parser("ng_build", help="Build the configured Angular application.")
+    ng_build = subparsers.add_parser(
+        "ng_build", help="Build the configured Angular application."
+    )
     ng_build.add_argument(
         "path", nargs="?", default=None, help="Path to the project config."
     )
@@ -87,12 +106,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     ng_gen_app = subparsers.add_parser(
-        "ng_gen_app", help="Generate an Angular application in the configured workspace."
+        "ng_gen_app",
+        help="Generate an Angular application in the configured workspace.",
     )
     ng_gen_app.add_argument(
         "path", nargs="?", default=None, help="Path to the project config."
     )
-    ng_gen_app.add_argument("--app-name", default=None, help="Optional Angular application name.")
+    ng_gen_app.add_argument(
+        "--app-name", default=None, help="Optional Angular application name."
+    )
     ng_gen_app.add_argument(
         "--dry-run",
         action="store_true",
@@ -112,7 +134,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     ng_add = subparsers.add_parser("ng_add", help="Run ng add for an Angular package.")
-    ng_add.add_argument("path", nargs="?", default=None, help="Path to the project config.")
+    ng_add.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
     ng_add.add_argument(
         "--package",
         default=None,
@@ -143,7 +167,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "validate-openapi":
-        return _run_validation(validate_openapi_file(args.path), f"OpenAPI document {args.path}")
+        return _run_validation(
+            validate_openapi_file(args.path), f"OpenAPI document {args.path}"
+        )
 
     if args.command == "validate-ui":
         return _run_validation(validate_ui_file(args.path), f"UI document {args.path}")
@@ -195,7 +221,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             plan_options["app_name"] = args.app_name
         if args.command == "ng_add":
             plan_options["package"] = args.package
-        return _run_angular_command(args.command, args.path, dry_run=args.dry_run, **plan_options)
+        return _run_angular_command(
+            args.command, args.path, dry_run=args.dry_run, **plan_options
+        )
 
     parser.error("Unknown command")
     return 2
