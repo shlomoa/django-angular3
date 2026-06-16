@@ -231,7 +231,8 @@ class ExportSchemaCommandTests(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_build_app_auto_detects_previous_schema(self) -> None:
-        """build_app should auto-discover the .previous schema written by export_schema."""
+        """build_app should auto-discover the .previous schema
+        written by export_schema."""
         from django.core.management import call_command
 
         config = load_project_config(self.CONFIG_PATH)

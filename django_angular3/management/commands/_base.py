@@ -14,7 +14,8 @@ from ...config import ConfigError
 
 
 class AngularBaseCommand(BaseCommand):
-    """Base class for django-angular3 management commands that wrap Angular tooling."""
+    """Base class for django-angular3 management commands that wrap
+    Angular tooling."""
 
     angular_command_name = ""
 
@@ -25,7 +26,10 @@ class AngularBaseCommand(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the resolved subprocess call list instead of invoking Angular tooling.",
+            help=(
+                "Print the resolved subprocess call list instead of invoking "
+                "Angular tooling."
+            ),
         )
 
     def get_invocation_options(self, _options: dict[str, object]) -> dict[str, object]:

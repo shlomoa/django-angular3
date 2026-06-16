@@ -110,8 +110,10 @@ class Command(BaseCommand):
                 return {}  # No changes
             return json.loads(result.stdout)
         except subprocess.CalledProcessError as e:
-            # oasdiff might return non-zero exit code if it finds changes or breaking changes (depending on flags)
-            # Usually 'diff' returns 0, but if there's an error parsing the spec, it might fail.
+            # oasdiff might return non-zero exit code if it finds changes
+            # or breaking changes, depending on flags. Usually 'diff'
+            # returns 0, but if there's an error parsing the spec, it
+            # might fail.
             try:
                 if e.stdout.strip():
                     return json.loads(e.stdout)
@@ -122,7 +124,8 @@ class Command(BaseCommand):
     def _extract_resources(
         self, path_list: list[str], path_dict: dict[str, Any]
     ) -> set[str]:
-        """Extracts base resource names from OpenAPI paths like '/api/v1/customers/' -> 'customers'."""
+        """Extract base resource names from OpenAPI paths like
+        '/api/v1/customers/' -> 'customers'."""
         resources: set[str] = set()
 
         # Handle lists (added/deleted)
@@ -306,12 +309,16 @@ class Command(BaseCommand):
                 if callable(getattr(self.style, "ERROR", None)):
                     self.stderr.write(
                         self.style.ERROR(
-                            "Breaking schema changes detected. Review the oasdiff report before proceeding.\nRe-run with --acknowledge-breaking to continue."
+                            "Breaking schema changes detected. Review "
+                            "the oasdiff report before proceeding.\n"
+                            "Re-run with --acknowledge-breaking to continue."
                         )
                     )
                 else:
                     self.stderr.write(
-                        "Breaking schema changes detected. Review the oasdiff report before proceeding.\nRe-run with --acknowledge-breaking to continue."
+                        "Breaking schema changes detected. Review "
+                        "the oasdiff report before proceeding.\n"
+                        "Re-run with --acknowledge-breaking to continue."
                     )
                 raise SystemExit(2)
 
@@ -383,7 +390,10 @@ class Command(BaseCommand):
                         len(steps) + 1,
                         "ng-data-service",
                         "modify",
-                        f"Schema changed (add-things): update data service for '{resource}'",
+                        (
+                            "Schema changed (add-things): update data "
+                            f"service for '{resource}'"
+                        ),
                         config_path,
                         resource_name=resource,
                     )

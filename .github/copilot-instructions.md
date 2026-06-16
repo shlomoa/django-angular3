@@ -106,8 +106,14 @@ requirements for the generated app, use `django-admin <command>`.
 - **`djng`**: unit tests for services, permissions, and model behavior; API
 	tests for serializers, endpoints, authentication, and contract-producing
 	behavior; database-backed tests for critical workflows. For any Python-side
-	change use the repository unittest suite and the relevant `django-admin`
-	dry runs to verify inspectable outputs.
+	change run ruff lint and format checks, the repository unittest suite, and
+	the relevant `django-admin` dry runs to verify inspectable outputs:
+
+	```bash
+	ruff check django_angular3 tests
+	ruff format django_angular3 tests
+	python -m unittest discover -s tests -p 'test*.py'
+	```
 - **`ngdj`**: unit tests for services and utility logic; component tests for
 	forms, tables, route-protected pages, and generated UI behavior; end-to-end
 	tests for login and the main business module workflows. Keep Angular

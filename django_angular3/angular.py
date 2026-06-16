@@ -66,7 +66,8 @@ def execute_invocations(
             ) from exc
         except subprocess.CalledProcessError as exc:
             raise AngularCommandError(
-                f"Command '{' '.join(invocation.argv)}' failed with exit code {exc.returncode}."
+                f"Command '{' '.join(invocation.argv)}' failed with exit code "
+                f"{exc.returncode}."
             ) from exc
 
 
@@ -253,7 +254,8 @@ def build_ng_workspace_invocations(
 def build_ng_workspace_modify_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
-    """Reapply workspace defaults, collection registration, and workspace scaffolding."""
+    """Reapply workspace defaults, collection registration, and
+    workspace scaffolding."""
     invocations = _relabel_invocations(
         build_ng_config_invocations(config, settings), "ng_workspace_modify"
     )
@@ -274,7 +276,8 @@ def build_ng_workspace_modify_invocations(
 def build_ng_workspace_delete_invocations(
     config: ProjectConfig, _settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
-    """Deletes the entire workspace folder using Python's native cross-platform shutil."""
+    """Delete the entire workspace folder using Python's native
+    cross-platform shutil."""
     import sys
 
     py_code = (
@@ -312,7 +315,9 @@ def _relabel_invocations(
 ) -> list[AngularInvocation]:
     return [
         AngularInvocation(
-            command_name=command_name, argv=invocation.argv, cwd=invocation.cwd
+            command_name=command_name,
+            argv=invocation.argv,
+            cwd=invocation.cwd,
         )
         for invocation in invocations
     ]
@@ -325,5 +330,6 @@ def _ensure_command_is_allowed(command_name: str, settings: AngularSettings) -> 
 
     allowed_commands = ", ".join(settings.command_allowlist) or "<none>"
     raise AngularCommandError(
-        f"Command '{command_name}' is not allowed. Allowed commands: {allowed_commands}."
+        f"Command '{command_name}' is not allowed. Allowed commands: "
+        f"{allowed_commands}."
     )

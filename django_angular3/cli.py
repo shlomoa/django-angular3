@@ -65,7 +65,10 @@ def build_parser() -> argparse.ArgumentParser:
     ng_new.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
     )
 
     ng_workspace = subparsers.add_parser(
@@ -78,7 +81,10 @@ def build_parser() -> argparse.ArgumentParser:
     ng_workspace.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
     )
 
     ng_config = subparsers.add_parser(
@@ -90,7 +96,10 @@ def build_parser() -> argparse.ArgumentParser:
     ng_config.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
     )
 
     ng_build = subparsers.add_parser(
@@ -102,7 +111,10 @@ def build_parser() -> argparse.ArgumentParser:
     ng_build.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
     )
 
     ng_gen_app = subparsers.add_parser(
@@ -118,7 +130,10 @@ def build_parser() -> argparse.ArgumentParser:
     ng_gen_app.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
     )
 
     ng_openapi_gen = subparsers.add_parser(
@@ -130,7 +145,10 @@ def build_parser() -> argparse.ArgumentParser:
     ng_openapi_gen.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
     )
 
     ng_add = subparsers.add_parser("ng_add", help="Run ng add for an Angular package.")
@@ -145,7 +163,10 @@ def build_parser() -> argparse.ArgumentParser:
     ng_add.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print the resolved Angular subprocess call list instead of invoking Angular tooling.",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
     )
 
     install_tutorial = subparsers.add_parser(

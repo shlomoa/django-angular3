@@ -86,7 +86,8 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
-        # ng new runs from angular_output.parent so --directory is just the final component
+        # ng new runs from angular_output.parent, so --directory is
+        # just the final component.
         self.assertEqual(
             plan[0]["argv"],
             [
@@ -257,7 +258,10 @@ class AngularCliCommandTests(unittest.TestCase):
         with patch("django_angular3.angular.subprocess.run") as run:
             with self.assertRaisesRegex(
                 AngularCommandError,
-                r"Command 'ng_build' is not allowed\. Allowed commands: ng_openapi_gen\.",
+                (
+                    r"Command 'ng_build' is not allowed\. Allowed commands: "
+                    r"ng_openapi_gen\."
+                ),
             ):
                 execute_invocations([invocation], settings)
 

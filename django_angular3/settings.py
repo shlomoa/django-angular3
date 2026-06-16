@@ -32,7 +32,8 @@ class AngularSettings(SimpleNamespace):
         node_executable (str): Node executable name or path.
         pnpm_executable (str): pnpm executable name or path.
         ng_executable (str): Angular CLI executable name or path.
-        command_allowlist (tuple[str, ...]): Allowed resolved django-angular3 command names.
+        command_allowlist (tuple[str, ...]): Allowed resolved
+            django-angular3 command names.
         package_manager (str): Angular package manager setting.
         build_configuration (str): Angular build configuration name.
         style (str): Default Angular stylesheet format.
@@ -71,7 +72,8 @@ def _load_django_settings() -> dict[str, object]:
 
     if not isinstance(value, Mapping):
         raise AngularCommandError(
-            f"DJANGO_ANGULAR3 must be a dictionary-like mapping, got {type(value).__name__}."
+            "DJANGO_ANGULAR3 must be a dictionary-like mapping, got "
+            f"{type(value).__name__}."
         )
 
     return dict(value)
@@ -97,7 +99,8 @@ def _normalize_command_allowlist(value: object) -> tuple[str, ...]:
         commands = tuple(value)
     else:
         raise AngularCommandError(
-            "DJANGO_ANGULAR3['command_allowlist'] must be a string or a sequence of strings."
+            "DJANGO_ANGULAR3['command_allowlist'] must be a string "
+            "or a sequence of strings."
         )
 
     normalized_commands: list[str] = []
@@ -110,7 +113,8 @@ def _normalize_command_allowlist(value: object) -> tuple[str, ...]:
         normalized_command = command.strip().lower()
         if not normalized_command:
             raise AngularCommandError(
-                "DJANGO_ANGULAR3['command_allowlist'] cannot contain empty command names."
+                "DJANGO_ANGULAR3['command_allowlist'] cannot contain "
+                "empty command names."
             )
 
         if normalized_command not in normalized_commands:

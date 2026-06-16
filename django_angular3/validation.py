@@ -60,7 +60,8 @@ def validate_openapi_document(document: Any) -> list[str]:
             operation = path_item[operation_name]
             if not isinstance(operation, dict):
                 errors.append(
-                    f"Operation '{operation_name}' on path '{path_name}' must be an object."
+                    f"Operation '{operation_name}' on path "
+                    f"'{path_name}' must be an object."
                 )
 
     return errors
