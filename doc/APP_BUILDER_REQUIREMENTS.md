@@ -511,9 +511,9 @@ purposes only:
   procedures, as already required by §Procedure Graph.
 - The terminal verification procedures must consume the structured outputs of
   the deterministic tool procedures listed in FR-8 (for example, the
-the `generated_files` array returned by `angular_api_client_generate`) so that verification
-  is based on the recorded results of construction rather than on a separate
-  filesystem rescan.
+  `generated_files` array returned by `angular_api_client_generate`) so that
+  verification is based on the recorded results of construction rather than on
+  a separate filesystem rescan.
 - A run is reported as successful only when every terminal verification
   procedure reports success. A failed terminal verification procedure follows
   the failure-handling rules of FR-9.
