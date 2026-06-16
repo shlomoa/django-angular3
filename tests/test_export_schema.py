@@ -1,4 +1,5 @@
 """Tests for the export_schema management command and versioning helpers."""
+
 from __future__ import annotations
 
 import io
@@ -10,7 +11,6 @@ from unittest.mock import MagicMock, patch
 
 from django_angular3.config import get_previous_schema_path, load_project_config
 from django_angular3.management.commands.build_app import _command_for_skill
-
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -61,7 +61,9 @@ class GetPreviousSchemaPathTests(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
-@unittest.skipUnless(DJANGO_AVAILABLE, "Django is required for management command tests.")
+@unittest.skipUnless(
+    DJANGO_AVAILABLE, "Django is required for management command tests."
+)
 class ExportSchemaCommandTests(unittest.TestCase):
     """Tests for the export_schema management command."""
 
@@ -76,7 +78,9 @@ class ExportSchemaCommandTests(unittest.TestCase):
         schema = {
             "openapi": "3.0.3",
             "info": {"title": "Test API", "version": "1.0.0"},
-            "paths": {"/items/": {"get": {"responses": {"200": {"description": "ok"}}}}},
+            "paths": {
+                "/items/": {"get": {"responses": {"200": {"description": "ok"}}}}
+            },
         }
         return json.dumps(schema, indent=2).encode()
 
@@ -227,7 +231,8 @@ class ExportSchemaCommandTests(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_build_app_auto_detects_previous_schema(self) -> None:
-        """build_app should auto-discover the .previous schema written by export_schema."""
+        """build_app should auto-discover the .previous schema
+        written by export_schema."""
         from django.core.management import call_command
 
         config = load_project_config(self.CONFIG_PATH)
@@ -237,23 +242,26 @@ class ExportSchemaCommandTests(unittest.TestCase):
         minimal_schema = {
             "openapi": "3.0.0",
             "info": {"title": "prev", "version": "0.9.0"},
-            "paths": {"/items/": {"get": {"responses": {"200": {"description": "ok"}}}}},
+            "paths": {
+                "/items/": {"get": {"responses": {"200": {"description": "ok"}}}}
+            },
         }
         previous_path.write_text(json.dumps(minimal_schema), encoding="utf-8")
 
         try:
             stdout = io.StringIO()
             # Mock oasdiff so we don't need the binary installed in CI.
-            with patch(
-                "django_angular3.management.commands.build_app.ensure_oasdiff",
-                return_value="oasdiff",
-            ), patch(
-                "django_angular3.management.commands.build_app.subprocess.run"
-            ) as mock_run:
+            with (
+                patch(
+                    "django_angular3.management.commands.build_app.ensure_oasdiff",
+                    return_value="oasdiff",
+                ),
+                patch(
+                    "django_angular3.management.commands.build_app.subprocess.run"
+                ) as mock_run,
+            ):
                 # oasdiff diff returns empty (no changes).
-                mock_run.return_value = MagicMock(
-                    stdout="{}", stderr="", returncode=0
-                )
+                mock_run.return_value = MagicMock(stdout="{}", stderr="", returncode=0)
                 call_command(
                     "build_app",
                     self.CONFIG_PATH,
@@ -267,8 +275,12 @@ class ExportSchemaCommandTests(unittest.TestCase):
             if previous_path.exists():
                 previous_path.unlink()
 
-    def test_build_app_uses_ng_workspace_command_for_workspace_create_steps(self) -> None:
-        self.assertEqual(_command_for_skill("angular-workspace-foundation", "create"), "ng_workspace")
+    def test_build_app_uses_ng_workspace_command_for_workspace_create_steps(
+        self,
+    ) -> None:
+        self.assertEqual(
+            _command_for_skill("angular-workspace-foundation", "create"), "ng_workspace"
+        )
 
 
 if __name__ == "__main__":

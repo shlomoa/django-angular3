@@ -14,6 +14,7 @@ Usage::
     django-admin export_schema django-angular3.json --format yaml
     django-admin export_schema django-angular3.json --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -64,13 +65,17 @@ class Command(BaseCommand):
             self.stdout.write("--- DRY RUN: export_schema ---")
             self.stdout.write(f"  destination : {destination}")
             if destination.exists():
-                self.stdout.write(f"  previous    : {previous_path}  (would archive current)")
+                self.stdout.write(
+                    f"  previous    : {previous_path}  (would archive current)"
+                )
             self.stdout.write("  (no files written)")
             return
 
         # Generate the schema via drf-spectacular.
         try:
-            from drf_spectacular.generators import SchemaGenerator  # type: ignore[import-untyped]
+            from drf_spectacular.generators import (
+                SchemaGenerator,  # type: ignore[import-untyped]
+            )
             from drf_spectacular.renderers import (  # type: ignore[import-untyped]
                 OpenApiJsonRenderer,
                 OpenApiYamlRenderer,
@@ -84,7 +89,11 @@ class Command(BaseCommand):
         generator = SchemaGenerator()
         schema = generator.get_schema(request=None, public=True)
 
-        renderer = OpenApiYamlRenderer() if options["format"] == "yaml" else OpenApiJsonRenderer()
+        renderer = (
+            OpenApiYamlRenderer()
+            if options["format"] == "yaml"
+            else OpenApiJsonRenderer()
+        )
         schema_bytes: bytes = renderer.render(schema, renderer_context={})
 
         # Rotate current → previous before writing the new schema.

@@ -61,10 +61,13 @@ def execute_invocations(
         try:
             subprocess.run(invocation.argv, cwd=invocation.cwd, check=True)
         except FileNotFoundError as exc:
-            raise AngularCommandError(f"Command not found: {invocation.argv[0]}") from exc
+            raise AngularCommandError(
+                f"Command not found: {invocation.argv[0]}"
+            ) from exc
         except subprocess.CalledProcessError as exc:
             raise AngularCommandError(
-                f"Command '{' '.join(invocation.argv)}' failed with exit code {exc.returncode}."
+                f"Command '{' '.join(invocation.argv)}' failed with exit code "
+                f"{exc.returncode}."
             ) from exc
 
 
@@ -164,7 +167,11 @@ def build_ng_build_invocations(
 
 
 def build_ng_gen_app_invocations(
-    config: ProjectConfig, settings: AngularSettings, *, app_name: str | None = None, **_: Any
+    config: ProjectConfig,
+    settings: AngularSettings,
+    *,
+    app_name: str | None = None,
+    **_: Any,
 ) -> list[AngularInvocation]:
     target_app = app_name or config.project_name
     return [
@@ -204,7 +211,11 @@ def build_ng_openapi_gen_invocations(
 
 
 def build_ng_add_invocations(
-    config: ProjectConfig, settings: AngularSettings, *, package: str | None = None, **_: Any
+    config: ProjectConfig,
+    settings: AngularSettings,
+    *,
+    package: str | None = None,
+    **_: Any,
 ) -> list[AngularInvocation]:
     target_package = package or settings.ng_add_package
     return [
@@ -225,9 +236,17 @@ def build_ng_workspace_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     """Create and bootstrap an Angular workspace with angular-django2 defaults."""
-    invocations = _relabel_invocations(build_ng_new_invocations(config, settings), "ng_workspace")
-    invocations.extend(_relabel_invocations(build_ng_config_invocations(config, settings), "ng_workspace"))
-    invocations.extend(_relabel_invocations(build_ng_add_invocations(config, settings), "ng_workspace"))
+    invocations = _relabel_invocations(
+        build_ng_new_invocations(config, settings), "ng_workspace"
+    )
+    invocations.extend(
+        _relabel_invocations(
+            build_ng_config_invocations(config, settings), "ng_workspace"
+        )
+    )
+    invocations.extend(
+        _relabel_invocations(build_ng_add_invocations(config, settings), "ng_workspace")
+    )
     invocations.extend(build_ng_workspace_schematic_invocations(config, settings))
     return invocations
 
@@ -235,16 +254,20 @@ def build_ng_workspace_invocations(
 def build_ng_workspace_modify_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
-    """Reapply workspace defaults, collection registration, and workspace scaffolding."""
+    """Reapply workspace defaults, collection registration, and
+    workspace scaffolding."""
     invocations = _relabel_invocations(
         build_ng_config_invocations(config, settings), "ng_workspace_modify"
     )
     invocations.extend(
-        _relabel_invocations(build_ng_add_invocations(config, settings), "ng_workspace_modify")
+        _relabel_invocations(
+            build_ng_add_invocations(config, settings), "ng_workspace_modify"
+        )
     )
     invocations.extend(
         _relabel_invocations(
-            build_ng_workspace_schematic_invocations(config, settings), "ng_workspace_modify"
+            build_ng_workspace_schematic_invocations(config, settings),
+            "ng_workspace_modify",
         )
     )
     return invocations
@@ -253,10 +276,14 @@ def build_ng_workspace_modify_invocations(
 def build_ng_workspace_delete_invocations(
     config: ProjectConfig, _settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
-    """Deletes the entire workspace folder using Python's native cross-platform shutil."""
+    """Delete the entire workspace folder using Python's native
+    cross-platform shutil."""
     import sys
-    py_code = f"import shutil; shutil.rmtree(r'{config.angular_output}', ignore_errors=True)"
-    
+
+    py_code = (
+        f"import shutil; shutil.rmtree(r'{config.angular_output}', ignore_errors=True)"
+    )
+
     return [
         AngularInvocation(
             command_name="ng_workspace_delete",
@@ -287,7 +314,11 @@ def _relabel_invocations(
     invocations: list[AngularInvocation], command_name: str
 ) -> list[AngularInvocation]:
     return [
-        AngularInvocation(command_name=command_name, argv=invocation.argv, cwd=invocation.cwd)
+        AngularInvocation(
+            command_name=command_name,
+            argv=invocation.argv,
+            cwd=invocation.cwd,
+        )
         for invocation in invocations
     ]
 
@@ -299,5 +330,6 @@ def _ensure_command_is_allowed(command_name: str, settings: AngularSettings) -> 
 
     allowed_commands = ", ".join(settings.command_allowlist) or "<none>"
     raise AngularCommandError(
-        f"Command '{command_name}' is not allowed. Allowed commands: {allowed_commands}."
+        f"Command '{command_name}' is not allowed. Allowed commands: "
+        f"{allowed_commands}."
     )

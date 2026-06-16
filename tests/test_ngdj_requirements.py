@@ -1,19 +1,25 @@
 import json
 import unittest
 from pathlib import Path
+from typing import Any
 
 from django_angular3.angular import resolve_angular_command
-from typing import Any
 
 ROOT: Path = Path(__file__).resolve().parent.parent
 NGDJ_ROOT: Path = ROOT.parent / "angular-django2"
 
 
-@unittest.skipUnless(NGDJ_ROOT.is_dir(), "angular-django2 sibling repository is required")
+@unittest.skipUnless(
+    NGDJ_ROOT.is_dir(), "angular-django2 sibling repository is required"
+)
 class NgdjRequirementsContractTests(unittest.TestCase):
-    def _collection(self) -> Any :
+    def _collection(self) -> Any:
         collection_path: Path = (
-            NGDJ_ROOT / "projects" / "angular-django2" / "schematics" / "collection.json"
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "collection.json"
         )
         self.assertTrue(collection_path.is_file())
         return json.loads(collection_path.read_text(encoding="utf-8"))
@@ -33,7 +39,12 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_ng_add_registers_angular_django2_in_schematic_collections(self) -> None:
         ng_add_index_path = (
-            NGDJ_ROOT / "projects" / "angular-django2" / "schematics" / "ng-add" / "index.ts"
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "ng-add"
+            / "index.ts"
         )
         self.assertTrue(ng_add_index_path.is_file())
 
@@ -44,7 +55,12 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_application_schema_defaults_style_to_scss(self) -> None:
         schema_path = (
-            NGDJ_ROOT / "projects" / "angular-django2" / "schematics" / "application" / "schema.json"
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "application"
+            / "schema.json"
         )
         self.assertTrue(schema_path.is_file())
 
@@ -54,7 +70,12 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_ng_app_schematic_creates_material_app(self) -> None:
         ng_app_index_path = (
-            NGDJ_ROOT / "projects" / "angular-django2" / "schematics" / "ng-app" / "index.ts"
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "ng-app"
+            / "index.ts"
         )
         self.assertTrue(ng_app_index_path.is_file())
 
@@ -64,7 +85,12 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_ng_api_schematic_bootstraps_ng_openapi_gen(self) -> None:
         ng_api_index_path = (
-            NGDJ_ROOT / "projects" / "angular-django2" / "schematics" / "ng-api" / "index.ts"
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "ng-api"
+            / "index.ts"
         )
         self.assertTrue(ng_api_index_path.is_file())
 
@@ -74,7 +100,12 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_data_service_schematic_generates_typed_wrapper(self) -> None:
         ds_index_path = (
-            NGDJ_ROOT / "projects" / "angular-django2" / "schematics" / "data-service" / "index.ts"
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "data-service"
+            / "index.ts"
         )
         self.assertTrue(ds_index_path.is_file())
 
@@ -85,7 +116,9 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
 class DjngNgdjIntegrationContractTests(unittest.TestCase):
     def test_ng_workspace_uses_angular_django2_ng_workspace_schematic(self) -> None:
-        invocations = resolve_angular_command("ng_workspace", ROOT / "django-angular3.json")
+        invocations = resolve_angular_command(
+            "ng_workspace", ROOT / "django-angular3.json"
+        )
         self.assertEqual(len(invocations), 6)
 
         argv = invocations[-1].argv
@@ -96,11 +129,14 @@ class DjngNgdjIntegrationContractTests(unittest.TestCase):
         self.assertEqual(argv[2], "angular-django2:ng-workspace")
 
     def test_ng_gen_app_uses_angular_django2_ng_app_schematic(self) -> None:
-        invocations = resolve_angular_command("ng_gen_app", ROOT / "django-angular3.json")
+        invocations = resolve_angular_command(
+            "ng_gen_app", ROOT / "django-angular3.json"
+        )
         self.assertEqual(len(invocations), 1)
 
         argv = invocations[0].argv
         from django_angular3.settings import DEFAULT_ANGULAR_SETTINGS
+
         self.assertEqual(argv[0], DEFAULT_ANGULAR_SETTINGS["ng_executable"])
         self.assertEqual(argv[1], "generate")
         self.assertEqual(argv[2], "angular-django2:ng-app")
