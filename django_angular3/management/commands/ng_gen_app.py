@@ -12,7 +12,10 @@ class Command(AngularBaseCommand):
         parser.add_argument(
             "--app-name",
             default=None,
-            help="Optional Angular application name. Defaults to project.name from config.",
+            help=(
+                "Optional Angular application name. Defaults to "
+                "project.name from config."
+            ),
         )
 
     def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:

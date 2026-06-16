@@ -44,6 +44,20 @@ docs = [
   "furo>=2024.1.29",
   "myst-parser>=3.0",
 ]
+dev = [
+  "ruff>=0.4",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["django_angular3"]
 
 [project.scripts]
 django-angular3 = "django_angular3.cli:main"
@@ -55,6 +69,7 @@ include = ["django_angular3*"]
 
 [tool.setuptools.package-data]
 django_angular3 = [
+    "examples/**/*",
     "templates/django_angular3/**/*",
     "static/django_angular3/**/*",
 ]

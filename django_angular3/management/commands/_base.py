@@ -4,21 +4,32 @@ import argparse
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...angular import AngularCommandError, execute_invocations, format_invocations, resolve_angular_command
+from ...angular import (
+    AngularCommandError,
+    execute_invocations,
+    format_invocations,
+    resolve_angular_command,
+)
 from ...config import ConfigError
 
 
 class AngularBaseCommand(BaseCommand):
-    """Base class for django-angular3 management commands that wrap Angular tooling."""
+    """Base class for django-angular3 management commands that wrap
+    Angular tooling."""
 
     angular_command_name = ""
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("path", nargs="?", default=None, help="Path to the project config.")
+        parser.add_argument(
+            "path", nargs="?", default=None, help="Path to the project config."
+        )
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the resolved subprocess call list instead of invoking Angular tooling.",
+            help=(
+                "Print the resolved subprocess call list instead of invoking "
+                "Angular tooling."
+            ),
         )
 
     def get_invocation_options(self, _options: dict[str, object]) -> dict[str, object]:

@@ -4,9 +4,11 @@ import unittest
 try:
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
     import django
+
     django.setup()
     from django.apps import apps
     from django.test import SimpleTestCase
+
     DJANGO_AVAILABLE = True
 except ImportError:
     DJANGO_AVAILABLE = False

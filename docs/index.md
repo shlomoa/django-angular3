@@ -9,6 +9,7 @@ backend and an Angular Material frontend.
 :caption: Contents
 
 overview
+commands
 api/index
 ```
 

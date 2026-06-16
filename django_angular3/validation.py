@@ -41,7 +41,9 @@ def validate_openapi_document(document: Any) -> list[str]:
 
     for path_name, path_item in paths.items():
         if not isinstance(path_name, str) or not path_name.startswith("/"):
-            errors.append(f"OpenAPI path '{path_name}' must be a string starting with '/'.")
+            errors.append(
+                f"OpenAPI path '{path_name}' must be a string starting with '/'."
+            )
             continue
         if not isinstance(path_item, dict):
             errors.append(f"OpenAPI path '{path_name}' must map to an object.")
@@ -49,14 +51,17 @@ def validate_openapi_document(document: Any) -> list[str]:
 
         operations = [name for name in path_item if name in allowed_methods]
         if not operations:
-            errors.append(f"OpenAPI path '{path_name}' must define at least one HTTP operation.")
+            errors.append(
+                f"OpenAPI path '{path_name}' must define at least one HTTP operation."
+            )
             continue
 
         for operation_name in operations:
             operation = path_item[operation_name]
             if not isinstance(operation, dict):
                 errors.append(
-                    f"Operation '{operation_name}' on path '{path_name}' must be an object."
+                    f"Operation '{operation_name}' on path "
+                    f"'{path_name}' must be an object."
                 )
 
     return errors
@@ -80,7 +85,9 @@ def validate_ui_document(document: Any) -> list[str]:
             route = page.get("route")
             kind = page.get("kind")
             if not isinstance(route, str) or not route.startswith("/"):
-                errors.append(f"pages[{index}].route must be a string starting with '/'.")
+                errors.append(
+                    f"pages[{index}].route must be a string starting with '/'."
+                )
             if not isinstance(kind, str) or not kind.strip():
                 errors.append(f"pages[{index}].kind must be a non-empty string.")
 
@@ -100,7 +107,9 @@ def validate_ui_document(document: Any) -> list[str]:
                 errors.append(f"forms[{index}].mode must be a non-empty string.")
             if submit is not None:
                 if not isinstance(submit, dict):
-                    errors.append(f"forms[{index}].submit must be an object when provided.")
+                    errors.append(
+                        f"forms[{index}].submit must be an object when provided."
+                    )
                 else:
                     action = submit.get("action")
                     if not isinstance(action, str) or not action.strip():
@@ -154,8 +163,7 @@ def validate_project_config(config: ProjectConfig) -> list[str]:
 
     if config.ng_openapi_gen_config and not config.ng_openapi_gen_config.exists():
         errors.append(
-            "ng-openapi-gen config does not exist: "
-            f"{config.ng_openapi_gen_config}"
+            f"ng-openapi-gen config does not exist: {config.ng_openapi_gen_config}"
         )
 
     return errors
