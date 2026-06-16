@@ -15,7 +15,7 @@ class CustomerViewSet(
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
     permission_classes = [permissions.AllowAny]
-    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
 
 class ProductViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
