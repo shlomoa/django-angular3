@@ -317,7 +317,9 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 
 **Acceptance criteria**:
 - The global acceptance gate is documented in `doc/ARCHITECTURE.md` §7.2/§7.3 and
-  `doc/REQUIREMENTS.md` §6.4.
+  `doc/REQUIREMENTS.md` §6.4 (recorded for the design-alignment phase; future
+  implementation phases must keep those sections aligned with the executable
+  gate).
 - The gate fails the run on cross-Skill interface drift even when every Skill
   passed its local acceptance.
 

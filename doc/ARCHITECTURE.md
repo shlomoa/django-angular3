@@ -398,22 +398,20 @@ A typical construction cycle is:
    outputs are incomplete, inconsistent, or invalid
 5. Within each guided agent session, continue until the procedure's acceptance
    criteria are satisfied or a blocking issue is surfaced explicitly
-6. After all guided agent sessions, deterministic tool calls, and lifecycle
-   hooks complete, run a distinct terminal global acceptance gate that decides
-   whether the composed application is correct as a whole
 
 This loop is part of the architecture, not an implementation accident. Convergence
 within each session, and the composition of all sessions, produce a correct
 working application.
 
-Local acceptance by an individual guided agent session is necessary but not
-sufficient for global correctness. The architecture therefore requires a
-distinct terminal global acceptance gate, owned by the terminal verification
-procedures, that runs after all local procedure acceptance has completed. This
-gate verifies cross-Skill interface consistency, backend-contract / generated
-Angular-client alignment, and runtime smoke-test readiness across the composed
-application. A run produces a correct working application (§2.17) only when
-this global gate passes.
+Local acceptance by a guided agent session is necessary but not sufficient for
+global correctness. A session can satisfy its own acceptance criteria while the
+composed generated app is still incorrect because of cross-session interface
+drift, stale backend-contract/client alignment, or runtime integration failure.
+The architecture therefore requires a distinct global acceptance gate after all
+guided sessions, deterministic tool procedures, and lifecycle hooks complete.
+That gate is owned by terminal verification procedures, not by any individual
+SKILL, and a run is a correct working application only when the global gate
+passes.
 
 ### 7.3 Verification categories
 
@@ -423,10 +421,12 @@ Verification in this architecture occurs throughout construction and integration
 - Construction-output verification: inspect generated and assembled outputs so they can be corrected, refined, or reused in later iterations.
 - Integration verification: verify alignment between backend behavior, generated integration artifacts, and frontend composition.
 - Test-based verification: use automated tests and smoke tests to verify expected behavior across backend, frontend, and composed application flows.
-- Global acceptance verification: after local procedure acceptance has succeeded,
-  the terminal verification procedures must still fail the run if they detect
-  cross-Skill interface drift, backend-contract / generated-client mismatch, or
-  a composed-application smoke-test failure.
+
+Terminal verification applies these categories to the complete generated app.
+It consumes recorded construction results from deterministic tools and guided
+sessions, then fails the run if local procedure success does not compose into
+cross-SKILL interface consistency, backend-contract / Angular-client alignment,
+and runnable application flows.
 
 ### 7.4 Example Build Flow
 
