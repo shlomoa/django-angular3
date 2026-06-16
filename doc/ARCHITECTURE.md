@@ -425,7 +425,7 @@ Verification in this architecture occurs throughout construction and integration
 Terminal verification applies these categories to the complete generated app.
 It consumes recorded construction results from deterministic tools and guided
 sessions, then fails the run if local procedure success does not compose into
-cross-SKILL interface consistency, backend-contract / Angular-client alignment,
+cross-Skill interface consistency, backend-contract / Angular-client alignment,
 and runnable application flows.
 
 ### 7.4 Example Build Flow
