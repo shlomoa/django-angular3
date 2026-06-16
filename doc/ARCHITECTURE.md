@@ -410,7 +410,7 @@ drift, stale backend-contract/client alignment, or runtime integration failure.
 The architecture therefore requires a distinct global acceptance gate after all
 guided sessions, deterministic tool procedures, and lifecycle hooks complete.
 That gate is owned by terminal verification procedures, not by any individual
-SKILL, and a run is a correct working application only when the global gate
+Skill, and a run is a correct working application only when the global gate
 passes.
 
 ### 7.3 Verification categories
