@@ -938,6 +938,11 @@ following scenario classes:
   interleave correctly
 - **Full replacement**: a resource is removed and a different resource is
   added; remove steps precede add steps at the same dependency level
+- **Local success but global failure caught**: individual automation
+  procedures can report local success, but the terminal global acceptance gate
+  must still fail the run when it detects cross-Skill interface drift,
+  backend-contract / generated-client mismatch, or composed-application
+  smoke-test failure
 
 ## Appendix
 

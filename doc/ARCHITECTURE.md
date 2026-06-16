@@ -398,10 +398,22 @@ A typical construction cycle is:
    outputs are incomplete, inconsistent, or invalid
 5. Within each guided agent session, continue until the procedure's acceptance
    criteria are satisfied or a blocking issue is surfaced explicitly
+6. After all guided agent sessions, deterministic tool calls, and lifecycle
+   hooks complete, run a distinct terminal global acceptance gate that decides
+   whether the composed application is correct as a whole
 
 This loop is part of the architecture, not an implementation accident. Convergence
 within each session, and the composition of all sessions, produce a correct
 working application.
+
+Local acceptance by an individual guided agent session is necessary but not
+sufficient for global correctness. The architecture therefore requires a
+distinct terminal global acceptance gate, owned by the terminal verification
+procedures, that runs after all local procedure acceptance has completed. This
+gate verifies cross-Skill interface consistency, backend-contract / generated
+Angular-client alignment, and runtime smoke-test readiness across the composed
+application. A run produces a correct working application (§2.17) only when
+this global gate passes.
 
 ### 7.3 Verification categories
 
@@ -411,6 +423,10 @@ Verification in this architecture occurs throughout construction and integration
 - Construction-output verification: inspect generated and assembled outputs so they can be corrected, refined, or reused in later iterations.
 - Integration verification: verify alignment between backend behavior, generated integration artifacts, and frontend composition.
 - Test-based verification: use automated tests and smoke tests to verify expected behavior across backend, frontend, and composed application flows.
+- Global acceptance verification: after local procedure acceptance has succeeded,
+  the terminal verification procedures must still fail the run if they detect
+  cross-Skill interface drift, backend-contract / generated-client mismatch, or
+  a composed-application smoke-test failure.
 
 ### 7.4 Example Build Flow
 
