@@ -9,6 +9,9 @@ backend and an Angular Material frontend.
 :caption: Contents
 
 overview
+getting-started
+configuration
+workflow
 commands
 api/index
 ```

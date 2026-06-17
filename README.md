@@ -240,8 +240,15 @@ see [Contributing](CONTRIBUTING.md).
 
 ## Documentation
 
-Public usage documentation is not available yet. The project website is
-available at <https://djangoangular.com/>.
+User-facing usage documentation is published at
+<https://django-angular3.readthedocs.io/>:
+
+- [Getting started](https://django-angular3.readthedocs.io/en/latest/getting-started.html) — install, run the bundled tutorial, and complete the workflow end to end.
+- [Configuration](https://django-angular3.readthedocs.io/en/latest/configuration.html) — the `django-angular3.json` schema and the `DJANGO_ANGULAR3` settings.
+- [Usage workflow](https://django-angular3.readthedocs.io/en/latest/workflow.html) — the contract-first cycle for your own project.
+- [Command reference](https://django-angular3.readthedocs.io/en/latest/commands.html) — every command in both the standalone CLI and management-command form.
+
+The project website is available at <https://djangoangular.com/>.
 
 Current project documents:
 

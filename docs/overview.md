@@ -5,6 +5,8 @@
 between a DRF backend and an Angular Material frontend.
 
 For the full description see the [project README](https://github.com/shlomoa/django-angular3#readme).
+New here? Start with [Getting started](getting-started.md) for a step-by-step
+walkthrough using the bundled tutorial.
 
 ## Installation
 
