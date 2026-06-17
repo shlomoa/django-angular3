@@ -125,10 +125,18 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) and
 | Final release | `0.2.0` |
 | Patch release | `0.2.1` |
 
-Edit `pyproject.toml` and update the `version` field. Then commit:
+Edit the version string in all three files:
+
+| File | Field / variable |
+|---|---|
+| `pyproject.toml` | `[project] version = "X.Y.Z"` |
+| `django_angular3/__init__.py` | `__version__ = "X.Y.Z"` |
+| `docs/conf.py` | `release = "X.Y.Z"` |
+
+Then commit:
 
 ```bash
-git add pyproject.toml
+git add pyproject.toml django_angular3/__init__.py docs/conf.py
 git commit -m "chore: bump version to X.Y.Z"
 ```
 
