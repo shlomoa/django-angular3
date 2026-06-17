@@ -939,7 +939,7 @@ following scenario classes:
 - **Full replacement**: a resource is removed and a different resource is
   added; remove steps precede add steps at the same dependency level
 - **Global acceptance gate**: terminal verification fails the run when local
-  SKILL acceptance does not compose into cross-SKILL interface consistency,
+  Skill acceptance does not compose into cross-Skill interface consistency,
   backend-contract / Angular-client alignment, and runnable application flows
 
 ## Appendix
