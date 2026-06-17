@@ -48,7 +48,9 @@ python -m pip install -e .[docs]   # Sphinx and doc dependencies
 - Write access to the `shlomoa/django-angular3` GitHub repository (to push
   tags and publish releases)
 - The PyPI Trusted Publishing link is already configured — no further PyPI
-  account setup is required for normal releases
+  account setup is required for normal releases. The deploy workflow publishes
+  from the GitHub Actions `pypi` environment; keep that environment aligned
+  with the PyPI trusted publisher entry.
 
 ---
 
