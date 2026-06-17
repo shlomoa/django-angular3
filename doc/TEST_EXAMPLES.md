@@ -326,9 +326,9 @@ components:
 ```json
 {
   "pages": [
-    { "name": "customer-list",   "resource": "Customer", "type": "list" },
-    { "name": "customer-detail", "resource": "Customer", "type": "detail" },
-    { "name": "product-list",    "resource": "Product",  "type": "list" }
+    { "route": "/customers",     "kind": "list" },
+    { "route": "/customers/:id", "kind": "detail" },
+    { "route": "/products",      "kind": "list" }
   ],
   "site": {
     "nav": [
@@ -569,10 +569,10 @@ Example 1's generated app configuration plus a new page and two new components:
 ```json
 {
   "pages": [
-    { "name": "customer-list",   "resource": "Customer", "type": "list" },
-    { "name": "customer-detail", "resource": "Customer", "type": "detail" },
-    { "name": "product-list",    "resource": "Product",  "type": "list" },
-    { "name": "dashboard",       "type": "custom",       "components": ["customer-summary", "product-summary"] }
+    { "route": "/customers",     "kind": "list" },
+    { "route": "/customers/:id", "kind": "detail" },
+    { "route": "/products",      "kind": "list" },
+    { "route": "/dashboard",     "kind": "custom",       "components": ["customer-summary", "product-summary"] }
   ],
   "components": [
     { "name": "customer-summary", "type": "small-field", "resource": "Customer", "fields": ["name", "active"] },

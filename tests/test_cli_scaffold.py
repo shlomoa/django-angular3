@@ -25,6 +25,22 @@ class ScaffoldTests(unittest.TestCase):
         document = load_document(ROOT / "spec" / "ui" / "example.ui.json")
         self.assertEqual(validate_ui_document(document), [])
 
+    def test_tutorial_ui_document_is_valid(self) -> None:
+        document = load_document(
+            ROOT / "django_angular3" / "examples" / "01_simple_crm" / "ui.json"
+        )
+        self.assertEqual(validate_ui_document(document), [])
+
+    def test_tutorial_project_config_is_valid(self) -> None:
+        config = load_project_config(
+            ROOT
+            / "django_angular3"
+            / "examples"
+            / "01_simple_crm"
+            / "django-angular3.json"
+        )
+        self.assertEqual(validate_project_config(config), [])
+
     def test_project_config_resolves_paths(self) -> None:
         config = load_project_config(ROOT / "django-angular3.json")
         self.assertTrue(config.openapi_source.is_file())
