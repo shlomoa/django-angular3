@@ -1,25 +1,10 @@
-# django-angular3 Repo Instructions
+# Repo Instructions
 
-The source of truth for the general instructions is the private
-`shlomoa/internal` repository. The file is not publicly accessible via HTTPS.
-Fetch it using the GitHub CLI:
+## General instructions
 
-**bash / macOS / Linux:**
+The source of truth for the general instructions is [here](https://github.com/shlomoa/shlomoa/blob/main/.github/copilot-instructions.md).
 
-```bash
-gh api repos/shlomoa/internal/contents/github/copilot-instructions.md \
-  --jq '.content' \
-  | python -c "import base64,sys; sys.stdout.buffer.write(base64.b64decode(sys.stdin.read()))"
-```
-
-**PowerShell (Windows):**
-
-```powershell
-$encoded = gh api repos/shlomoa/internal/contents/github/copilot-instructions.md --jq '.content'
-[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encoded))
-```
-
-## Repo specific
+## django-angular3 repo specific instructions
 
 ### Two-Package Architecture
 
