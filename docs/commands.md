@@ -41,7 +41,7 @@ Invoked as `django-angular3 <command> [args]`.
 | `ng_workspace [path]` | Bootstrap the configured workspace: `ng new`, workspace defaults, `ng add angular-django2`, and schematic generation. |
 | `ng_config [path]` | Apply workspace defaults (package manager, style, routing). |
 | `ng_add [path]` | Run `ng add` for an Angular package. Accepts `--package <name>`. |
-| `ng_gen_app [path]` | Generate an Angular application inside the configured workspace. Accepts `--app-name <name>`. |
+| `ng_gen_app [path]` | Generate an Angular application inside the configured workspace via the `angular-django2:ng-app` schematic (forwards `--ssr`, `--zoneless`, and `--defaults`). Accepts `--app-name <name>`. |
 | `ng_openapi_gen [path]` | Run a locally installed `ng-openapi-gen` via `pnpm exec` for the configured OpenAPI source. |
 | `ng_build [path]` | Build the configured Angular application. |
 | `install-tutorial [dest]` | Copy the bundled `simple_crm` tutorial project to `dest` (default: `simple_crm`). Prints migration and run steps on success. |
@@ -64,7 +64,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | `ng_workspace_delete [path]` | Delete the generated Angular workspace entirely. |
 | `ng_config [path]` | Apply workspace defaults. |
 | `ng_add [path]` | Run `ng add` for an Angular package. |
-| `ng_gen_app [path]` | Generate an Angular application. |
+| `ng_gen_app [path]` | Generate an Angular application via the `angular-django2:ng-app` schematic (forwards `--ssr`, `--zoneless`, and `--defaults`). |
 | `ng_openapi_gen [path]` | Run `ng-openapi-gen` via `pnpm exec`. |
 | `ng_build [path]` | Build the configured Angular application. |
 

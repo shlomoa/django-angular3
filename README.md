@@ -109,7 +109,7 @@ resolution flow:
 - `ng_workspace` runs the upstream-aligned workspace bootstrap flow: `ng new`, workspace defaults, `ng add angular-django2`, and `ng generate angular-django2:ng-workspace`
 - `ng_config` applies workspace defaults such as package manager, style, and routing
 - `ng_add` installs and registers the configured Angular schematic package
-- `ng_gen_app` generates an Angular application inside the configured workspace
+- `ng_gen_app` generates an Angular application inside the configured workspace via the `angular-django2:ng-app` schematic, forwarding `--ssr`, `--zoneless`, and `--defaults` to align with the Angular CLI `ng new` defaults
 - `ng_openapi_gen` runs a locally installed `ng-openapi-gen` for the configured OpenAPI source
 
 `ng_openapi_gen` resolves to `pnpm exec`, so it only uses dependencies that
