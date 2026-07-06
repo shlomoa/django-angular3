@@ -20,6 +20,8 @@ DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
     "build_configuration": "production",
     "style": "scss",
     "routing": True,
+    "ssr": False,
+    "zoneless": True,
     "ng_add_package": "angular-django2",
 }
 
@@ -38,6 +40,9 @@ class AngularSettings(SimpleNamespace):
         build_configuration (str): Angular build configuration name.
         style (str): Default Angular stylesheet format.
         routing (bool): Whether generated applications enable routing.
+        ssr (bool): Whether generated applications enable server-side rendering.
+        zoneless (bool): Whether generated applications use zoneless change
+            detection.
         ng_add_package (str): The default package name or path to install for ng_add.
     """
 

@@ -202,6 +202,22 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
 
+    def test_ng_gen_app_flags_follow_ssr_and_zoneless_settings(self) -> None:
+        from django_angular3.angular import build_ng_gen_app_invocations
+        from django_angular3.config import load_project_config
+
+        config = load_project_config(CONFIG_PATH)
+        overridden = AngularSettings(
+            **(DEFAULT_ANGULAR_SETTINGS | {"ssr": True, "zoneless": False})
+        )
+
+        invocations = build_ng_gen_app_invocations(config, overridden)
+
+        argv = invocations[0].argv
+        self.assertIn("--ssr=true", argv)
+        self.assertIn("--zoneless=false", argv)
+        self.assertIn("--defaults", argv)
+
     def test_ng_openapi_gen_dry_run_uses_openapi_source(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
             "ng_openapi_gen", str(CONFIG_PATH), "--dry-run"
