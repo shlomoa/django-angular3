@@ -196,6 +196,9 @@ class AngularCliCommandTests(unittest.TestCase):
                 "portal",
                 "--style=scss",
                 "--routing",
+                "--ssr=false",
+                "--zoneless=true",
+                "--defaults",
             ],
         )
 

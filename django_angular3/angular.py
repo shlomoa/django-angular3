@@ -184,6 +184,9 @@ def build_ng_gen_app_invocations(
                 target_app,
                 f"--style={settings.style}",
                 "--routing" if settings.routing else "--no-routing",
+                "--ssr=false",
+                "--zoneless=true",
+                "--defaults",
             ),
             cwd=config.angular_output,
         )
