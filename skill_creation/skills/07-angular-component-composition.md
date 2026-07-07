@@ -25,6 +25,8 @@ allowed-tools:
 
 The `angular-component-composition` skill manages the creation, modification, and deletion of Angular components within an existing Angular Material application. Components are generated following modern Angular conventions (standalone components, signals, Material Design patterns) and can be one of three types: **display** (presentational with Material layout), **container** (smart component with service injection and Observable data binding), or **dialog** (Material dialog with data injection and action buttons). This skill should be used after the workspace and application have been created.
 
+When components are generated through the `angular-django2:component` schematic, the generated TypeScript and template files are seeded with stable **begin/end embedding hooks** — marker pairs around the import, injected-services, input, output, and template `children` sections. These markers are the well-known insertion points that the companion `angular-django2:embed-component` schematic targets to wire a generated component into a parent, so making a component visible in the application hierarchy is a deterministic follow-up step rather than manual editing (see [Component embedding](#component-embedding)).
+
 ### Inputs
 
 **From invocation context**:
@@ -486,6 +488,82 @@ Remove an Angular component completely, including all files and references in pa
 - List of files that referenced the component (requiring manual cleanup)
 - Confirmation of deletion
 
+### Component embedding
+
+Generating a component does not make it visible. A generated component becomes
+part of the application hierarchy only when it is embedded into a parent
+component. The `angular-django2:embed-component` schematic performs that wiring
+through the begin/end embedding hooks seeded by `angular-django2:component`, so
+child components can be composed into parents (and parents into the app shell)
+without hand-editing.
+
+**Marker contract**: `angular-django2:component` seeds paired begin/end markers
+in the generated files so later tooling has stable insertion points:
+
+- import section — where the child class import is added
+- injected-services section — where injected dependencies are added
+- input section — where child input signals are declared
+- output section — where child output signals are declared
+- template `children` section — where embedded child elements are inserted
+
+Do not remove these markers when modifying a generated component; `embed-component`
+relies on them.
+
+**Embed a generated child into a parent** (file mode) — pass workspace-relative
+`.ts` paths for both the child (`--component`) and the parent (`--parent`):
+
+```bash
+ng generate angular-django2:embed-component \
+  --component=projects/<appName>/src/app/features/dashboard/dashboard-card/dashboard-card.ts \
+  --parent=projects/<appName>/src/app/app.ts
+```
+
+Before — making the child visible required manual edits to the parent: add the
+child selector to the template, import the child class, register it in the
+standalone `imports` array, wire each input/output signal, and hand-write output
+callback methods.
+
+After — `embed-component` performs that wiring through the generated hooks:
+
+- inserts the child element after the parent template `children` marker
+- feeds each child input signal
+- binds each child output signal to an `on<Output>($event)` handler
+- imports the child class in the parent
+- registers the child in the parent standalone `imports` array
+- adds not-implemented `on<Output>()` handler stubs to the parent class
+
+**Compose a nested hierarchy** — repeat generation and embedding to build a
+feature area from several components, then embed the feature parent into the app
+shell:
+
+```bash
+ng generate angular-django2:component hero-card --project=<appName> --path=src/app/features/dashboard
+ng generate angular-django2:component dashboard --project=<appName> --path=src/app/features/dashboard
+ng generate angular-django2:embed-component \
+  --component=projects/<appName>/src/app/features/dashboard/hero-card/hero-card.ts \
+  --parent=projects/<appName>/src/app/features/dashboard/dashboard/dashboard.ts
+ng generate angular-django2:embed-component \
+  --component=projects/<appName>/src/app/features/dashboard/dashboard/dashboard.ts \
+  --parent=projects/<appName>/src/app/app.ts
+```
+
+**Package mode** — to embed a component exported by an installed package (for
+example an Angular Material control), add `--from` and treat `--component` as the
+exported class name, optionally with `--selector`, `--inputs`, and `--outputs`
+(comma-separated):
+
+```bash
+ng generate angular-django2:embed-component \
+  --component=MatDateRangePicker --from=@angular/material/datepicker \
+  --parent=projects/<appName>/src/app/app.ts
+```
+
+**Idempotency** — `embed-component` is designed to be safe to re-run during
+iterative development. Re-running the same embed does not duplicate the child
+selector, the import, the `imports` array entry, or the `on<Output>()` handler
+stubs. Rebuild after embedding (`ng build <appName>`) to verify the composition
+compiles.
+
 ### Context Files
 
 {{context:../../shared/angular-conventions.md}}
@@ -718,4 +796,28 @@ Optional dependencies:
 
 // Output: Component deleted. Manual cleanup needed in:
 //   - src/app/pages/dashboard/dashboard.component.html (remove <app-old-widget>)
+```
+
+**Example 6: Embed a generated child component into a parent**
+
+```typescript
+// Inputs
+{
+  child: "projects/admin-dashboard/src/app/features/dashboard/dashboard-card/dashboard-card.ts",
+  parent: "projects/admin-dashboard/src/app/app.ts"
+}
+
+// Executes:
+// ng generate angular-django2:embed-component \
+//   --component=projects/admin-dashboard/src/app/features/dashboard/dashboard-card/dashboard-card.ts \
+//   --parent=projects/admin-dashboard/src/app/app.ts
+
+// Wires through the parent's embedding hooks:
+// 1. Inserts <app-dashboard-card ...> after the parent template children marker
+// 2. Feeds child input signals and binds outputs to on<Output>($event) handlers
+// 3. Imports DashboardCard in app.ts and registers it in the standalone imports array
+// 4. Adds not-implemented on<Output>() handler stubs to the parent class
+
+// Output: dashboard-card is now visible inside the root app component.
+// Re-running the same embed is idempotent (no duplicate wiring).
 ```

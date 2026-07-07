@@ -130,6 +130,16 @@ command allowlist to include the django-angular3 commands you want to permit.
 Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
 application name.
 
+Beyond these workspace wrappers, `angular-django2` ships schematics for
+composing bespoke feature UI. `ng generate angular-django2:component <name>`
+scaffolds a standalone component seeded with begin/end embedding hooks, and
+`ng generate angular-django2:embed-component --component=<child.ts> --parent=<parent.ts>`
+wires a generated child into a parent — importing the class, registering it in the
+parent standalone `imports` array, feeding input signals, and binding outputs to
+`on<Output>()` handler stubs. Embedding is idempotent, so it is safe to re-run
+during iterative development. See the [Usage workflow](https://django-angular3.readthedocs.io/en/latest/workflow.html)
+for the full generate → embed composition flow.
+
 At the moment this reusable Django app contributes configuration helpers and
 management commands; it does not yet ship models, URLs, templates, static
 assets, or migrations, so there is no extra URL inclusion or migration step for
