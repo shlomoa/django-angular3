@@ -35,13 +35,48 @@ wrappers needed to materialize the required Angular-side outputs.
 - Wrappers implemented: `ng_new`, `ng_workspace`, `ng_add`, `ng_config`,
   `ng_gen_app`, `ng_openapi_gen`, `ng_build`, `ng_workspace_delete`,
   `ng_workspace_modify`.
+- `ng_gen_app` now emits the explicit Angular 22 `ng-app` choices
+  (`--ssr=false`, `--zoneless=true`, `--defaults`) sourced from the `ssr` and
+  `zoneless` Angular settings, matching the upstream `angular-django2:ng-app`
+  contract.
 - `ng_workspace` now represents the upstream-aligned empty-workspace bootstrap
   flow: `ng new` + workspace defaults + `ng add angular-django2` +
   `ng generate angular-django2:ng-workspace`.
 - Broader repository docs under `doc/` still need wording alignment where they
   describe workspace creation as `ng_new`-first rather than the composite
   `ng_workspace` flow.
-- Complete derivation aligned with all 11 SKILLS not yet done.
+- Complete derivation aligned with all 11 SKILLS not yet done; see §2.1 for the
+  outstanding `angular-django2` (ngdj) capability alignment tasks.
+
+### 2.1 angular-django2 (ngdj) capability alignment
+
+`angular-django2` (ngdj) was released with new and clarified schematic
+capabilities. Each ngdj change below is mapped to the corresponding djng
+alignment action (wrapper, build-plan step, or SKILL/doc wording) and its
+current status. `Done` items already have djng-side evidence; `Pending` items
+still require a djng wrapper, build-plan step, or SKILL/doc alignment.
+
+| ngdj change | djng alignment action | Status |
+|---|---|---|
+| Explicit Angular 22 `ng-app` flags (`--ssr=false`, `--zoneless=true`, `--defaults`) | `ng_gen_app` emits the explicit flags via `build_ng_gen_app_invocations` in `django_angular3/angular.py`, driven by the `ssr`/`zoneless` defaults in `django_angular3/settings.py`. | Done |
+| Non-interactive app generation (`--defaults`) | Emitted by `ng_gen_app` (`angular.py`). | Done |
+| SSR disabled by default in generated app (`--ssr=false`) | Emitted by `ng_gen_app` from the `ssr` setting default (`settings.py`). | Done |
+| Zoneless app generation (`--zoneless=true`) | Emitted by `ng_gen_app` from the `zoneless` setting default (`settings.py`). | Done |
+| Positional names for `component`/`service`/`class` pass-through generators | Add djng wrappers (or build-plan steps) that pass the generator name as a positional argument, not `--name=...`. | Pending |
+| Project-relative `--path` for `component`/`service`/`class` | Wrappers must pass `--project=<app> --path=src/app/features/...` and expect output under `projects/<app>/src/app/features/...`. | Pending |
+| Component generation seeds embedding hooks (begin/end markers in TS/HTML) | Document the marker contract in the component-composition SKILLs so later automated embedding targets the marked sections. | Pending |
+| New `embed-component` command (local mode) | Add a djng `embed-component` wrapper / build-plan step: `ng generate angular-django2:embed-component --component=<child-ts> --parent=<parent-ts>`. | Pending |
+| Embed generated component into app root | Compose the `embed-component` wrapper to wire a feature component into `projects/<app>/src/app/app.ts`. | Pending |
+| Compose nested component hierarchy | Support repeated `embed-component` invocations (child→parent, parent→app root) in wrappers/SKILLs. | Pending |
+| Embed existing package component (package mode, `--from=<module>`) | Extend the `embed-component` wrapper with package mode using `--from` and an exported class as `--component`. | Pending |
+| Explicit selector for package component (`--selector`) | Support `--selector=<element-selector>` in the package-mode wrapper. | Pending |
+| Explicit inputs/outputs for package component (`--inputs`/`--outputs`) | Support comma-separated `--inputs`/`--outputs` in the package-mode wrapper. | Pending |
+| Angular Material component embedding example | Add a SKILL/doc example embedding a Material package component (e.g. `MatDateRangePicker`). | Pending |
+| Rebuild after embedding (`ng build <app>`) | Reuse the existing `ng_build` wrapper as the post-embedding verification step. | Pending |
+| OpenAPI bootstrap command (`ng-api --inputPath`, `npm install`, `npm run generate:api`) | `build_app` already emits `ng-api` build-plan steps; add a standalone djng `ng-api` wrapper and align the bootstrap workflow (`--inputPath`, install, `generate:api`). | Pending |
+| Data service wrapper command (`data-service <resource> --project=<app>`) | `build_app` already emits `ng-data-service` steps; add a standalone djng `data-service` wrapper passing `--project`. | Pending |
+| Lower-level app setup alternative (`application` → `material-setup` → `project-structure` → `app-shell`) | Document/derive wrappers for the lower-level schematic flow as an alternative to one-shot `ng-app`. | Pending |
+| `ng-workspace` file hooks are not normal CLI flags | Document for wrapper authors that advanced `ng-workspace` `files` hooks are programmatic (wrapper schematic, test runner, or direct factory), not nested CLI flags. | Pending |
 
 ---
 
