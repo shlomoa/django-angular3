@@ -64,11 +64,11 @@ still require a djng wrapper, build-plan step, or SKILL/doc alignment.
 | Zoneless app generation (`--zoneless=true`) | Emitted by `ng_gen_app` from the `zoneless` setting default (`settings.py`). | Done |
 | Positional names for `component`/`service`/`class` pass-through generators | Add djng wrappers (or build-plan steps) that pass the generator name as a positional argument, not `--name=...`. | Pending |
 | Project-relative `--path` for `component`/`service`/`class` | Wrappers must pass `--project=<app> --path=src/app/features/...` and expect output under `projects/<app>/src/app/features/...`. | Pending |
-| Component generation seeds embedding hooks (begin/end markers in TS/HTML) | Document the marker contract in the component-composition SKILLs so later automated embedding targets the marked sections. | Pending |
-| New `embed-component` command (local mode) | Add a djng `embed-component` wrapper / build-plan step: `ng generate angular-django2:embed-component --component=<child-ts> --parent=<parent-ts>`. | Pending |
-| Embed generated component into app root | Compose the `embed-component` wrapper to wire a feature component into `projects/<app>/src/app/app.ts`. | Pending |
-| Compose nested component hierarchy | Support repeated `embed-component` invocations (child→parent, parent→app root) in wrappers/SKILLs. | Pending |
-| Embed existing package component (package mode, `--from=<module>`) | Extend the `embed-component` wrapper with package mode using `--from` and an exported class as `--component`. | Pending |
+| Component generation seeds embedding hooks (begin/end markers in TS/HTML) | Marker contract documented in the component-composition SKILL (`skill_creation/skills/07-angular-component-composition.md` §Component embedding, mirrored in `doc/GENERATE_AI_AUTOMATIONS.md`) and the user workflow (`docs/workflow.md` §6). | Done |
+| New `embed-component` command (local mode) | File-mode `embed-component` usage documented in `docs/workflow.md` §6, `README.md`, and SKILL 07; a djng `embed-component` wrapper / build-plan step is still to be added. | Doc done; wrapper pending |
+| Embed generated component into app root | Documented as embedding a feature component into `projects/<app>/src/app/app.ts` in `docs/workflow.md` §6 and SKILL 07; wrapper composition pending. | Doc done; wrapper pending |
+| Compose nested component hierarchy | Repeated child→parent, parent→app-root `embed-component` flow documented in `docs/workflow.md` §6 and SKILL 07; wrapper support pending. | Doc done; wrapper pending |
+| Embed existing package component (package mode, `--from=<module>`) | Package-mode usage (`--from`, exported class as `--component`) documented in `docs/workflow.md` §6 and SKILL 07; a djng wrapper is still to be added. | Doc done; wrapper pending |
 | Explicit selector for package component (`--selector`) | Support `--selector=<element-selector>` in the package-mode wrapper. | Pending |
 | Explicit inputs/outputs for package component (`--inputs`/`--outputs`) | Support comma-separated `--inputs`/`--outputs` in the package-mode wrapper. | Pending |
 | Angular Material component embedding example | Add a SKILL/doc example embedding a Material package component (e.g. `MatDateRangePicker`). | Pending |
