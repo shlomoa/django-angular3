@@ -24,6 +24,7 @@ def _command_for_skill(skill: str, mode: str) -> str:
         ("api-setup", "modify"): "ng_openapi_gen",
     }
     legacy_skill_overrides = {
+        ("angular-workspace-foundation", "create"): "ng_workspace",
         ("angular-workspace-foundation", "modify"): "ng_workspace_modify",
         ("angular-workspace-foundation", "delete"): "ng_workspace_delete",
         ("angular-app-composition", "create"): "ng_gen_app",
