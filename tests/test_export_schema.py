@@ -275,11 +275,26 @@ class ExportSchemaCommandTests(unittest.TestCase):
             if previous_path.exists():
                 previous_path.unlink()
 
-    def test_build_app_uses_ng_workspace_command_for_workspace_create_steps(
+    def test_build_app_uses_ng_workspace_command_for_workspace_setup_create_steps(
         self,
     ) -> None:
         self.assertEqual(
-            _command_for_skill("angular-workspace-foundation", "create"), "ng_workspace"
+            _command_for_skill("workspace-setup", "create"), "ng_workspace"
+        )
+        self.assertEqual(_command_for_skill("material-app", "create"), "ng_gen_app")
+        self.assertEqual(_command_for_skill("api-setup", "create"), "ng_openapi_gen")
+        self.assertEqual(_command_for_skill("api-setup", "modify"), "ng_openapi_gen")
+        self.assertEqual(
+            _command_for_skill("angular-workspace-foundation", "create"),
+            "ng_workspace",
+        )
+        self.assertEqual(
+            _command_for_skill("angular-app-composition", "create"),
+            "ng_gen_app",
+        )
+        self.assertEqual(
+            _command_for_skill("angular-api-integration", "create"),
+            "ng_openapi_gen",
         )
 
 

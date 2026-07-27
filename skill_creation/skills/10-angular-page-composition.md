@@ -215,8 +215,8 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 
 **Required Skills**:
 
-1. **ng-workspace** — Workspace and Angular Material foundation must exist
-2. **ng-app** — Application shell and route structure must exist
+1. **workspace-setup** — Workspace and Angular Material foundation must exist
+2. **material-app** — Application shell and route structure must exist
 
 **Common Upstream Skills**:
 

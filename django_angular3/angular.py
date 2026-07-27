@@ -104,7 +104,7 @@ def build_ng_workspace_schematic_invocations(
             argv=(
                 settings.ng_executable,
                 "generate",
-                "angular-django2:ng-workspace",
+                "angular-django2:workspace-setup",
                 config.project_name,
             ),
             cwd=config.angular_output,
@@ -180,7 +180,7 @@ def build_ng_gen_app_invocations(
             argv=(
                 settings.ng_executable,
                 "generate",
-                "angular-django2:ng-app",
+                "angular-django2:material-app",
                 target_app,
                 f"--style={settings.style}",
                 "--routing" if settings.routing else "--no-routing",

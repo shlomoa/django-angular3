@@ -55,7 +55,7 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
 
    > **Note**: `ng_gen_app` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
-   > **Schematic flags**: The wrapper invokes the `angular-django2:ng-app`
+   > **Schematic flags**: The wrapper invokes the `angular-django2:material-app`
    > schematic with `--ssr`, `--zoneless`, and `--defaults` (driven by the
    > `ssr`/`zoneless` settings) to match the Angular CLI `ng new` defaults.
 

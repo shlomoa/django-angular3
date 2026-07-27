@@ -667,14 +667,14 @@ Common errors and their resolution strategies:
 
 Required prerequisites before executing this skill:
 
-1. **Angular Material workspace boilerplate** (Skill 1 - ng-workspace) — Workspace must exist
-2. **Angular Material app boilerplate** (Skill 2 - ng-app) — Application must exist before creating components
+1. **Angular Material workspace boilerplate** (Skill 1 - workspace-setup) — Workspace must exist
+2. **Angular Material app boilerplate** (Skill 2 - material-app) — Application must exist before creating components
 3. **Angular CLI** — Must be installed and accessible
 4. **Angular Material** — Must be installed in the target application
 
 Optional dependencies:
 
-- **Angular API generation** (Skill 3 - ng-api-gen) — If component needs to consume API services
+- **Angular API generation** (Skill 3 - api-setup) — If component needs to consume API services
 - **Angular data model Service** (Skill 4) — If container component needs data service injection
 
 ### Examples

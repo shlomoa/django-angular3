@@ -484,12 +484,12 @@ Remove a reactive form component and clean up references (route configurations, 
 
 **Required Skills** (must execute before this skill):
 
-1. **ng-workspace** (Skill 1) — Workspace must exist with Angular Material installed
-2. **ng-app** (Skill 2) — Application must exist in workspace with proper directory structure
+1. **workspace-setup** (Skill 1) — Workspace must exist with Angular Material installed
+2. **material-app** (Skill 2) — Application must exist in workspace with proper directory structure
 
 **Optional Dependencies** (enhance functionality if present):
 
-- **ng-api** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
+- **api-setup** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
 - **ng-data-service** (Skill 4) — If `resourceName` provided, data service is injected for submit integration
 - **ng-form-field** (Skill 6) — Custom form field components can be used in place of standard `MatFormField` inputs
 

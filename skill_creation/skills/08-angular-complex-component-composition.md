@@ -277,8 +277,8 @@ Common errors and their resolution strategies:
 
 Required prerequisites before executing this skill:
 
-1. **Angular Material workspace boilerplate** (Skill 1 - ng-workspace)
-2. **Angular Material app boilerplate** (Skill 2 - ng-app)
+1. **Angular Material workspace boilerplate** (Skill 1 - workspace-setup)
+2. **Angular Material app boilerplate** (Skill 2 - material-app)
 3. **Angular component generation** (Skill 7 - ng-component) conventions should already be understood and available for reuse
 
 ### Examples

@@ -211,12 +211,12 @@ Remove the Angular application that owns the generated site from the workspace.
 
 **Required Skills**:
 
-1. **ng-workspace** — Angular workspace must exist before site orchestration starts
-2. **ng-app** — Target Angular application must already exist so the site shell has a home
+1. **workspace-setup** — Angular workspace must exist before site orchestration starts
+2. **material-app** — Target Angular application must already exist so the site shell has a home
 
 **Orchestrated Skills**:
 
-- **ng-api** — Generates OpenAPI clients when `openapi_source_path` is provided
+- **api-setup** — Generates OpenAPI clients when `openapi_source_path` is provided
 - **ng-page** — Generates each page discovered from the UI spec or defaults
 - **ng-reactive-form** — Generates each form discovered from the UI spec
 
