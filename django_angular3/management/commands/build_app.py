@@ -12,7 +12,7 @@ from ...tools import ensure_oasdiff
 
 
 def _command_for_skill(skill: str, mode: str) -> str:
-    """Maps a skill + mode pair to the corresponding management command name."""
+    """Map build-plan schematic keys or SKILL identifiers to management commands."""
     overrides = {
         ("workspace-setup", "create"): "ng_workspace",
         ("material-app", "create"): "ng_gen_app",
