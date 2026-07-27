@@ -14,14 +14,16 @@ from ...tools import ensure_oasdiff
 def _command_for_skill(skill: str, mode: str) -> str:
     """Map canonical schematic keys and legacy SKILL identifiers to commands.
 
-    Renamed schematic keys are emitted in new build plans; SKILL identifiers
-    remain supported for existing plans.
+    Canonical keys are workspace-setup, material-app, and api-setup. Legacy
+    identifiers such as angular-workspace-foundation remain supported.
     """
-    overrides = {
+    schematic_overrides = {
         ("workspace-setup", "create"): "ng_workspace",
         ("material-app", "create"): "ng_gen_app",
         ("api-setup", "create"): "ng_openapi_gen",
         ("api-setup", "modify"): "ng_openapi_gen",
+    }
+    legacy_skill_overrides = {
         ("angular-workspace-foundation", "modify"): "ng_workspace_modify",
         ("angular-workspace-foundation", "delete"): "ng_workspace_delete",
         ("angular-app-composition", "create"): "ng_gen_app",
@@ -29,7 +31,10 @@ def _command_for_skill(skill: str, mode: str) -> str:
         ("angular-api-integration", "create"): "ng_openapi_gen",
         ("angular-api-integration", "modify"): "ng_openapi_gen",
     }
-    return overrides.get((skill, mode), skill.replace("-", "_"))
+    return schematic_overrides.get(
+        (skill, mode),
+        legacy_skill_overrides.get((skill, mode), skill.replace("-", "_")),
+    )
 
 
 class Command(BaseCommand):
