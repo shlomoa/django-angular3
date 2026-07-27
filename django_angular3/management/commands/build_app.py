@@ -12,7 +12,11 @@ from ...tools import ensure_oasdiff
 
 
 def _command_for_skill(skill: str, mode: str) -> str:
-    """Map renamed schematic keys and legacy SKILL identifiers to commands."""
+    """Map canonical schematic keys and legacy SKILL identifiers to commands.
+
+    Renamed schematic keys are emitted in new build plans; SKILL identifiers
+    remain supported for existing plans.
+    """
     overrides = {
         ("workspace-setup", "create"): "ng_workspace",
         ("material-app", "create"): "ng_gen_app",
