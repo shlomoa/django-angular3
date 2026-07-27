@@ -31,7 +31,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
             "application",
             "workspace-setup",
             "material-app",
-            "api-setup",
+            "openapi-setup",
             "data-service",
         ):
             with self.subTest(schematic=name):
@@ -83,18 +83,18 @@ class NgdjRequirementsContractTests(unittest.TestCase):
         self.assertIn("externalSchematic('@schematics/angular', 'application'", source)
         self.assertIn("style: options.style", source)
 
-    def test_api_setup_schematic_bootstraps_ng_openapi_gen(self) -> None:
-        api_setup_index_path = (
+    def test_openapi_setup_schematic_bootstraps_ng_openapi_gen(self) -> None:
+        openapi_setup_index_path = (
             NGDJ_ROOT
             / "projects"
             / "angular-django2"
             / "schematics"
-            / "api-setup"
+            / "openapi-setup"
             / "index.ts"
         )
-        self.assertTrue(api_setup_index_path.is_file())
+        self.assertTrue(openapi_setup_index_path.is_file())
 
-        source = api_setup_index_path.read_text(encoding="utf-8")
+        source = openapi_setup_index_path.read_text(encoding="utf-8")
         self.assertIn("ng-openapi-gen", source)
         self.assertIn("generate:api", source)
 

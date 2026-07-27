@@ -3502,7 +3502,7 @@ Input:
 - resource_name: "orders"
 
 Process:
-1. Verify OrdersApiService exists from api-setup generation
+1. Verify OrdersApiService exists from openapi-setup generation
 2. Create features/orders/services/orders.service.ts
 3. Wrap each OrdersApiService method with typed Observable returns and catchError
 4. Create features/orders/services/orders.service.spec.ts using HttpClientTestingModule
@@ -6631,7 +6631,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Optional Dependencies** (enhance functionality if present):
 
-- **api-setup** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
+- **openapi-setup** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
 - **ng-data-service** (Skill 4) — If `resourceName` provided, data service is injected for submit integration
 - **ng-form-field** (Skill 6) — Custom form field components can be used in place of standard `MatFormField` inputs
 
@@ -7207,7 +7207,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Orchestrated Skills**:
 
-- **api-setup** — Generates OpenAPI clients when `openapi_source_path` is provided
+- **openapi-setup** — Generates OpenAPI clients when `openapi_source_path` is provided
 - **ng-page** — Generates each page discovered from the UI spec or defaults
 - **ng-reactive-form** — Generates each form discovered from the UI spec
 

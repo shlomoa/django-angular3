@@ -14,14 +14,14 @@ from ...tools import ensure_oasdiff
 def _command_for_skill(skill: str, mode: str) -> str:
     """Map canonical schematic keys and legacy SKILL identifiers to commands.
 
-    Canonical keys are workspace-setup, material-app, and api-setup. Legacy
+    Canonical keys are workspace-setup, material-app, and openapi-setup. Legacy
     identifiers such as angular-workspace-foundation remain supported.
     """
     schematic_overrides = {
         ("workspace-setup", "create"): "ng_workspace",
         ("material-app", "create"): "ng_gen_app",
-        ("api-setup", "create"): "ng_openapi_gen",
-        ("api-setup", "modify"): "ng_openapi_gen",
+        ("openapi-setup", "create"): "ng_openapi_gen",
+        ("openapi-setup", "modify"): "ng_openapi_gen",
     }
     legacy_skill_overrides = {
         ("angular-workspace-foundation", "create"): "ng_workspace",
@@ -369,7 +369,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "api-setup",
+                    "openapi-setup",
                     "create",
                     "Start from scratch: generate API client from OpenAPI schema",
                     config_path,
@@ -391,7 +391,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "api-setup",
+                    "openapi-setup",
                     "modify",
                     "Schema changed (add-things): regenerate API client",
                     config_path,
@@ -430,7 +430,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "api-setup",
+                    "openapi-setup",
                     "modify",
                     "Schema changed (replace-things): regenerate API client",
                     config_path,
@@ -452,7 +452,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "api-setup",
+                    "openapi-setup",
                     "modify",
                     "Schema changed (remove-things): regenerate API client",
                     config_path,

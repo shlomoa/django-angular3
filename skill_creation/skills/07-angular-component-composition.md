@@ -674,7 +674,7 @@ Required prerequisites before executing this skill:
 
 Optional dependencies:
 
-- **Angular API generation** (Skill 3 - api-setup) — If component needs to consume API services
+- **Angular API generation** (Skill 3 - openapi-setup) — If component needs to consume API services
 - **Angular data model Service** (Skill 4) — If container component needs data service injection
 
 ### Examples
