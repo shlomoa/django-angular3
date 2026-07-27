@@ -14,7 +14,10 @@ from ...tools import ensure_oasdiff
 def _command_for_skill(skill: str, mode: str) -> str:
     """Maps a skill + mode pair to the corresponding management command name."""
     overrides = {
-        ("angular-workspace-foundation", "create"): "ng_workspace",
+        ("workspace-setup", "create"): "ng_workspace",
+        ("material-app", "create"): "ng_gen_app",
+        ("api-setup", "create"): "ng_openapi_gen",
+        ("api-setup", "modify"): "ng_openapi_gen",
         ("angular-workspace-foundation", "modify"): "ng_workspace_modify",
         ("angular-workspace-foundation", "delete"): "ng_workspace_delete",
         ("angular-app-composition", "create"): "ng_gen_app",
@@ -338,7 +341,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "ng-workspace",
+                    "workspace-setup",
                     "create",
                     "Start from scratch: create Angular workspace",
                     config_path,
@@ -347,7 +350,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "ng-app",
+                    "material-app",
                     "create",
                     "Start from scratch: generate Angular application",
                     config_path,
@@ -356,7 +359,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "ng-api",
+                    "api-setup",
                     "create",
                     "Start from scratch: generate API client from OpenAPI schema",
                     config_path,
@@ -378,7 +381,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "ng-api",
+                    "api-setup",
                     "modify",
                     "Schema changed (add-things): regenerate API client",
                     config_path,
@@ -417,7 +420,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "ng-api",
+                    "api-setup",
                     "modify",
                     "Schema changed (replace-things): regenerate API client",
                     config_path,
@@ -439,7 +442,7 @@ class Command(BaseCommand):
             steps.append(
                 self._build_step(
                     len(steps) + 1,
-                    "ng-api",
+                    "api-setup",
                     "modify",
                     "Schema changed (remove-things): regenerate API client",
                     config_path,

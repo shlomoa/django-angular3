@@ -46,7 +46,7 @@ django-angular3 ng_workspace django-angular3.json
 
 | Repo | Issue | Context |
 |---|---|---|
-| **ngdj** | `Implement angular-django2:ng-workspace schematic` ([angular-django2#24](https://github.com/shlomoa/angular-django2/issues/24)) | `ng_workspace` calls `ng generate angular-django2:ng-workspace`; absent or broken schematic fails the entire bootstrap |
+| **ngdj** | `Implement angular-django2:workspace-setup schematic` ([angular-django2#24](https://github.com/shlomoa/angular-django2/issues/24)) | `ng_workspace` calls `ng generate angular-django2:workspace-setup`; absent or broken schematic fails the entire bootstrap |
 | **djng** | `Add ng_workspace, ng_new, ng_add, ng_config, ng_gen_app to default command_allowlist in settings.py` ([django-angular3#57](https://github.com/shlomoa/django-angular3/issues/57)) | Default allowlist is `("ng_openapi_gen",)` only; none of the workspace bootstrap sub-commands can execute without this |
 
 ---
@@ -59,7 +59,7 @@ django-angular3 ng_openapi_gen django-angular3.json
 
 | Repo | Issue | Context |
 |---|---|---|
-| **ngdj** | `Include ng-openapi-gen as a devDependency in ng-workspace schematic output` ([angular-django2#26](https://github.com/shlomoa/angular-django2/issues/26)) | `ng_openapi_gen` runs `pnpm exec ng-openapi-gen`; if the package is absent the command fails |
+| **ngdj** | `Include ng-openapi-gen as a devDependency in workspace-setup schematic output` ([angular-django2#26](https://github.com/shlomoa/angular-django2/issues/26)) | `ng_openapi_gen` runs `pnpm exec ng-openapi-gen`; if the package is absent the command fails |
 
 ---
 
@@ -71,7 +71,7 @@ django-angular3 ng_build django-angular3.json
 
 | Repo | Issue | Context |
 |---|---|---|
-| **ngdj** | `ng-workspace schematic output passes tsc --noEmit with zero errors` ([angular-django2#25](https://github.com/shlomoa/angular-django2/issues/25)) | A schematic that emits invalid TypeScript blocks every downstream step |
+| **ngdj** | `workspace-setup schematic output passes tsc --noEmit with zero errors` ([angular-django2#25](https://github.com/shlomoa/angular-django2/issues/25)) | A schematic that emits invalid TypeScript blocks every downstream step |
 
 ---
 
@@ -80,7 +80,7 @@ django-angular3 ng_build django-angular3.json
 | Repo | Issue | Context |
 |---|---|---|
 | **djng** | `Serve Angular build output via Django static-files URL in development (whitenoise or TemplateView)` (not filed) | `ng_build` writes to `angular.output`; no Django URL or static-files config currently routes to it |
-| **ngdj** | `Ship proxy.conf.json in ng-workspace output forwarding /api/ to http://127.0.0.1:8000` ([angular-django2#25](https://github.com/shlomoa/angular-django2/issues/25)) | Without a proxy config, `ng serve` API calls hit CORS and Django session-cookie failures |
+| **ngdj** | `Ship proxy.conf.json in workspace-setup output forwarding /api/ to http://127.0.0.1:8000` ([angular-django2#25](https://github.com/shlomoa/angular-django2/issues/25)) | Without a proxy config, `ng serve` API calls hit CORS and Django session-cookie failures |
 | **djng** | `Document CORS_ALLOWED_ORIGINS and CSRF_TRUSTED_ORIGINS settings for Angular dev server in getting-started.md` (not filed) | No current guidance; without these, authenticated DRF calls from `ng serve` are rejected |
 
 After step 6: the app shell loads in a browser. There are no Customer/Product pages yet — the workspace is a structural scaffold only.
@@ -108,8 +108,8 @@ One djng issue and one ngdj issue per SKILL:
 | # | SKILL | djng issue (`shlomoa/django-angular3`) | ngdj issue (`shlomoa/angular-django2`) |
 |---|---|---|---|
 | 1 | `angular-workspace-foundation` | `Complete skill_creation/skills/01-angular-workspace-foundation.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | see step 3 — ([#24](https://github.com/shlomoa/angular-django2/issues/24)) |
-| 2 | `angular-app-composition` | `Complete skill_creation/skills/02-angular-app-composition.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | `Implement angular-django2:ng-app schematic` ([#24](https://github.com/shlomoa/angular-django2/issues/24)) |
-| 3 | `angular-api-integration` | `Complete skill_creation/skills/03-angular-api-integration.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | `Implement angular-django2:ng-api schematic` ([#26](https://github.com/shlomoa/angular-django2/issues/26)) |
+| 2 | `angular-app-composition` | `Complete skill_creation/skills/02-angular-app-composition.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | `Implement angular-django2:material-app schematic` ([#24](https://github.com/shlomoa/angular-django2/issues/24)) |
+| 3 | `angular-api-integration` | `Complete skill_creation/skills/03-angular-api-integration.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | `Implement angular-django2:api-setup schematic` ([#26](https://github.com/shlomoa/angular-django2/issues/26)) |
 | 4 | `angular-data-service-composition` | `Complete skill_creation/skills/04-angular-data-service-composition.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | `Implement angular-django2:ng-data-service schematic` ([#24](https://github.com/shlomoa/angular-django2/issues/24)) |
 | 5 | `angular-field-component-composition` | `Complete skill_creation/skills/05-angular-field-component-composition.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | `Implement angular-django2:ng-field-component schematic` ([#24](https://github.com/shlomoa/angular-django2/issues/24)) |
 | 6 | `angular-form-field-composition` | `Complete skill_creation/skills/06-angular-form-field-composition.md: add local acceptance criteria` ([#89](https://github.com/shlomoa/django-angular3/issues/89)) | `Implement angular-django2:ng-form-field schematic` ([#24](https://github.com/shlomoa/angular-django2/issues/24)) |

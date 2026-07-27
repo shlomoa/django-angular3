@@ -35,13 +35,13 @@ wrappers needed to materialize the required Angular-side outputs.
 - Wrappers implemented: `ng_new`, `ng_workspace`, `ng_add`, `ng_config`,
   `ng_gen_app`, `ng_openapi_gen`, `ng_build`, `ng_workspace_delete`,
   `ng_workspace_modify`.
-- `ng_gen_app` now emits the explicit Angular 22 `ng-app` choices
+- `ng_gen_app` now emits the explicit Angular 22 `material-app` choices
   (`--ssr=false`, `--zoneless=true`, `--defaults`) sourced from the `ssr` and
-  `zoneless` Angular settings, matching the upstream `angular-django2:ng-app`
+  `zoneless` Angular settings, matching the upstream `angular-django2:material-app`
   contract.
 - `ng_workspace` now represents the upstream-aligned empty-workspace bootstrap
   flow: `ng new` + workspace defaults + `ng add angular-django2` +
-  `ng generate angular-django2:ng-workspace`.
+  `ng generate angular-django2:workspace-setup`.
 - Broader repository docs under `doc/` still need wording alignment where they
   describe workspace creation as `ng_new`-first rather than the composite
   `ng_workspace` flow.
@@ -58,7 +58,7 @@ still require a djng wrapper, build-plan step, or SKILL/doc alignment.
 
 | ngdj change | djng alignment action | Status |
 |---|---|---|
-| Explicit Angular 22 `ng-app` flags (`--ssr=false`, `--zoneless=true`, `--defaults`) | `ng_gen_app` emits the explicit flags via `build_ng_gen_app_invocations` in `django_angular3/angular.py`, driven by the `ssr`/`zoneless` defaults in `django_angular3/settings.py`. | Done |
+| Explicit Angular 22 `material-app` flags (`--ssr=false`, `--zoneless=true`, `--defaults`) | `ng_gen_app` emits the explicit flags via `build_ng_gen_app_invocations` in `django_angular3/angular.py`, driven by the `ssr`/`zoneless` defaults in `django_angular3/settings.py`. | Done |
 | Non-interactive app generation (`--defaults`) | Emitted by `ng_gen_app` (`angular.py`). | Done |
 | SSR disabled by default in generated app (`--ssr=false`) | Emitted by `ng_gen_app` from the `ssr` setting default (`settings.py`). | Done |
 | Zoneless app generation (`--zoneless=true`) | Emitted by `ng_gen_app` from the `zoneless` setting default (`settings.py`). | Done |
@@ -73,10 +73,10 @@ still require a djng wrapper, build-plan step, or SKILL/doc alignment.
 | Explicit inputs/outputs for package component (`--inputs`/`--outputs`) | Support comma-separated `--inputs`/`--outputs` in the package-mode wrapper. | Pending |
 | Angular Material component embedding example | Add a SKILL/doc example embedding a Material package component (e.g. `MatDateRangePicker`). | Pending |
 | Rebuild after embedding (`ng build <app>`) | Reuse the existing `ng_build` wrapper as the post-embedding verification step. | Pending |
-| OpenAPI bootstrap command (`ng-api --inputPath`, `npm install`, `npm run generate:api`) | `build_app` already emits `ng-api` build-plan steps; add a standalone djng `ng-api` wrapper and align the bootstrap workflow (`--inputPath`, install, `generate:api`). | Pending |
+| OpenAPI bootstrap command (`api-setup --inputPath`, `npm install`, `npm run generate:api`) | `build_app` already emits `api-setup` build-plan steps; add a standalone djng `api-setup` wrapper and align the bootstrap workflow (`--inputPath`, install, `generate:api`). | Pending |
 | Data service wrapper command (`data-service <resource> --project=<app>`) | `build_app` already emits `ng-data-service` steps; add a standalone djng `data-service` wrapper passing `--project`. | Pending |
-| Lower-level app setup alternative (`application` → `material-setup` → `project-structure` → `app-shell`) | Document/derive wrappers for the lower-level schematic flow as an alternative to one-shot `ng-app`. | Pending |
-| `ng-workspace` file hooks are not normal CLI flags | Document for wrapper authors that advanced `ng-workspace` `files` hooks are programmatic (wrapper schematic, test runner, or direct factory), not nested CLI flags. | Pending |
+| Lower-level app setup alternative (`application` → `material-setup` → `project-structure` → `app-shell`) | Document/derive wrappers for the lower-level schematic flow as an alternative to one-shot `material-app`. | Pending |
+| `workspace-setup` file hooks are not normal CLI flags | Document for wrapper authors that advanced `workspace-setup` `files` hooks are programmatic (wrapper schematic, test runner, or direct factory), not nested CLI flags. | Pending |
 
 ---
 
@@ -129,7 +129,7 @@ construction.
 
 - All current workspace/app/contract wrappers implemented, including the
   explicit `ng_workspace` bootstrap wrapper aligned with the upstream
-  `angular-django2:ng-workspace` schematic. Non-CRM construction wrappers
+  `angular-django2:workspace-setup` schematic. Non-CRM construction wrappers
   depend on item 1 (MR1).
 
 ---
@@ -240,7 +240,7 @@ Local acceptance by each SKILL does not imply global correctness. A
 representative failure chain:
 
 ```
-ng-api          generates  OrderApiService.getOrder(id: number)
+api-setup       generates  OrderApiService.getOrder(id: number)
 ng-data-service wraps it as load(id: string)   ← locally valid TypeScript
 ng-page         calls      dataService.load(route.params.id)  ← locally valid
 ```

@@ -29,9 +29,9 @@ class NgdjRequirementsContractTests(unittest.TestCase):
         for name in (
             "ng-add",
             "application",
-            "ng-workspace",
-            "ng-app",
-            "ng-api",
+            "workspace-setup",
+            "material-app",
+            "api-setup",
             "data-service",
         ):
             with self.subTest(schematic=name):
@@ -68,33 +68,33 @@ class NgdjRequirementsContractTests(unittest.TestCase):
         style_property = schema.get("properties", {}).get("style", {})
         self.assertEqual(style_property.get("default"), "scss")
 
-    def test_ng_app_schematic_creates_material_app(self) -> None:
-        ng_app_index_path = (
+    def test_material_app_schematic_creates_material_app(self) -> None:
+        material_app_index_path = (
             NGDJ_ROOT
             / "projects"
             / "angular-django2"
             / "schematics"
-            / "ng-app"
+            / "material-app"
             / "index.ts"
         )
-        self.assertTrue(ng_app_index_path.is_file())
+        self.assertTrue(material_app_index_path.is_file())
 
-        source = ng_app_index_path.read_text(encoding="utf-8")
+        source = material_app_index_path.read_text(encoding="utf-8")
         self.assertIn("externalSchematic('@schematics/angular', 'application'", source)
         self.assertIn("style: options.style", source)
 
-    def test_ng_api_schematic_bootstraps_ng_openapi_gen(self) -> None:
-        ng_api_index_path = (
+    def test_api_setup_schematic_bootstraps_ng_openapi_gen(self) -> None:
+        api_setup_index_path = (
             NGDJ_ROOT
             / "projects"
             / "angular-django2"
             / "schematics"
-            / "ng-api"
+            / "api-setup"
             / "index.ts"
         )
-        self.assertTrue(ng_api_index_path.is_file())
+        self.assertTrue(api_setup_index_path.is_file())
 
-        source = ng_api_index_path.read_text(encoding="utf-8")
+        source = api_setup_index_path.read_text(encoding="utf-8")
         self.assertIn("ng-openapi-gen", source)
         self.assertIn("generate:api", source)
 
@@ -115,7 +115,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
 
 class DjngNgdjIntegrationContractTests(unittest.TestCase):
-    def test_ng_workspace_uses_angular_django2_ng_workspace_schematic(self) -> None:
+    def test_ng_workspace_uses_angular_django2_workspace_setup_schematic(self) -> None:
         invocations = resolve_angular_command(
             "ng_workspace", ROOT / "django-angular3.json"
         )
@@ -126,9 +126,9 @@ class DjngNgdjIntegrationContractTests(unittest.TestCase):
 
         self.assertEqual(argv[0], DEFAULT_ANGULAR_SETTINGS["ng_executable"])
         self.assertEqual(argv[1], "generate")
-        self.assertEqual(argv[2], "angular-django2:ng-workspace")
+        self.assertEqual(argv[2], "angular-django2:workspace-setup")
 
-    def test_ng_gen_app_uses_angular_django2_ng_app_schematic(self) -> None:
+    def test_ng_gen_app_uses_angular_django2_material_app_schematic(self) -> None:
         invocations = resolve_angular_command(
             "ng_gen_app", ROOT / "django-angular3.json"
         )
@@ -139,7 +139,7 @@ class DjngNgdjIntegrationContractTests(unittest.TestCase):
 
         self.assertEqual(argv[0], DEFAULT_ANGULAR_SETTINGS["ng_executable"])
         self.assertEqual(argv[1], "generate")
-        self.assertEqual(argv[2], "angular-django2:ng-app")
+        self.assertEqual(argv[2], "angular-django2:material-app")
 
 
 if __name__ == "__main__":

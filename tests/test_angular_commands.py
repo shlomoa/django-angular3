@@ -134,7 +134,7 @@ class AngularCliCommandTests(unittest.TestCase):
             [
                 ng,
                 "generate",
-                "angular-django2:ng-workspace",
+                "angular-django2:workspace-setup",
                 "django-angular3-scaffold",
             ],
         )
@@ -192,7 +192,7 @@ class AngularCliCommandTests(unittest.TestCase):
             [
                 ng,
                 "generate",
-                "angular-django2:ng-app",
+                "angular-django2:material-app",
                 "portal",
                 "--style=scss",
                 "--routing",

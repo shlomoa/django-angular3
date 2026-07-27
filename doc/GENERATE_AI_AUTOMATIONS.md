@@ -493,7 +493,7 @@ workspace creation must be an explicit graph node.
 **Purpose**: Invoke the `ngdj add` / `ng_gen_app` schematic to add the primary
 Angular application into an existing workspace. Wraps the existing
 `ng_gen_app` djng management command. The wrapper forwards `--ssr`,
-`--zoneless`, and `--defaults` to the `angular-django2:ng-app` schematic so the
+`--zoneless`, and `--defaults` to the `angular-django2:material-app` schematic so the
 generated application matches the Angular CLI `ng new` defaults.
 
 **Inputs**:
@@ -2694,7 +2694,7 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
 
    > **Note**: `ng_gen_app` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
-   > **Schematic flags**: The wrapper invokes the `angular-django2:ng-app`
+   > **Schematic flags**: The wrapper invokes the `angular-django2:material-app`
    > schematic with `--ssr`, `--zoneless`, and `--defaults` (driven by the
    > `ssr`/`zoneless` settings) to match the Angular CLI `ng new` defaults.
 
@@ -3502,7 +3502,7 @@ Input:
 - resource_name: "orders"
 
 Process:
-1. Verify OrdersApiService exists from ng-api generation
+1. Verify OrdersApiService exists from api-setup generation
 2. Create features/orders/services/orders.service.ts
 3. Wrap each OrdersApiService method with typed Observable returns and catchError
 4. Create features/orders/services/orders.service.spec.ts using HttpClientTestingModule
@@ -6626,12 +6626,12 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Required Skills** (must execute before this skill):
 
-1. **ng-workspace** (Skill 1) — Workspace must exist with Angular Material installed
-2. **ng-app** (Skill 2) — Application must exist in workspace with proper directory structure
+1. **workspace-setup** (Skill 1) — Workspace must exist with Angular Material installed
+2. **material-app** (Skill 2) — Application must exist in workspace with proper directory structure
 
 **Optional Dependencies** (enhance functionality if present):
 
-- **ng-api** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
+- **api-setup** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
 - **ng-data-service** (Skill 4) — If `resourceName` provided, data service is injected for submit integration
 - **ng-form-field** (Skill 6) — Custom form field components can be used in place of standard `MatFormField` inputs
 
@@ -6939,8 +6939,8 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 
 **Required Skills**:
 
-1. **ng-workspace** — Workspace and Angular Material foundation must exist
-2. **ng-app** — Application shell and route structure must exist
+1. **workspace-setup** — Workspace and Angular Material foundation must exist
+2. **material-app** — Application shell and route structure must exist
 
 **Common Upstream Skills**:
 
@@ -7202,12 +7202,12 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Required Skills**:
 
-1. **ng-workspace** — Angular workspace must exist before site orchestration starts
-2. **ng-app** — Target Angular application must already exist so the site shell has a home
+1. **workspace-setup** — Angular workspace must exist before site orchestration starts
+2. **material-app** — Target Angular application must already exist so the site shell has a home
 
 **Orchestrated Skills**:
 
-- **ng-api** — Generates OpenAPI clients when `openapi_source_path` is provided
+- **api-setup** — Generates OpenAPI clients when `openapi_source_path` is provided
 - **ng-page** — Generates each page discovered from the UI spec or defaults
 - **ng-reactive-form** — Generates each form discovered from the UI spec
 
