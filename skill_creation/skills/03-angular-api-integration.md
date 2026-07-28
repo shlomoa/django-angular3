@@ -47,7 +47,7 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
    Invoke the ngdj schematic via `ng generate`:
    ```bash
    cd <workspacePath>
-   ng generate angular-django2:openapi-setup --inputPath=<openapi_source_path> --outputPath=src/app/api
+   ng generate angular-django2:openapi-setup --openapi_spec_file=<openapi_source_path> --outputPath=src/app/api
    ```
    The `angular-django2:openapi-setup` schematic handles:
    - Adding `ng-openapi-gen` to `devDependencies` in `package.json`
