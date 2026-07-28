@@ -179,7 +179,7 @@ Input:
 - resource_name: "orders"
 
 Process:
-1. Verify OrdersApiService exists from api-setup generation
+1. Verify OrdersApiService exists from openapi-setup generation
 2. Create features/orders/services/orders.service.ts
 3. Wrap each OrdersApiService method with typed Observable returns and catchError
 4. Create features/orders/services/orders.service.spec.ts using HttpClientTestingModule

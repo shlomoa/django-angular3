@@ -47,9 +47,9 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
    Invoke the ngdj schematic via `ng generate`:
    ```bash
    cd <workspacePath>
-   ng generate angular-django2:api-setup --openapi_spec_file=<openapi_source_path> --outputPath=src/app/api
+   ng generate angular-django2:openapi-setup --openapi_spec_file=<openapi_source_path> --outputPath=src/app/api
    ```
-   The `angular-django2:api-setup` schematic handles:
+   The `angular-django2:openapi-setup` schematic handles:
    - Adding `ng-openapi-gen` to `devDependencies` in `package.json`
    - Creating `ng-openapi-gen.json` at the workspace root
    - Adding a `generate:api` npm script to `package.json`
@@ -193,7 +193,7 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 
 3. **ng-openapi-gen not installed**:
    - Error: `command not found: ng-openapi-gen`
-   - Resolution: Run `ng generate angular-django2:api-setup` to bootstrap (adds devDependency and config), then re-run generation
+   - Resolution: Run `ng generate angular-django2:openapi-setup` to bootstrap (adds devDependency and config), then re-run generation
 
 4. **Generation errors**:
    - Error: Various ng-openapi-gen errors during generation

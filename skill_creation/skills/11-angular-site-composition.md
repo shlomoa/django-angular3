@@ -216,7 +216,7 @@ Remove the Angular application that owns the generated site from the workspace.
 
 **Orchestrated Skills**:
 
-- **api-setup** — Generates OpenAPI clients when `openapi_source_path` is provided
+- **openapi-setup** — Generates OpenAPI clients when `openapi_source_path` is provided
 - **ng-page** — Generates each page discovered from the UI spec or defaults
 - **ng-reactive-form** — Generates each form discovered from the UI spec
 

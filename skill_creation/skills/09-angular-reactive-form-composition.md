@@ -489,7 +489,7 @@ Remove a reactive form component and clean up references (route configurations, 
 
 **Optional Dependencies** (enhance functionality if present):
 
-- **api-setup** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
+- **openapi-setup** (Skill 3) — If `resourceName` provided, generated models are used to derive typed `FormGroup<>` fields
 - **ng-data-service** (Skill 4) — If `resourceName` provided, data service is injected for submit integration
 - **ng-form-field** (Skill 6) — Custom form field components can be used in place of standard `MatFormField` inputs
 

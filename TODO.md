@@ -73,7 +73,7 @@ still require a djng wrapper, build-plan step, or SKILL/doc alignment.
 | Explicit inputs/outputs for package component (`--inputs`/`--outputs`) | Support comma-separated `--inputs`/`--outputs` in the package-mode wrapper. | Pending |
 | Angular Material component embedding example | Add a SKILL/doc example embedding a Material package component (e.g. `MatDateRangePicker`). | Pending |
 | Rebuild after embedding (`ng build <app>`) | Reuse the existing `ng_build` wrapper as the post-embedding verification step. | Pending |
-| OpenAPI bootstrap command (`api-setup --openapi_spec_file`, `npm install`, `npm run generate:api`) | `build_app` already emits `api-setup` build-plan steps; add a standalone djng `api-setup` wrapper and align the bootstrap workflow (`--openapi_spec_file`, install, `generate:api`). | Pending |
+| OpenAPI bootstrap command (`openapi-setup --openapi_spec_file`, `npm install`, `npm run generate:api`) | `build_app` already emits `openapi-setup` build-plan steps; add a standalone djng `openapi-setup` wrapper and align the bootstrap workflow (`--openapi_spec_file`, install, `generate:api`). | Pending |
 | Data service wrapper command (`data-service <resource> --project=<app>`) | `build_app` already emits `ng-data-service` steps; add a standalone djng `data-service` wrapper passing `--project`. | Pending |
 | Lower-level app setup alternative (`application` → `material-setup` → `project-structure` → `app-shell`) | Document/derive wrappers for the lower-level schematic flow as an alternative to one-shot `material-app`. | Pending |
 | `workspace-setup` file hooks are not normal CLI flags | Document for wrapper authors that advanced `workspace-setup` `files` hooks are programmatic (wrapper schematic, test runner, or direct factory), not nested CLI flags. | Pending |
@@ -240,7 +240,7 @@ Local acceptance by each SKILL does not imply global correctness. A
 representative failure chain:
 
 ```
-api-setup       generates  OrderApiService.getOrder(id: number)
+openapi-setup       generates  OrderApiService.getOrder(id: number)
 ng-data-service wraps it as load(id: string)   ← locally valid TypeScript
 ng-page         calls      dataService.load(route.params.id)  ← locally valid
 ```

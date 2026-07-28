@@ -368,7 +368,7 @@ After modifying a workspace, verify:
 
 **Dependent skills** (must have workspace before using):
 - `angular-app-composition` — Angular Material app boiler plate
-- `api-setup` — Angular API generation
+- `openapi-setup` — Angular API generation
 - All component, form, page, and site generation skills
 
 ### Examples
