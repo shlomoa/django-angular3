@@ -282,8 +282,12 @@ class ExportSchemaCommandTests(unittest.TestCase):
             _command_for_skill("workspace-setup", "create"), "ng_workspace"
         )
         self.assertEqual(_command_for_skill("material-app", "create"), "ng_gen_app")
-        self.assertEqual(_command_for_skill("api-setup", "create"), "ng_openapi_gen")
-        self.assertEqual(_command_for_skill("api-setup", "modify"), "ng_openapi_gen")
+        self.assertEqual(
+            _command_for_skill("openapi-setup", "create"), "ng_openapi_gen"
+        )
+        self.assertEqual(
+            _command_for_skill("openapi-setup", "modify"), "ng_openapi_gen"
+        )
         self.assertEqual(
             _command_for_skill("angular-workspace-foundation", "create"),
             "ng_workspace",
