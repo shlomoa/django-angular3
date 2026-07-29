@@ -41,10 +41,13 @@ The package bundles a ready-made tutorial. Copy it into a working directory:
 django-angular3 install-tutorial simple_crm
 ```
 
-This creates a `simple_crm/` directory containing a Django project (`simple_crm`),
-a DRF app (`shop`), an exported `schema.yaml`, a `ui.json` UI definition, and a
-`django-angular3.json` configuration file. The command prints the next steps on
-success.
+This creates:
+- A `simple_crm/` folder containing a Django project (`simple_crm`),
+- A DRF app (`shop`)
+- `schema.yaml` exported from the above DRF app.
+- `ui.json` containing the UI requirements.
+- `django-angular3.json` configuration file.
+The command prints the next steps on success.
 
 ## 3. Run the Django backend
 
@@ -72,7 +75,7 @@ django-angular3 validate-project django-angular3.json
 so you can also run it with no arguments. See [Configuration](configuration.md)
 for the full schema.
 
-## 5. Generate a build plan
+## 5. Generate a build plan (optional for debugging)
 
 Produce a deterministic build plan without touching any Angular tooling:
 
@@ -80,8 +83,9 @@ Produce a deterministic build plan without touching any Angular tooling:
 django-angular3 build django-angular3.json --dry-run
 ```
 
-The `--dry-run` flag prints the plan instead of writing it. Drop the flag (or
-add `--output <dir>`) to persist the build artifacts.
+The `--dry-run` flag prints the plan to stdout. Without it, the plan is written
+to `build/plan.json` (use `--output <dir>` to change the destination). The
+Angular steps in the next section do not depend on this file.
 
 ## 6. Scaffold the Angular workspace
 
