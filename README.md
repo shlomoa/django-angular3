@@ -228,20 +228,34 @@ paths:
       operationId: updateUser
 ```
 
-Non-CRM pages and bespoke workflows are then supplied separately.
+Non-CRM pages and bespoke workflows are then supplied in `spec/ui/app.ui.json`
+as an [OpenUI concrete UI document](https://github.com/shlomoa/openui-spec).
+It conforms to `openui.schema.json` and uses the vocabulary defined by
+`openui.json`; see the [OpenUI examples](https://openui-spec.readthedocs.io/en/latest/examples/)
+for the per-scope vocabulary.
 
 For example:
 
-```yaml
-pages:
-  - route: /dashboard
-    kind: dashboard
-
-forms:
-  - id: invite-user
-    mode: reactive
-    submit:
-      action: createUser
+```json
+{
+  "id": "root",
+  "version": "0.0.1",
+  "type": "Application",
+  "children": [
+    {
+      "id": "dashboardPage",
+      "type": "DashboardPage"
+    },
+    {
+      "id": "inviteUserForm",
+      "type": "FormView",
+      "attrs": {
+        "title": "\"Invite user\"",
+        "(submit)": "createUser(form.value)"
+      }
+    }
+  ]
+}
 ```
 
 The scaffolded first version in this repository already includes example inputs.

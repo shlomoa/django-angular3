@@ -1,21 +1,62 @@
 {
-  "pages": [
+  "id": "root",
+  "version": "0.0.1",
+  "type": "Application",
+  "children": [
     {
-      "route": "/dashboard",
-      "kind": "dashboard"
+      "id": "appRouting",
+      "type": "Routing",
+      "attrs": {
+        "[defaultRoute]": "\"dashboard\""
+      },
+      "children": [
+        {
+          "id": "dashboardRoute",
+          "type": "Route",
+          "attrs": {
+            "[path]": "\"dashboard\"",
+            "[target]": "\"dashboardPage\""
+          }
+        },
+        {
+          "id": "inviteUserRoute",
+          "type": "Route",
+          "attrs": {
+            "[path]": "\"users/invite\"",
+            "[target]": "\"inviteUserForm\""
+          }
+        }
+      ]
     },
     {
-      "route": "/users/invite",
-      "kind": "workflow"
-    }
-  ],
-  "forms": [
+      "id": "dashboardPage",
+      "type": "DashboardPage"
+    },
     {
-      "id": "invite-user",
-      "mode": "reactive",
-      "submit": {
-        "action": "createUser"
-      }
+      "id": "inviteUserForm",
+      "type": "FormView",
+      "attrs": {
+        "title": "\"Invite user\"",
+        "(submit)": "createUser(form.value)"
+      },
+      "children": [
+        {
+          "id": "emailField",
+          "type": "Field",
+          "attrs": {
+            "[label]": "\"Email\"",
+            "[required]": "true"
+          }
+        },
+        {
+          "id": "submitButton",
+          "type": "button",
+          "attrs": {
+            "text": "\"Invite\"",
+            "(click)": "createUser(form.value)"
+          }
+        }
+      ]
     }
   ]
 }
