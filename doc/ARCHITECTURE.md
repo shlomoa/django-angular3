@@ -37,12 +37,11 @@ A TypeScript-based open-source web application framework led by the Angular Team
 A UI component library for Angular that implements Google's Material Design. It provides pre-built components for layout, forms, navigation, and more, with a consistent design language.
 
 ### 2.5 djng
-The `django-angular3` solution — this repository, the Django package, and the
-tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files
-required for construction. See §19 Glossary.
+`djng` is Django Angular in short, where dj stands for Django and ng is the known two letters representing Angular. This repository, the Django package, and the
+tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files required for construction. See §19 Glossary.
 
 ### 2.6 ngdj
-The `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`.
+`ngdj` stands for Angular Django, `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`.
 
 ### 2.7 [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.

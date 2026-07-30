@@ -2,7 +2,7 @@
 
 ## General instructions
 
-The source of truth for the general instructions is [here](https://github.com/shlomoa/shlomoa/blob/main/.github/copilot-instructions.md).
+The source of truth for the general instructions is mandatory reading when reading this document and is located [here](https://github.com/shlomoa/shlomoa/blob/main/.github/copilot-instructions.md).
 
 ## django-angular3 repo specific instructions
 
