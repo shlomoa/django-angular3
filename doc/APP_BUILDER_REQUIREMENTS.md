@@ -27,13 +27,17 @@ python manage.py build_app <config> [options]
 - An existing generated app: initially empty on first run.
 - `django-angular3.json`: the djng tool configuration. Read as current; always authoritative. Not diffed; changes take effect on the next run without being tracked.
 - Two OpenAPI schemas: current and previous (previous absent on first run).
-- Two `<project>.project.json` files: current and previous (previous absent on first run). `<project>.project.json` is the generated app configuration — name is a placeholder pending schema definition.
+- Two `app.ui.json` documents: current and previous (previous absent on first
+  run). Each is an OpenUI concrete UI document validated by
+  `openui.schema.json`.
 
 ### It operates through three phases:
 
 **Change derivation**: Two-fold:
 - **CRM**: Compares the current OpenAPI schema against the previous schema using `oasdiff`.
-- **Non-CRM**: Compares the current `<project>.project.json` against the previous one using an equivalent config diff function. ⚠️ The config diff function is not yet defined — it depends on the `<project>.project.json` schema being finalised first. See `TODO.md`.
+- **Non-CRM**: Structurally compares the current `app.ui.json` OpenUI document
+  tree against the previous one, including node `id`, `type`, `attrs`, and
+  `children`.
 
 Produces a typed `ChangeSet` and maps it to the automations required for the
 run, including which SKILL sessions must be invoked and in what mode.
@@ -73,8 +77,8 @@ order. For each procedure node, it executes the node according to its kind:
 | `django-angular3.json` | Tool configuration file | JSON | Must contain `project.name`, `openapi.source`, `angular.output`. Read as current; always authoritative. |
 | Current OpenAPI schema | Path from `openapi.source` in `django-angular3.json` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous OpenAPI schema | `--previous-schema <path>` | YAML or JSON (OAS 3.x) | OAS file from prior build. Absent on first run — treated as empty; builder uses `start-from-scratch`. |
-| Current `<project>.project.json` | Generated app configuration file (name is a placeholder) | JSON (schema TBD) | Defines the generated app's UI artifacts: pages, components, forms. |
-| Previous `<project>.project.json` | `--previous-project-config <path>` | JSON (schema TBD) | Prior generated app configuration. Absent on first run — non-CRM change detection is skipped. |
+| Current `app.ui.json` | OpenUI concrete UI document | JSON (`openui.schema.json`) | Defines the generated app's non-CRM UI artifacts. |
+| Previous `app.ui.json` | `--previous-project-config <path>` | JSON (`openui.schema.json`) | Prior OpenUI document. Absent on first run — non-CRM change detection is skipped. |
 
 ### Optional
 
@@ -137,18 +141,11 @@ This matches the contract normalization requirement in `REQUIREMENTS.md` §4.1.
 
 ### Generated app config change detection
 
-⚠️ The config diff function and the `<project>.project.json` schema are not yet defined. See `TODO.md`.
+Generated app config comparison is a structural diff of the two `app.ui.json`
+OpenUI document trees. It compares each node's `id`, `type`, `attrs`, and
+ordered `children`, producing the affected OpenUI node IDs.
 
-Generated app config comparison is a structural diff of the two `<project>.project.json` files.
-The builder diffs the following sections (subject to revision once `<project>.project.json` schema is defined):
-
-| Section | Change meaning |
-|---|---|
-| `pages` | Pages added, removed, or modified |
-| `components` | Standalone components added, removed, or modified |
-| `forms` | Reactive forms added, removed, or modified |
-
-If the previous `<project>.project.json` is absent (first run), non-CRM change detection is skipped and
+If the previous `app.ui.json` is absent (first run), non-CRM change detection is skipped and
 config-derived skills are treated as `no-change` (they run only if triggered by schema changes).
 
 ---
@@ -167,14 +164,12 @@ The builder produces a `ChangeSet` object:
   },
   "config": {
     "type": "add-things | remove-things | replace-things | no-change | start-from-scratch",
-    "affected_pages": ["dashboard"],
-    "affected_components": [],
-    "affected_forms": ["customer-edit"]
+    "affected_nodes": ["dashboardPage", "customerEditForm"]
   }
 }
 ```
 
-⚠️ The `config` block structure is preliminary — the `affected_pages`, `affected_components`, and `affected_forms` keys depend on the `<project>.project.json` schema being finalised. See `TODO.md`.
+The `affected_nodes` values are IDs from the OpenUI document tree.
 
 ---
 
@@ -226,7 +221,7 @@ model.
 
 ### Config change → AI-guided SKILL sessions
 
-| `<project>.project.json` change | SKILL | Mode |
+| `app.ui.json` change | SKILL | Mode |
 |---|---|---|
 | Page added | 10 (`angular-page-composition`) | create |
 | Page modified | 10 (`angular-page-composition`) | modify |
@@ -315,8 +310,8 @@ consistent state after all construction procedures have completed.
         "resource": "Order",
         "config": "path/to/django-angular3.json",
         "previous_schema": "path/to/previous-schema.yaml",
-        "project_config": "path/to/<project>.project.json",
-        "previous_project_config": "path/to/previous-<project>.project.json"
+        "project_config": "path/to/app.ui.json",
+        "previous_project_config": "path/to/previous-app.ui.json"
       },
       "depends_on": ["oasdiff-diff"]
     },
@@ -330,8 +325,8 @@ consistent state after all construction procedures have completed.
         "resource": "Order",
         "config": "path/to/django-angular3.json",
         "previous_schema": "path/to/previous-schema.yaml",
-        "project_config": "path/to/<project>.project.json",
-        "previous_project_config": "path/to/previous-<project>.project.json"
+        "project_config": "path/to/app.ui.json",
+        "previous_project_config": "path/to/previous-app.ui.json"
       },
       "depends_on": ["angular-api-integration-create-Order"]
     }
@@ -379,8 +374,8 @@ purposes only:
 
 - The builder must detect schema changes using `oasdiff`.
 - The builder must halt on breaking schema changes unless `--acknowledge-breaking` is set.
-- The builder must detect non-CRM changes by diffing the `<project>.project.json` files.
-  ⚠️ Not yet implementable — depends on the `<project>.project.json` schema being finalised. See `TODO.md`.
+- The builder must detect non-CRM changes by structurally diffing the
+  `app.ui.json` OpenUI document trees.
 - If no previous state is available, the builder treats the run as
   `start-from-scratch`.
 
@@ -554,6 +549,6 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Nodes may represent tool procedures, guided agent sessions, gate procedures, or verification procedures. | §Procedure Graph |
 | **guided agent session** | A single Claude Agent SDK call in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
 | **ChangeSet** | The typed record of schema and config changes produced by change derivation, used to construct the procedure graph. | §Change Derivation |
-| **`<project>.project.json`** | The generated app's configuration file. Defines the UI artifacts (pages, components, forms) used for non-CRM change detection. Name is a placeholder — schema and final name are TBD. | `TODO.md` MR1 |
+| **`app.ui.json`** | The generated app's OpenUI concrete UI document. It is validated by `openui.schema.json` and defines non-CRM UI artifacts used for change detection. | `ARCHITECTURE.md` §8.5 |
 
 ---

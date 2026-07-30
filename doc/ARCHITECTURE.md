@@ -374,8 +374,8 @@ criteria.
 3. Angular integration artifacts generation stage: the OpenAPI contract produces typed
    clients, resource adapters, and reusable Angular Material-oriented
    integration helpers
-4. Non-CRM content stage: a separate structured input source provides bespoke
-   reactive forms, standalone pages, and workflow definitions
+4. Non-CRM content stage: the `app.ui.json` OpenUI concrete UI document
+   provides bespoke reactive forms, standalone pages, and workflow definitions
 5. Application assembly stage: the Angular app composes CRM-derived outputs from
    generated integration artifacts with the non-CRM content stream
 6. Verification stage: generated artifacts, contracts, and app integration are
@@ -489,8 +489,10 @@ does not get mixed with manually-authored UI definitions.
 
 ### 8.5 Non-CRM Input Source
 
-Use a dedicated structured input source under a path such as `spec/ui/` for
-non-CRM content.
+Use `spec/ui/app.ui.json` as the dedicated structured input source for
+non-CRM content. It is an [OpenUI concrete UI document][openui-spec] that
+conforms to `openui.schema.json` and uses the vocabulary defined by
+`openui.json`.
 
 This source should define:
 
@@ -498,8 +500,10 @@ This source should define:
 - Standalone page definitions
 - Workflow-specific layouts or interaction rules
 
-It should be machine-readable, versioned in the repository, and able to
-reference API resources exposed through the OpenAPI contract.
+[OpenUI's per-scope examples][openui-examples] are the vocabulary reference
+for authoring this document. It should be machine-readable, versioned in the
+repository, and able to reference API resources exposed through the OpenAPI
+contract.
 
 ---
 
@@ -772,6 +776,8 @@ Key actors and terms. Full definitions are in §2.
 [django-angular3]: https://pypi.org/project/django-angular3/
 [django-angular3-github]: https://github.com/shlomoa/django-angular3
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
+[openui-examples]: https://openui-spec.readthedocs.io/en/latest/examples/
+[openui-spec]: https://github.com/shlomoa/openui-spec
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/
 [datamodel-code-generator-github]: https://github.com/koxudaxi/datamodel-code-generator

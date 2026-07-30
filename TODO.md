@@ -5,23 +5,22 @@ shown for each item.
 
 ---
 
-## 1. Non-CRM UI Input Format: Requirement Not Defined
+## 1. Non-CRM UI Input Format: OpenUI Defined
 
-**Status: Blocked — Top Priority**
+**Status: Resolved — pending implementation**
 
-The generated app's configuration file (placeholder: `<project>.project.json`)
-defines the UI artifacts — pages, components, forms — used for non-CRM change
-detection. Its schema and final file name are not yet defined. Non-CRM change
-detection cannot be implemented until this is resolved. When resolved, also add
-a sentence to `REQUIREMENTS.md` §4.2.2 naming the non-CRM content stage as a
-discrete governed construction stage (currently absent from §4.2.2; covered by
-`ARCHITECTURE.md` §7.1 stage 4).
+The generated app's non-CRM UI source is `spec/ui/app.ui.json`, an OpenUI
+concrete UI document. It conforms to `openui.schema.json` and uses the
+vocabulary in `openui.json` from
+[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). Non-CRM change
+detection must still be implemented in `django_angular3/validation.py` by
+validating and structurally diffing the OpenUI document tree.
 
 | | |
 |---|---|
-| **Options** | Define the JSON schema and the final file name for the generated app config file. |
+| **Remaining work** | Implement OpenUI document validation and structural diffing in `django_angular3/validation.py`. |
 | **Origin** | `APP_BUILDER_REQUIREMENTS.md` §Inputs, §Change Derivation; `ARCHITECTURE.md` §7.1 stage 4; `REQUIREMENTS.md` §4.2.2 |
-| **Input sources** | `spec/ui/`, `django_angular3/validation.py` |
+| **Input sources** | `spec/ui/app.ui.json`, `django_angular3/validation.py` |
 
 ---
 

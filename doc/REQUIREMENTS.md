@@ -511,6 +511,8 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - `ngdj` must provide the Angular-side commands, schematics, templates, and
   assembly actions consumed by governed construction, including generation
   from contract-derived and non-CRM inputs
+- Non-CRM content construction must be a discrete governed construction stage,
+  as defined by `ARCHITECTURE.md` §7.1 stage 4
 - Governed construction must be carried out by the agent through the governed
   AI automation model, using SKILLS for AI-guided construction work, TOOLS for
   deterministic bounded operations, and HOOKS for lifecycle gates or mandatory
