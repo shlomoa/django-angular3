@@ -37,7 +37,6 @@ the authoritative description of djng's role in the toolchain.
 - `django_angular3/management/commands/`: Django management command wrappers.
 - `django_angular3/config.py`: project config loading and normalization.
 - `django_angular3/validation.py`: OpenAPI, UI, and project config validation.
-- `django_angular3/build.py`: deterministic build plan creation and writing.
 - `django_angular3/angular.py`: Angular command resolution and execution helpers.
 - `django_angular3/settings.py`: Django setting defaults and compatibility.
 - `tests/`: unittest test suite.

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -12,7 +11,6 @@ from .angular import (
     format_invocations,
     resolve_angular_command,
 )
-from .build import create_build_plan, write_build_plan
 from .config import ConfigError, load_project_config
 from .validation import validate_openapi_file, validate_project_config, validate_ui_file
 
@@ -39,23 +37,6 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         default="django-angular3.json",
         help="Path to the project config.",
-    )
-
-    build = subparsers.add_parser(
-        "build", help="Validate a project and emit a deterministic build plan."
-    )
-    build.add_argument(
-        "path", nargs="?", default="django-angular3.json", help="Path to the config."
-    )
-    build.add_argument(
-        "--output",
-        default="build",
-        help="Directory where the build plan should be written.",
-    )
-    build.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print the build plan instead of writing it to disk.",
     )
 
     ng_new = subparsers.add_parser("ng_new", help="Create an empty Angular workspace.")
@@ -205,26 +186,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             validate_project_config(config), f"Project configuration {Path(args.path)}"
         )
 
-    if args.command == "build":
-        try:
-            config = load_project_config(args.path)
-        except ConfigError as exc:
-            print(f"Configuration error: {exc}", file=sys.stderr)
-            return 1
-
-        errors = validate_project_config(config)
-        if errors:
-            return _run_validation(errors, f"Project configuration {Path(args.path)}")
-
-        plan = create_build_plan(config)
-        if args.dry_run:
-            print(json.dumps(plan.to_dict(), indent=2))
-            return 0
-
-        plan_path = write_build_plan(plan, args.output)
-        print(f"Wrote build plan to {plan_path}")
-        return 0
-
     if args.command == "install-tutorial":
         return _run_install_tutorial(args.dest)
 
@@ -237,7 +198,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "ng_openapi_gen",
         "ng_add",
     }:
-        plan_options = {}
+        plan_options: dict[str, str | None] = {}
         if args.command == "ng_gen_app":
             plan_options["app_name"] = args.app_name
         if args.command == "ng_add":

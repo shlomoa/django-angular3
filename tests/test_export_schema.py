@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -274,6 +275,42 @@ class ExportSchemaCommandTests(unittest.TestCase):
         finally:
             if previous_path.exists():
                 previous_path.unlink()
+
+    def test_build_app_validates_project_sources_before_change_detection(self) -> None:
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        with tempfile.TemporaryDirectory() as directory:
+            project_root = Path(directory)
+            openapi_path = project_root / "openapi.json"
+            openapi_path.write_text(
+                json.dumps(
+                    {
+                        "openapi": "3.0.0",
+                        "paths": {
+                            "/items/": {
+                                "get": {"responses": {"200": {"description": "ok"}}}
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config_path = project_root / "django-angular3.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "project": {"name": "invalid-ui"},
+                        "openapi": {"source": "openapi.json"},
+                        "ui": {"source": "missing.ui.json"},
+                        "angular": {"output": "build/angular"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(CommandError, "UI source does not exist"):
+                call_command("build_app", str(config_path), dry_run=True)
 
     def test_build_app_uses_ng_workspace_command_for_workspace_setup_create_steps(
         self,

@@ -11,13 +11,13 @@ requirements and available commands.
 | **Invoked as** | `django-angular3 <command>` | `django-admin <command>` or `python manage.py <command>` |
 | **Requires Django project** | No | Yes — `django_angular3` must be in `INSTALLED_APPS` and `DJANGO_SETTINGS_MODULE` must be set |
 | **Requires DRF / drf-spectacular** | No | Only for `export_schema` |
-| **Primary use** | Validation, build-plan generation, Angular wrappers without a project | Full app lifecycle — including schema export, AI-automation plans, and workspace management |
+| **Primary use** | Validation and Angular wrappers without a project | Full app lifecycle — including schema export, AI-automation plans, and workspace management |
 
 ## Use cases
 
 **Use the standalone CLI** when:
 - Working in the `django-angular3` repository itself (no generated app present).
-- Running validation and build-plan generation in CI without a Django project.
+- Running validation in CI without a Django project.
 - Validating OpenAPI, UI definition, or project config files in isolation.
 - Invoking Angular wrapper commands from outside a Django project.
 
@@ -36,7 +36,6 @@ Invoked as `django-angular3 <command> [args]`.
 | `validate-openapi <path>` | Validate an OpenAPI source document. |
 | `validate-ui <path>` | Validate a UI definition document. |
 | `validate-project [path]` | Validate a `django-angular3` project configuration. Defaults to `django-angular3.json`. |
-| `build [path]` | Validate a project and emit a deterministic build plan. Accepts `--dry-run` and `--output <dir>`. |
 | `ng_new [path]` | Create an empty Angular workspace. |
 | `ng_workspace [path]` | Bootstrap the configured workspace: `ng new`, workspace defaults, `ng add angular-django2`, and schematic generation. |
 | `ng_config [path]` | Apply workspace defaults (package manager, style, routing). |
@@ -57,7 +56,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema <path>` | Export the OpenAPI schema from DRF (via drf-spectacular) and persist it as a versioned artifact. Rotates the previous schema alongside the current one for `build_app` change detection. Accepts `--format yaml` and `--dry-run`. |
-| `build_app <path>` | Generate a deterministic build plan driven by schema change detection. Maps skill/mode pairs to the corresponding management command names for AI-automation workflows. |
+| `build_app <path>` | Validate the configured OpenAPI and UI sources, then generate a deterministic build plan driven by schema change detection. Maps skill/mode pairs to the corresponding management command names for AI-automation workflows. |
 | `ng_new [path]` | Create an empty Angular workspace. |
 | `ng_workspace [path]` | Bootstrap the configured workspace. |
 | `ng_workspace_modify [path]` | Reapply angular-django2 workspace bootstrap and django-angular3 defaults to an existing workspace. |

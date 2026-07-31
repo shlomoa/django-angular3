@@ -10,10 +10,10 @@ contract-first workflow without writing a backend from scratch.
 
 - **Python 3.10+** with `pip`.
 - **Node.js** and **pnpm** — only needed once you generate or build the Angular
-  workspace. The validation and build-plan steps work without them.
+  workspace. Validation works without them.
 
-You do not need a Django project to try the validation and build-plan commands:
-the [standalone CLI](commands.md) runs them directly.
+You do not need a Django project to try the validation commands: the
+[standalone CLI](commands.md) runs them directly.
 
 ## 1. Install the package
 
@@ -75,19 +75,7 @@ django-angular3 validate-project django-angular3.json
 so you can also run it with no arguments. See [Configuration](configuration.md)
 for the full schema.
 
-## 5. Generate a build plan (optional for debugging)
-
-Produce a deterministic build plan without touching any Angular tooling:
-
-```bash
-django-angular3 build django-angular3.json --dry-run
-```
-
-The `--dry-run` flag prints the plan to stdout. Without it, the plan is written
-to `build/plan.json` (use `--output <dir>` to change the destination). The
-Angular steps in the next section do not depend on this file.
-
-## 6. Scaffold the Angular workspace
+## 5. Scaffold the Angular workspace
 
 These steps require Node.js and pnpm. Each `ng_*` command accepts `--dry-run`
 to print the resolved Angular subprocess calls without executing them — start

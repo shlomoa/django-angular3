@@ -27,7 +27,6 @@ INSTALLED_APPS = [
 
 ```bash
 django-admin validate-project django-angular3.json
-django-admin build django-angular3.json --dry-run
 django-admin build_app django-angular3.json --dry-run
 django-admin ng_workspace django-angular3.json --dry-run
 django-admin ng_openapi_gen django-angular3.json --dry-run

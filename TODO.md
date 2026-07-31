@@ -28,6 +28,17 @@ validating and structurally diffing the OpenUI document tree.
 
 **Status: In progress**
 
+### 2.0 Previous OpenUI input interface
+
+**Status: Decision required**
+
+`build_app` must compare the current OpenUI document with the accepted
+previous document. Decide whether the command keeps `--previous-config`,
+resolving the prior OpenUI source through that configuration file, or instead
+accepts an explicit `--previous-ui <path>` argument. The chosen interface must
+be used consistently by `build_app`, `APP_BUILDER_REQUIREMENTS.md`, examples,
+and tests.
+
 Derive the complete set of `angular-django2` capabilities and `djng` command
 wrappers needed to materialize the required Angular-side outputs.
 

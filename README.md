@@ -259,8 +259,8 @@ For example:
 ```
 
 The scaffolded first version in this repository already includes example inputs.
-For the contributor workflow around local validation and build-plan generation,
-see [Contributing](CONTRIBUTING.md).
+For the contributor workflow around local validation, see
+[Contributing](CONTRIBUTING.md).
 
 ## Documentation
 

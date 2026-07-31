@@ -4,7 +4,6 @@
 :maxdepth: 1
 
 angular
-build
 config
 validation
 cli

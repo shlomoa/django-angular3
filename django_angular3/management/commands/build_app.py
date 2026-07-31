@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from ...config import ConfigError, get_previous_schema_path, load_project_config
 from ...tools import ensure_oasdiff
+from ...validation import validate_project_config
 
 
 def _command_for_skill(skill: str, mode: str) -> str:
@@ -218,6 +219,13 @@ class Command(BaseCommand):
             current_config = load_project_config(config_path)
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
+
+        validation_errors = validate_project_config(current_config)
+        if validation_errors:
+            raise CommandError(
+                "Project configuration is invalid:\n"
+                + "\n".join(f"  - {error}" for error in validation_errors)
+            )
 
         current_schema_path: Path = current_config.openapi_source
         if not current_schema_path:

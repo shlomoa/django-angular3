@@ -21,8 +21,10 @@ run-through using a ready-made sample, start with
 
 ```text
 DRF backend ──export_schema──▶ OpenAPI schema ─┐
-                                               ├─▶ validate-project ──▶ build / build_app
-UI definition ─────────────────────────────────┘                              │
+                                               ├─▶ validate-project
+UI definition ─────────────────────────────────┘              │
+                                                                └─▶ build_app (validates and plans)
+                                                                               │
                                                                                ▼
                           Angular Material app ◀── ng_build ◀── ng_workspace + ng_openapi_gen
 ```
@@ -74,17 +76,13 @@ django-angular3 validate-ui ui.json
 Produce a deterministic build plan. Use `--dry-run` to preview it:
 
 ```bash
-# Standalone CLI — validation + build plan, no Django project required:
-django-angular3 build django-angular3.json --dry-run
-
-# Inside a generated app — schema-change-driven AI-automation plan:
+# Inside a generated app — validate sources, then produce a schema-change-driven plan:
 python manage.py build_app django-angular3.json --dry-run
 ```
 
-`build` emits a deterministic build plan from the validated project.
-`build_app` (a management command) drives the plan from schema change detection
-and maps skill/mode pairs to management command names for AI-automation
-workflows.
+`build_app` is a management command. It validates the configured OpenAPI and UI
+sources before it drives the plan from schema change detection and maps
+skill/mode pairs to management command names for AI-automation workflows.
 
 ### 5. Scaffold and build the Angular app
 

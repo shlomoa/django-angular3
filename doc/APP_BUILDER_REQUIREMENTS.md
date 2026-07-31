@@ -2,20 +2,12 @@
 
 ## Purpose
 
-The **generated app** is the resulting integrated Django-Angular application —
-the artifact `build_app` receives, modifies, and delivers.
+The **generated app** is the integrated Django-Angular application that
+`build_app` receives, modifies, validates, and delivers.
 
-djng provides two categories of Django admin commands for producing the
-generated app:
-
-- **Deterministic commands**: produce correct-by-construction outputs without
-  iteration — schema extraction from DRF models, direct ngdj wrapper calls,
-  and similar bounded operations.
-- **`build_app`**: the mixed AI-automation orchestration command that drives
-  change-detected construction of the generated app through SKILLS, TOOLS, and
-  enforced HOOK/gate behavior.
-
-`build_app` is invoked as:
+`djng` provides deterministic Django management commands for bounded work such
+as schema extraction and ngdj wrapper invocation. `build_app` is the generated
+app's orchestration command. It is invoked as:
 
 ```bash
 django-admin build_app <config> [options]
@@ -23,48 +15,25 @@ django-admin build_app <config> [options]
 python manage.py build_app <config> [options]
 ```
 
-`build_app` takes:
-- An existing generated app: initially empty on first run.
-- `django-angular3.json`: the djng tool configuration. Read as current; always authoritative. Not diffed; changes take effect on the next run without being tracked.
-- Two OpenAPI schemas: current and previous (previous absent on first run).
-- Two `app.ui.json` documents: current and previous (previous absent on first
-  run). Each is an OpenUI concrete UI document validated by
-  `openui.schema.json`.
+### Build algorithm
 
-### It operates through three phases:
+`build_app` builds the generated app; it does not emit a build plan or a
+procedure graph. For every run it performs this ordered algorithm:
 
-**Change derivation**: Two-fold:
-- **CRM**: Compares the current OpenAPI schema against the previous schema using `oasdiff`.
-- **Non-CRM**: Structurally compares the current `app.ui.json` OpenUI document
-  tree against the previous one, including node `id`, `type`, `attrs`, and
-  `children`.
+1. Validate the current `django-angular3.json`, OpenAPI schema, and OpenUI
+   document.
+2. Identify the difference between the previous and current OpenAPI schemas.
+3. Identify the structural difference between the previous and current OpenUI
+   document trees, including each node's `id`, `type`, `attrs`, and ordered
+   `children`.
+4. Translate both identified change sets into the required change commands.
+5. Execute those commands against the generated-app workspace.
+6. Validate the generated outputs and the resulting integrated application.
 
-Produces a typed `ChangeSet` and maps it to the automations required for the
-run, including which SKILL sessions must be invoked and in what mode.
-
-In the mixed automation model, change derivation also determines which
-deterministic tool procedures and gate procedures are required before or around
-the AI-guided SKILL sessions.
-
-**Procedure graph construction**: Translates the change derivation output into
-a directed graph of procedures. Each procedure represents a unit of
-construction work. The graph encodes the ordering and dependency constraints
-for deterministic tool procedures, AI-guided SKILL sessions, verification
-procedures, and enforced gate boundaries derived from the ChangeSet (delete
-before create at the same dependency level).
-
-**Procedure execution**: `build_app` traverses the procedure graph in dependency
-order. For each procedure node, it executes the node according to its kind:
-
-- **Tool procedure**: run a deterministic tool contract with structured inputs
-  and outputs.
-- **SKILL session procedure**: make a Claude Agent SDK call with the specified
-  SKILL(s) enabled, the procedure inputs as the prompt, and the working
-  directory set to the generated app workspace.
-- **Gate / HOOK boundary**: enforce a mandatory blocking check or lifecycle
-  side effect before downstream work continues.
-- **Verification procedure**: run required verification steps that confirm the
-  generated app is in a correct and consistent state.
+The comparison inputs determine what changes; command execution performs those
+changes; validation decides whether the build succeeded. A command failure or
+failed validation halts the build and surfaces the failure through Django's
+normal command error reporting.
 
 ---
 
@@ -74,184 +43,138 @@ order. For each procedure node, it executes the node according to its kind:
 
 | Input | Source | Format | Notes |
 |---|---|---|---|
-| `django-angular3.json` | Tool configuration file | JSON | Must contain `project.name`, `openapi.source`, `angular.output`. Read as current; always authoritative. |
-| Current OpenAPI schema | Path from `openapi.source` in `django-angular3.json` | YAML or JSON (OAS 3.x) | The current schema version. |
-| Previous OpenAPI schema | `--previous-schema <path>` | YAML or JSON (OAS 3.x) | OAS file from prior build. Absent on first run — treated as empty; builder uses `start-from-scratch`. |
-| Current `app.ui.json` | OpenUI concrete UI document | JSON (`openui.schema.json`) | Defines the generated app's non-CRM UI artifacts. |
-| Previous `app.ui.json` | `--previous-project-config <path>` | JSON (`openui.schema.json`) | Prior OpenUI document. Absent on first run — non-CRM change detection is skipped. |
+| `django-angular3.json` | Tool configuration file | JSON | Must contain `project.name`, `openapi.source`, `ui.source`, and `angular.output`. Read as current and always authoritative. |
+| Current OpenAPI schema | `openapi.source` | YAML or JSON (OAS 3.x) | The current schema version. |
+| Previous OpenAPI schema | `--previous-schema <path>` | YAML or JSON (OAS 3.x) | Prior schema. Absent on a first run; the schema change type is `start-from-scratch`. |
+| Current `app.ui.json` | `ui.source` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
+| Previous `app.ui.json` | Interface pending: `--previous-config` or `--previous-ui <path>` | JSON (`openui.schema.json`) | Prior OpenUI document. Absent on a first run; OpenUI-specific changes are not derived. See `TODO.md` §2.0. |
 
 ### Optional
 
-Items marked `[DEBUG]` are available for inspection and troubleshooting; they
-are not required for normal operation.
-
 | Input | Flag | Notes |
 |---|---|---|
-| Output format | `--output-format json\|yaml\|text` | `[DEBUG]` Format for the emitted procedure graph. Default: `json`. |
-| Dry run | `--dry-run` | `[DEBUG]` Emit the procedure graph without invoking any automations or writing to disk. |
-| Graph output path | `--output <dir>` | `[DEBUG]` Write the procedure graph to `<dir>/procedure-graph.<ext>`. Default: `build/`. |
-| Force mode | `--force start-from-scratch` | Override change detection; treat as start-from-scratch regardless of diff. |
+| Dry run | `--dry-run` | Show the ordered change commands without executing them or modifying the generated-app workspace. |
+| Force mode | `--force start-from-scratch` | Override comparison results and execute the full initial-build command set. |
+| Breaking-change acknowledgement | `--acknowledge-breaking` | Permit execution after the breaking-change gate reports OpenAPI breaking changes. |
 
 ### Configuration keys read from `django-angular3.json`
 
 | Key | Required | Purpose |
 |---|---|---|
 | `project.name` | yes | Workspace and app name |
-| `openapi.source` | yes | Path to the current OpenAPI schema |
-| `angular.output` | yes | Workspace root path |
-| `angular.workspace.*` | no | Workspace settings (package manager, style, routing) |
+| `openapi.source` | yes | Current OpenAPI schema path |
+| `ui.source` | yes | Current OpenUI document path |
+| `angular.output` | yes | Generated-app workspace root |
+| `angular.workspace.*` | no | Workspace settings such as package manager, style, and routing |
 
 ---
 
 ## Change Derivation
 
-### Schema change detection
+### OpenAPI change detection
 
-Schema comparison uses `oasdiff`. The builder runs:
+Schema comparison uses `oasdiff`:
 
 ```bash
 oasdiff diff <previous-schema> <current-schema> --format json
 ```
 
-oasdiff output is parsed to classify each difference.
+oasdiff output is parsed to classify the change and affected resources.
 
-If the previous schema is absent (first run), the change type is `start-from-scratch` for all schema-derived skills.
-
-#### Schema change types
-
-| Type | oasdiff signal | Meaning |
+| Type | Signal | Meaning |
 |---|---|---|
-| `start-from-scratch` | No previous schema | First build; generate everything |
-| `no-change` | oasdiff diff is empty | Schema identical; skip all schema-driven skills |
-| `add-things` | Only additions in oasdiff output | New endpoints, resources, or properties added |
-| `remove-things` | Only removals | Endpoints, resources, or properties deleted |
-| `replace-things` | Both additions and removals | Existing things modified (treated as remove + add at the resource level) |
-| `breaking` | oasdiff reports breaking changes | Breaking changes present; builder emits a warning and halts unless `--acknowledge-breaking` flag is set |
+| `start-from-scratch` | No previous schema | First build; generate schema-derived artifacts. |
+| `no-change` | Empty diff | Skip schema-derived commands. |
+| `add-things` | Additions only | New endpoints, resources, or properties. |
+| `remove-things` | Removals only | Deleted endpoints, resources, or properties. |
+| `replace-things` | Additions and removals | Modified resources; execute removals before additions. |
+| `breaking` | Breaking changes reported | Stop unless `--acknowledge-breaking` is present. |
 
-#### Breaking change gate
-
-When oasdiff reports breaking changes, the app builder must stop and output:
+When breaking changes are found, the builder must stop and output:
 
 ```
 Breaking schema changes detected. Review the oasdiff report before proceeding.
 Re-run with --acknowledge-breaking to continue.
 ```
 
-This matches the contract normalization requirement in `REQUIREMENTS.md` §4.1.
+### OpenUI change detection
 
-### Generated app config change detection
+OpenUI comparison is a structural diff of current and previous `app.ui.json`
+document trees. It compares each node's `id`, `type`, `attrs`, and ordered
+`children`, and records affected node IDs and their add, modify, or delete
+operation. If no previous OpenUI document is available, OpenUI-specific change
+detection is skipped; the first-run command set still creates the configured UI
+artifacts required by the generated app.
 
-Generated app config comparison is a structural diff of the two `app.ui.json`
-OpenUI document trees. It compares each node's `id`, `type`, `attrs`, and
-ordered `children`, producing the affected OpenUI node IDs.
+### ChangeSet
 
-If the previous `app.ui.json` is absent (first run), non-CRM change detection is skipped and
-config-derived skills are treated as `no-change` (they run only if triggered by schema changes).
-
----
-
-## Change Classification Summary
-
-The builder produces a `ChangeSet` object:
+The builder uses a typed `ChangeSet` internally to carry comparison results
+into command translation. It is not a build plan and does not replace command
+execution.
 
 ```json
 {
   "schema": {
     "type": "add-things | remove-things | replace-things | start-from-scratch | no-change | breaking",
     "affected_resources": ["Customer", "Order"],
-    "breaking": false,
-    "oasdiff_report": "<path-to-report>"
+    "breaking": false
   },
-  "config": {
+  "openui": {
     "type": "add-things | remove-things | replace-things | no-change | start-from-scratch",
     "affected_nodes": ["dashboardPage", "customerEditForm"]
   }
 }
 ```
 
-The `affected_nodes` values are IDs from the OpenUI document tree.
-
 ---
 
-## Change-to-Automations Mapping
+## Change Command Translation and Execution
 
-Change derivation maps each change type to the automations that must run,
-using the dependency order and primitive-selection policy defined in
-`GENERATE_AI_AUTOMATIONS.md`.
+`build_app` translates the `ChangeSet` into an ordered sequence of executable
+commands. Each command has a stable identity, mode, inputs, and a
+human-readable reason. Translation is deterministic for the same current and
+previous inputs; commands not selected by either change set are omitted.
 
-### Deterministic procedures and enforced gates
+### Automation boundaries
 
-The mixed model distinguishes deterministic procedures and enforced gates from
-the AI-guided SKILL sessions that perform generative construction work. Each
-deterministic procedure invokes a tool contract defined in
-`doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. Each enforced gate
-invokes a hook contract defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook
-Contracts Catalog. The contract names listed in the **Tool contract** and
-**Hook contract** columns are the exact values the procedure graph emits in
-the `tool` field of a `tool` node and the `hook` field of a `gate` node.
+The selected commands invoke the following documented automation contracts.
+Tool and hook names remain distinct from CLI wrapper command names, as defined
+by the automation naming layers in `ARCHITECTURE.md` §2.23.
 
-| Construction concern | Primitive | Tool contract | Hook contract | Role in `build_app` |
+| Construction concern | Primitive | Tool contract | Hook contract | Direct-build role |
 |---|---|---|---|---|
-| Schema export from DRF | TOOL | `openapi_schema_export` | — | Produce the current OpenAPI artifact as a deterministic build input |
-| Migration-driven schema refresh | HOOK | (wraps `openapi_schema_export`) | `migration-triggered` | Re-export the schema automatically whenever a new Django migration file appears |
-| OpenAPI validation | TOOL | `validate_openapi_schema` | — | Validate the schema before downstream construction continues |
-| Pre-construction contract validation gate | HOOK | (wraps `validate_openapi_schema`) | `pre-construction` | Block any Angular generation tool until the schema exists, is valid OAS 3.1, and is at least as fresh as the latest migration |
-| Schema diff / change detection | TOOL | `oasdiff_diff` | — | Produce the structured schema-change inputs used to derive the `ChangeSet` |
-| Breaking-change stop condition | HOOK | (consumes `oasdiff_diff` output) | `breaking-change` | Block downstream construction until breaking changes are acknowledged or resolved |
-| Angular workspace scaffold | TOOL | `angular_workspace_scaffold` | — | Create the Angular workspace before the `angular-workspace-foundation` skill session |
-| Angular application scaffold | TOOL | `angular_app_scaffold` | — | Add the primary Angular application before the `angular-app-composition` skill session |
-| Typed Angular client generation | TOOL | `angular_api_client_generate` | — | Generate the typed Angular API client before the `angular-api-integration` skill session |
-| Post-generation verification logging | HOOK | (consumes generation-tool outputs) | `post-generation` | Run a structural check after each generation tool and append a pass/fail entry to `build/verification.log` |
-| Session-end archiving and audit | HOOK | (no wrapped tool) | `session-stop` | Archive durable artifacts and write a session summary when the agent session ends |
+| Schema export from DRF | TOOL | `openapi_schema_export` | — | Produce the current OpenAPI artifact when required. |
+| Schema validation | TOOL | `validate_openapi_schema` | — | Validate the schema before construction. |
+| Pre-construction validation | HOOK | — | `pre-construction` | Block Angular generation until required inputs are valid. |
+| Schema diff | TOOL | `oasdiff_diff` | — | Derive schema changes. |
+| Breaking-change gate | HOOK | — | `breaking-change` | Block execution until acknowledged or resolved. |
+| Angular workspace scaffold | TOOL | `angular_workspace_scaffold` | — | Create the workspace for a first build. |
+| Angular app scaffold | TOOL | `angular_app_scaffold` | — | Create the primary Angular application. |
+| Typed Angular client generation | TOOL | `angular_api_client_generate` | — | Generate the typed API client. |
+| Post-generation verification | HOOK | — | `post-generation` | Record and enforce per-command structural checks. |
+| Session-end audit | HOOK | — | `session-stop` | Archive run information and write a session summary. |
 
-The detailed per-resource mapping below remains most explicit for the
-AI-guided SKILL subset, but it is now framed within this broader automation
-model.
+### Change-to-command mapping
 
-### Schema change → AI-guided SKILL sessions
-
-| Schema change type | SKILLS invoked | Notes |
+| Source change | Selected command category | Mode |
 |---|---|---|
-| `start-from-scratch` | 1, 2, 3, 4, then config-derived SKILLS | Full pipeline |
-| `no-change` | None (schema-derived) | Config-derived SKILLS still run if config changed |
-| `add-things` | 3 (`angular-api-integration`), 4 (`angular-data-service-composition`) for new resources, then component/page SKILLS for new resources | Existing workspace and app untouched |
-| `remove-things` | 3 (`angular-api-integration`), 4 (`angular-data-service-composition`) in delete mode, component/page SKILLS for removed resources in delete mode | |
-| `replace-things` | Same as remove-things for removed resources, then add-things for new resources | Order: remove first, then add |
-| `breaking` | Blocked — see Breaking change gate above | |
+| Schema start-from-scratch | Workspace, app, API-integration, data-service, and required OpenUI commands | create |
+| Schema addition | API-integration and data-service commands for affected resources, followed by dependent UI commands | create |
+| Schema removal | Dependent UI, data-service, and API-integration commands for affected resources | delete |
+| Schema replacement | Removal commands followed by creation commands for affected resources | delete, then create |
+| OpenUI page addition, modification, or removal | `angular-page-composition` | create, modify, or delete |
+| OpenUI standalone component addition, modification, or removal | `angular-component-composition` | create, modify, or delete |
+| OpenUI complex component addition, modification, or removal | `angular-complex-component-composition` | create, modify, or delete |
+| OpenUI reactive form addition, modification, or removal | `angular-reactive-form-composition` | create, modify, or delete |
+| OpenUI site-navigation change | `angular-site-composition` | modify |
 
-### Config change → AI-guided SKILL sessions
+The implementation must define the precise wrapper invocation for every row
+before claiming support for that change type. Unsupported changes must fail
+explicitly; `build_app` must not silently omit them.
 
-| `app.ui.json` change | SKILL | Mode |
-|---|---|---|
-| Page added | 10 (`angular-page-composition`) | create |
-| Page modified | 10 (`angular-page-composition`) | modify |
-| Page removed | 10 (`angular-page-composition`) | delete |
-| Standalone component added | 7 (`angular-component-composition`) | create |
-| Standalone component modified | 7 (`angular-component-composition`) | modify |
-| Standalone component removed | 7 (`angular-component-composition`) | delete |
-| Complex component added | 8 (`angular-complex-component-composition`) | create |
-| Complex component modified | 8 (`angular-complex-component-composition`) | modify |
-| Complex component removed | 8 (`angular-complex-component-composition`) | delete |
-| Reactive form added | 9 (`angular-reactive-form-composition`) | create |
-| Reactive form modified | 9 (`angular-reactive-form-composition`) | modify |
-| Reactive form removed | 9 (`angular-reactive-form-composition`) | delete |
-| Site navigation changed | 11 (`angular-site-composition`) | modify |
+### Execution order
 
-## Procedure Graph
-
-Procedure graph construction translates the change-to-automations mapping into
-a directed acyclic graph of procedures. Each node in the graph is a procedure
-with a node kind, a reason, node-specific inputs, and dependency edges.
-
-Supported procedure kinds in the target model are:
-
-- `tool` — deterministic callable operation
-- `skill-session` — guided agent session using one or more SKILLS
-- `gate` — enforced blocking check or lifecycle boundary
-- `verification` — mandatory verification step
-
-Within that broader graph, the current AI-guided construction subset encodes
-the following SKILLS dependency chain:
+Commands must satisfy this dependency order:
 
 ```
 1  angular-workspace-foundation   (foundation)
@@ -267,104 +190,29 @@ the following SKILLS dependency chain:
 11 angular-site-composition         (composes 2–10)
 ```
 
-SKILLS not triggered by any change in the current run are omitted from the
-graph. Procedures that invoke a SKILL in delete mode for removed resources
-precede procedures that invoke in create/add mode for new resources at the
-same dependency level. Deterministic tool procedures and gate procedures may
-precede, surround, or follow the SKILL-session subset as required by the
-construction stage.
+Commands that delete removed resources precede commands that create replacement
+or new resources at the same dependency level. Schema-derived commands precede
+OpenUI-derived commands at the same level. Mandatory validation commands run
+last.
 
-The final node(s) in the graph are always verification procedures. Verification
-is `build_app`'s responsibility: it is not a separate command and is not
-optional. The verification procedures confirm that the generated app is in a correct and
-consistent state after all construction procedures have completed.
-
-⚠️ The specific verification procedures and their acceptance criteria are not yet defined. See `TODO.md`.
-
-### JSON representation `[DEBUG]`
-
-```json
-{
-  "generated_at": "2026-04-30T12:00:00Z",
-  "config": "path/to/django-angular3.json",
-  "change_set": { ... },
-  "procedures": [
-    {
-      "id": "oasdiff-diff",
-      "kind": "tool",
-      "tool": "oasdiff_diff",
-      "reason": "Schema change detection is required before downstream construction",
-      "inputs": {
-        "current_schema": "path/to/current-schema.yaml",
-        "previous_schema": "path/to/previous-schema.yaml"
-      },
-      "depends_on": []
-    },
-    {
-      "id": "angular-api-integration-create-Order",
-      "kind": "skill-session",
-      "skill": "angular-api-integration",
-      "mode": "create",
-      "reason": "New resource 'Order' added to schema",
-      "inputs": {
-        "resource": "Order",
-        "config": "path/to/django-angular3.json",
-        "previous_schema": "path/to/previous-schema.yaml",
-        "project_config": "path/to/app.ui.json",
-        "previous_project_config": "path/to/previous-app.ui.json"
-      },
-      "depends_on": ["oasdiff-diff"]
-    },
-    {
-      "id": "angular-data-service-composition-create-Order",
-      "kind": "skill-session",
-      "skill": "angular-data-service-composition",
-      "mode": "create",
-      "reason": "New resource 'Order' requires data service",
-      "inputs": {
-        "resource": "Order",
-        "config": "path/to/django-angular3.json",
-        "previous_schema": "path/to/previous-schema.yaml",
-        "project_config": "path/to/app.ui.json",
-        "previous_project_config": "path/to/previous-app.ui.json"
-      },
-      "depends_on": ["angular-api-integration-create-Order"]
-    }
-  ]
-}
-```
-
-### Constraints on the procedure graph
-
-- The graph is a directed acyclic graph: no circular dependencies.
-- Each procedure includes `reason` — a human-readable explanation of why it
-  is included.
-- The graph is deterministic: the same inputs always produce the same graph.
-- Procedures not triggered by any change in the current run are omitted.
-- `build_app` traverses the graph in dependency order, executing each
-  procedure according to its node kind.
-- Tool procedures, gate procedures, and verification procedures are first-class
-  graph elements, not implicit side notes around SKILL sessions.
+`--dry-run` reports ordered commands, modes, inputs, and reasons, but does not
+execute commands or modify the generated-app workspace. It is a command preview,
+not a build-plan artifact.
 
 ---
 
 ## Durable Artifacts
 
-The durable artifact of each `build_app` run is the set of generated application
-files produced by the mixed automation flow:
+The durable artifact of a successful run is the generated application at
+`angular.output`. Diagnostic artifacts support troubleshooting and validation;
+they are not a substitute for execution.
 
 | Artifact | Format | Storage path |
 |---|---|---|
-| Generated application files — Angular source files accumulated across tool procedures, guided agent sessions, and related verification-controlled construction steps (components, services, API clients, routes, configuration) | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root (from `django-angular3.json`) |
-
-The following internal artifacts are produced for `[DEBUG]` and validation
-purposes only:
-
-| Internal artifact | Format | Storage path |
-|---|---|---|
-| oasdiff diff report | YAML | `build/oasdiff-report.yaml` |
-| `ChangeSet` | JSON | `build/changeset.json` |
-| Procedure graph | JSON or YAML | `build/procedure-graph.json` |
+| Generated application files | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root |
+| oasdiff report | JSON or YAML | `build/` |
+| ChangeSet | JSON | `build/` |
+| Command execution and validation log | JSONL or text | `build/` |
 
 ---
 
@@ -372,165 +220,99 @@ purposes only:
 
 ### FR-1: Change detection
 
+- The builder must validate current project sources before comparison.
 - The builder must detect schema changes using `oasdiff`.
-- The builder must halt on breaking schema changes unless `--acknowledge-breaking` is set.
-- The builder must detect non-CRM changes by structurally diffing the
-  `app.ui.json` OpenUI document trees.
-- If no previous state is available, the builder treats the run as
+- The builder must detect non-CRM changes by structurally diffing OpenUI
+  document trees.
+- The builder must halt on breaking schema changes unless
+  `--acknowledge-breaking` is set.
+- If no previous schema is available, the schema change type is
   `start-from-scratch`.
 
-### FR-2: Procedure graph generation
+### FR-2: Command translation and execution
 
-- The procedure graph must be deterministic for the same inputs.
-- The graph must encode the dependency ordering of the mixed automation model,
-  including deterministic tool procedures, AI-guided SKILL sessions,
-  verification procedures, and enforced gate boundaries.
-- The graph must encode the SKILLS dependency chain as dependency edges within
-  the SKILL-session subset.
-- Each procedure must include a `reason` for its inclusion.
-- Procedures not triggered by any change in the current run must be omitted.
+- The command sequence must be deterministic for the same inputs.
+- Translation must apply dependency ordering for deterministic tool commands,
+  AI-guided SKILL commands, enforced gates, and terminal validation.
+- Each selected command must include a reason for its inclusion.
+- Commands not triggered by either change set must not execute.
+- `build_app` must execute selected commands in order; it must not emit a build
+  plan or procedure graph instead of executing them.
 
 ### FR-3: Dry run `[DEBUG]`
 
-- `--dry-run` must emit the procedure graph without invoking any automations,
-  including deterministic tool procedures or SDK-driven SKILL sessions.
-- The emitted graph must be inspectable and human-readable.
+- `--dry-run` must report translated commands without invoking automation or
+  modifying the generated-app workspace.
+- The preview must be human-readable and include command order, mode, inputs,
+  and reason.
 
-### FR-4: Breaking change gate
+### FR-4: Breaking-change gate
 
-- When oasdiff detects breaking changes, the builder must stop, print the
-  oasdiff report summary, and exit with a non-zero code.
-- Breaking changes must only be bypassed with `--acknowledge-breaking`.
-- The gate MUST be implemented by the `breaking-change` hook contract defined
-  in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog. The hook
-  consumes the structured output of the `oasdiff_diff` tool procedure and is
-  the single point of enforcement — the builder MUST NOT re-implement the
-  gate logic outside the hook.
+- When oasdiff detects breaking changes, the builder must stop, print the report
+  summary, and exit non-zero.
+- Breaking changes may be bypassed only with `--acknowledge-breaking`.
+- The `breaking-change` hook contract in
+  `doc/GENERATE_AI_AUTOMATIONS.md` is the single point of enforcement.
 
 ### FR-5: Start-from-scratch mode
 
-- `--force start-from-scratch` overrides change detection and schedules all
-  required automation procedures for a full build, including deterministic
-  prerequisite procedures and all SKILL-session procedures in dependency order.
+- `--force start-from-scratch` overrides comparison results and executes the
+  full initial-build command set, including deterministic prerequisites and
+  required SKILL commands in dependency order.
 
-### FR-6: Config-only changes
+### FR-6: OpenUI-only changes
 
-- When the schema has not changed (`no-change`) but the config has changed,
-  only config-derived SKILL-session procedures are included in the
-  construction subset of the procedure graph.
-- Schema-derived SKILL-session procedures are not re-run unless triggered by a
-  schema change.
+- When the schema is unchanged but the OpenUI document changed, execute only
+  the OpenUI-derived commands and required terminal validation.
+- Schema-derived commands must not rerun unless triggered by a schema change.
 
 ### FR-7: Combined changes
 
-- When both schema and config change, schema-derived procedures are ordered
-  before config-derived procedures at the same dependency level.
+- When both sources change, schema-derived commands are ordered before
+  OpenUI-derived commands at the same dependency level.
 
-### FR-8: Procedure graph traversal and automation execution
+### FR-8: Automation command execution
 
-- `build_app` must traverse the procedure graph in dependency order.
-- For each `skill-session` node, `build_app` must make a Claude Agent SDK call
-  with the specified SKILL(s) enabled, the procedure inputs as the prompt, and
-  the working directory set to the generated app workspace (`angular.output` from
-  `django-angular3.json`).
-- For each `tool` node, `build_app` must execute the corresponding
-  deterministic tool contract with structured inputs and outputs. The `tool`
-  field of the node MUST equal one of the contract names defined in
-  `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog
-  (`openapi_schema_export`, `validate_openapi_schema`, `oasdiff_diff`,
-  `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`).
-  TOOL contract names are one of the four automation naming layers defined in
-  `doc/ARCHITECTURE.md` §2.23; they are distinct from the CLI wrapper command
-  names that share similar spellings.
-- For each `gate` node or equivalent enforced boundary, `build_app` must apply
-  the required blocking check or lifecycle side effect before downstream
-  procedures continue. The `hook` field of the node MUST equal one of the
-  contract names defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts
-  Catalog (`pre-construction`, `migration-triggered`, `breaking-change`,
-  `post-generation`, `session-stop`).
+- Each selected SKILL command must make a Claude Agent SDK call with the
+  specified SKILL(s) enabled, command inputs as the prompt, and
+  `angular.output` as the generated-app workspace.
+- Each selected tool command must execute the corresponding deterministic tool
+  contract with structured inputs and outputs.
+- Each selected gate must enforce its blocking check or lifecycle side effect
+  before downstream commands continue.
 
-### FR-9: Tool procedure failure handling
+### FR-9: Command and hook failure handling
 
-- `build_app` must treat every tool procedure as honouring the contract shape
-  defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Tool contract shape:
-  structured inputs, structured outputs, and a structured error object with a
-  `category` in
-  `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
-- When a tool procedure returns a non-success result, `build_app` must:
-  1. Halt traversal at the failed node and refuse to start any procedure that
-     depends on it.
-  2. Emit the failed procedure's `id`, `tool`, error `category`, error
-     `message`, and any structured `details` to stdout and to the run's
-     durable artifact log.
-  3. Exit with a non-zero status code distinct from the breaking-change exit
-     code so callers can distinguish "tool failed" from "breaking changes
-     blocked the run".
-- Tool procedures whose outputs include a `valid: false` report (notably
-  `validate_openapi_schema`) are not themselves errors; the procedure-graph
-  builder is responsible for translating such reports into the appropriate
-  downstream gate or halt.
-- `build_app` must not silently retry a failed tool procedure. Retry, if any,
-  must be explicit (re-running the command).
+- A failed tool command must halt execution and prevent dependent commands from
+  starting.
+- A failed command must report its identity, automation contract, error
+  category, message, and structured details to the command output and run log.
+- A failing pre- or post-execution hook must halt the build. A `session-stop`
+  hook may only append warnings and must not change the run's exit code.
+- The builder must not silently retry a failed command or hook.
 
-### FR-9a: Hook procedure execution and failure handling
+### FR-10: Terminal validation
 
-- `build_app` must treat every `gate` (or equivalent enforced-boundary)
-  procedure as honouring the contract shape defined in
-  `doc/GENERATE_AI_AUTOMATIONS.md` §Hook contract shape: a stable hook
-  **Name**, a `Pre*` / `Post*` / `Stop` **trigger event**, a deterministic
-  **action**, and a documented **failure behavior**.
-- When a `Pre*` hook procedure (`pre-construction`, `breaking-change`) returns
-  a non-zero exit, `build_app` must:
-  1. Block the wrapped tool procedure and refuse to start any procedure that
-     depends on the wrapped tool's output.
-  2. Emit the failed hook's `Name`, exit code, and the structured error
-     fields the hook wrote to stderr / `build/hook-log.jsonl`.
-  3. Exit with the hook-failure exit code dedicated to that hook contract
-     (the `breaking-change` exit code defined in FR-4 for that hook, and a
-     distinct hook-failure exit code — distinct from FR-4 and FR-9 — for
-     every other hook).
-- When a `Post*` hook procedure (`migration-triggered`, `post-generation`)
-  returns a non-zero exit, `build_app` must halt traversal at that point (so
-  the failure cannot be silently swallowed), record the hook's structured
-  error, and exit with the hook-failure exit code above. The wrapped tool's
-  result is preserved on disk; the hook does not roll it back.
-- A `Stop` hook procedure (`session-stop`) MUST NOT change the session exit
-  code — it can only append warnings to the session log. `build_app` must
-  still surface any non-zero `session-stop` exit as a post-session warning.
-- `build_app` must not silently retry a failed hook procedure. Retry, if
-  any, must be explicit (re-running the command).
-
-### FR-10: Terminal verification procedure
-
-- The procedure graph must always terminate in one or more verification
-  procedures, as already required by §Procedure Graph.
-- The terminal verification procedures must consume the structured outputs of
-  the deterministic tool procedures listed in FR-8 (for example, the
-  `generated_files` array returned by `angular_api_client_generate`) so that
-  verification is based on the recorded results of construction rather than on
-  a separate filesystem rescan.
-- A run is reported as successful only when every terminal verification
-  procedure reports success. A failed terminal verification procedure follows
-  the failure-handling rules of FR-9.
-- ⚠️ The specific verification procedures and their acceptance criteria are
-  still tracked under `TODO.md`; FR-10 defines the contract those procedures
-  must satisfy once they are specified.
+- Every successful execution sequence must finish with one or more validation
+  commands.
+- Validation must consume recorded construction outputs where available and
+  verify generated files, Angular build health, and required backend/frontend
+  integration checks.
+- A run is successful only when every terminal validation command succeeds.
+- Specific integration acceptance criteria remain tracked in `TODO.md`.
 
 ---
 
 ## Non-Functional Requirements
 
-- Change derivation and procedure graph construction must complete in under 30
-  seconds for typical schema/config sizes, excluding `oasdiff` execution time
-  which is treated as an external process. Guided agent session duration is
-  unbounded as it depends on Claude Agent SDK call duration.
-- The builder must be testable with mock oasdiff output so `oasdiff` does not
-  need to be installed to run the test suite.
-- `[DEBUG]` The procedure graph must be emittable in machine-readable format
-  (JSON/YAML) for inspection and CI consumption.
+- Change derivation and command translation must complete in under 30 seconds
+  for typical schema and OpenUI document sizes, excluding `oasdiff` execution.
+- The builder must be testable with mock oasdiff output so oasdiff does not
+  need to be installed for the test suite.
+- Dry-run command previews must be available for CI inspection without modifying
+  the generated-app workspace.
 
 ---
-
 
 ## Glossary
 
@@ -538,17 +320,12 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 | Term | Definition | See |
 |---|---|---|
-| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `ARCHITECTURE.md` §2, `GENERATE_AI_AUTOMATIONS.md` |
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked during construction. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. The subject of this document. | §Purpose |
-| **the agent** | The agentic orchestrator bundled in `djng`. Driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
-| **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | `GENERATE_AI_AUTOMATIONS.md` |
-| **HOOKS / gates** | Deterministic lifecycle-triggered or blocking automations that enforce gates, logging, cleanup, and other mandatory side effects. | `GENERATE_AI_AUTOMATIONS.md` |
-| **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Nodes may represent tool procedures, guided agent sessions, gate procedures, or verification procedures. | §Procedure Graph |
-| **guided agent session** | A single Claude Agent SDK call in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
-| **ChangeSet** | The typed record of schema and config changes produced by change derivation, used to construct the procedure graph. | §Change Derivation |
-| **`app.ui.json`** | The generated app's OpenUI concrete UI document. It is validated by `openui.schema.json` and defines non-CRM UI artifacts used for change detection. | `ARCHITECTURE.md` §8.5 |
-
----
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS. | `ARCHITECTURE.md` §2, `GENERATE_AI_AUTOMATIONS.md` |
+| **`djng`** | The `django-angular3` solution: this repository, Django package, and tool. | `ARCHITECTURE.md` §2.5 |
+| **`ngdj`** | The `angular-django2` companion Angular package. | `ARCHITECTURE.md` §2.6 |
+| **`build_app`** | The `djng` management command that compares inputs, translates changes to commands, executes them, and validates the generated app. | §Purpose |
+| **SKILLS** | Bounded AI skills that guide selected agent sessions. | `ARCHITECTURE.md` §2.14 |
+| **TOOLS** | Deterministic callable capabilities for bounded operations. | `GENERATE_AI_AUTOMATIONS.md` |
+| **HOOKS / gates** | Deterministic lifecycle-triggered or blocking automations. | `GENERATE_AI_AUTOMATIONS.md` |
+| **ChangeSet** | Typed OpenAPI and OpenUI comparison results used to select change commands. | §Change Derivation |
+| **`app.ui.json`** | The generated app's OpenUI concrete UI document. | `ARCHITECTURE.md` §8.5 |

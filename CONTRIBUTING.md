@@ -41,12 +41,10 @@ python -m pip install -e .[dev,yaml]
 ## Local validation and build checks
 
 The current scaffold is Python-only. Use the bundled project config to validate
-the example inputs and generate a build plan locally:
+the example inputs locally:
 
 ```bash
 django-admin validate-project django-angular3.json
-django-admin build django-angular3.json --dry-run
-django-admin build django-angular3.json --output build
 ```
 
 The bundled project config targets generated Angular artifacts under
