@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -193,6 +194,44 @@ def build_ng_gen_app_invocations(
     ]
 
 
+def build_ng_complex_component_invocations(
+    config: ProjectConfig,
+    settings: AngularSettings,
+    *,
+    name: str,
+    target_path: str,
+    features: str | list[str] | tuple[str, ...],
+    project: str | None = None,
+    mode: str = "create",
+    confirm: bool = False,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Build the ngdj advanced complex-component schematic invocation."""
+    _validate_complex_component_options(name, target_path, features, mode, confirm)
+    feature_names = _normalize_complex_component_features(features)
+    argv = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:complex-component",
+        name,
+        f"--path={target_path}",
+        f"--features={','.join(feature_names)}",
+        f"--mode={mode}",
+    ]
+    if project:
+        argv.append(f"--project={project}")
+    if mode == "delete":
+        argv.append("--confirm=true")
+
+    return [
+        AngularInvocation(
+            command_name="ng_complex_component",
+            argv=tuple(argv),
+            cwd=config.angular_output,
+        )
+    ]
+
+
 def build_ng_openapi_gen_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
@@ -302,6 +341,7 @@ _COMMAND_BUILDERS: dict[str, AngularInvocationBuilder] = {
     "ng_config": build_ng_config_invocations,
     "ng_build": build_ng_build_invocations,
     "ng_gen_app": build_ng_gen_app_invocations,
+    "ng_complex_component": build_ng_complex_component_invocations,
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
     "ng_add": build_ng_add_invocations,
     "ng_workspace_modify": build_ng_workspace_modify_invocations,
@@ -311,6 +351,57 @@ _COMMAND_BUILDERS: dict[str, AngularInvocationBuilder] = {
 
 def _stringify_bool(value: bool) -> str:
     return "true" if value else "false"
+
+
+_COMPLEX_COMPONENT_FEATURES = frozenset(
+    {"mixins", "nested", "projection", "cdk-overlay"}
+)
+_COMPLEX_COMPONENT_NAME = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
+
+
+def _normalize_complex_component_features(
+    features: str | list[str] | tuple[str, ...],
+) -> tuple[str, ...]:
+    values = features.split(",") if isinstance(features, str) else features
+    return tuple(feature.strip() for feature in values if feature.strip())
+
+
+def _validate_complex_component_options(
+    name: str,
+    target_path: str,
+    features: str | list[str] | tuple[str, ...],
+    mode: str,
+    confirm: bool,
+) -> None:
+    if not _COMPLEX_COMPONENT_NAME.fullmatch(name):
+        raise AngularCommandError("Complex component name must be kebab-case.")
+
+    path = Path(target_path)
+    if path.is_absolute() or ".." in path.parts or not target_path.strip():
+        raise AngularCommandError(
+            "Complex component path must be a non-empty relative path within the "
+            "Angular application source tree."
+        )
+
+    feature_names = _normalize_complex_component_features(features)
+    invalid_features = set(feature_names) - _COMPLEX_COMPONENT_FEATURES
+    if (
+        not feature_names
+        or invalid_features
+        or len(set(feature_names)) != len(feature_names)
+    ):
+        supported = ", ".join(sorted(_COMPLEX_COMPONENT_FEATURES))
+        raise AngularCommandError(
+            "Complex component features must be a non-empty, unique subset of: "
+            f"{supported}."
+        )
+
+    if mode not in {"create", "modify", "delete"}:
+        raise AngularCommandError(
+            "Complex component mode must be create, modify, or delete."
+        )
+    if mode == "delete" and not confirm:
+        raise AngularCommandError("Complex component deletion requires --confirm.")
 
 
 def _relabel_invocations(

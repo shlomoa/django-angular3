@@ -218,6 +218,73 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertIn("--zoneless=false", argv)
         self.assertIn("--defaults", argv)
 
+    def test_ng_complex_component_dry_run_resolves_ngdj_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_complex_component",
+            str(CONFIG_PATH),
+            "--name",
+            "dashboard-card",
+            "--target-path",
+            "src/app/features/dashboard",
+            "--features",
+            "mixins,nested,projection,cdk-overlay",
+            "--project",
+            "portal",
+            "--dry-run",
+        )
+
+        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan[0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:complex-component",
+                "dashboard-card",
+                "--path=src/app/features/dashboard",
+                "--features=mixins,nested,projection,cdk-overlay",
+                "--mode=create",
+                "--project=portal",
+            ],
+        )
+
+    def test_ng_complex_component_delete_requires_confirmation(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_complex_component",
+            str(CONFIG_PATH),
+            "--name",
+            "dashboard-card",
+            "--target-path",
+            "src/app/features/dashboard",
+            "--features",
+            "nested",
+            "--mode",
+            "delete",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Complex component deletion requires --confirm.", stderr)
+
+    def test_ng_complex_component_rejects_invalid_options(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_complex_component",
+            str(CONFIG_PATH),
+            "--name",
+            "DashboardCard",
+            "--target-path",
+            "../outside",
+            "--features",
+            "unknown",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Complex component name must be kebab-case.", stderr)
+
     def test_ng_openapi_gen_dry_run_uses_openapi_source(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
             "ng_openapi_gen", str(CONFIG_PATH), "--dry-run"
@@ -311,6 +378,14 @@ class AngularManagementCommandTests(unittest.TestCase):
             ("ng_config", {}),
             ("ng_build", {}),
             ("ng_gen_app", {"app_name": "portal"}),
+            (
+                "ng_complex_component",
+                {
+                    "name": "dashboard-card",
+                    "target_path": "src/app/features/dashboard",
+                    "features": "nested",
+                },
+            ),
             ("ng_openapi_gen", {}),
             ("ng_add", {}),
         )

@@ -100,7 +100,12 @@ other commands run, add them explicitly:
 
 ```python
 DJANGO_ANGULAR3 = {
-    "command_allowlist": ["ng_workspace", "ng_openapi_gen", "ng_build"],
+  "command_allowlist": [
+    "ng_workspace",
+    "ng_openapi_gen",
+    "ng_build",
+    "ng_complex_component",
+  ],
 }
 ```
 

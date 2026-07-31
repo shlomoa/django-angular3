@@ -19,14 +19,15 @@ run-through using a ready-made sample, start with
 
 ## The cycle
 
-```text
-DRF backend ──export_schema──▶ OpenAPI schema ─┐
-                                               ├─▶ validate-project
-UI definition ─────────────────────────────────┘              │
-                                                                └─▶ build_app (validates and plans)
-                                                                               │
-                                                                               ▼
-                          Angular Material app ◀── ng_build ◀── ng_workspace + ng_openapi_gen
+```mermaid
+flowchart LR
+  drf[DRF backend] -->|export_schema| schema[OpenAPI schema]
+  schema --> validate[validate-project]
+  ui[UI definition] --> validate
+  validate --> plan[build_app<br/>validates and plans]
+  plan --> workspace[ng_workspace + ng_openapi_gen]
+  workspace --> build[ng_build]
+  build --> angular[Angular Material app]
 ```
 
 ### 1. Export the OpenAPI contract
@@ -110,6 +111,20 @@ workflow.
 The commands below are Angular schematics; run them inside the generated
 workspace with `pnpm exec ng generate ...` (the same locally installed toolchain
 the `ng_*` wrappers use). Replace `<app-name>` with your application name.
+
+For an advanced Material component that needs theme mixins, nested children,
+projection slots, or CDK overlay behavior, use the `ng_complex_component`
+wrapper rather than assembling those features through `embed-component` alone:
+
+```bash
+django-angular3 ng_complex_component django-angular3.json \
+  --name dashboard-card --target-path src/app/features/dashboard \
+  --features mixins,nested,projection --dry-run
+```
+
+The wrapper delegates to `angular-django2:complex-component`. Use `--mode
+modify` to add features, or `--mode delete --confirm` to remove the generated
+component and registered theme mixin.
 
 #### Generate a feature component
 

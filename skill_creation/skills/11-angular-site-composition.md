@@ -222,7 +222,8 @@ Remove the Angular application that owns the generated site from the workspace.
 
 **Common Supporting Skills**:
 
-- **ng-complex-component** — Useful when generated pages need richer reusable widgets inside dashboards or workflows
+- **angular-django2:complex-component** — Generates richer reusable widgets
+   inside dashboards or workflows.
 
 ### Examples
 

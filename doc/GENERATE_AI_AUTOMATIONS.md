@@ -1,3 +1,5 @@
+# Generate AI automations
+
 Design the AI automation subsystem used by `djng` to build and maintain
 Angular applications.
 
@@ -11,7 +13,7 @@ This document defines how `djng` uses four automation primitives together:
 It also specifies the detailed SKILL catalog used for the AI-guided layer of
 Angular construction and integration.
 
-# Glossary
+## Glossary
 
 For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
@@ -31,7 +33,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 ---
 
-# Automation Naming Crosswalk
+## Automation Naming Crosswalk
 
 This table is the single source of truth mapping every construction concern to
 its name in each of the four automation naming layers (see `ARCHITECTURE.md`
@@ -57,7 +59,7 @@ manifests, or skill files to ensure each layer uses the correct name.
 
 ---
 
-# AI Automation Architecture
+## AI Automation Architecture
 
 This document defines the automation subsystem at four primitive levels. Each
 primitive family carries both an architectural boundary (selection policy and
@@ -69,7 +71,7 @@ responsibilities) and a per-capability contract catalog: SKILLS in the
 below governs which family a new capability belongs to before it is added to
 any catalog.
 
-## Primitive families
+### Primitive families
 
 - **SKILLS** handle AI-guided generation, modification, and integration work
   that requires judgment, iteration, or code authoring.
@@ -80,7 +82,7 @@ any catalog.
 - **PLUGINS** package coherent bundles of SKILLS, TOOLS, HOOKS, and related
   agent capabilities for reuse and distribution.
 
-## Primitive-selection policy
+### Primitive-selection policy
 
 This section is the **normative selection rule** for the four primitive
 families. Every new capability added to the `djng`/`ngdj` automation subsystem
@@ -92,7 +94,7 @@ The policy is distilled from `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §1
 (comparison table and key distinctions). When this document and the analysis
 document disagree, this section is authoritative.
 
-### Decision axes
+#### Decision axes
 
 Classify the candidate capability along the following four axes. The answers
 together determine the primitive (or composition of primitives).
@@ -110,7 +112,7 @@ it must run at a defined lifecycle event without the agent choosing to invoke
 it. A **PLUGIN** is never a substitute for one of the other three primitives;
 it is a packaging unit that contains them.
 
-### Selection table
+#### Selection table
 
 | If the work… | Use |
 |---|---|
@@ -120,7 +122,7 @@ it is a packaging unit that contains them.
 | Is deterministic and must be guaranteed at a lifecycle event | **HOOK** wrapping a **TOOL** |
 | Is a reusable bundle of SKILLS, TOOLS, and/or HOOKS intended for distribution | **PLUGIN** |
 
-### Application procedure for new capabilities
+#### Application procedure for new capabilities
 
 When a new capability is proposed:
 
@@ -143,7 +145,7 @@ When a new capability is proposed:
    the contract shape defined for that primitive (tool contract shape, hook
    contract shape, plugin contract shape).
 
-### Tie-breakers
+#### Tie-breakers
 
 The following rules resolve common ambiguous cases:
 
@@ -167,7 +169,7 @@ The following rules resolve common ambiguous cases:
   primitive. Classify what it *does* using the axes above and register it as
   the matching primitive (typically a **TOOL** or a **HOOK**).
 
-### Worked examples
+#### Worked examples
 
 The following classifications already follow this policy and serve as
 reference cases for new work.
@@ -186,7 +188,7 @@ reference cases for new work.
 When classifying a new capability, prefer matching it to one of the rows
 above by analogy before proposing a new pattern.
 
-## Tools
+### Tools
 
 Use TOOLS for deterministic operations that do not require AI judgment. In the
 `djng` architecture, this includes schema export, schema diff, contract
@@ -200,7 +202,7 @@ the same fixed shape — **name, inputs, outputs, error behavior, allowed
 invocation context** — so the agent, the procedure-graph builder, and a future
 MCP exposure layer all see the same surface.
 
-### Tool contract shape
+#### Tool contract shape
 
 Every tool contract in this document **MUST** specify:
 
@@ -217,7 +219,7 @@ Every tool contract in this document **MUST** specify:
 Contracts are normative. An implementation that deviates from a documented
 contract is a bug in the implementation, not in the contract.
 
-### Criteria for a future `tools_creation/` workspace
+#### Criteria for a future `tools_creation/` workspace
 
 Do not create a sibling `tools_creation/` folder just to mirror
 `skill_creation/`. Introduce it only when tool work becomes a dedicated
@@ -238,7 +240,7 @@ Use the following criteria:
 Until those conditions are met, keep tool planning and design detail in the
 umbrella documentation under `doc/`.
 
-## Tool Contracts Catalog
+### Tool Contracts Catalog
 
 This catalog defines the deterministic tool contracts referenced from
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §2 and from `APP_BUILDER_REQUIREMENTS.md`
@@ -249,9 +251,9 @@ The contracts are grouped by lifecycle stage so the procedure-graph order is
 visually obvious: **contract lifecycle** (export → validate → diff) precedes
 **Angular generation wrappers** (`ng-openapi-gen`, `ngdj_*`).
 
-### Contract lifecycle tools
+#### Contract lifecycle tools
 
-#### 1. `openapi_schema_export` — schema extraction trigger
+##### 1. `openapi_schema_export` — schema extraction trigger
 
 **Name**: `openapi_schema_export`
 
@@ -302,7 +304,7 @@ schema-derived skill sessions); HOOK (PostToolUse on `makemigrations`, per
 `django_angular3/management/commands/export_schema.py`;
 `django_angular3.config.get_previous_schema_path()`.
 
-#### 2. `validate_openapi_schema` — contract validation
+##### 2. `validate_openapi_schema` — contract validation
 
 **Name**: `validate_openapi_schema`
 
@@ -351,7 +353,7 @@ hand-edited schema). Not a user-facing CLI command in the current release.
 (e.g. `spectral lint`) invoked from `django_angular3/validation.py`. Contract
 must be honoured regardless of the chosen backing validator.
 
-#### 3. `oasdiff_diff` — schema diff and change detection
+##### 3. `oasdiff_diff` — schema diff and change detection
 
 **Name**: `oasdiff_diff`
 
@@ -394,9 +396,9 @@ a guided agent session that needs to re-inspect a diff).
 binary acquisition; planned `django_angular3.diff` wrapper that calls
 `oasdiff` with the contract above and post-processes its JSON output.
 
-### Angular generation wrapper tools
+#### Angular generation wrapper tools
 
-#### 4. `angular_api_client_generate` — typed Angular client generation
+##### 4. `angular_api_client_generate` — typed Angular client generation
 
 **Name**: `angular_api_client_generate`
 
@@ -445,7 +447,7 @@ explicit. CLI (`django-admin ng_openapi_gen <config>`).
 `django_angular3/management/commands/ng_openapi_gen.py`;
 `django_angular3/angular.py`.
 
-#### 5. `angular_workspace_scaffold` — Angular workspace scaffold wrapper
+##### 5. `angular_workspace_scaffold` — Angular workspace scaffold wrapper
 
 **Name**: `angular_workspace_scaffold`
 
@@ -486,7 +488,7 @@ workspace creation must be an explicit graph node.
 `django_angular3/management/commands/ng_new.py`;
 `django_angular3/angular.py`.
 
-#### 6. `angular_app_scaffold` — Angular application scaffold wrapper
+##### 6. `angular_app_scaffold` — Angular application scaffold wrapper
 
 **Name**: `angular_app_scaffold`
 
@@ -529,7 +531,7 @@ exist); CLI (`django-admin ng_gen_app <config>`). Not invocable from a HOOK.
 `django_angular3/management/commands/ng_gen_app.py`;
 `django_angular3/management/commands/ng_add.py`.
 
-### Contract compliance
+#### Contract compliance
 
 - The procedure-graph builder in `build_app` MUST emit a `tool` node whose
   `tool` field equals one of the **Name** values above when scheduling a
@@ -543,7 +545,7 @@ exist); CLI (`django-admin ng_gen_app <config>`). Not invocable from a HOOK.
   the [tool contract shape](#tool-contract-shape) before they may appear as a
   `tool` procedure in the graph.
 
-## Hooks
+### Hooks
 
 Use HOOKS for deterministic lifecycle enforcement points that must run whether
 or not the agent would choose to do so. In the `djng` architecture, this
@@ -559,7 +561,7 @@ failure behavior, allowed wrapped tools, implementation reference** — so the
 procedure-graph builder, the `build_app` traversal, and a future Claude Code
 `settings.json` exposure layer all see the same surface.
 
-### Hook contract shape
+#### Hook contract shape
 
 Every hook contract in this document **MUST** specify:
 
@@ -576,7 +578,7 @@ Every hook contract in this document **MUST** specify:
 Contracts are normative. An implementation that deviates from a documented
 contract is a bug in the implementation, not in the contract.
 
-#### Shape rationale
+##### Shape rationale
 
 The seven fields are derived directly from the Claude Code hooks execution
 model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/docs/claude-code/hooks)):
@@ -626,7 +628,7 @@ model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/
   field, a contract can become unanchored documentation with no path back to
   the running system.
 
-## Hook Contracts Catalog
+### Hook Contracts Catalog
 
 This catalog defines the lifecycle hook contracts referenced from
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3 and from `APP_BUILDER_REQUIREMENTS.md`
@@ -639,9 +641,9 @@ triggers** fire on backend events that invalidate prior artifacts;
 **post-generation enforcement** fires after each generation tool; **session
 lifecycle** fires when the agent session ends.
 
-### Pre-construction gates
+#### Pre-construction gates
 
-#### 1. `pre-construction` — contract validation gate
+##### 1. `pre-construction` — contract validation gate
 
 **Name**: `pre-construction`
 
@@ -687,9 +689,9 @@ generation procedure.
 project's Claude Code `settings.json`. Wraps `validate_openapi_schema` via
 its tool contract.
 
-### Mid-run triggers
+#### Mid-run triggers
 
-#### 2. `migration-triggered` — OpenAPI schema re-extraction
+##### 2. `migration-triggered` — OpenAPI schema re-extraction
 
 **Name**: `migration-triggered`
 
@@ -732,7 +734,7 @@ described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 the project's Claude Code `settings.json`. Wraps `openapi_schema_export` via its
 tool contract.
 
-#### 3. `breaking-change` — gate on schema diff
+##### 3. `breaking-change` — gate on schema diff
 
 **Name**: `breaking-change`
 
@@ -782,9 +784,9 @@ procedure graph.
 `hooks/breaking-change.sh`, registered under the `PreToolUse` key of the
 project's Claude Code `settings.json`. Consumes `oasdiff_diff` tool output.
 
-### Post-generation enforcement
+#### Post-generation enforcement
 
-#### 4. `post-generation` — verification logging
+##### 4. `post-generation` — verification logging
 
 **Name**: `post-generation`
 
@@ -830,9 +832,9 @@ generation tool contract.
 `hooks/post-generation.sh`, registered under the `PostToolUse` key of the
 project's Claude Code `settings.json`.
 
-### Session lifecycle
+#### Session lifecycle
 
-#### 5. `session-stop` — archiving and audit cleanup
+##### 5. `session-stop` — archiving and audit cleanup
 
 **Name**: `session-stop`
 
@@ -875,7 +877,7 @@ unconditionally.
 registered under the `Stop` key of the project's Claude Code
 `settings.json`.
 
-### Contract compliance
+#### Contract compliance
 
 - The procedure-graph builder in `build_app` MUST emit an enforced-boundary
   procedure whose `hook` field equals one of the **Name** values above (a `gate`
@@ -892,7 +894,7 @@ registered under the `Stop` key of the project's Claude Code
   appear as an enforced-boundary procedure in the graph or be registered in any
   project's Claude Code `settings.json`.
 
-## Plugins
+### Plugins
 
 Use PLUGINS to package coherent bundles of SKILLS, TOOLS, and HOOKS for reuse
 or distribution. In the `djng` architecture, candidate bundles include the
@@ -907,7 +909,7 @@ bundled HOOKS, distribution, versioning, dependencies, installation, and
 implementation reference** — so consumers of a plugin can see at a glance what
 it contains, where it ships from, and how it is brought into a project.
 
-### Plugin contract shape
+#### Plugin contract shape
 
 Every plugin contract in this document **MUST** specify:
 
@@ -928,7 +930,7 @@ Contracts are normative. A plugin that ships SKILLS, TOOLS, or HOOKS not
 listed in its catalog entry — or that omits a listed entry — is a bug in the
 plugin, not in the contract.
 
-#### Shape rationale
+##### Shape rationale
 
 The fields are derived from the Claude Code plugin model
 ([Claude Code Plugins][Claude Plugins]) and from the responsibilities a
@@ -961,7 +963,7 @@ plugin assumes in the `djng` architecture:
   external package) so drift between the spec and the shipped plugin is
   detectable during review.
 
-## Plugin Contracts Catalog
+### Plugin Contracts Catalog
 
 This catalog defines the plugin contracts referenced from
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §4. Each entry follows the
@@ -973,9 +975,9 @@ Angular construction, `ngdj` scaffold) drive generation, and the
 **contract-side plugin** (contract lifecycle) governs the OpenAPI boundary
 between Django and Angular.
 
-### Construction-side plugins
+#### Construction-side plugins
 
-#### 1. `djng-angular-construction` — Angular construction bundle
+##### 1. `djng-angular-construction` — Angular construction bundle
 
 **Name**: `djng-angular-construction`
 
@@ -1056,7 +1058,7 @@ specifications in this document (§Skills Catalog), its tools from
 `pre-construction`, `post-generation`, and `session-stop` entries in the
 [Hook Contracts Catalog](#hook-contracts-catalog).
 
-#### 2. `ngdj-scaffold` — Angular schematics bundle
+##### 2. `ngdj-scaffold` — Angular schematics bundle
 
 **Name**: `ngdj-scaffold`
 
@@ -1120,9 +1122,9 @@ in the `angular-django2` repository, sourcing its tool wrappers from the
 [Tool Contracts Catalog](#tool-contracts-catalog) and its MCP server
 configuration from the `ngdj` CLI entry point.
 
-### Contract-side plugins
+#### Contract-side plugins
 
-#### 3. `contract-lifecycle` — OpenAPI contract bundle
+##### 3. `contract-lifecycle` — OpenAPI contract bundle
 
 **Name**: `contract-lifecycle`
 
@@ -1198,7 +1200,7 @@ directory in this repository, sourcing its tools from
 `migration-triggered` and `breaking-change` entries in the
 [Hook Contracts Catalog](#hook-contracts-catalog).
 
-### Contract compliance
+#### Contract compliance
 
 - A plugin MUST ship exactly the SKILLS, TOOLS, and HOOKS listed in its
   catalog entry — no more and no less. A plugin found to bundle an
@@ -1223,13 +1225,13 @@ directory in this repository, sourcing its tools from
 
 [Claude Plugins]: https://code.claude.com/docs/en/plugins
 
-## Skills
+### Skills
 
 The formal skill format used here is defined by Anthropic — see `ARCHITECTURE.md` §20: [Claude Skills] (conceptual overview), [Claude Code Skills] (CLI-side reference: extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] (SDK-side discovery and invocation). This section describes the project-specific application of that format; for the authoritative skill-format reference, consult the upstream documents.
 
 All skill specifications in this document follow the **Agent Skills** format — reusable capabilities invoked explicitly by `build_app` via the Claude Agent SDK `query(skills=[...])` option, or by users via `/<skill-name>` in the Claude Code CLI.
 
-### Directory Structure
+#### Directory Structure
 
 Each skill lives in its own directory under `.claude/skills/`:
 
@@ -1241,7 +1243,7 @@ Each skill lives in its own directory under `.claude/skills/`:
   examples/         # Optional example files demonstrating usage
 ```
 
-### YAML Frontmatter
+#### YAML Frontmatter
 
 Every `SKILL.md` file begins with YAML frontmatter that defines skill metadata:
 
@@ -1265,7 +1267,7 @@ allowed-tools:
 
 **Dual-mode requirement.** These skills are used both by direct CLI invocation (a user types `/<skill-name>` in Claude Code) and by `build_app` via the Claude Agent SDK (`query(skills=[...], allowedTools=[...])`). The `allowed-tools` frontmatter field is honored by the CLI but **not** by the SDK — `build_app` must mirror the same tool list in its `query()` `allowedTools` option. The canonical tool list per skill in this document is the source of truth for both surfaces. See `ARCHITECTURE.md` §2.14 references to [Claude Code Skills] and [Claude Agent SDK Skills] for the authoritative field reference.
 
-#### Field Definitions
+##### Field Definitions
 
 - **`name`**: Unique identifier for the skill (matches directory name)
 - **`description`**: Brief description used by outer agent for skill matching and invocation
@@ -1273,33 +1275,33 @@ allowed-tools:
 - **`context`**: Always `fork` — each skill execution runs in an isolated context
 - **`allowed-tools`**: List of Claude Code tools the skill is permitted to use during execution
 
-### Skill loading model
+#### Skill loading model
 
 At session start, the skill loader preloads only the YAML frontmatter (`name`, `description`, `when_to_use`) of every discovered SKILL.md into the model's context. When a skill is invoked — by the user typing `/<name>` in CLI mode, or by `build_app` selecting it via `query(skills=[...])` in SDK mode — the SKILL.md body loads. Supporting files (shared references, templates, scripts) live on the filesystem and are read by Claude on demand via the Read tool when SKILL.md links to them. Scripts are executed via Bash; their source is never loaded as context.
 
 **Token strategy.** Keep SKILL.md body under ~500 lines (per [Claude Skills Best Practices]). Move detailed reference material into separate files in the same skill directory and link to them. Files that Claude does not need to read incur no token cost.
 
-### Progressive disclosure of supporting files
+#### Progressive disclosure of supporting files
 
 Per the formal skill format ([Claude Code Skills], [Claude Agent SDK Skills]), SKILL.md preloads only its YAML frontmatter (`name`, `description`, optionally `when_to_use`) into the session at startup. The body of SKILL.md loads when the skill is invoked. Supporting files (shared references, templates, scripts) live on the filesystem and are read on demand by Claude via the Read tool when SKILL.md links to them. Scripts in `scripts/` are executed via Bash; their source is never loaded as context.
 
-#### Referencing supporting files
+##### Referencing supporting files
 
 Use standard markdown links from SKILL.md to point at supporting files. Keep references one level deep so Claude reads them in full (deeply nested references can lead to partial reads):
 
 ```markdown
-## Conventions
+### Conventions
 See [angular-conventions.md](../shared/angular-conventions.md) — read this before scaffolding.
 
-## Templates
+### Templates
 Use the template at `templates/component.ts.tpl` — read and adapt for the output file.
 ```
 
-#### Dynamic context injection (CLI only)
+##### Dynamic context injection (CLI only)
 
 For dynamic context injected at load time, the Claude Code CLI supports shell-command interpolation via the `` !`<command>` `` syntax. The Claude Agent SDK does not perform this preprocessing — under SDK invocation, Claude must use the Bash tool explicitly when shell output is needed inline.
 
-### Invocation Model
+#### Invocation Model
 
 Within the broader automation model, SKILLS are used by the agent within
 guided agent sessions, not invoked by users directly:
@@ -1324,7 +1326,7 @@ session when a procedure composes capabilities from several skills.
 guided agent session. In the Claude Agent SDK, this is implemented as a `query()`
 call. This document uses `query()` to refer to that concrete function.
 
-### Canonical SKILL.md Template Structure
+#### Canonical SKILL.md Template Structure
 
 Every `SKILL.md` file follows this structure:
 
@@ -1345,17 +1347,17 @@ allowed-tools:
   - Glob
 ---
 
-# <Skill Display Name>
+## <Skill Display Name>
 
-## Purpose
+### Purpose
 
 Brief statement of what this skill does and when to use it.
 
-## Modes
+### Modes
 
 All skills support three operational modes:
 
-### Create
+#### Create
 Generate the artifact from scratch when it doesn't exist.
 
 **Input Requirements**:
@@ -1369,7 +1371,7 @@ Generate the artifact from scratch when it doesn't exist.
 **Output**:
 - Description of created artifacts
 
-### Modify
+#### Modify
 Update an existing artifact with changes.
 
 **Input Requirements**:
@@ -1383,7 +1385,7 @@ Update an existing artifact with changes.
 **Output**:
 - Description of modified artifacts
 
-### Delete
+#### Delete
 Remove the artifact completely.
 
 **Input Requirements**:
@@ -1397,35 +1399,35 @@ Remove the artifact completely.
 **Output**:
 - Confirmation of deletion
 
-## Context Files
+### Context Files
 
 - See [shared-context-file.md](../shared/shared-context-file.md) — replace with the actual filename when this skill needs the shared content.
 
-## Templates
+### Templates
 
 - `templates/template-name.ts` — description of template purpose
 - `templates/another-template.html` — description of template purpose
 
-## Validation
+### Validation
 
 Steps to validate successful execution of the skill.
 
-## Error Handling
+### Error Handling
 
 Common errors and their resolution strategies.
 
-## Dependencies
+### Dependencies
 
 List any skills that must be executed before this skill (e.g., workspace must exist before creating an app).
 
-## Examples
+### Examples
 
 Brief examples demonstrating typical usage patterns.
 ```
 
 This canonical structure ensures consistency across all 11 skills and provides clear guidance for both outer agent invocation and skill implementation.
 
-# Skill Shared Context Files
+## Skill Shared Context Files
 
 Shared context files are reference documents stored in `.claude/skills/shared/`
 that multiple skills read on demand. They eliminate duplication by
@@ -1438,7 +1440,7 @@ Each skill references a shared file using a standard markdown link with a one-le
 See [angular-conventions.md](../shared/angular-conventions.md) — when this skill needs shared Angular conventions.
 ```
 
-## `angular-conventions.md`
+### `angular-conventions.md`
 
 **Path**: `.claude/skills/shared/angular-conventions.md`
 
@@ -1461,7 +1463,7 @@ See [angular-conventions.md](../shared/angular-conventions.md) — when this ski
 - Angular Material page generation
 - Angular Material site generation
 
-## `angular-material-patterns.md`
+### `angular-material-patterns.md`
 
 **Path**: `.claude/skills/shared/angular-material-patterns.md`
 
@@ -1482,7 +1484,7 @@ See [angular-conventions.md](../shared/angular-conventions.md) — when this ski
 - Angular Material page generation
 - Angular Material site generation
 
-## `openapi-integration.md`
+### `openapi-integration.md`
 
 **Path**: `.claude/skills/shared/openapi-integration.md`
 
@@ -1501,7 +1503,7 @@ See [angular-conventions.md](../shared/angular-conventions.md) — when this ski
 - Angular Material page generation
 - Angular Material site generation
 
-# Skill Templates
+## Skill Templates
 
 Template files are reusable Angular code scaffolds stored in `.claude/skills/<skill-name>/templates/` that skills reference during code generation. Each template provides a complete, working example following the conventions defined in the Shared Context Files section.
 
@@ -1511,7 +1513,7 @@ Skills reference these templates by relative path. Claude reads the file via the
 Use the template at `templates/component.ts.tpl` — read and adapt for the output file.
 ```
 
-## Template 1: Standalone Component (`.ts` + `.html` + `.scss`)
+### Template 1: Standalone Component (`.ts` + `.html` + `.scss`)
 
 **Files**: `component.ts.tpl`, `component.html.tpl`, `component.scss.tpl`
 
@@ -1521,7 +1523,7 @@ Use the template at `templates/component.ts.tpl` — read and adapt for the outp
 - Angular component generation (skill 7)
 - Angular Material complex component generation (skill 8)
 
-### `component.ts.tpl`
+#### `component.ts.tpl`
 
 ```typescript
 import { Component, input, output } from '@angular/core';
@@ -1554,7 +1556,7 @@ export class {{COMPONENT_NAME_PASCAL}}Component {
 }
 ```
 
-### `component.html.tpl`
+#### `component.html.tpl`
 
 ```html
 <mat-card>
@@ -1578,7 +1580,7 @@ export class {{COMPONENT_NAME_PASCAL}}Component {
 </mat-card>
 ```
 
-### `component.scss.tpl`
+#### `component.scss.tpl`
 
 ```scss
 @use '@angular/material' as mat;
@@ -1607,7 +1609,7 @@ export class {{COMPONENT_NAME_PASCAL}}Component {
 }
 ```
 
-## Template 2: ControlValueAccessor Boilerplate
+### Template 2: ControlValueAccessor Boilerplate
 
 **File**: `form-field.ts.tpl`
 
@@ -1679,7 +1681,7 @@ export class {{FIELD_NAME_PASCAL}}Component implements ControlValueAccessor {
 }
 ```
 
-## Template 3: Typed Reactive `FormGroup<>`
+### Template 3: Typed Reactive `FormGroup<>`
 
 **File**: `reactive-form.ts.tpl`
 
@@ -1759,14 +1761,14 @@ export class {{FORM_NAME_PASCAL}}FormComponent {
 }
 ```
 
-## Template 4: `MatTable` + Paginator + Sort Page
+### Template 4: `MatTable` + Paginator + Sort Page
 
 **Files**: `list-page.ts.tpl`, `list-page.html.tpl`
 
 **Used by**:
 - Angular Material page generation (skill 10)
 
-### `list-page.ts.tpl`
+#### `list-page.ts.tpl`
 
 ```typescript
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
@@ -1866,7 +1868,7 @@ export class {{RESOURCE_NAME_PASCAL}}ListComponent implements OnInit {
 }
 ```
 
-### `list-page.html.tpl`
+#### `list-page.html.tpl`
 
 ```html
 <div class="list-container">
@@ -1938,14 +1940,14 @@ export class {{RESOURCE_NAME_PASCAL}}ListComponent implements OnInit {
 </div>
 ```
 
-## Template 5: `MatSidenav` App Shell
+### Template 5: `MatSidenav` App Shell
 
 **Files**: `app-shell.ts.tpl`, `app-shell.html.tpl`
 
 **Used by**:
 - Angular Material site generation (skill 11)
 
-### `app-shell.ts.tpl`
+#### `app-shell.ts.tpl`
 
 ```typescript
 import { Component, signal, computed, inject } from '@angular/core';
@@ -2014,7 +2016,7 @@ export class AppComponent {
 }
 ```
 
-### `app-shell.html.tpl`
+#### `app-shell.html.tpl`
 
 ```html
 <mat-sidenav-container class="app-container">
@@ -2055,7 +2057,7 @@ export class AppComponent {
 </mat-sidenav-container>
 ```
 
-## Template 6: Service + `catchError` + `MatSnackBar`
+### Template 6: Service + `catchError` + `MatSnackBar`
 
 **File**: `service.ts.tpl` (intended resource path for the `angular-data-service-composition` skill template)
 
@@ -2199,7 +2201,7 @@ export class {{RESOURCE_NAME_PASCAL}}Service {
 }
 ```
 
-# Skills Catalog
+## Skills Catalog
 
 This section breaks down the skills subset of the automation model into the
 different skills.
@@ -2216,11 +2218,11 @@ Each script will have the following modes:
 
 The mode to apply to each object is determined by running `oasdiff` against the previous and current OpenAPI schema. `oasdiff` output identifies which API resources, operations, and models were added (→ Create), changed (→ Modify), or removed (→ Delete), driving the correct skill mode for each affected object.
 
-## Angular Material workspace boiler plate
+### Angular Material workspace boiler plate
 
 **Skill Name**: `angular-workspace-foundation`
 
-### YAML Frontmatter
+#### YAML Frontmatter
 
 ```yaml
 ---
@@ -2239,11 +2241,11 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 The `angular-workspace-foundation` skill manages the creation, modification, and deletion of Angular workspaces configured with Angular Material, following modern Angular conventions (standalone components, signals, SCSS theming). This is the foundation skill that must be executed before any app-level or component-level skills can be invoked.
 
-### Inputs
+#### Inputs
 
 All inputs are read from `django-angular3.json` passed as the procedure input.
 
@@ -2255,11 +2257,11 @@ All inputs are read from `django-angular3.json` passed as the procedure input.
 | `angular.workspace.style` | no | `css` \| `scss` \| `sass` \| `less` | `scss` | Stylesheet format |
 | `angular.workspace.routing` | no | boolean | `true` | Whether to include routing |
 
-### Mode: Create
+#### Mode: Create
 
 Generate an Angular Material workspace from scratch when it doesn't exist.
 
-#### Input Requirements
+##### Input Requirements
 
 - **`angular.output`**: Must not already exist or must be an empty directory
 - **`project.name`**: Valid workspace name (lowercase, hyphenated)
@@ -2267,7 +2269,7 @@ Generate an Angular Material workspace from scratch when it doesn't exist.
 - **`angular.workspace.style`**: Must be a valid Angular CLI stylesheet option
 - **`angular.workspace.routing`**: Boolean flag
 
-#### Pre-flight Checks
+##### Pre-flight Checks
 
 Before creating the workspace, verify:
 
@@ -2277,7 +2279,7 @@ Before creating the workspace, verify:
 
 Package manager availability and Angular CLI access are validated by the `ng_new` djng wrapper.
 
-#### Process (Create Mode)
+##### Process (Create Mode)
 
 1. **Create workspace via djng wrapper**:
    ```bash
@@ -2343,37 +2345,37 @@ Package manager availability and Angular CLI access are validated by the `ng_new
     git commit -m "chore: initialize Angular Material workspace with modern conventions"
     ```
 
-#### Expected Output
+##### Expected Output
 
 After successful execution, the workspace directory contains:
 
 ```
 <angular.output>/
-├── .angular/                    # Angular cache directory
-├── .editorconfig               # Editor configuration
-├── .gitignore                  # Git ignore rules
-├── .prettierrc.json            # Prettier configuration
-├── angular.json                # Angular workspace configuration
-├── node_modules/               # Installed dependencies
-├── package.json                # NPM package manifest
-├── pnpm-lock.yaml              # pnpm lock file (default package manager)
-├── README.md                   # Project readme
-├── tsconfig.json               # TypeScript configuration
-├── tsconfig.app.json           # App-specific TS config
-├── tsconfig.spec.json          # Test-specific TS config
-├── .eslintrc.json              # ESLint configuration
+├── .angular/                     # Angular cache directory
+├── .editorconfig                 # Editor configuration
+├── .gitignore                    # Git ignore rules
+├── .prettierrc.json              # Prettier configuration
+├── angular.json                  # Angular workspace configuration
+├── node_modules/                 # Installed dependencies
+├── package.json                  # NPM package manifest
+├── pnpm-lock.yaml                # pnpm lock file (default package manager)
+├── README.md                     # Project readme
+├── tsconfig.json                 # TypeScript configuration
+├── tsconfig.app.json             # App-specific TS config
+├── tsconfig.spec.json            # Test-specific TS config
+├── .eslintrc.json                # ESLint configuration
 └── src/
-    ├── index.html              # Main HTML file
-    ├── main.ts                 # Application entry point
-    ├── styles.scss             # Global styles with Material theme
+    ├── index.html                # Main HTML file
+    ├── main.ts                   # Application entry point
+    ├── styles.scss               # Global styles with Material theme
     ├── app/
-    │   ├── app.component.ts    # Root component (standalone)
-    │   ├── app.component.html  # Root template
-    │   ├── app.component.scss  # Root styles
+    │   ├── app.component.ts      # Root component (standalone)
+    │   ├── app.component.html    # Root template
+    │   ├── app.component.scss    # Root styles
     │   ├── app.component.spec.ts # Root tests
-    │   ├── app.config.ts       # Application configuration
-    │   └── app.routes.ts       # Application routes (if routing enabled)
-    └── assets/                 # Static assets
+    │   ├── app.config.ts         # Application configuration
+    │   └── app.routes.ts         # Application routes (if routing enabled)
+    └── assets/                   # Static assets
 ```
 
 **Key characteristics**:
@@ -2383,13 +2385,13 @@ After successful execution, the workspace directory contains:
 - TypeScript strict mode enabled
 - Routing configured if requested
 
-### Mode: Modify
+#### Mode: Modify
 
 Update an existing workspace with configuration changes, package updates, or new tooling.
 
 > **Note**: `build_app` does not trigger `angular-workspace-foundation` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
 
-#### Input Requirements
+##### Input Requirements
 
 - **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 - **`modificationTarget`** (enum): Type of modification to perform:
@@ -2402,7 +2404,7 @@ Update an existing workspace with configuration changes, package updates, or new
   - `add-eslint-rule`: Add or modify ESLint rules
 - **`modificationDetails`** (object): Details specific to the modification type
 
-#### Process (Modify Mode)
+##### Process (Modify Mode)
 
 **For `add-package` modifications**:
 1. Verify workspace exists
@@ -2450,21 +2452,21 @@ Update an existing workspace with configuration changes, package updates, or new
 5. Fix any new violations
 6. Commit changes: `git add . && git commit -m "chore: update ESLint rules"`
 
-#### Output
+##### Output
 
 - Modified workspace with requested changes applied
 - All builds and tests passing
 - Git commit created documenting the modification
 
-### Mode: Delete
+#### Mode: Delete
 
 Remove the workspace directory completely, typically when starting fresh is simpler than extensive modification.
 
-#### Input Requirements
+##### Input Requirements
 
 - **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 
-#### Process (Delete Mode)
+##### Process (Delete Mode)
 
 1. **Remove workspace via djng wrapper**:
    ```bash
@@ -2480,26 +2482,26 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
 2. **Verify deletion**: Confirm `angular.output` directory no longer exists.
 
-#### Output
+##### Output
 
 - Workspace directory removed
 - Deletion confirmed
 
-### Supporting Files
+#### Supporting Files
 
-#### Context Files
+##### Context Files
 
 This skill references the following shared context files:
 
 - [angular-conventions.md](../shared/angular-conventions.md) — Conventions for standalone components, signals, SCSS theming, naming, imports, and testing patterns.
 
-#### Template Files
+##### Template Files
 
 This skill does not use template files directly, as it relies on Angular CLI schematics for code generation. However, it configures the workspace to use the templates defined in the Templates section when subsequent skills (like `angular-component-composition` or `angular-page-composition`) are invoked.
 
-### Validation
+#### Validation
 
-#### Post-Creation Validation
+##### Post-Creation Validation
 
 After creating a workspace, verify:
 
@@ -2536,7 +2538,7 @@ After creating a workspace, verify:
    - Check `src/styles.scss` contains Material theme imports
    - Verify Material components can be imported in app component
 
-#### Post-Modification Validation
+##### Post-Modification Validation
 
 After modifying a workspace, verify:
 
@@ -2545,9 +2547,9 @@ After modifying a workspace, verify:
 3. **Linter passes**: `pnpm exec ng lint` (if ESLint configured)
 4. **No TypeScript errors**: `django-admin ng_build django-angular3.json` (production configuration)
 
-### Error Handling
+#### Error Handling
 
-#### Common Errors and Resolutions
+##### Common Errors and Resolutions
 
 **Error**: `ng: command not found`
 - **Cause**: Angular CLI not installed in workspace `node_modules`
@@ -2573,7 +2575,7 @@ After modifying a workspace, verify:
 - **Cause**: Target directory contains files
 - **Resolution**: Use Delete mode first, or choose a different directory
 
-### Dependencies
+#### Dependencies
 
 **Prerequisites**:
 - Node.js (v18.19+ or v20.11+ or v22.0+)
@@ -2589,9 +2591,9 @@ After modifying a workspace, verify:
 - `angular-api-integration` — Angular API generation
 - All component, form, page, and site generation skills
 
-### Examples
+#### Examples
 
-#### Example 1: Create New Workspace
+##### Example 1: Create New Workspace
 
 **Input** (from `django-angular3.json`):
 - `project.name`: `"my-shop"`
@@ -2609,7 +2611,7 @@ After modifying a workspace, verify:
 
 **Output**: Workspace created at `/home/user/projects/my-shop` with Material configured
 
-#### Example 2: Update Angular Version
+##### Example 2: Update Angular Version
 
 **Input** (from `django-angular3.json`):
 - `project.name`: `"my-shop"`
@@ -2623,7 +2625,7 @@ After modifying a workspace, verify:
 
 **Output**: Angular updated to latest version with all migrations applied
 
-#### Example 3: Delete Workspace
+##### Example 3: Delete Workspace
 
 **Input** (from `django-angular3.json`):
 - `project.name`: `"my-shop"`
@@ -2637,7 +2639,7 @@ Procedure-level input: `confirmDelete: true`
 
 **Output**: Workspace deleted
 
-## Angular Material app boiler plate
+### Angular Material app boiler plate
 
 ```yaml
 ---
@@ -2656,15 +2658,15 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 Generate and manage Angular Material applications within an existing Angular workspace. This skill creates a complete application scaffold with Material Design theming, standalone component architecture, proper directory structure, and routing configuration. Use this skill after the workspace has been created but before generating individual components or pages.
 
-### Modes
+#### Modes
 
 All skills support three operational modes:
 
-#### Create
+##### Create
 
 Generate a new Angular Material application inside the workspace with complete directory structure, theme configuration, and standalone bootstrap setup.
 
@@ -2779,7 +2781,7 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
 - Application shell with responsive navigation
 - Entry added to `angular.json` for the new application
 
-#### Modify
+##### Modify
 
 Update an existing Angular Material application with changes to providers, global styles, or routing configuration.
 
@@ -2868,7 +2870,7 @@ Update an existing Angular Material application with changes to providers, globa
 - Updated `package.json` and `node_modules` if dependencies changed
 - Confirmation of successful modification with list of changes made
 
-#### Delete
+##### Delete
 
 Remove an Angular Material application completely from the workspace, including all source files and configuration.
 
@@ -2908,20 +2910,20 @@ Remove an Angular Material application completely from the workspace, including 
 - Workspace remains valid and functional
 - Confirmation message listing what was deleted
 
-### Context Files
+#### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md)
 
 See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
-### Templates
+#### Templates
 
 - `app-shell.ts.tpl` — Root AppComponent with Material sidenav navigation shell, responsive breakpoint handling, and routing outlet
 - `app-shell.html.tpl` — MatSidenav container template with toolbar, navigation list, and content area
 - `app.config.ts.tpl` — Standalone application configuration with standard providers (router, animations, HTTP client)
 - `app.routes.ts.tpl` — Initial route configuration with empty routes array and typed Routes import
 
-### Validation
+#### Validation
 
 Steps to validate successful execution of the skill:
 
@@ -2955,7 +2957,7 @@ Steps to validate successful execution of the skill:
    ```
    Navigate to `http://localhost:4200` and verify Material components render
 
-### Error Handling
+#### Error Handling
 
 Common errors and their resolution strategies:
 
@@ -2983,7 +2985,7 @@ Common errors and their resolution strategies:
 - **Cause**: Another application is already running on default port
 - **Resolution**: Stop other dev servers or use `pnpm exec ng serve <project.name> --port=4201`
 
-### Dependencies
+#### Dependencies
 
 Required prerequisites before executing this skill:
 
@@ -2994,7 +2996,7 @@ Required prerequisites before executing this skill:
 Optional dependencies:
 
 - If using OpenAPI integration, **Angular API generation** (Skill 3) should be executed after app creation
-### Examples
+#### Examples
 
 **Example 1: Create a new admin dashboard application**
 
@@ -3064,7 +3066,7 @@ Optional dependencies:
 // Output: Application "old-admin" removed from workspace
 ```
 
-## Angular API generation
+### Angular API generation
 
 ```yaml
 ---
@@ -3082,13 +3084,13 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 Generate TypeScript API client code (services and models) from OpenAPI specifications using the ng-openapi-gen tool. This skill creates strongly-typed Angular services that wrap HTTP endpoints defined in the OpenAPI schema, producing `*ApiService` files organized by OpenAPI tags and corresponding TypeScript model interfaces.
 
-### Modes
+#### Modes
 
-#### Create
+##### Create
 
 Generate API client code from an OpenAPI specification when it doesn't exist.
 
@@ -3132,7 +3134,7 @@ Output path is configured in `ng-openapi-gen.json` at the workspace root; breaki
 - Barrel exports at `<output_path>/models.ts` and `<output_path>/services.ts`
 - Base API configuration file at `<output_path>/base-service.ts`
 
-#### Modify
+##### Modify
 
 Regenerate API client code after OpenAPI specification changes.
 
@@ -3165,7 +3167,7 @@ Breaking-change detection is already performed by `build_app` before invoking th
 
 **Important**: Never hand-edit generated files in `<output_path>/`. Always regenerate via this skill.
 
-#### Delete
+##### Delete
 
 Remove generated API client code directory; invoke Create mode to regenerate.
 
@@ -3187,16 +3189,16 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 - Removed output directory
 - Confirmation message
 
-### Context Files
+#### Context Files
 
 See [openapi-integration.md](../shared/openapi-integration.md)
 
-### Supporting Files
+#### Supporting Files
 
 - `ng-openapi-gen.json` — Configuration file for ng-openapi-gen tool (created if doesn't exist)
 - OpenAPI specification file (external input, not part of skill)
 
-### Validation
+#### Validation
 
 **Post-Create/Modify Validation**:
 1. **Directory structure check**:
@@ -3222,7 +3224,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Service file names follow kebab-case: `<tag>-api.service.ts`
    - Service class names follow PascalCase: `<Tag>ApiService`
 
-### Error Handling
+#### Error Handling
 
 **Common Errors**:
 
@@ -3249,7 +3251,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Error: Compilation failures in generated code
    - Resolution: Usually indicates OpenAPI spec issue or ng-openapi-gen version incompatibility; check ng-openapi-gen documentation for supported OpenAPI versions
 
-### Dependencies
+#### Dependencies
 
 **Required Skills**:
 - Angular Material workspace boilerplate must exist (workspace with `package.json` and Angular CLI)
@@ -3262,7 +3264,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 **Optional Dependencies**:
 - OpenAPI specification linting tools for validation
 
-### Examples
+#### Examples
 
 **Example 1: Initial API generation**
 ```markdown
@@ -3316,7 +3318,7 @@ Output:
 Cleaned and regenerated API client code
 ```
 
-## Angular data model Service
+### Angular data model Service
 
 ```yaml
 ---
@@ -3335,11 +3337,11 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 The `angular-data-service-composition` skill manages handwritten Angular data services that sit on top of generated `*ApiService` clients from the `angular-api-integration` skill. It creates or updates a resource-specific service that centralises API calls, wraps errors with `catchError`, reports failures through `MatSnackBar`, preserves typed `Observable<>` return values, and maintains a matching unit spec.
 
-### Inputs
+#### Inputs
 
 Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path (used to locate the workspace)
@@ -3353,9 +3355,9 @@ Procedure-level input (provided by `build_app` when invoking this skill):
 - Service file names follow Angular conventions such as `features/<resource>/services/<resource>.service.ts`
 - Shared services that are reused across features may instead live in `core/services/<resource>.service.ts`
 
-### Modes
+#### Modes
 
-#### Create
+##### Create
 
 Generate a new Angular data service and unit spec when a resource already has generated OpenAPI client code.
 
@@ -3392,7 +3394,7 @@ Generate a new Angular data service and unit spec when a resource already has ge
 - Matching unit spec at the same location with `.spec.ts` suffix
 - Wrapped methods for each generated `<Resource>ApiService` endpoint
 
-#### Modify
+##### Modify
 
 Update an existing Angular data service when generated API methods or service behavior changes.
 
@@ -3419,7 +3421,7 @@ Update an existing Angular data service when generated API methods or service be
 - Updated `<resource>.service.spec.ts`
 - Change summary covering wrapped methods, caching, and error handling
 
-#### Delete
+##### Delete
 
 Remove a handwritten Angular data service and its associated unit spec.
 
@@ -3437,16 +3439,16 @@ Remove a handwritten Angular data service and its associated unit spec.
 - Removed `<resource>.service.spec.ts`
 - Confirmation of deleted artifacts and any follow-up cleanup notes
 
-### Context Files
+#### Context Files
 
 See [openapi-integration.md](../shared/openapi-integration.md)
 
-### Supporting Files
+#### Supporting Files
 
 - `templates/service.ts.tpl` — Service scaffold that wraps generated `<Resource>ApiService` methods with typed `Observable<>` returns and shared error handling
 - `context/openapi-integration.md` — Guidance for locating generated OpenAPI services, models, and import paths
 
-### Validation
+#### Validation
 
 **Post-Create/Modify Validation**:
 1. **Compile check**:
@@ -3463,7 +3465,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Verify every generated `<Resource>ApiService` method that should be exposed has a matching wrapper
    - Verify `catchError` and `MatSnackBar` behavior are present on error paths
 
-### Error Handling
+#### Error Handling
 
 **Common Errors**:
 
@@ -3483,7 +3485,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Error: Tests no longer cover all wrapped methods or error paths
    - Resolution: Update `<resource>.service.spec.ts` whenever methods, caching, or snack-bar behavior changes
 
-### Dependencies
+#### Dependencies
 
 **Required Skills**:
 - `angular-workspace-foundation` for the Angular workspace structure
@@ -3494,7 +3496,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 - Angular HTTP client testing support via `HttpClientTestingModule`
 - Angular Material `MatSnackBar`
 
-### Examples
+#### Examples
 
 **Example 1: Create a feature-local data service**
 ```markdown
@@ -3528,7 +3530,7 @@ Output:
 - Updated users.service.spec.ts
 ```
 
-## Angular Material small field level component generation
+### Angular Material small field level component generation
 
 ```yaml
 ---
@@ -3547,15 +3549,15 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 Generate and manage small, reusable Angular Material field-level components (e.g., custom buttons, chips, badges, status indicators, icons with tooltips). These are lightweight standalone components that use Angular signals for inputs/outputs, import only required Material modules, include ARIA attributes for accessibility, and utilize modern control flow syntax (`@if`/`@for`). Unlike form fields (skill 6) which implement `ControlValueAccessor`, these components are simple presentational or interactive elements used within larger components or pages.
 
-### Modes
+#### Modes
 
 All skills support three operational modes:
 
-#### Create
+##### Create
 
 Generate a standalone Angular Material small field-level component from scratch with typed signals, Material imports, ARIA attributes, and test harness.
 
@@ -3733,7 +3735,7 @@ Procedure-level inputs (provided by `build_app`):
 - Tests passing
 - Confirmation message with component location and usage example
 
-#### Modify
+##### Modify
 
 Update an existing Angular Material small field-level component by adding/removing inputs/outputs, updating template, or modifying styles.
 
@@ -3836,7 +3838,7 @@ Procedure-level inputs:
 - All tests passing
 - Change summary listing what was modified
 
-#### Delete
+##### Delete
 
 Remove an Angular Material small field-level component completely, including all files and references.
 
@@ -3900,19 +3902,19 @@ Procedure-level inputs:
 - Compilation successful
 - Confirmation message with deletion summary
 
-### Context Files
+#### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md)
 
 See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
-### Templates
+#### Templates
 
 - `component.ts.tpl` — Standalone component TypeScript scaffold with typed input/output signals, Material imports, and signal-based state management
 - `component.html.tpl` — Component template with Material components, ARIA attributes, and modern control flow (`@if`/`@for`)
 - `component.scss.tpl` — Component styles using Material theme tokens and `:host` selector pattern
 
-### Validation
+#### Validation
 
 Steps to validate successful execution of the skill:
 
@@ -3985,7 +3987,7 @@ Steps to validate successful execution of the skill:
    ```
    - Should compile successfully
 
-### Error Handling
+#### Error Handling
 
 Common errors and their resolution strategies:
 
@@ -4021,7 +4023,7 @@ Common errors and their resolution strategies:
 - **Cause**: Tests not updated to reflect component changes
 - **Resolution**: Update test file to match new component inputs/outputs/behavior
 
-### Dependencies
+#### Dependencies
 
 Required prerequisites before executing this skill:
 
@@ -4038,7 +4040,7 @@ Dependent skills (use this skill before):
 - **Angular component generation** (Skill 7) — May compose field components into larger components
 - **Angular Material page generation** (Skill 10) — Pages may use field components
 
-### Examples
+#### Examples
 
 **Example 1: Create a status badge component in shared**
 
@@ -4151,7 +4153,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 
 **Output**: Component deleted successfully
 
-## Angular Material form field generation
+### Angular Material form field generation
 
 ```yaml
 ---
@@ -4170,15 +4172,15 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 Generate and manage Angular Material form field components that implement `ControlValueAccessor` for seamless integration with Angular reactive forms. These components wrap Material form field elements (`MatFormField`, `MatInput`, `MatSelect`, `MatDatepicker`, `MatAutocomplete`, `MatTextarea`) with custom validation, error messages, labels, hints, and disabled state handling. Unlike simple field-level components (skill 5) which are presentational, form field components implement the full `ControlValueAccessor` interface (`writeValue`, `registerOnChange`, `registerOnTouched`, `setDisabledState`) and provide `NG_VALUE_ACCESSOR`, enabling them to work as custom form controls within `FormGroup` and `FormControl` contexts.
 
-### Modes
+#### Modes
 
 All skills support three operational modes:
 
-#### Create
+##### Create
 
 Generate a standalone Angular Material form field component implementing `ControlValueAccessor` with Material form field wrapper, validation support, and test harness.
 
@@ -4440,7 +4442,7 @@ Procedure-level inputs:
 - Barrel export updated
 - Compilation successful
 
-#### Modify
+##### Modify
 
 Update an existing form field component to change input type, add/remove validators, update error messages, or modify configuration.
 
@@ -4539,7 +4541,7 @@ Procedure-level inputs:
 - Compilation successful
 - Changes documented in commit message
 
-#### Delete
+##### Delete
 
 Remove a form field component completely from the codebase, including all related files and imports.
 
@@ -4605,19 +4607,19 @@ Procedure-level inputs:
 - Compilation successful
 - Confirmation message with deletion summary
 
-### Context Files
+#### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md)
 
 See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
-### Templates
+#### Templates
 
 - `form-field.ts.tpl` — ControlValueAccessor TypeScript scaffold with `writeValue`, `registerOnChange`, `registerOnTouched`, `setDisabledState`, `NG_VALUE_ACCESSOR` provider, and typed signals
 - `form-field.html.tpl` — Material form field template with `<mat-form-field>`, appropriate input element based on field type, label, hint, and error message blocks
 - `component.scss.tpl` — Component styles using Material theme tokens and `:host` selector pattern
 
-### Validation
+#### Validation
 
 Steps to validate successful execution of the skill:
 
@@ -4702,7 +4704,7 @@ Steps to validate successful execution of the skill:
    ```
    - Should compile successfully
 
-### Error Handling
+#### Error Handling
 
 Common errors and their resolution strategies:
 
@@ -4754,7 +4756,7 @@ Common errors and their resolution strategies:
 - **Cause**: Parent form control not passed to component or not marked as touched
 - **Resolution**: Pass form control via input and ensure `markAsTouched()` is called on blur
 
-### Dependencies
+#### Dependencies
 
 Required prerequisites before executing this skill:
 
@@ -4771,7 +4773,7 @@ Dependent skills (use this skill before):
 - **Angular Material page generation** (Skill 10) — Pages may include forms with custom form fields
 - **Angular component generation** (Skill 7) — Complex components may compose form fields
 
-### Examples
+#### Examples
 
 **Example 1: Create an email input form field in shared**
 
@@ -4990,11 +4992,11 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 
 **Output**: Form field component deleted successfully
 
-## Angular component generation
+### Angular component generation
 
 **Skill Name**: `angular-component-composition`
 
-### YAML Frontmatter
+#### YAML Frontmatter
 
 ```yaml
 ---
@@ -5013,13 +5015,13 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 The `angular-component-composition` skill manages the creation, modification, and deletion of Angular components within an existing Angular Material application. Components are generated following modern Angular conventions (standalone components, signals, Material Design patterns) and can be one of three types: **display** (presentational with Material layout), **container** (smart component with service injection and Observable data binding), or **dialog** (Material dialog with data injection and action buttons). This skill should be used after the workspace and application have been created.
 
 When components are generated through the `angular-django2:component` schematic, the generated TypeScript and template files are seeded with stable **begin/end embedding hooks**. These are marker pairs around the import, injected-services, input, output, and template `children` sections. The companion `angular-django2:embed-component` schematic targets these well-known insertion points to wire a generated component into a parent, so making a component visible in the application hierarchy is a deterministic follow-up step rather than manual editing (see the Component embedding section below).
 
-### Inputs
+#### Inputs
 
 Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
@@ -5030,11 +5032,11 @@ Procedure-level inputs:
 - **`targetPath`** (string, required): Relative path from app source directory where component will be created (e.g., `src/app/features/users`, `src/app/shared/components`)
 - **`type`** (enum, required): Component type (`display` | `container` | `dialog`)
 
-### Modes
+#### Modes
 
 All skills support three operational modes:
 
-#### Create
+##### Create
 
 Generate a new Angular component from scratch when it doesn't exist.
 
@@ -5056,7 +5058,7 @@ Before creating the component, verify:
 
 The creation process varies based on component `type`:
 
-##### Type: Display
+###### Type: Display
 
 **Display components** are presentational components that receive data via input signals and emit events via output signals. They use Material Card layout with structured header, content, and actions sections.
 
@@ -5162,7 +5164,7 @@ The creation process varies based on component `type`:
    - Replace `{{COMPONENT_NAME_KEBAB}}` with `componentName` (e.g., `user-profile`)
    - Replace `{{COMPONENT_NAME_PASCAL}}` with PascalCase version (e.g., `UserProfile`)
 
-##### Type: Container
+###### Type: Container
 
 **Container components** are smart components that inject services, manage state, and interact with backend APIs. They use `toSignal()` to convert Observables to signals for reactive data binding.
 
@@ -5263,7 +5265,7 @@ The creation process varies based on component `type`:
    - Replace `{{COMPONENT_NAME_PASCAL}}` with PascalCase version (e.g., `UserList`)
    - Replace `{{COMPONENT_NAME_TITLE}}` with Title Case version (e.g., `User List`)
 
-##### Type: Dialog
+###### Type: Dialog
 
 **Dialog components** are Material dialogs that receive data via `MAT_DIALOG_DATA` injection and close with results via `MatDialogRef`. They include confirm and cancel action buttons.
 
@@ -5360,7 +5362,7 @@ The creation process varies based on component `type`:
   - `<componentName>.component.spec.ts` - Component unit tests
 - Confirmation message with component location and next steps
 
-#### Modify
+##### Modify
 
 Update an existing Angular component with changes to template, services, or type conversion.
 
@@ -5430,7 +5432,7 @@ Procedure-level inputs:
 - List of modifications applied
 - Compilation confirmation
 
-#### Delete
+##### Delete
 
 Remove an Angular component completely, including all files and references in parent components or routes.
 
@@ -5483,7 +5485,7 @@ Procedure-level inputs:
 - List of files that referenced the component (requiring manual cleanup)
 - Confirmation of deletion
 
-### Component embedding
+#### Component embedding
 
 Generating a component does not make it visible. A generated component becomes
 part of the application hierarchy only when it is embedded into a parent
@@ -5559,13 +5561,13 @@ selector, the import, the `imports` array entry, or the `on<Output>()` handler
 stubs. Rebuild after embedding (`ng build <project.name>`) to verify the
 composition compiles.
 
-### Context Files
+#### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md)
 
 See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
-### Templates
+#### Templates
 
 - `component-display.ts.tpl` — Display component TypeScript with input/output signals, Material Card layout
 - `component-display.html.tpl` — Display component template with MatCard, header, content, and actions
@@ -5577,7 +5579,7 @@ See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 - `component-dialog.html.tpl` — Dialog component template with title, content, and action buttons
 - `component-dialog.scss.tpl` — Dialog component styles
 
-### Validation
+#### Validation
 
 Steps to validate successful execution of the skill:
 
@@ -5622,7 +5624,7 @@ Steps to validate successful execution of the skill:
    # Should pass with no failures
    ```
 
-### Error Handling
+#### Error Handling
 
 Common errors and their resolution strategies:
 
@@ -5658,7 +5660,7 @@ Common errors and their resolution strategies:
 - **Cause**: Dialog component used outside of MatDialog.open() context
 - **Resolution**: Only instantiate dialog components via `MatDialog.open()`, not directly in templates
 
-### Dependencies
+#### Dependencies
 
 Required prerequisites before executing this skill:
 
@@ -5672,7 +5674,7 @@ Optional dependencies:
 - **Angular API generation** (Skill 3 - angular-api-integration) — If component needs to consume API services
 - **Angular data model Service** (Skill 4) — If container component needs data service injection
 
-### Examples
+#### Examples
 
 **Example 1: Create a display component for product card**
 
@@ -5816,11 +5818,11 @@ Optional dependencies:
 // Re-running the same embed is idempotent (no duplicate wiring).
 ```
 
-## Angular Material complex component generation
+### Angular Material complex component generation
 
 **Skill Name**: `angular-complex-component-composition`
 
-### YAML Frontmatter
+#### YAML Frontmatter
 
 ```yaml
 ---
@@ -5839,11 +5841,11 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 The `angular-complex-component-composition` skill manages Angular Material components that go beyond a single standalone component scaffold. It is used when a component needs one or more advanced composition features: a dedicated theme mixin, nested child components, typed content projection slots, or CDK overlay behavior. The skill keeps the component aligned with the simpler `angular-component-composition` conventions while expanding the generated structure to cover public API documentation, theming integration, and multi-file component composition.
 
-### Inputs
+#### Inputs
 
 Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
@@ -5858,11 +5860,11 @@ Procedure-level inputs:
   - `projection`
   - `cdk-overlay`
 
-### Modes
+#### Modes
 
 All skills support three operational modes:
 
-#### Create
+##### Create
 
 Generate a new Angular Material complex component from scratch.
 
@@ -5883,19 +5885,16 @@ Before creating the component, verify:
 
 **Process (Create Mode)**:
 
-1. **Generate the parent standalone component scaffold**:
+1. **Delegate generation to the ngdj complex-component schematic**:
    ```bash
-   pnpm exec ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<project.name>
+  pnpm exec ng generate angular-django2:complex-component <componentName> \
+    --path=<targetPath> --project=<project.name> \
+    --features=<comma-separated features> --mode=create
    ```
 
-2. **Replace the generated parent component** with a Material-oriented complex component implementation that:
-   - uses standalone imports
-   - keeps Angular Material imports explicit
-   - adds a top-level JSDoc block documenting the public API:
-     - inputs
-     - outputs
-     - projection slots
-   - exposes only the supported public surface
+2. **Use the schematic-owned implementation**. It generates the standalone
+  Material parent, documents its public API, and composes the existing
+  `component` and `embed-component` schematics for nested-child wiring.
 
 3. **Apply feature: `mixins`**:
    - Create `_<componentName>-theme.scss` in the component directory
@@ -5954,7 +5953,7 @@ Before creating the component, verify:
   - typed slot directives
   - overlay-specific providers or support files when required
 
-#### Modify
+##### Modify
 
 Update an existing complex component by adding advanced composition features without rebuilding the entire component.
 
@@ -5969,29 +5968,18 @@ Procedure-level inputs:
 
 **Process**:
 
-1. Read the current parent component, template, styles, tests, and any existing child components
-2. Preserve the existing public API unless the requested change explicitly expands it
-3. For requested modifications:
-   - **Add mixin**:
-     - create `_<componentName>-theme.scss` if missing
-     - extract theme-specific rules into the mixin
-     - add the import/include in `styles.scss`
-   - **Extract child**:
-     - move a cohesive template region into a child component inside `<componentName>/`
-     - add the child component to the parent `imports`
-     - keep existing bindings flowing through typed inputs/outputs
-   - **Add projection slot**:
-     - add a new `<ng-content select="...">` slot
-     - add the corresponding typed directive
-     - extend the parent JSDoc block with the new slot contract
-4. Re-run a compile check after modifications
+1. Run `angular-django2:complex-component` with `--mode=modify` and the
+   selected feature set.
+2. Preserve the existing public API unless the requested change explicitly
+   expands it.
+3. Re-run a compile check after modifications.
 
 **Output**:
 - Existing component updated in place
 - Public API documentation refreshed
 - Theme, child component, or slot support added without deleting unaffected files
 
-#### Delete
+##### Delete
 
 Remove a complex component and its advanced integrations completely.
 
@@ -6006,19 +5994,11 @@ Procedure-level inputs:
 
 **Process**:
 
-1. Verify the component directory exists and identify all references
-2. Remove the full component directory tree:
-   ```bash
-   rm -rf <targetPath>/<componentName>
-   ```
-3. If `mixins` was enabled:
-   - remove the theme mixin import from `styles.scss`
-   - remove the `@include` statement for the component theme mixin
-4. If `cdk-overlay` was enabled:
-   - remove CDK overlay-specific providers or helper registrations introduced for the component
-   - remove overlay portal imports that are now unused
-5. Remove any parent-level imports, route references, or barrel exports that still reference the component or extracted children
-6. Re-run a compile check to ensure all references were removed
+1. Run `angular-django2:complex-component` with `--mode=delete --confirm=true`.
+2. The schematic removes its generated directory and registered theme mixin.
+3. Remove unrelated route, export, or parent references that were not created
+  by the schematic.
+4. Re-run a compile check to ensure all references were removed.
 
 **Output**:
 - Component directory tree removed
@@ -6026,17 +6006,17 @@ Procedure-level inputs:
 - CDK providers and imports cleaned up
 - Remaining manual cleanup locations reported if unrelated templates still reference the deleted selectors
 
-### Context Files
+#### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md)
 
 See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 
-### Templates
+#### Templates
 
 None
 
-### Validation
+#### Validation
 
 Steps to validate successful execution of the skill:
 
@@ -6078,7 +6058,7 @@ Steps to validate successful execution of the skill:
    ```
    - Should show CDK overlay primitives when `cdk-overlay` is enabled
 
-### Error Handling
+#### Error Handling
 
 Common errors and their resolution strategies:
 
@@ -6098,7 +6078,7 @@ Common errors and their resolution strategies:
 - **Cause**: CDK overlay support is requested but Angular CDK is not available
 - **Resolution**: Install or restore Angular CDK before enabling `cdk-overlay`
 
-### Dependencies
+#### Dependencies
 
 Required prerequisites before executing this skill:
 
@@ -6106,7 +6086,7 @@ Required prerequisites before executing this skill:
 2. **Angular Material app boilerplate** (Skill 2 - angular-app-composition)
 3. **Angular component generation** (Skill 7 - angular-component-composition) conventions should already be understood and available for reuse
 
-### Examples
+#### Examples
 
 **Example 1: Create a themed complex component with nested children**
 
@@ -6130,7 +6110,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 }
 ```
 
-## Angular reactive form generation
+### Angular reactive form generation
 
 ```yaml
 ---
@@ -6149,11 +6129,11 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 The `angular-reactive-form-composition` skill manages Angular reactive form components that use typed `FormGroup<>` interfaces, `FormBuilder` for control creation, Angular Material form fields (`MatFormField`), and integrate with data services for submission. These forms implement loading states with `MatProgressBar`, handle server-side validation errors by calling `setErrors()` on individual controls, wire submit actions to data service methods, and provide cancel handlers for navigation or output events. Forms can operate in create mode (empty initial values), edit mode (pre-populated from resource), or both modes (dynamic based on route parameters).
 
-### Inputs
+#### Inputs
 
 Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
@@ -6172,9 +6152,9 @@ Procedure-level inputs:
   - Wire submit to corresponding data service method (e.g., `createUser()`, `updateUser()`)
   - If not provided, form fields must be manually specified
 
-### Modes
+#### Modes
 
-#### Create
+##### Create
 
 Generate a new Angular reactive form component from scratch with typed `FormGroup<>`, Material form fields, validation, loading state, server error handling, and comprehensive spec tests.
 
@@ -6468,7 +6448,7 @@ Procedure-level inputs:
 - Server-side validation error handling with `setErrors()`
 - Comprehensive unit tests covering validation state transitions and submit flow
 
-#### Modify
+##### Modify
 
 Update an existing reactive form component to add/remove fields, change validators, update submit target, or adjust behavior.
 
@@ -6520,7 +6500,7 @@ Procedure-level inputs:
 - Updated `<formName>.component.spec.ts` with matching test coverage
 - Change summary documenting field additions/removals and validator updates
 
-#### Delete
+##### Delete
 
 Remove a reactive form component and clean up references (route configurations, parent component imports).
 
@@ -6558,20 +6538,20 @@ Procedure-level inputs:
 - Confirmation of deletion
 - List of references that require manual cleanup (routes, parent component usage)
 
-### Context Files
+#### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md)
 See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 See [openapi-integration.md](../shared/openapi-integration.md)
 
-### Supporting Files
+#### Supporting Files
 
 - `templates/reactive-form.ts.tpl` — Typed reactive form scaffold with `FormGroup<>`, `FormBuilder`, loading state, and server error handling
 - `templates/reactive-form.html.tpl` — Material form template with `MatCard`, `MatFormField` per control, progress bar, and submit/cancel buttons
 - `context/angular-conventions.md` — Angular standalone component patterns, signals, dependency injection
 - `context/openapi-integration.md` — Resource model location and import patterns for deriving form field types
 
-### Validation
+#### Validation
 
 **Post-Create/Modify Validation**:
 
@@ -6598,7 +6578,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Verify `form.invalid` disables submit button
    - Test form interactively in running application
 
-### Error Handling
+#### Error Handling
 
 **Common Errors**:
 
@@ -6622,7 +6602,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Error: Tests reference old field names or validators
    - Resolution: Regenerate spec tests to match current form definition
 
-### Dependencies
+#### Dependencies
 
 **Required Skills** (must execute before this skill):
 
@@ -6640,7 +6620,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 - **ng-page** (Skill 10) — Pages include forms with routing integration and navigation
 - **ng-component** (Skill 7) — Container components may include reactive forms as child components
 
-### Examples
+#### Examples
 
 **Example 1: Create a user profile form with API integration**
 
@@ -6719,11 +6699,11 @@ Output:
 - Updated `product-edit.component.spec.ts`
 ```
 
-## Angular Material page generation
+### Angular Material page generation
 
 **Skill Name**: `angular-page-composition`
 
-### YAML Frontmatter
+#### YAML Frontmatter
 
 ```yaml
 ---
@@ -6742,11 +6722,11 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 The `angular-page-composition` skill manages top-level Angular Material pages inside an existing feature area. It covers page scaffolding, route registration, optional sidenav navigation, and page-specific layout patterns for common application screens. Use this skill after the Angular workspace and app exist, and after supporting skills such as data services, shared components, and reactive forms are available when the requested page depends on them.
 
-### Inputs
+#### Inputs
 
 Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
@@ -6758,11 +6738,11 @@ Procedure-level inputs:
 - **`pageType`** (enum, required): Page type (`list` | `detail` | `dashboard` | `workflow`)
 - **`featureName`** (string, required): Feature area that owns the route and page files (for example `users`, `orders`, `admin`)
 
-### Modes
+#### Modes
 
 All skills support three operational modes:
 
-#### Create
+##### Create
 
 Generate a new Angular Material page from scratch, register it in the feature route tree, and wire navigation when the page is top-level.
 
@@ -6786,7 +6766,7 @@ Generate a new Angular Material page from scratch, register it in the feature ro
 1. **Create the standalone page component** in the feature page directory using the appropriate template files.
 2. **Generate the page layout based on `pageType`**:
 
-   ##### Type: List
+   ###### Type: List
 
    Create a resource list page using:
    - `MatTable` for rows and displayed columns
@@ -6796,20 +6776,20 @@ Generate a new Angular Material page from scratch, register it in the feature ro
    - Row click navigation to the matching detail page
    - A `"New"` button that routes to the create form/workflow page
 
-   ##### Type: Detail
+   ###### Type: Detail
 
    Create a single-resource detail page using:
    - `MatCard` layout for the record summary and sections
    - Read-only presentation of one resource
    - Edit and delete actions in the card action area
 
-   ##### Type: Dashboard
+   ###### Type: Dashboard
 
    Create a summary dashboard using:
    - A responsive grid of `MatCard` widgets
    - Summary metrics, shortcuts, or status blocks per card
 
-   ##### Type: Workflow
+   ###### Type: Workflow
 
    Create a multi-step workflow page using:
    - `MatStepper` for sequential workflow steps
@@ -6848,7 +6828,7 @@ Generate a new Angular Material page from scratch, register it in the feature ro
 - Optional authenticated route guard reference
 - Optional top-level sidenav navigation item
 
-#### Modify
+##### Modify
 
 Update an existing page to change its visible structure or route protection without rebuilding the feature from scratch.
 
@@ -6873,7 +6853,7 @@ Update an existing page to change its visible structure or route protection with
 - Updated feature route definition when required
 - Updated navigation entry when required
 
-#### Delete
+##### Delete
 
 Remove a page and clean up routing and navigation references.
 
@@ -6894,13 +6874,13 @@ Remove a page and clean up routing and navigation references.
 - Removed route registration
 - Removed sidenav navigation item when applicable
 
-### Context Files
+#### Context Files
 
 See [angular-material-patterns.md](../shared/angular-material-patterns.md) — Material design patterns for table pages, sidenav shells, card forms, dialogs, and snackbars.
 
 Each shared file is referenced by a standard markdown link with a one-level-up relative path (e.g. `../shared/angular-material-patterns.md`). The shared files live at `.claude/skills/shared/`, sibling to each skill directory.
 
-### Supporting Files
+#### Supporting Files
 
 - `templates/list-page.ts.tpl` — Standalone Angular Material list-page TypeScript scaffold
 - `templates/list-page.html.tpl` — Angular Material list-page template with table and loading state
@@ -6908,7 +6888,7 @@ Each shared file is referenced by a standard markdown link with a one-level-up r
 
 List-page templates act as the canonical scaffold for page generation. Detail, dashboard, and workflow pages are fully supported by the mode definitions above. Those non-list page types are generated from the documented mode rules and shared context even when dedicated template files are not listed separately in this section.
 
-### Validation
+#### Validation
 
 **Post-Create/Modify/Delete Validation**:
 
@@ -6922,7 +6902,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
    ```
    - Confirm the page component, route file, and optional sidenav changes compile without errors
 
-### Error Handling
+#### Error Handling
 
 **Common Errors**:
 
@@ -6935,7 +6915,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 3. **Workflow page missing reactive form dependencies**:
    - Resolution: run the `angular-reactive-form-composition` skill first for the required step forms (see Dependencies below), then retry page generation
 
-### Dependencies
+#### Dependencies
 
 **Required Skills**:
 
@@ -6948,7 +6928,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 - **ng-component** — Useful for reusable dashboard widgets and nested page content
 - **ng-reactive-form** — Needed for workflow steps and create/edit form flows
 
-### Examples
+#### Examples
 
 **Example 1: Create a top-level users list page**
 
@@ -6985,11 +6965,11 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 3. Add `CanActivate` guard reference for authenticated checkout access
 4. Validate that the route is reachable and the app still compiles
 
-## Angular Material site generation
+### Angular Material site generation
 
 **Skill Name**: `angular-site-composition`
 
-### YAML Frontmatter
+#### YAML Frontmatter
 
 ```yaml
 ---
@@ -7008,11 +6988,11 @@ allowed-tools:
 ---
 ```
 
-### Purpose
+#### Purpose
 
 The `angular-site-composition` skill coordinates complete Angular Material site generation for an application that already has an Angular workspace and app scaffold available. It acts as an orchestrator across app shell creation, route setup, OpenAPI client generation, page generation, reactive form generation, Material theming, and application-wide auth wiring. Use this skill when the agent needs to build or reshape the overall site structure rather than a single page or form in isolation.
 
-### Inputs
+#### Inputs
 
 Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
@@ -7023,11 +7003,11 @@ Procedure-level inputs:
 - **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/ui/`, used to discover pages, navigation structure, and forms
 - **`defaults`** (object, optional): Fallback definitions to use when no UI spec is provided, such as default pages, route prefixes, or auth requirements
 
-### Modes
+#### Modes
 
 All skills support three operational modes:
 
-#### Create
+##### Create
 
 Create a complete Angular Material site by orchestrating the existing Angular generation skills in the correct order and then wiring shared site-level infrastructure.
 
@@ -7100,7 +7080,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 - `AuthGuard` under `core/guards/`
 - CSRF HTTP interceptor under `core/interceptors/`
 
-#### Modify
+##### Modify
 
 Update an existing Angular Material site without regenerating the entire application.
 
@@ -7124,7 +7104,7 @@ Update an existing Angular Material site without regenerating the entire applica
 - Updated site-level shell, routes, theme, and/or auth infrastructure
 - Change summary showing which site-wide concern was modified
 
-#### Delete
+##### Delete
 
 Remove the Angular application that owns the generated site from the workspace.
 
@@ -7145,20 +7125,20 @@ Procedure-level inputs:
 - Angular application removed from the workspace
 - Site-specific shell, route, theme, and auth artifacts removed with the app
 
-### Context Files
+#### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md)
 See [angular-material-patterns.md](../shared/angular-material-patterns.md)
 See [openapi-integration.md](../shared/openapi-integration.md)
 
-### Supporting Files
+#### Supporting Files
 
 - `templates/app-shell.ts.tpl` — Root site shell template used for `app.component.ts` generation with `MatSidenav` layout
 - `context/angular-conventions.md` — Angular standalone application and DI conventions for app shell and route orchestration
 - `context/angular-material-patterns.md` — Material sidenav, toolbar, navigation, and theme guidance used by the generated site shell
 - `context/openapi-integration.md` — OpenAPI client generation and usage guidance for `angular-api-integration`-driven pages and forms
 
-### Validation
+#### Validation
 
 **Post-Create/Modify/Delete Validation**:
 
@@ -7179,7 +7159,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Confirm authenticated routes reference `AuthGuard`
    - Confirm forms and API-backed pages are reachable from the generated route tree
 
-### Error Handling
+#### Error Handling
 
 **Common Errors**:
 
@@ -7198,7 +7178,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 5. **Auth or interceptor wiring fails compile validation**:
    - Resolution: review route guard imports, HTTP provider registration, and CSRF header handling before rerunning validation
 
-### Dependencies
+#### Dependencies
 
 **Required Skills**:
 
@@ -7213,9 +7193,10 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Common Supporting Skills**:
 
-- **ng-complex-component** — Useful when generated pages need richer reusable widgets inside dashboards or workflows
+- **angular-django2:complex-component** — Generates richer reusable widgets
+  inside dashboards or workflows.
 
-### Examples
+#### Examples
 
 **Example 1: Create a site from UI spec and OpenAPI**
 
@@ -7253,7 +7234,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`,
 
 ---
 
-# Skill building
+## Skill building
 
 To create a skill from scratch with the skill-creator, I need roughly four things from you. Only the first two are required upfront; the rest can be built together.
 

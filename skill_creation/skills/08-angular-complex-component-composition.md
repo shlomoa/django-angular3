@@ -64,20 +64,17 @@ Before creating the component, verify:
 
 **Process (Create Mode)**:
 
-1. **Generate the parent standalone component scaffold**:
+1. **Delegate generation to the ngdj complex-component schematic**:
    ```bash
    cd <workspacePath>
-   ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
+   ng generate angular-django2:complex-component <componentName> \
+     --path=<targetPath> --project=<appName> \
+     --features=<comma-separated features> --mode=create
    ```
 
-2. **Replace the generated parent component** with a Material-oriented complex component implementation that:
-   - uses standalone imports
-   - keeps Angular Material imports explicit
-   - adds a top-level JSDoc block documenting the public API:
-     - inputs
-     - outputs
-     - projection slots
-   - exposes only the supported public surface
+2. **Use the schematic-owned implementation**. It generates the standalone
+   Material parent, documents its public API, and composes the existing
+   `component` and `embed-component` schematics for nested-child wiring.
 
 3. **Apply feature: `mixins`**:
    - Create `_<componentName>-theme.scss` in the component directory
@@ -147,22 +144,11 @@ Update an existing complex component by adding advanced composition features wit
 
 **Process**:
 
-1. Read the current parent component, template, styles, tests, and any existing child components
-2. Preserve the existing public API unless the requested change explicitly expands it
-3. For requested modifications:
-   - **Add mixin**:
-     - create `_<componentName>-theme.scss` if missing
-     - extract theme-specific rules into the mixin
-     - add the import/include in `styles.scss`
-   - **Extract child**:
-     - move a cohesive template region into a child component inside `<componentName>/`
-     - add the child component to the parent `imports`
-     - keep existing bindings flowing through typed inputs/outputs
-   - **Add projection slot**:
-     - add a new `<ng-content select="...">` slot
-     - add the corresponding typed directive
-     - extend the parent JSDoc block with the new slot contract
-4. Re-run a compile check after modifications
+1. Run `angular-django2:complex-component` with `--mode=modify` and the
+    selected feature set.
+2. Preserve the existing public API unless the requested change explicitly
+    expands it.
+3. Re-run a compile check after modifications.
 
 **Output**:
 - Existing component updated in place
@@ -181,19 +167,11 @@ Remove a complex component and its advanced integrations completely.
 
 **Process**:
 
-1. Verify the component directory exists and identify all references
-2. Remove the full component directory tree:
-   ```bash
-   rm -rf <targetPath>/<componentName>
-   ```
-3. If `mixins` was enabled:
-   - remove the theme mixin import from `styles.scss`
-   - remove the `@include` statement for the component theme mixin
-4. If `cdk-overlay` was enabled:
-   - remove CDK overlay-specific providers or helper registrations introduced for the component
-   - remove overlay portal imports that are now unused
-5. Remove any parent-level imports, route references, or barrel exports that still reference the component or extracted children
-6. Re-run a compile check to ensure all references were removed
+1. Run `angular-django2:complex-component` with `--mode=delete --confirm=true`.
+2. The schematic removes its generated directory and registered theme mixin.
+3. Remove unrelated route, export, or parent references that were not created
+   by the schematic.
+4. Re-run a compile check to ensure all references were removed.
 
 **Output**:
 - Component directory tree removed
@@ -279,7 +257,9 @@ Required prerequisites before executing this skill:
 
 1. **Angular Material workspace boilerplate** (Skill 1 - workspace-setup)
 2. **Angular Material app boilerplate** (Skill 2 - material-app)
-3. **Angular component generation** (Skill 7 - ng-component) conventions should already be understood and available for reuse
+3. **Angular component generation** (Skill 7) conventions should already be
+   understood; ngdj composes its `component` and `embed-component` schematics
+   internally.
 
 ### Examples
 

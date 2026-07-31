@@ -140,6 +140,20 @@ parent standalone `imports` array, feeding input signals, and binding outputs to
 during iterative development. See the [Usage workflow](https://django-angular3.readthedocs.io/en/latest/workflow.html)
 for the full generate → embed composition flow.
 
+For advanced Material components, use the `ng_complex_component` wrapper. It
+invokes `angular-django2:complex-component`, which owns theme mixins, nested
+child composition, projection slots, CDK overlay support, and create/modify/
+delete lifecycle handling:
+
+```bash
+./manage.py ng_complex_component django-angular3.json \
+  --name dashboard-card --target-path src/app/features/dashboard \
+  --features mixins,nested,projection --dry-run
+```
+
+Use `--mode delete --confirm` for deletion. Add `ng_complex_component` to the
+`DJANGO_ANGULAR3.command_allowlist` before running without `--dry-run`.
+
 At the moment this reusable Django app contributes configuration helpers and
 management commands; it does not yet ship models, URLs, templates, static
 assets, or migrations, so there is no extra URL inclusion or migration step for

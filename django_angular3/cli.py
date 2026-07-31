@@ -117,6 +117,42 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    ng_complex_component = subparsers.add_parser(
+        "ng_complex_component",
+        help="Generate, update, or delete an advanced Angular Material component.",
+    )
+    ng_complex_component.add_argument(
+        "path", nargs="?", default=None, help="Path to the project config."
+    )
+    ng_complex_component.add_argument("--name", required=True, help="Kebab-case name.")
+    ng_complex_component.add_argument(
+        "--target-path",
+        required=True,
+        help="Path within the Angular application source tree.",
+    )
+    ng_complex_component.add_argument(
+        "--features",
+        required=True,
+        help="Comma-separated features: mixins, nested, projection, cdk-overlay.",
+    )
+    ng_complex_component.add_argument(
+        "--project", default=None, help="Angular project."
+    )
+    ng_complex_component.add_argument(
+        "--mode", choices=["create", "modify", "delete"], default="create"
+    )
+    ng_complex_component.add_argument(
+        "--confirm", action="store_true", help="Required when --mode=delete."
+    )
+    ng_complex_component.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Print the resolved Angular subprocess call list instead of "
+            "invoking Angular tooling."
+        ),
+    )
+
     ng_openapi_gen = subparsers.add_parser(
         "ng_openapi_gen", help="Run ng-openapi-gen for the configured OpenAPI source."
     )
@@ -195,6 +231,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "ng_config",
         "ng_build",
         "ng_gen_app",
+        "ng_complex_component",
         "ng_openapi_gen",
         "ng_add",
     }:
@@ -203,6 +240,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             plan_options["app_name"] = args.app_name
         if args.command == "ng_add":
             plan_options["package"] = args.package
+        if args.command == "ng_complex_component":
+            plan_options = {
+                "name": args.name,
+                "target_path": args.target_path,
+                "features": args.features,
+                "project": args.project,
+                "mode": args.mode,
+                "confirm": args.confirm,
+            }
         return _run_angular_command(
             args.command, args.path, dry_run=args.dry_run, **plan_options
         )
