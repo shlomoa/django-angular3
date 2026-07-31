@@ -269,7 +269,7 @@ existing schema to its `.previous` counterpart before writing.
 | `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. |
 | `format` | no | `"json"` \| `"yaml"` | `"json"` | Serialization format for the exported schema. |
 | `dry_run` | no | boolean | `false` | When `true`, compute and report the destination and would-be-archived previous path, but do not modify disk. |
-
+| `app_routes_path` | string (path) \| null | Application route file updated when `register_route` is `true`; otherwise `null`. |
 **Outputs**:
 
 | Key | Type | Description |
@@ -530,6 +530,176 @@ exist); CLI (`django-admin ng_gen_app <config>`). Not invocable from a HOOK.
 **Implementation reference**:
 `django_angular3/management/commands/ng_gen_app.py`;
 `django_angular3/management/commands/ng_add.py`.
+
+##### 7. `ngdj_add_feature` — Angular feature page and route scaffold
+
+**Name**: `ngdj_add_feature`
+
+**Purpose**: Create a deterministic feature area beneath the selected Angular
+application's `features/` directory, including an initial standalone page
+component, a feature route definition, and registration in the application
+route tree. This is a djng wrapper contract; the current ngdj collection does
+not expose a separate `feature` schematic.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. |
+| `name` | yes | string | — | Kebab-case feature name. |
+| `path` | no | string (relative path) | `src/app/features` | Application-relative parent directory for the feature area. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. Required when inference is ambiguous. |
+| `page_name` | no | string | value of `name` | Kebab-case initial page component name. |
+| `route_path` | no | string | value of `name` | URL path segment registered for the feature. |
+| `register_route` | no | boolean | `true` | Add the feature route to the application route tree. |
+| `dry_run` | no | boolean | `false` | When `true`, return planned paths and invocations without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `feature_path` | string (path) | Absolute path of the created feature area. |
+| `page_component_path` | string (path) | Absolute path of the initial page component source. |
+| `feature_routes_path` | string (path) | Absolute path of the feature route definition. |
+| `app_routes_path` | nullable string (path) | Application route file updated when `register_route` is `true`; otherwise `null`. |
+| `generated_files` | array of string (path) | Files created by this invocation, relative to `feature_path`. |
+| `commands` | array of string | Exact ngdj command lines invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes non-kebab-case names, paths outside the selected
+application source root, an existing feature area, invalid page or route names,
+or a requested route registration without an application route tree.
+`output_invalid` applies when generation completes without the expected page
+component or feature route definition.
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure), agent
+(inside a guided Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: planned djng wrapper that composes the
+`angular-django2:component` schematic, writes the feature route definition,
+and performs a syntax-aware application-route registration. Its contract
+remains stable even if ngdj later provides a dedicated feature schematic.
+
+##### 8. `ngdj_add_component` — standalone component scaffold
+
+**Name**: `ngdj_add_component`
+
+**Purpose**: Generate a standalone OnPush Angular component with ngdj's
+embedding hooks at a deterministic project-relative path.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. |
+| `name` | yes | string | — | Kebab-case component name. |
+| `path` | no | string (relative path) | Angular CLI default | Project-relative destination directory. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `dry_run` | no | boolean | `false` | When `true`, return the planned invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `component_path` | string (path) | Absolute path of the generated component directory. |
+| `component_class` | string | Generated component class name. |
+| `selector` | string | Generated component selector. |
+| `generated_files` | array of string (path) | Files created by this invocation, relative to `component_path`. |
+| `command` | string | Exact `angular-django2:component` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a non-kebab-case name or a path outside the selected
+application source root. `output_invalid` applies when the invocation succeeds
+but does not create the expected component source and template.
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure), agent
+(inside a guided Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: planned djng wrapper over
+`ng generate angular-django2:component <name> --path=<path> --project=<project>`.
+
+##### 9. `ngdj_run_schematic` — controlled ngdj schematic runner
+
+**Name**: `ngdj_run_schematic`
+
+**Purpose**: Execute one explicitly allowlisted `angular-django2` schematic
+with structured options, returning the resulting file delta rather than raw
+Angular CLI output.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. |
+| `schematic` | yes | string | — | Allowlisted ngdj schematic name, without the `angular-django2:` prefix. |
+| `options` | no | object | `{}` | JSON-shaped schematic options, validated against the selected schematic schema. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify when the selected schematic supports it. |
+| `dry_run` | no | boolean | `false` | When `true`, validate and return the invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `schematic` | string | Canonical executed collection name (`angular-django2:<name>`). |
+| `generated_files` | array of string (path) | Files created, changed, or removed by the invocation, relative to the workspace. |
+| `command` | string | Exact command line invoked. |
+| `warnings` | array of string | Non-fatal schematic warnings. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a schematic outside the djng-maintained allowlist or
+options that fail its schema. The tool MUST NOT accept arbitrary collection
+names or execute package downloads at runtime.
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure), agent
+(inside a guided Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: planned djng wrapper invoking the workspace-local
+`pnpm exec ng generate angular-django2:<schematic>` command. The allowlist is
+derived from the supported ngdj collection version and is verified by contract
+tests.
+
+##### 10. `oasdiff_changelog` — human-readable schema-change report
+
+**Name**: `oasdiff_changelog`
+
+**Purpose**: Generate a durable human-readable changelog from a previous and a
+current OpenAPI artifact, using the same schema pair consumed by `oasdiff_diff`.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `current_schema` | yes | string (path) | — | Absolute path to the current OpenAPI artifact. |
+| `previous_schema` | yes | string (path) | — | Absolute path to the previous OpenAPI artifact. |
+| `output_path` | no | string (path) | `build/openapi-changelog.md` | Destination for the generated Markdown changelog. |
+| `format` | no | `"markdown"` \| `"html"` | `"markdown"` | Changelog serialization format. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the planned destination without writing. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `changelog_path` | string (path) | Absolute path of the written changelog. |
+| `format` | `"markdown"` \| `"html"` | Serialization format used. |
+| `schema_changed` | boolean | Whether the schema pair contains any change. |
+| `breaking_change_count` | integer | Number of breaking changes represented in the report. |
+| `command` | string | Exact `oasdiff` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`output_invalid` applies when `oasdiff` exits successfully but the requested
+changelog file is empty or cannot be parsed as the requested format.
+
+**Allowed invocation context**: `build_app` (as a `tool` procedure after
+`oasdiff_diff`), agent (read-only contract-review assistance), CLI. Not a HOOK
+target.
+
+**Implementation reference**: planned wrapper around the installed `oasdiff`
+CLI changelog capability. It must use the existing `ensure_oasdiff()` binary
+resolution and archive output under the configured build directory.
 
 #### Contract compliance
 
@@ -1077,13 +1247,12 @@ them is owned by `djng-angular-construction` (§1) instead.
 |---|---|
 | `angular_workspace_scaffold` | Wrap the `ngdj` workspace-creation schematic. |
 | `angular_app_scaffold` | Wrap the `ngdj` application-creation schematic. |
+| `ngdj_add_feature` | Create a feature page, feature route, and application-route registration. |
+| `ngdj_add_component` | Generate a standalone component with embedding hooks. |
+| `ngdj_run_schematic` | Run an explicitly allowlisted ngdj schematic. |
 
-Future `ngdj_*` schematic wrappers (e.g. `ngdj_add_feature`,
-`ngdj_add_component`, `ngdj_run_schematic`) MUST be added to this list as
-their tool contracts are promoted into the
-[Tool Contracts Catalog](#tool-contracts-catalog), and MUST NOT be shipped by
-this plugin before that promotion. The plugin ships the wrapped tools under
-`mcp-servers/` as an MCP server configuration pointing at the `ngdj` CLI.
+The plugin ships the wrapped tools under `mcp-servers/` as an MCP server
+configuration pointing at the ngdj CLI.
 
 **Bundled HOOKS**: none. The lifecycle gates that protect `ngdj` invocations
 (`pre-construction`, `post-generation`) are bundled inside
@@ -1143,11 +1312,10 @@ judgment is not required between export, validate, diff, and gate.
 | `openapi_schema_export` | Trigger OpenAPI schema extraction from DRF. |
 | `validate_openapi_schema` | Validate that the exported schema is well-formed OAS 3.1. |
 | `oasdiff_diff` | Run `oasdiff` and return structured diff output (`breaking`, `non_breaking`, `schema_changed`). |
+| `oasdiff_changelog` | Generate the durable human-readable schema-change report. |
 
 The plugin ships these tools under `mcp-servers/` as a single MCP server
-configuration that exposes the three contract names. The future
-`oasdiff_changelog` tool contract MUST be added to this list when it is
-promoted into the [Tool Contracts Catalog](#tool-contracts-catalog).
+configuration that exposes the four contract names.
 
 **Bundled HOOKS** (from the [Hook Contracts Catalog](#hook-contracts-catalog)):
 

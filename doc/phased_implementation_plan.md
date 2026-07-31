@@ -42,11 +42,13 @@ This plan applies the primitive-selection policy from
 
 ## Current state (baseline)
 
-The following already exist on `main` and are the starting point for this plan:
+The following already exist in the current workspace and are the starting point
+for this plan:
 
 - **CLI wrappers** (Django management commands): `export_schema`, `build_app`,
-  `ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_openapi_gen`, `ng_build`,
-  `ng_workspace`, `ng_workspace_delete`, `ng_workspace_modify`
+  `ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_complex_component`,
+  `ng_openapi_gen`, `ng_build`, `ng_workspace`, `ng_workspace_delete`,
+  `ng_workspace_modify`
   (`django_angular3/management/commands/`).
 - **oasdiff acquisition**: `django_angular3/tools.py:ensure_oasdiff()`.
 - **Normative contracts** for every Tool, Hook, and Plugin
@@ -112,6 +114,11 @@ operations and receives structured results, replacing raw CLI parsing.
   `generated_files: []`.
 - `angular_workspace_scaffold`, `angular_app_scaffold` — wrap `ng_new` / the
   app-scaffold wrapper to return structured result objects.
+- `ngdj_add_feature`, `ngdj_add_component`, `ngdj_run_schematic` — expose the
+  supported ngdj feature/component/schematic surface through validated,
+  structured calls.
+- `oasdiff_changelog` — generate and archive a human-readable schema-change
+  report from the same artifact pair used by `oasdiff_diff`.
 
 Each tool MUST honour the **Tool contract shape**
 (`doc/GENERATE_AI_AUTOMATIONS.md` §Tool contract shape): structured inputs,

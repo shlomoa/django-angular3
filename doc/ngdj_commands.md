@@ -130,7 +130,7 @@ From [GENERATE_AI_AUTOMATIONS.md](doc/GENERATE_AI_AUTOMATIONS.md#L46-L53), these
 | `angular.field-component` | `angular-field-component-composition` | — | — | 🛑 Planned |
 | `angular.form-field` | `angular-form-field-composition` | — | — | 🛑 Planned |
 | `angular.component` | `angular-component-composition` | — | — | 🛑 Planned |
-| `angular.complex-component` | `angular-complex-component-composition` | — | — | 🛑 Planned |
+| `angular.complex-component` | `angular-complex-component-composition` | — | — | `angular-django2:complex-component` available; djng wrapper available. |
 | `angular.reactive-form` | `angular-reactive-form-composition` | — | — | 🛑 Planned |
 | `angular.page` | `angular-page-composition` | — | — | 🛑 Planned |
 | `angular.site` | `angular-site-composition` | — | — | 🛑 Planned |
@@ -158,7 +158,7 @@ verified on 2026-07-31.
 | `angular-site-composition` | No matching `ng-site` schematic is documented. |
 
 `material-app`, `workspace-setup`, `openapi-setup`, `data-service`, `component`,
-and `embed-component` are current ngdj CLI schematics. The remaining named
+`embed-component`, and `complex-component` are current ngdj CLI schematics. The remaining named
 placeholders require an explicit ngdj design and implementation decision; they
 must not be treated as existing CLI commands.
 

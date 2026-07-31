@@ -24,6 +24,9 @@ behavior, allowed invocation context) covering:
 - `angular_api_client_generate` — §2.3 of this document
 - `angular_workspace_scaffold`, `angular_app_scaffold` — §2.4 of this document
 - `validate_openapi_schema` — §2.5 of this document
+- `ngdj_add_feature`, `ngdj_add_component`, `ngdj_run_schematic` — §4.2 of
+   this document
+- `oasdiff_changelog` — §4.3 of this document
 
 The Hooks recommendations in §3 below have been promoted into explicit,
 normative hook contracts. See `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts
@@ -223,7 +226,7 @@ that are natural candidates for packaging as **Plugins**.
 | **Location in ARCHITECTURE.md** | §2.5, §2.14, §3.3, §3.5 |
 | **Current approach** | All construction capabilities (agent, SKILLS, `build_app` entry point, configuration) are bundled inside the `djng` repository but are not packaged in the Claude plugin format |
 | **Why a Plugin is better** | The full set of 11 Angular construction Skills, the schema and generation Tools (§2 above), and the validation/enforcement Hooks (§3 above) together form a complete, coherent capability that any `djng`-backed project needs. Packaging them as a Claude plugin enables: (a) installation with a single command, (b) versioning independent of the Django package, (c) reuse across multiple generated-app projects without copying files. |
-| **Plugin contents** | Skills: all 11 Angular SKILL.md files (`angular-workspace-foundation`, `angular-app-composition`, `angular-api-integration`, `angular-data-service-composition`, `angular-field-component-composition`, `angular-form-field-composition`, `angular-component-composition`, `angular-complex-component-composition`, `angular-reactive-form-composition`, `angular-page-composition`, `angular-site-composition`); Tools: `openapi_schema_export`, `oasdiff_diff`, `angular_api_client_generate`, `validate_openapi_schema`; Hooks: breaking-change gate (PreToolUse), migration-triggered extraction (PostToolUse), session cleanup (Stop). |
+| **Plugin contents** | Skills: all 11 Angular SKILL.md files (`angular-workspace-foundation`, `angular-app-composition`, `angular-api-integration`, `angular-data-service-composition`, `angular-field-component-composition`, `angular-form-field-composition`, `angular-component-composition`, `angular-complex-component-composition`, `angular-reactive-form-composition`, `angular-page-composition`, `angular-site-composition`); Tools: `angular_api_client_generate`, `validate_openapi_schema`; Hooks: pre-construction gate (PreToolUse), post-generation verification (PostToolUse), session cleanup (Stop). Contract-lifecycle operations and their hooks are supplied by the `contract-lifecycle` plugin dependency. |
 
 ### 4.2 ngdj Angular Scaffold Plugin
 
