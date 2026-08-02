@@ -484,16 +484,11 @@ class Command(BaseCommand):
             "change_set": change_set,
             "steps": steps,
         }
-
-        self._emit_plan(build_plan, options)
+        if options["dry_run"]:
+            self._emit_plan(build_plan, options)
 
     def _emit_plan(self, build_plan: dict[str, Any], options: dict[str, Any]) -> None:
         plan_str: str = json.dumps(build_plan, indent=2)
-
-        if options["dry_run"]:
-            self.stdout.write("--- DRY RUN: Build Plan ---")
-            self.stdout.write(plan_str)
-            return
 
         out_dir = Path(options["output"])
         out_dir.mkdir(parents=True, exist_ok=True)

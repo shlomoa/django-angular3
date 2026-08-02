@@ -12,7 +12,11 @@ from .angular import (
     resolve_angular_command,
 )
 from .config import ConfigError, load_project_config
-from .validation import validate_openapi_file, validate_project_config, validate_ui_file
+from .validation import (
+    validate_openapi_file,
+    validate_openui_file,
+    validate_project_config,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -24,10 +28,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_openapi.add_argument("path", help="Path to the OpenAPI document.")
 
-    validate_ui = subparsers.add_parser(
-        "validate-ui", help="Validate a UI definition document."
+    validate_openui = subparsers.add_parser(
+        "validate-openui", help="Validate a UI definition document."
     )
-    validate_ui.add_argument("path", help="Path to the UI definition document.")
+    validate_openui.add_argument("path", help="Path to the UI definition document.")
 
     validate_project = subparsers.add_parser(
         "validate-project", help="Validate a django-angular3 project configuration."
@@ -209,8 +213,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             validate_openapi_file(args.path), f"OpenAPI document {args.path}"
         )
 
-    if args.command == "validate-ui":
-        return _run_validation(validate_ui_file(args.path), f"UI document {args.path}")
+    if args.command == "validate-openui":
+        return _run_validation(
+            validate_openui_file(args.path), f"UI document {args.path}"
+        )
 
     if args.command == "validate-project":
         try:

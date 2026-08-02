@@ -68,10 +68,10 @@ From inside the tutorial directory, validate the configuration and its
 referenced OpenAPI and UI sources:
 
 ```bash
-django-angular3 validate-project django-angular3.json
+python manage.py validate_project django-angular3.json
 ```
 
-`validate-project` defaults to `django-angular3.json` in the current directory,
+`validate_project` defaults to `django-angular3.json` in the current directory,
 so you can also run it with no arguments. See [Configuration](configuration.md)
 for the full schema.
 
@@ -82,15 +82,15 @@ to print the resolved Angular subprocess calls without executing them — start
 there to preview what will happen:
 
 ```bash
-django-angular3 ng_workspace django-angular3.json --dry-run
+python manage.py ng_workspace django-angular3.json --dry-run
 ```
 
 When you are ready to execute, drop `--dry-run`:
 
 ```bash
-django-angular3 ng_workspace django-angular3.json
-django-angular3 ng_openapi_gen django-angular3.json
-django-angular3 ng_build django-angular3.json
+python manage.py ng_workspace django-angular3.json
+python manage.py ng_openapi_gen django-angular3.json
+python manage.py ng_build django-angular3.json
 ```
 
 `ng_workspace` runs the full bootstrap flow (`ng new`, workspace defaults,

@@ -67,7 +67,7 @@ def validate_openapi_document(document: Any) -> list[str]:
     return errors
 
 
-def validate_ui_document(document: Any) -> list[str]:
+def validate_openui_document(document: Any) -> list[str]:
     errors: list[str] = []
     if not isinstance(document, dict):
         return ["UI definition document must be a mapping."]
@@ -128,12 +128,12 @@ def validate_openapi_file(path: str | Path) -> list[str]:
     return validate_openapi_document(document)
 
 
-def validate_ui_file(path: str | Path) -> list[str]:
+def validate_openui_file(path: str | Path) -> list[str]:
     try:
         document = load_document(path)
     except DocumentError as exc:
         return [str(exc)]
-    return validate_ui_document(document)
+    return validate_openui_document(document)
 
 
 def validate_project_config(config: ProjectConfig) -> list[str]:
@@ -144,10 +144,10 @@ def validate_project_config(config: ProjectConfig) -> list[str]:
     else:
         errors.extend(validate_openapi_file(config.openapi_source))
 
-    if not config.ui_source.exists():
-        errors.append(f"UI source does not exist: {config.ui_source}")
+    if not config.openui_source.exists():
+        errors.append(f"UI source does not exist: {config.openui_source}")
     else:
-        errors.extend(validate_ui_file(config.ui_source))
+        errors.extend(validate_openui_file(config.openui_source))
 
     if config.angular_output.exists() and not config.angular_output.is_dir():
         errors.append(

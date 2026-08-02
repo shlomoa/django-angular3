@@ -90,7 +90,7 @@ OpenUI catalog validation in this task.
 
 **Target:** `django_angular3/management/commands/build_app.py`.
 
-Keep `validate-ui` as the explicit non-CRM stage before assembly. `build_app`
+Keep `validate-openui` as the explicit non-CRM stage before assembly. `build_app`
 owns project-source validation before change detection. Update its procedure
 labels and outputs to identify the OpenUI document, but do not implement Angular
 assembly in this task.
@@ -105,7 +105,7 @@ assembly in this task.
 `tests/test_cli_scaffold.py`.
 
 Create `tests/test_validation.py` for direct unit tests of
-`validate_ui_document()`. Cover a valid OpenUI concrete document and invalid
+`validate_openui_document()`. Cover a valid OpenUI concrete document and invalid
 cases for: a non-object document; missing or invalid top-level `version`, `id`,
 or `type`; invalid element IDs/types; invalid `attrs` value types; unrecognized
 loose properties; and malformed `children`. Assert path-qualified,
@@ -129,7 +129,7 @@ invalid OpenUI document through `validate_project_config()`.
 
 **Target:** new `tests/test_cli.py`.
 
-Add CLI tests for `validate-ui <project.ui.json>` and `validate-project`.
+Add CLI tests for `validate-openui <project.ui.json>` and `validate-project`.
 Verify valid fixtures return success and invalid OpenUI documents return failure
 with the validation path. Add generated-app command coverage showing that
 `build_app` rejects an invalid UI source before change detection. This test file
@@ -150,7 +150,7 @@ remain conformant without parsing Markdown snippets in tests.
 
 After implementation, run Ruff format and lint checks plus the full unittest
 suite specified in `.github/copilot-instructions.md`. Also run the relevant
-`django-admin validate-ui`, `django-admin validate-project`, and
+`django-admin validate-openui`, `django-admin validate-project`, and
 `django-admin build_app --dry-run` commands in a generated-app-compatible Django
 configuration. Record the OpenUI format reference and commands in the
 implementation change.

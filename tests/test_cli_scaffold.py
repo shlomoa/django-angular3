@@ -1,12 +1,14 @@
+import tempfile
 import unittest
 from pathlib import Path
 
+from django_angular3.cli import _run_install_tutorial
 from django_angular3.config import load_project_config
 from django_angular3.documents import load_document
 from django_angular3.validation import (
     validate_openapi_document,
+    validate_openui_document,
     validate_project_config,
-    validate_ui_document,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,15 +21,15 @@ class ScaffoldTests(unittest.TestCase):
         )
         self.assertEqual(validate_openapi_document(document), [])
 
-    def test_example_ui_document_is_valid(self) -> None:
+    def test_example_openui_document_is_valid(self) -> None:
         document = load_document(ROOT / "spec" / "ui" / "example.ui.json")
-        self.assertEqual(validate_ui_document(document), [])
+        self.assertEqual(validate_openui_document(document), [])
 
-    def test_tutorial_ui_document_is_valid(self) -> None:
+    def test_tutorial_openui_document_is_valid(self) -> None:
         document = load_document(
             ROOT / "django_angular3" / "examples" / "01_simple_crm" / "ui.json"
         )
-        self.assertEqual(validate_ui_document(document), [])
+        self.assertEqual(validate_openui_document(document), [])
 
     def test_tutorial_project_config_is_valid(self) -> None:
         config = load_project_config(
@@ -42,7 +44,7 @@ class ScaffoldTests(unittest.TestCase):
     def test_project_config_resolves_paths(self) -> None:
         config = load_project_config(ROOT / "django-angular3.json")
         self.assertTrue(config.openapi_source.is_file())
-        self.assertTrue(config.ui_source.is_file())
+        self.assertTrue(config.openui_source.is_file())
         self.assertEqual(config.angular_output, ROOT / "build" / "angular")
         self.assertEqual(validate_project_config(config), [])
 
@@ -74,6 +76,22 @@ class ScaffoldTests(unittest.TestCase):
             if line.strip() and not line.lstrip().startswith("#")
         }
         self.assertIn("include requirements.txt", manifest_lines)
+
+    def test_install_tutorial_copies_expected_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            dest = str(Path(tmp) / "simple_crm")
+            result = _run_install_tutorial(dest)
+            self.assertEqual(result, 0)
+            dest_path = Path(dest)
+            self.assertTrue((dest_path / "manage.py").is_file())
+            self.assertTrue((dest_path / "django-angular3.json").is_file())
+            self.assertTrue((dest_path / "ui.json").is_file())
+            self.assertTrue((dest_path / "simple_crm" / "settings.py").is_file())
+
+    def test_install_tutorial_fails_if_dest_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = _run_install_tutorial(tmp)
+            self.assertEqual(result, 1)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ run-through using a ready-made sample, start with
 flowchart LR
   drf[DRF backend] -->|export_schema| schema[OpenAPI schema]
   schema --> validate[validate-project]
-  ui[UI definition] --> validate
+  openui[UI definition] --> validate
   validate --> plan[build_app<br/>validates and plans]
   plan --> workspace[ng_workspace + ng_openapi_gen]
   workspace --> build[ng_build]
@@ -69,7 +69,7 @@ Each piece can also be validated in isolation:
 ```bash
 django-angular3 validate-project django-angular3.json
 django-angular3 validate-openapi schema.yaml
-django-angular3 validate-ui ui.json
+django-angular3 validate-openui openui.json
 ```
 
 ### 4. Generate the build plan

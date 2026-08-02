@@ -16,7 +16,7 @@ class ProjectConfig:
     config_path: Path
     project_name: str
     openapi_source: Path
-    ui_source: Path
+    openui_source: Path
     angular_output: Path
     openapi_generator_config: Path | None = None
     ng_openapi_gen_config: Path | None = None
@@ -34,7 +34,7 @@ def load_project_config(path: str | Path) -> ProjectConfig:
 
     project: dict[str, Any] = _require_mapping(document, "project")
     openapi: dict[str, Any] = _require_mapping(document, "openapi")
-    ui: dict[str, Any] = _require_mapping(document, "ui")
+    openui: dict[str, Any] = _require_mapping(document, "ui")
     angular: dict[str, Any] = _require_mapping(document, "angular")
 
     root = config_path.parent
@@ -42,7 +42,7 @@ def load_project_config(path: str | Path) -> ProjectConfig:
     openapi_source = _resolve_path(
         root, _require_string(openapi, "source", section="openapi")
     )
-    ui_source = _resolve_path(root, _require_string(ui, "source", section="ui"))
+    openui_source = _resolve_path(root, _require_string(openui, "source", section="ui"))
     angular_output_value = angular.get("output", angular.get("package"))
     if not isinstance(angular_output_value, str) or not angular_output_value.strip():
         raise ConfigError(
@@ -61,7 +61,7 @@ def load_project_config(path: str | Path) -> ProjectConfig:
         config_path=config_path,
         project_name=project_name,
         openapi_source=openapi_source,
-        ui_source=ui_source,
+        openui_source=openui_source,
         angular_output=angular_output,
         openapi_generator_config=openapi_generator_config,
         ng_openapi_gen_config=ng_openapi_gen_config,

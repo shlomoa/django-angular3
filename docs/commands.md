@@ -34,7 +34,7 @@ Invoked as `django-angular3 <command> [args]`.
 | Command | Description |
 |---|---|
 | `validate-openapi <path>` | Validate an OpenAPI source document. |
-| `validate-ui <path>` | Validate a UI definition document. |
+| `validate-openui <path>` | Validate a UI definition document. |
 | `validate-project [path]` | Validate a `django-angular3` project configuration. Defaults to `django-angular3.json`. |
 | `ng_new [path]` | Create an empty Angular workspace. |
 | `ng_workspace [path]` | Bootstrap the configured workspace: `ng new`, workspace defaults, `ng add angular-django2`, and schematic generation. |
@@ -77,7 +77,7 @@ subprocess call list without invoking Angular tooling.
 | Command | Standalone CLI | Management commands |
 |---|:---:|:---:|
 | `validate-openapi` | ✓ | — |
-| `validate-ui` | ✓ | — |
+| `validate-openui` | ✓ | — |
 | `validate-project` | ✓ | — |
 | `export_schema` | — | ✓ |
 | `build_app` | — | ✓ |
