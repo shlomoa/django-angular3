@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +13,81 @@ class ValidationError(ValueError):
     """Raised when validation cannot continue."""
 
 
+# ---------------------------------------------------------------------------
+# Speakeasy OpenAPI CLI helpers
+# ---------------------------------------------------------------------------
+
+_SPEAKEASY_OPENAPI_BIN = "openapi"
+
+
+def _find_speakeasy_openapi() -> str | None:
+    """Return the path to the Speakeasy ``openapi`` binary, or None."""
+    # Prefer the binary installed via ensure_speakeasy_openapi() in GOPATH/bin
+    import os
+    import platform
+
+    try:
+        result = subprocess.run(
+            ["go", "env", "GOPATH"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        gopath = result.stdout.strip()
+    except Exception:
+        gopath = ""
+
+    if gopath:
+        exe = "openapi.exe" if platform.system().lower() == "windows" else "openapi"
+        candidate = Path(gopath) / "bin" / exe
+        if candidate.exists() and os.access(candidate, os.X_OK):
+            return str(candidate)
+
+    return shutil.which(_SPEAKEASY_OPENAPI_BIN)
+
+
+def _run_speakeasy_validate(path: str | Path) -> list[str]:
+    """Run ``openapi spec validate`` against *path*.
+
+    Returns a list of error strings (empty if valid).
+    Raises ``RuntimeError`` if the binary cannot be found.
+    """
+    binary = _find_speakeasy_openapi()
+    if binary is None:
+        raise RuntimeError(
+            "Speakeasy OpenAPI CLI ('openapi') is not installed. "
+            "Run 'python -c \"from django_angular3.tools import "
+            "ensure_speakeasy_openapi; ensure_speakeasy_openapi()\"' "
+            "to install it."
+        )
+
+    try:
+        result = subprocess.run(
+            [binary, "spec", "validate", str(path)],
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError(
+            f"Speakeasy OpenAPI CLI not found at '{binary}': {exc}"
+        ) from exc
+
+    if result.returncode == 0:
+        return []
+
+    # Collect error output
+    output = (result.stderr or result.stdout or "").strip()
+    if output:
+        return [output]
+    return [f"openapi spec validate exited with code {result.returncode}."]
+
+
 def validate_openapi_document(document: Any) -> list[str]:
+    """Lightweight structural pre-check for an in-memory OpenAPI document.
+
+    This is intentionally minimal — full OAS compliance is delegated to the
+    Speakeasy ``openapi spec validate`` CLI (see :func:`validate_openapi_file`).
+    """
     errors: list[str] = []
     if not isinstance(document, dict):
         return ["OpenAPI document must be a mapping."]
@@ -121,11 +197,41 @@ def validate_openui_document(document: Any) -> list[str]:
 
 
 def validate_openapi_file(path: str | Path) -> list[str]:
+    """Validate an OpenAPI file using the Speakeasy CLI.
+
+    When the Speakeasy ``openapi`` binary is available, it is invoked as::
+
+        openapi spec validate <path>
+
+    providing full OAS compliance checking.  If the binary is not installed a
+    warning is emitted and the lightweight in-process structural check
+    (:func:`validate_openapi_document`) is used as a fallback so that the
+    package remains usable without Go installed.
+    """
     try:
         document = load_document(path)
     except DocumentError as exc:
         return [str(exc)]
-    return validate_openapi_document(document)
+
+    # Run quick structural checks first — fast feedback for obviously broken docs
+    structural_errors = validate_openapi_document(document)
+    if structural_errors:
+        return structural_errors
+
+    # Delegate to the Speakeasy CLI for full OAS compliance validation
+    try:
+        return _run_speakeasy_validate(path)
+    except RuntimeError as exc:
+        import warnings
+
+        warnings.warn(
+            f"Speakeasy OpenAPI CLI unavailable; falling back to basic validation. "
+            f"Install it with 'python -c \"from django_angular3.tools import "
+            f"ensure_speakeasy_openapi; ensure_speakeasy_openapi()\"'. "
+            f"Details: {exc}",
+            stacklevel=2,
+        )
+        return []
 
 
 def validate_openui_file(path: str | Path) -> list[str]:

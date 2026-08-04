@@ -7,18 +7,38 @@
   "paths": {
     "/api/users/": {
       "get": {
-        "operationId": "listUsers"
+        "operationId": "listUsers",
+        "responses": {
+          "200": {
+            "description": "A list of users."
+          }
+        }
       },
       "post": {
-        "operationId": "createUser"
+        "operationId": "createUser",
+        "responses": {
+          "201": {
+            "description": "User created."
+          }
+        }
       }
     },
     "/api/users/{id}/": {
       "get": {
-        "operationId": "retrieveUser"
+        "operationId": "retrieveUser",
+        "responses": {
+          "200": {
+            "description": "User detail."
+          }
+        }
       },
       "patch": {
-        "operationId": "updateUser"
+        "operationId": "updateUser",
+        "responses": {
+          "200": {
+            "description": "User updated."
+          }
+        }
       }
     }
   }

@@ -33,6 +33,29 @@ To install from a local clone:
 pip install -e /path/to/django-angular3/
 ```
 
+### OpenAPI validation dependency (Go)
+
+`django-angular3` uses the [Speakeasy OpenAPI CLI] for full OAS compliance
+validation of OpenAPI documents.  The CLI is a Go binary installed separately:
+
+```bash
+# Requires Go ≥ 1.21 — https://go.dev/dl/
+go install github.com/speakeasy-api/openapi/cmd/openapi@latest
+```
+
+Or use the built-in installer helper:
+
+```python
+from django_angular3.tools import ensure_speakeasy_openapi
+ensure_speakeasy_openapi()
+```
+
+When the binary is not installed, `django-angular3` falls back to a lightweight
+structural check and emits a warning.  Full OAS validation is strongly
+recommended for production workflows.
+
+[Speakeasy OpenAPI CLI]: https://github.com/speakeasy-api/openapi
+
 ## Django app integration
 
 If you install `django-angular3` into a Django project, add the app to
