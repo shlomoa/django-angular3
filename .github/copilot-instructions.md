@@ -41,7 +41,7 @@ the authoritative description of djng's role in the toolchain.
 - `django_angular3/settings.py`: Django setting defaults and compatibility.
 - `tests/`: unittest test suite.
 - `spec/openapi/`: source OpenAPI examples and generator configs.
-- `spec/ui/`: structured UI definition examples.
+- `spec/openui/`: structured UI definition examples.
 - `doc/REQUIREMENTS.md` and `doc/ARCHITECTURE.md`: target platform context.
 
 ### Django Project vs Django App
@@ -60,7 +60,6 @@ See `doc/ARCHITECTURE.md` §2.21 for the authoritative definition.
 - Treat OpenAPI as the source of truth for CRM-facing contract-derived content.
 - Keep bespoke non-CRM UI definitions separate from OpenAPI-derived content.
 - Prefer small, explicit, deterministic build and validation steps.
-- Keep command planning separate from command execution.
 - Do not make Angular tooling download packages at runtime. `ng_openapi_gen`
 	should continue to use locally installed workspace dependencies via
 	`pnpm exec`.

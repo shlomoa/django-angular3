@@ -56,7 +56,7 @@ class Command(BaseCommand):
             "--output-format",
             choices=["json", "yaml", "text"],
             default="json",
-            help="Format of the emitted build plan.",
+            help="Format of the printed command execution plan.",
         )
         parser.add_argument(
             "--dry-run", action="store_true", help="Print plan without writing to disk."
@@ -212,7 +212,55 @@ class Command(BaseCommand):
             "affected_forms": [],
         }
 
+    def _diff_openui_spec(
+        self, previous_openui_spec_path: str, current_openui_spec_path: str
+    ):
+        """
+        Compare two OpenUI spec JSON files and return a summary of changes.
+        Use openui-spec compare_openui_json.py command to calculate differences.
+
+        :param previous_openui_spec_path: Previous OpenUI spec json file path
+        :type previous_openui_spec_path: str
+        :param current_openui_spec_path: Current OpenUI spec json file path
+        :type current_openui_spec_path: str
+
+        :raises CommandError: If loading the OpenUI spec fails
+        :return: A summary of changes and commands to execute
+        """
+        try:
+            raise NotImplementedError("OpenUI spec diffing is not implemented yet.")
+        except ConfigError as e:
+            raise CommandError(f"Config load failed: {e}") from e
+
     def handle(self, *args: list[str], **options: dict[str, Any]) -> None:
+        """Create a deterministic Angular build plan from project changes.
+
+        The command loads and validates the supplied project configuration, then
+        compares its OpenAPI schema with either ``--previous-schema`` or the
+        conventional previous-schema artifact. When no prior schema is available
+        (or ``--force start-from-scratch`` is used), it treats the current schema
+        as a new application and derives its resources by diffing an empty OpenAPI
+        document.
+
+        For incremental schema changes, this method obtains structural and
+        breaking-change reports from ``oasdiff``. Breaking changes stop planning
+        unless the caller explicitly supplies ``--acknowledge-breaking``. If a
+        previous configuration is supplied, it is also compared to capture
+        configuration-level changes.
+
+        The resulting change set is translated into ordered, inspectable
+        ``django-admin`` commands: workspace and app creation precede API client
+        generation, and resource removals precede regeneration and additions.
+        With the current command contract, ``--dry-run`` writes this plan using
+        :meth:`_print_debug_change_set`; without it, planning completes without emitting a
+        plan file.
+
+        Raises:
+            CommandError: If the configuration is invalid, its schema source is
+                absent, or ``oasdiff`` cannot be prepared or used.
+            SystemExit: With status 2 when breaking schema changes are found
+                without ``--acknowledge-breaking``.
+        """
         config_path: str | Any = options["config"]
 
         try:
@@ -485,9 +533,9 @@ class Command(BaseCommand):
             "steps": steps,
         }
         if options["dry_run"]:
-            self._emit_plan(build_plan, options)
+            self._print_debug_change_set(build_plan, options)
 
-    def _emit_plan(self, build_plan: dict[str, Any], options: dict[str, Any]) -> None:
+    def _print_debug_change_set(self, build_plan: dict[str, Any], options: dict[str, Any]) -> None:
         plan_str: str = json.dumps(build_plan, indent=2)
 
         out_dir = Path(options["output"])

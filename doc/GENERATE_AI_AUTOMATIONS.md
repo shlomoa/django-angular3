@@ -22,13 +22,13 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md`, `ARCHITECTURE.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
+| **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. One primitive family in the automation model defined here. | `ARCHITECTURE.md` §2.14 |
 | **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
 | **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
-| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
+| **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
 | **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
 
 ---
@@ -37,7 +37,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 This table is the single source of truth mapping every construction concern to
 its name in each of the four automation naming layers (see `ARCHITECTURE.md`
-§2.23). Use it when authoring procedure graphs, hook contracts, plugin
+§2.23). Use it when authoring command translations, hook contracts, plugin
 manifests, or skill files to ensure each layer uses the correct name.
 
 | Concern key | CLI wrapper | TOOL contract | SKILL name | HOOKs |
@@ -199,8 +199,8 @@ Per-capability tool contracts for the deterministic operations identified in
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` are defined in the
 [Tool Contracts Catalog](#tool-contracts-catalog) below. Each contract follows
 the same fixed shape — **name, inputs, outputs, error behavior, allowed
-invocation context** — so the agent, the procedure-graph builder, and a future
-MCP exposure layer all see the same surface.
+invocation context** — so the agent, `build_app` command translator, and a
+future MCP exposure layer all see the same surface.
 
 #### Tool contract shape
 
@@ -208,12 +208,12 @@ Every tool contract in this document **MUST** specify:
 
 | Field | Meaning |
 |---|---|
-| **Name** | The stable identifier the agent uses to call the tool. Matches the `tool` field of a `tool` procedure node in the procedure graph (see `APP_BUILDER_REQUIREMENTS.md` §Procedure Graph). |
+| **Name** | The stable identifier the agent and `build_app` use to call the tool. Matches the deterministic tool contract selected during command translation (see `APP_BUILDER_REQUIREMENTS.md` §Change Command Translation and Execution). |
 | **Purpose** | One-sentence statement of what the tool does. Must be deterministic — no AI judgment inside the operation. |
 | **Inputs** | Typed table of input keys, required/optional status, type, default, and description. Inputs are passed as a single structured object. |
 | **Outputs** | Typed table of output keys returned on success. Outputs are returned as a single structured object so the agent and downstream tools can read them without parsing free-form text. |
 | **Error behavior** | The exit-code or exception contract on failure, the structured error fields returned, and the failure categories the caller must distinguish (e.g. `invalid_input`, `missing_dependency`, `external_tool_failed`, `output_invalid`). |
-| **Allowed invocation context** | Which automation primitives are permitted to invoke this tool: `build_app` (as a `tool` procedure), `HOOK` (as the wrapped action of a lifecycle hook), agent (as a direct callable inside a guided agent session), or CLI (as a `django-admin` command). |
+| **Allowed invocation context** | Which automation primitives are permitted to invoke this tool: `build_app` (as a selected TOOL command), `HOOK` (as the wrapped action of a lifecycle hook), agent (as a direct callable inside a guided agent session), or CLI (as a `django-admin` command). |
 | **Implementation reference** | Pointer to the concrete code or external CLI that backs the contract today, so the contract and the implementation can be kept aligned. |
 
 Contracts are normative. An implementation that deviates from a documented
@@ -247,7 +247,7 @@ This catalog defines the deterministic tool contracts referenced from
 §Change-to-Automations Mapping. Each entry follows the
 [tool contract shape](#tool-contract-shape) defined above.
 
-The contracts are grouped by lifecycle stage so the procedure-graph order is
+The contracts are grouped by lifecycle stage so the command execution order is
 visually obvious: **contract lifecycle** (export → validate → diff) precedes
 **Angular generation wrappers** (`ng-openapi-gen`, `ngdj_*`).
 
@@ -295,8 +295,8 @@ The destination file is **never** left in a partially written state: on any
 failure after rotation, the rotation is reversed so the previous schema is
 restored.
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure preceding
-schema-derived skill sessions); HOOK (PostToolUse on `makemigrations`, per
+**Allowed invocation context**: `build_app` (as a TOOL command preceding
+schema-derived SKILL commands); HOOK (PostToolUse on `makemigrations`, per
 `TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2); CLI
 (`django-admin export_schema <config>`).
 
@@ -334,16 +334,16 @@ free-form text blob.
 **Error behavior**:
 
 - Validation failures (`valid: false`) are **not** treated as tool errors:
-  the tool returns its structured report and exits zero. The procedure-graph
-  caller (`build_app`) — or a PreToolUse hook — decides whether to halt.
+  the tool returns its structured report and exits zero. The `build_app`
+  command executor — or a PreToolUse hook — decides whether to halt.
 - A non-zero exit / raised `ToolError` is reserved for `category` values:
   `invalid_input` (schema path missing or unreadable),
   `missing_dependency` (validator binary not installed),
   `external_tool_failed` (validator crashed),
   `output_invalid` (validator returned an unparseable report).
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure after
-`openapi_schema_export` and before any generation procedure); HOOK (PreToolUse on
+**Allowed invocation context**: `build_app` (as a TOOL command after
+`openapi_schema_export` and before any generation command); HOOK (PreToolUse on
 `angular_api_client_generate`, `angular_workspace_scaffold`, and
 `angular_app_scaffold`, per `TOOLS_HOOKS_SKILLS_ANALYSIS.md`
 §3.5); agent (callable inside a guided agent session that needs to re-verify a
@@ -358,8 +358,8 @@ must be honoured regardless of the chosen backing validator.
 **Name**: `oasdiff_diff`
 
 **Purpose**: Run `oasdiff` against the current and previous OpenAPI artifacts
-and return a structured diff result that the procedure-graph builder consumes
-to derive the `ChangeSet`. The agent does not parse raw `oasdiff` output.
+and return a structured diff result that `build_app` consumes to derive the
+`ChangeSet`. The agent does not parse raw `oasdiff` output.
 
 **Inputs**:
 
@@ -387,7 +387,7 @@ A successful `oasdiff` invocation that reports breaking changes is **not** an
 error — it returns the populated `breaking` array with exit zero. The
 breaking-change gate (HOOK or `build_app`) interprets the structured output.
 
-**Allowed invocation context**: `build_app` (as the `tool` procedure feeding
+**Allowed invocation context**: `build_app` (as the TOOL command feeding
 the `ChangeSet`); HOOK (wrapped by the PreToolUse breaking-change gate from
 `TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.1); agent (read-only diagnostic use inside
 a guided agent session that needs to re-inspect a diff).
@@ -405,7 +405,7 @@ binary acquisition; planned `django_angular3.diff` wrapper that calls
 **Purpose**: Run `ng-openapi-gen` against the current OpenAPI artifact inside
 the generated Angular workspace to produce typed Angular API clients. Wraps
 the existing `ng_openapi_gen` djng management command so the agent and
-procedure graph see a structured tool contract instead of raw CLI output.
+`build_app` command executor see a structured tool contract instead of raw CLI output.
 
 **Inputs**:
 
@@ -437,7 +437,7 @@ procedure graph see a structured tool contract instead of raw CLI output.
 - `output_invalid` is returned when the generator exits zero but writes no
   files or produces files that fail a TypeScript parse smoke check.
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure invoked
+**Allowed invocation context**: `build_app` (as a TOOL command invoked
 after `validate_openapi_schema` and before the `angular-api-integration` skill session); agent
 (inside the `angular-api-integration` guided agent session when the SKILL needs to regenerate
 the client during refinement). Not a HOOK target — generation is always
@@ -453,14 +453,14 @@ explicit. CLI (`django-admin ng_openapi_gen <config>`).
 
 **Purpose**: Invoke the `ngdj` Angular workspace schematic to scaffold a fresh
 workspace at `angular.output`. Wraps the existing `ng_new` djng management
-command behind the structured tool contract used by the procedure graph.
+command behind the structured tool contract used during direct execution.
 
 **Inputs**:
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
 | `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. `angular.output`, `project.name`, and the `angular.workspace.*` keys are read from this file. |
-| `dry_run` | no | boolean | `false` | When `true`, compute and report the planned command line but do not create the workspace. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the resolved command line without creating the workspace. |
 
 **Outputs**:
 
@@ -479,10 +479,10 @@ command behind the structured tool contract used by the procedure graph.
 - `external_tool_failed` — `ng new` exited non-zero.
 - `output_invalid` — the scaffold completed but `angular.json` is missing.
 
-**Allowed invocation context**: `build_app` (as the foundational `tool`
-procedure before the `angular-workspace-foundation` skill session, when the workspace does not
+**Allowed invocation context**: `build_app` (as the foundational TOOL
+command before the `angular-workspace-foundation` SKILL session, when the workspace does not
 yet exist); CLI (`django-admin ng_new <config>`). Not invocable from a HOOK —
-workspace creation must be an explicit graph node.
+workspace creation must be an explicit command.
 
 **Implementation reference**:
 `django_angular3/management/commands/ng_new.py`;
@@ -503,7 +503,7 @@ generated application matches the Angular CLI `ng new` defaults.
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
 | `config` | yes | string (path) | — | Absolute path to the `django-angular3.json` project config. `app.name`, `angular.output`, and the `angular.app.*` keys are read from this file. |
-| `dry_run` | no | boolean | `false` | When `true`, compute and report the planned command line but do not modify the workspace. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the resolved command line without modifying the workspace. |
 
 **Outputs**:
 
@@ -523,7 +523,7 @@ generated application matches the Angular CLI `ng new` defaults.
 - `output_invalid` — the schematic completed but the expected app directory
   is missing.
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure between the
+**Allowed invocation context**: `build_app` (as a TOOL command between the
 `angular-workspace-foundation` and `angular-app-composition` skill sessions, when the application does not yet
 exist); CLI (`django-admin ng_gen_app <config>`). Not invocable from a HOOK.
 
@@ -552,7 +552,7 @@ not expose a separate `feature` schematic.
 | `page_name` | no | string | value of `name` | Kebab-case initial page component name. |
 | `route_path` | no | string | value of `name` | URL path segment registered for the feature. |
 | `register_route` | no | boolean | `true` | Add the feature route to the application route tree. |
-| `dry_run` | no | boolean | `false` | When `true`, return planned paths and invocations without modifying the workspace. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return resolved paths and invocations without modifying the workspace. |
 
 **Outputs**:
 
@@ -573,7 +573,7 @@ or a requested route registration without an application route tree.
 `output_invalid` applies when generation completes without the expected page
 component or feature route definition.
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure), agent
+**Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: planned djng wrapper that composes the
@@ -596,7 +596,7 @@ embedding hooks at a deterministic project-relative path.
 | `name` | yes | string | — | Kebab-case component name. |
 | `path` | no | string (relative path) | Angular CLI default | Project-relative destination directory. |
 | `project` | no | string | inferred from `project.name` | Angular project to modify. |
-| `dry_run` | no | boolean | `false` | When `true`, return the planned invocation without modifying the workspace. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 
 **Outputs**:
 
@@ -614,7 +614,7 @@ embedding hooks at a deterministic project-relative path.
 application source root. `output_invalid` applies when the invocation succeeds
 but does not create the expected component source and template.
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure), agent
+**Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: planned djng wrapper over
@@ -653,7 +653,7 @@ Angular CLI output.
 options that fail its schema. The tool MUST NOT accept arbitrary collection
 names or execute package downloads at runtime.
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure), agent
+**Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: planned djng wrapper invoking the workspace-local
@@ -676,7 +676,7 @@ current OpenAPI artifact, using the same schema pair consumed by `oasdiff_diff`.
 | `previous_schema` | yes | string (path) | — | Absolute path to the previous OpenAPI artifact. |
 | `output_path` | no | string (path) | `build/openapi-changelog.md` | Destination for the generated Markdown changelog. |
 | `format` | no | `"markdown"` \| `"html"` | `"markdown"` | Changelog serialization format. |
-| `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the planned destination without writing. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the resolved destination without writing. |
 
 **Outputs**:
 
@@ -693,7 +693,7 @@ current OpenAPI artifact, using the same schema pair consumed by `oasdiff_diff`.
 `output_invalid` applies when `oasdiff` exits successfully but the requested
 changelog file is empty or cannot be parsed as the requested format.
 
-**Allowed invocation context**: `build_app` (as a `tool` procedure after
+**Allowed invocation context**: `build_app` (as a TOOL command after
 `oasdiff_diff`), agent (read-only contract-review assistance), CLI. Not a HOOK
 target.
 
@@ -703,17 +703,17 @@ resolution and archive output under the configured build directory.
 
 #### Contract compliance
 
-- The procedure-graph builder in `build_app` MUST emit a `tool` node whose
-  `tool` field equals one of the **Name** values above when scheduling a
-  deterministic operation. Free-form `Bash` invocations of these capabilities
-  outside the `tool` node mechanism are not permitted.
+- `build_app` MUST select the matching **Name** value above when translating a
+  deterministic operation into an executable command. Free-form `Bash`
+  invocations of these capabilities outside the documented tool-contract
+  mechanism are not permitted.
 - HOOKS that need to perform any of the operations above MUST do so by
   invoking the corresponding tool contract — not by calling the underlying
   binary directly — so error categories and structured outputs remain uniform
   across automation primitives.
 - New deterministic capabilities added to `djng` MUST be documented here using
   the [tool contract shape](#tool-contract-shape) before they may appear as a
-  `tool` procedure in the graph.
+  selected TOOL command.
 
 ### Hooks
 
@@ -727,9 +727,9 @@ Per-capability hook contracts for the lifecycle enforcement points identified
 in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3 are defined in the
 [Hook Contracts Catalog](#hook-contracts-catalog) below. Each contract follows
 the same fixed shape — **name, purpose, trigger event, deterministic action,
-failure behavior, allowed wrapped tools, implementation reference** — so the
-procedure-graph builder, the `build_app` traversal, and a future Claude Code
-`settings.json` exposure layer all see the same surface.
+failure behavior, allowed wrapped tools, implementation reference** — so
+`build_app` command execution and a future Claude Code `settings.json`
+exposure layer all see the same surface.
 
 #### Hook contract shape
 
@@ -737,11 +737,11 @@ Every hook contract in this document **MUST** specify:
 
 | Field | Meaning |
 |---|---|
-| **Name** | The stable identifier the hook is registered under. Matches the `hook` field of a `gate` node in the procedure graph and the script/handler key in a Claude Code `settings.json` lifecycle event. |
+| **Name** | The stable identifier the hook is registered under. It is used during direct `build_app` command execution and as the script/handler key in a Claude Code `settings.json` lifecycle event. |
 | **Purpose** | One-sentence statement of the lifecycle enforcement the hook guarantees. Must be deterministic — no AI judgment inside the hook itself. |
-| **Trigger event** | The lifecycle event that fires the hook. One of the Claude Code lifecycle events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) with, when applicable, the specific tool name(s) it is scoped to — these same events govern the hook when it runs inside a Claude Code agent session. The same hook also serves as a `build_app` procedure-graph enforcement point: `Pre*` hooks become blocking `gate` nodes before the wrapped tool, `Post*` hooks become verification nodes after it, and `Stop` hooks execute at session teardown. Tool names referenced here MUST match a contract in the [Tool Contracts Catalog](#tool-contracts-catalog) or an explicitly-named external command. |
+| **Trigger event** | The lifecycle event that fires the hook. One of the Claude Code lifecycle events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) with, when applicable, the specific tool name(s) it is scoped to — these same events govern the hook when it runs inside a Claude Code agent session. During `build_app` command execution, `Pre*` hooks block their wrapped command before it runs, `Post*` hooks validate it after it runs, and `Stop` hooks execute at session teardown. Tool names referenced here MUST match a contract in the [Tool Contracts Catalog](#tool-contracts-catalog) or an explicitly-named external command. |
 | **Deterministic action** | Step-by-step description of what the hook does on the trigger event. The action must be reproducible — same inputs always produce the same outcome and side effects. When the hook performs a deterministic operation that already has a tool contract above, it MUST invoke that contract by name rather than calling the underlying binary directly. |
-| **Failure behavior** | What the hook does when its check fails or its action errors. MUST specify: (1) the hook script exit code and runtime consequence in Claude Code (`PreToolUse`: exit `2` blocks the tool; `PostToolUse`: non-zero halts further processing; `Stop`: non-zero warns only), and (2) the `build_app` process exit code used when the same hook is represented as a procedure-graph node. Also MUST specify the structured message written to stderr or to the durable artifact log. |
+| **Failure behavior** | What the hook does when its check fails or its action errors. MUST specify: (1) the hook script exit code and runtime consequence in Claude Code (`PreToolUse`: exit `2` blocks the tool; `PostToolUse`: non-zero halts further processing; `Stop`: non-zero warns only), and (2) the `build_app` process exit code used when the hook runs during direct command execution. Also MUST specify the structured message written to stderr or to the durable artifact log. |
 | **Allowed wrapped tools** | The tool contract names (from the [Tool Contracts Catalog](#tool-contracts-catalog)) or external commands the hook may scope itself to. Hooks MUST NOT silently apply themselves to tools outside this list. |
 | **Implementation reference** | Pointer to the concrete script or planned implementation that backs the contract, so the contract and the implementation can be kept aligned. |
 
@@ -758,15 +758,15 @@ model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/
   `Stop`) in `settings.json` requires a stable identifier and an explicit
   event-plus-matcher declaration (see [Hooks reference — Claude Code
   docs](https://docs.anthropic.com/en/docs/claude-code/hooks)). In a
-  `build_app` run the *same* lifecycle family determines the node type in the
-  procedure graph: `Pre*` → blocking `gate` node before the wrapped tool,
-  `Post*` → verification node after it, `Stop` → teardown node. Separating the
+  `build_app` run the *same* lifecycle family determines the command boundary:
+  `Pre*` blocks the wrapped tool before execution, `Post*` verifies it after
+  execution, and `Stop` performs teardown. Separating the
   *name* (catalog key used in both `gate` nodes and `settings.json`) from the
   *trigger event* (the runtime event that fires it) lets multiple hooks share
   the same event without name collision and lets the catalog be validated
   against both execution contexts.
 - **Purpose** is required so that consumers of the catalog — the
-  procedure-graph builder, `build_app` reviewers, and future plugin authors —
+  `build_app` command translator, reviewers, and future plugin authors —
   can verify at a glance what invariant a hook enforces without reading the
   implementation. It also makes the *deterministic* constraint explicit: a
   one-sentence purpose that requires AI judgment signals a misclassification
@@ -787,8 +787,8 @@ model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/
   downstream steps are aborted and the error is surfaced to the caller. `Stop`
   hooks that exit non-zero produce a **warning only** — the session-stop
   outcome is not changed. The `build_app` FR-9a requirements mirror this
-  exactly: `Pre*` failure blocks the wrapped tool procedure; `Post*` failure
-  halts traversal (no further graph nodes run); `Stop` failure appends a
+  exactly: `Pre*` failure blocks the wrapped TOOL command; `Post*` failure
+  halts command execution (no further commands run); `Stop` failure appends a
   warning to the session log. Documenting exit codes, message destinations, and
   block/halt/warn semantics per hook prevents each implementer from inventing
   their own convention and enables automated compliance checks.
@@ -805,8 +805,8 @@ This catalog defines the lifecycle hook contracts referenced from
 §Change-to-Automations Mapping. Each entry follows the
 [hook contract shape](#hook-contract-shape) defined above.
 
-The contracts are grouped by when they fire relative to the procedure graph:
-**pre-construction gates** fire before generation procedures; **mid-run
+The contracts are grouped by when they fire relative to command execution:
+**pre-construction gates** fire before generation commands; **mid-run
 triggers** fire on backend events that invalidate prior artifacts;
 **post-generation enforcement** fires after each generation tool; **session
 lifecycle** fires when the agent session ends.
@@ -824,9 +824,9 @@ Angular generation tool is allowed to run. Implements the gate described in
 
 **Trigger event**: `PreToolUse` scoped to the Angular generation tools
 `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`
-(and any future generation tool contracts). Also runs as the very first `gate` procedure of every
-`build_app` invocation, before the procedure-graph traversal reaches any
-generation procedure.
+(and any future generation tool contracts). Also runs as the very first gate of every
+`build_app` invocation, before direct execution reaches any generation
+command.
 
 **Deterministic action**:
 
@@ -916,9 +916,8 @@ reports breaking changes, unless the run was started with
 
 **Trigger event**: `PreToolUse` scoped to `angular_api_client_generate`,
 `angular_workspace_scaffold`, `angular_app_scaffold`, and any future generation
-tool. Also runs as the `gate` procedure that consumes
-the structured output of the `oasdiff_diff` `tool` procedure in the
-procedure graph.
+tool. Also runs as the gate that consumes the structured output of the
+`oasdiff_diff` TOOL command during command execution.
 
 **Deterministic action**:
 
@@ -1019,12 +1018,12 @@ unconditionally.
 **Deterministic action**:
 
 1. Read a stable session timestamp `YYYYMMDDTHHMMSSZ` from a durable location (e.g. `build/session-timestamp.txt`); if missing, compute it and persist it so retries reuse the same value.
-2. Move (not copy) `build/procedure-graph.*`, `build/oasdiff-report.json`,
+2. Move (not copy) `build/command-execution.*`, `build/oasdiff-report.json`,
    `build/verification.log`, and `build/hook-log.jsonl` into
    `build/history/<timestamp>/`. Missing artifacts are silently skipped.
 3. Write (or update) a session summary
-   `{ hook: "session-stop", timestamp, schema_version, procedures_completed,
-   procedures_failed, hook_failures, exit_code }` to
+  `{ hook: "session-stop", timestamp, schema_version, commands_completed,
+  commands_failed, hook_failures, exit_code }` to
    `build/session-log.json` (append to the JSON array on disk only if an entry for this `timestamp` does not already exist).
 4. Exit 0.
 
@@ -1049,19 +1048,18 @@ registered under the `Stop` key of the project's Claude Code
 
 #### Contract compliance
 
-- The procedure-graph builder in `build_app` MUST emit an enforced-boundary
-  procedure whose `hook` field equals one of the **Name** values above (a `gate`
-  node for `Pre*` hooks, a `verification` node for `Post*` hooks, and a
-  session-teardown step for `Stop`).
-  Ad-hoc `Bash` invocations of the actions above outside the hook mechanism are
-  not permitted.
+- `build_app` MUST apply an enforced command boundary whose `hook` equals one
+  of the **Name** values above: before a wrapped command for `Pre*` hooks,
+  after it for `Post*` hooks, and at session teardown for `Stop`. Ad-hoc
+  `Bash` invocations of the actions above outside the hook mechanism are not
+  permitted.
 - HOOKS that need to perform a deterministic operation also covered by the
   [Tool Contracts Catalog](#tool-contracts-catalog) MUST do so by invoking
   the corresponding tool contract — not by calling the underlying binary
   directly — so error categories and structured outputs remain uniform.
 - New lifecycle enforcement points added to `djng` MUST be documented here
   using the [hook contract shape](#hook-contract-shape) before they may
-  appear as an enforced-boundary procedure in the graph or be registered in any
+  appear as an enforced command boundary or be registered in any
   project's Claude Code `settings.json`.
 
 ### Plugins
@@ -1139,7 +1137,7 @@ This catalog defines the plugin contracts referenced from
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §4. Each entry follows the
 [plugin contract shape](#plugin-contract-shape) defined above.
 
-The contracts are grouped by domain so the procedure-graph and project-setup
+The contracts are grouped by domain so the command-execution and project-setup
 relationships are visually obvious: **construction-side plugins** (`djng`
 Angular construction, `ngdj` scaffold) drive generation, and the
 **contract-side plugin** (contract lifecycle) governs the OpenAPI boundary
@@ -1188,7 +1186,7 @@ configuration that exposes the two contract names.
 |---|---|---|
 | `pre-construction` | `PreToolUse` on `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold` | Block any construction tool until the OpenAPI schema is present and valid. |
 | `post-generation` | `PostToolUse` on the construction tools above | Write structured verification logs after each generation step. |
-| `session-stop` | `Stop` | Archive `build/procedure-graph.*` and write the session summary. |
+| `session-stop` | `Stop` | Archive `build/command-execution.*` and write the session summary. |
 
 **Distribution**: Source artifacts live in this repository
 (`django-angular3`). The plugin is shipped as an in-tree `.claude-plugin/`
@@ -1474,20 +1472,20 @@ For dynamic context injected at load time, the Claude Code CLI supports shell-co
 Within the broader automation model, SKILLS are used by the agent within
 guided agent sessions, not invoked by users directly:
 
-1. **Procedure graph construction**: `build_app` derives a procedure graph from
-   schema and config changes. Each node specifies which SKILL(s) apply and what
-   inputs to provide.
-2. **Guided agent session**: For each procedure node, `build_app` makes a Claude
-   Agent SDK `query()` call with the relevant SKILL(s) enabled and the procedure
+1. **Command translation**: `build_app` derives an ordered command sequence
+  from schema and configuration changes. Each selected AI-guided command
+  specifies which SKILL(s) apply and what inputs to provide.
+2. **Guided agent session**: For each selected AI-guided command, `build_app`
+  makes a Claude Agent SDK `query()` call with the relevant SKILL(s) enabled and the command
    inputs as the prompt. The agent carries out the construction work, using the
    SKILL's knowledge to guide its actions — invoking ngdj schematics, reading
    and writing files, and verifying results.
-3. **Next procedure**: `build_app` proceeds to the next procedure node in
-   dependency order until all procedures are complete.
+3. **Next command**: `build_app` proceeds to the next selected command in
+  dependency order until all commands are complete.
 
 **Key Principle**: SKILLS are composable knowledge units within the broader
 automation model. Multiple SKILLS may be enabled for a single guided agent
-session when a procedure composes capabilities from several skills.
+session when a selected command composes capabilities from several skills.
 
 **Implementation note**: Higher-level documents (`APP_BUILDER_REQUIREMENTS.md`,
 `ARCHITECTURE.md`) use the abstract term "Claude Agent SDK call" to describe a
@@ -1658,7 +1656,7 @@ See [angular-conventions.md](../shared/angular-conventions.md) — when this ski
 
 **Contents**:
 
-- **oasdiff — schema diff and change detection**: `oasdiff` is run by `build_app` during the Change Derivation phase, before any skill is invoked. Skills receive the resulting `ChangeSet` as procedure input (see `APP_BUILDER_REQUIREMENTS.md` §"Change Derivation"). Skills must **not** re-run `oasdiff`.
+- **oasdiff — schema diff and change detection**: `oasdiff` is run by `build_app` during the Change Derivation phase, before any skill is invoked. Skills receive the resulting `ChangeSet` as command input (see `APP_BUILDER_REQUIREMENTS.md` §"Change Derivation"). Skills must **not** re-run `oasdiff`.
 - **ng-openapi-gen output paths**: Generated files are placed in `src/app/api/` by default. The output directory is configured in `ng-openapi-gen.json` at the workspace root.
 - **Service naming**: Each OpenAPI tag produces one Angular service named `<Tag>ApiService` (e.g., tag `Users` → `UsersApiService`). Import from `src/app/api/services/<tag>-api.service.ts`.
 - **Import patterns**: Models are imported from `src/app/api/models/<model-name>.ts`. The barrel export at `src/app/api/models.ts` re-exports all models.
@@ -2396,7 +2394,7 @@ The mode to apply to each object is determined by running `oasdiff` against the 
 ---
 name: angular-workspace-foundation
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
-when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
+when_to_use: Use when build_app selects a workspace-creation or workspace-modification command, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2415,7 +2413,7 @@ The `angular-workspace-foundation` skill manages the creation, modification, and
 
 #### Inputs
 
-All inputs are read from `django-angular3.json` passed as the procedure input.
+All inputs are read from `django-angular3.json` passed as the command input.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
@@ -2453,7 +2451,8 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    ```bash
    django-admin ng_new django-angular3.json --dry-run
    ```
-   Review the dry-run output (the previewed command invocation). When `ng_new` is in `command_allowlist`, execute:
+  Use the dry-run output to diagnose the resolved command invocation. When
+  `ng_new` is in `command_allowlist`, execute:
    ```bash
    django-admin ng_new django-angular3.json
    ```
@@ -2467,7 +2466,9 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    django-admin ng_add django-angular3.json
    ```
 
-   > **Note**: `ng_new` and `ng_add` are not in `command_allowlist` by default — they plan dry-runs unless the allowlist is explicitly broadened. See `django_angular3/settings.py`.
+  > **Note**: `ng_new` and `ng_add` are not in `command_allowlist` by default.
+  > Use `--dry-run` only for diagnostic validation and debugging until the
+  > allowlist is explicitly broadened. See `django_angular3/settings.py`.
 
 3. **Configure custom Material theme**:
    - Read the generated `src/styles.scss`
@@ -2640,7 +2641,8 @@ Remove the workspace directory completely, typically when starting fresh is simp
    ```bash
    django-admin ng_workspace_delete django-angular3.json --dry-run
    ```
-   Review the dry-run output (the previewed command invocation). When `ng_workspace_delete` is in `command_allowlist`, execute:
+  Use the dry-run output to diagnose the resolved command invocation. When
+  `ng_workspace_delete` is in `command_allowlist`, execute:
    ```bash
    django-admin ng_workspace_delete django-angular3.json
    ```
@@ -2799,7 +2801,7 @@ After modifying a workspace, verify:
 - `project.name`: `"my-shop"`
 - `angular.output`: `"/home/user/projects/my-shop"`
 
-Procedure-level input: `confirmDelete: true`
+Command-level input: `confirmDelete: true`
 
 **Execution**:
 1. Run `django-admin ng_workspace_delete django-angular3.json` (when in `command_allowlist`)
@@ -2813,7 +2815,7 @@ Procedure-level input: `confirmDelete: true`
 ---
 name: angular-app-composition
 description: Manage Angular Material application within a workspace - create app structure with Material theme, modify providers and routing, or delete app
-when_to_use: Use when build_app dispatches an app-creation, app-modification, or app-deletion procedure node, or when a user runs /angular-app-composition to scaffold or update an Angular Material application inside an existing workspace.
+when_to_use: Use when build_app selects an app-creation, app-modification, or app-deletion command, or when a user runs /angular-app-composition to scaffold or update an Angular Material application inside an existing workspace.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2956,7 +2958,7 @@ Update an existing Angular Material application with changes to providers, globa
 **Input Requirements**:
 - `project.name` (from `django-angular3.json`, required): Name of the existing application to modify
 - `angular.output` (from `django-angular3.json`, required): Absolute path to the Angular workspace
-- `modifications` (from procedure inputs, required): Object describing changes to make:
+- `modifications` (from command inputs, required): Object describing changes to make:
   - `providers`: Array of provider configurations to add/remove
   - `styles`: CSS/SCSS rules to add to global styles
   - `routes`: Route definitions to register (lazy-loaded or eager)
@@ -3172,7 +3174,7 @@ Optional dependencies:
 // Inputs from django-angular3.json:
 //   project.name = "admin-dashboard"
 //   angular.output = "/workspace/my-project"
-// Procedure-level: prefix = "admin"
+// Command-level: prefix = "admin"
 
 // Executes:
 // 1. django-admin ng_gen_app django-angular3.json
@@ -3191,7 +3193,7 @@ Optional dependencies:
 // Inputs from django-angular3.json:
 //   project.name = "admin-dashboard"
 //   angular.output = "/workspace/my-project"
-// Procedure-level: add provideAuth provider + styles
+// Command-level: add provideAuth provider + styles
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.config.ts
@@ -3224,7 +3226,7 @@ Optional dependencies:
 // Inputs from django-angular3.json:
 //   project.name = "old-admin"
 //   angular.output = "/workspace/my-project"
-// Procedure-level: confirm = true
+// Command-level: confirm = true
 
 // Executes:
 // 1. Verifies projects/old-admin/ exists
@@ -3240,7 +3242,7 @@ Optional dependencies:
 ---
 name: angular-api-integration
 description: Generate TypeScript API client code from an OpenAPI specification using ng-openapi-gen.
-when_to_use: Use when build_app dispatches an api-generation procedure node (initial generation or schema-change regeneration), or when a user runs /angular-api-integration to regenerate API clients after OpenAPI schema changes.
+when_to_use: Use when build_app selects an API-generation command (initial generation or schema-change regeneration), or when a user runs /angular-api-integration to regenerate API clients after OpenAPI schema changes.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3310,7 +3312,7 @@ Regenerate API client code after OpenAPI specification changes.
 - `openapi.source` (from `django-angular3.json`, required): Path to the updated OpenAPI specification file
 - `angular.output` (from `django-angular3.json`, required): Angular workspace root
 
-Breaking-change detection is already performed by `build_app` before invoking this skill. The `oasdiff_report` is available in the ChangeSet passed as procedure input.
+Breaking-change detection is already performed by `build_app` before invoking this skill. The `oasdiff_report` is available in the ChangeSet passed as command input.
 
 **Process**:
 1. **Verify existing generation**:
@@ -3492,7 +3494,7 @@ Cleaned and regenerated API client code
 ---
 name: angular-data-service-composition
 description: Create, modify, or delete Angular data services that wrap generated `<Resource>ApiService` clients with typed `Observable` methods, snack-bar feedback, and focused unit tests.
-when_to_use: Use when build_app dispatches a data-service procedure node for a resource that has generated <Resource>ApiService code, or when a user runs /angular-data-service-composition to wrap a generated API client with typed Observables and snack-bar feedback.
+when_to_use: Use when build_app selects a data-service command for a resource that has generated <Resource>ApiService code, or when a user runs /angular-data-service-composition to wrap a generated API client with typed Observables and snack-bar feedback.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3515,7 +3517,7 @@ Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path (used to locate the workspace)
 - `project.name`: Project name (used to resolve the application directory)
 
-Procedure-level input (provided by `build_app` when invoking this skill):
+Command-level input (provided by `build_app` when invoking this skill):
 - `resource_name` (string): Resource name used to resolve the generated `<Resource>ApiService` and related model types
 
 **Resource Mapping**:
@@ -3704,7 +3706,7 @@ Output:
 ---
 name: angular-field-component-composition
 description: Create, modify, or delete Angular Material small field-level components with typed input/output signals, Material imports, and ARIA accessibility
-when_to_use: Use when build_app dispatches a small-field-component procedure node, or when a user runs /angular-field-component-composition to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
+when_to_use: Use when build_app selects a small-field-component command, or when a user runs /angular-field-component-composition to scaffold a small reusable Material field-level component (badge, chip, button-with-icon, status indicator, etc.).
 user-invocable: false
 context: fork
 allowed-tools:
@@ -3735,7 +3737,7 @@ Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
-Procedure-level inputs (provided by `build_app`):
+Command-level inputs (provided by `build_app`):
 - `componentName` (string, required): Name of the component in kebab-case (e.g., `status-badge`, `action-button`)
 - `placement` (string, required): Where to place the component:
   - `shared` — Place in `projects/<project.name>/src/app/shared/components/` (for reusable components)
@@ -3911,7 +3913,7 @@ Update an existing Angular Material small field-level component by adding/removi
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName` (string, required): Name of the existing component to modify
 - `placement` (string, required): Current placement location (`shared` or `feature/<feature-name>`)
 - `modifications` (object, required): Changes to apply:
@@ -4014,7 +4016,7 @@ Remove an Angular Material small field-level component completely, including all
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName` (string, required): Name of the component to delete
 - `placement` (string, required): Current placement location
 - `confirmDelete` (boolean, required): Safety confirmation (must be `true`)
@@ -4327,7 +4329,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: angular-form-field-composition
 description: Create, modify, or delete Angular Material form field components implementing ControlValueAccessor for seamless reactive forms integration with validation and error handling
-when_to_use: Use when build_app dispatches a form-field-component procedure node, or when a user runs /angular-form-field-composition to scaffold a Material form-field component that implements ControlValueAccessor for reactive forms.
+when_to_use: Use when build_app selects a form-field-component command, or when a user runs /angular-form-field-composition to scaffold a Material form-field component that implements ControlValueAccessor for reactive forms.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -4358,7 +4360,7 @@ Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName` (string, required): Name of the form field component in kebab-case (e.g., `email-input`, `date-picker`, `country-select`)
 - `placement` (string, required): Where to place the component:
   - `shared` — Place in `projects/<project.name>/src/app/shared/form-fields/` (for reusable form fields)
@@ -4618,7 +4620,7 @@ Update an existing form field component to change input type, add/remove validat
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName` (string, required): Name of the form field component to modify
 - `placement` (string, required): Where the component is located (`shared` or `feature/<feature-name>`)
 - `modifications` (object, required): Specifies what to modify:
@@ -4717,7 +4719,7 @@ Remove a form field component completely from the codebase, including all relate
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName` (string, required): Name of the form field component to delete
 - `placement` (string, required): Where the component is located (`shared` or `feature/<feature-name>`)
 - `confirmDelete` (boolean, required): Explicit confirmation flag to prevent accidental deletion
@@ -5170,7 +5172,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: angular-component-composition
 description: Create, modify, or delete Angular Material components (display, container, or dialog types) with standalone architecture and Material theming
-when_to_use: Use when build_app dispatches a component procedure node for display, container, or dialog types, or when a user runs /angular-component-composition to scaffold a standalone Angular Material component.
+when_to_use: Use when build_app selects a component command for display, container, or dialog types, or when a user runs /angular-component-composition to scaffold a standalone Angular Material component.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -5195,7 +5197,7 @@ Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
-Procedure-level inputs:
+Command-level inputs:
 - **`componentName`** (string, required): Name of the component in kebab-case (e.g., `user-profile`, `product-card`)
 - **`targetPath`** (string, required): Relative path from app source directory where component will be created (e.g., `src/app/features/users`, `src/app/shared/components`)
 - **`type`** (enum, required): Component type (`display` | `container` | `dialog`)
@@ -5538,7 +5540,7 @@ Update an existing Angular component with changes to template, services, or type
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName`: Must reference existing component
 - `targetPath`: Must point to existing component directory
 - `modifications` (required): Object describing changes to make:
@@ -5608,7 +5610,7 @@ Remove an Angular component completely, including all files and references in pa
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName`: Must reference existing component to delete
 - `targetPath`: Must point to existing component directory
 - `confirm` (required): Boolean confirmation flag (must be `true`)
@@ -5848,7 +5850,7 @@ Optional dependencies:
 
 ```typescript
 // Inputs from django-angular3.json: angular.output, project.name = "admin-dashboard"
-// Procedure-level:
+// Command-level:
 {
   componentName: "product-card",
   targetPath: "src/app/shared/components",
@@ -5870,7 +5872,7 @@ Optional dependencies:
 
 ```typescript
 // Inputs from django-angular3.json: angular.output, project.name
-// Procedure-level:
+// Command-level:
 {
   componentName: "user-list",
   targetPath: "src/app/features/users",
@@ -5892,7 +5894,7 @@ Optional dependencies:
 
 ```typescript
 // Inputs from django-angular3.json: angular.output, project.name
-// Procedure-level:
+// Command-level:
 {
   componentName: "confirm-delete",
   targetPath: "src/app/shared/dialogs",
@@ -5914,7 +5916,7 @@ Optional dependencies:
 
 ```typescript
 // Inputs from django-angular3.json: angular.output, project.name
-// Procedure-level:
+// Command-level:
 {
   componentName: "user-list",
   targetPath: "src/app/features/users",
@@ -5944,7 +5946,7 @@ Optional dependencies:
 
 ```typescript
 // Inputs from django-angular3.json: angular.output, project.name
-// Procedure-level:
+// Command-level:
 {
   componentName: "old-widget",
   targetPath: "src/app/shared/components",
@@ -5996,7 +5998,7 @@ Optional dependencies:
 ---
 name: angular-complex-component-composition
 description: Create, modify, or delete Angular Material complex components with theme mixins, nested child components, content projection, and CDK overlay integration
-when_to_use: Use when build_app dispatches a complex-component procedure node, or when a user runs /angular-complex-component-composition to scaffold a Material component requiring theme mixins, content projection, child components, or CDK overlay integration.
+when_to_use: Use when build_app selects a complex-component command, or when a user runs /angular-complex-component-composition to scaffold a Material component requiring theme mixins, content projection, child components, or CDK overlay integration.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -6019,7 +6021,7 @@ Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
-Procedure-level inputs:
+Command-level inputs:
 - **`componentName`** (string, required): Component name in kebab-case (e.g., `user-menu`, `filter-builder`)
 - **`targetPath`** (string, required): Relative path from app source directory where the component directory will be created
 - **`features`** (array, required): List of advanced features to enable. Allowed values:
@@ -6129,7 +6131,7 @@ Update an existing complex component by adding advanced composition features wit
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName` must reference an existing component directory
 - `targetPath` must point to a valid existing path
 - `features` must describe the feature(s) to add or expand
@@ -6155,7 +6157,7 @@ Remove a complex component and its advanced integrations completely.
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `componentName` must reference an existing complex component
 - `targetPath` must resolve to the existing component directory
 - `confirm` (required): Must be `true`
@@ -6284,7 +6286,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `
 ---
 name: angular-reactive-form-composition
 description: Create, modify, or delete Angular Material reactive forms with typed FormGroup, FormBuilder scaffolding, Material form fields, server-side validation error handling, and comprehensive specs
-when_to_use: Use when build_app dispatches a reactive-form procedure node, or when a user runs /angular-reactive-form-composition to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
+when_to_use: Use when build_app selects a reactive-form command, or when a user runs /angular-reactive-form-composition to scaffold a typed Material reactive form with FormBuilder, validation, and server-error handling.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -6307,7 +6309,7 @@ Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
-Procedure-level inputs:
+Command-level inputs:
 - `formName` (string, required): Name of the form component in kebab-case (e.g., `user-profile`, `order-create`, `product-edit`)
 - `targetPath` (string, required): Relative path from app source where form should be placed (e.g., `features/users/forms`, `shared/forms`)
 - `mode` (enum, required): Form operational mode:
@@ -6330,7 +6332,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `formName` (string): Form component name in kebab-case
 - `targetPath` (string): Target directory relative to app source
 - `mode` (enum): `create`, `edit`, or `both`
@@ -6624,7 +6626,7 @@ Update an existing reactive form component to add/remove fields, change validato
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `formName` (string): Name of the form to modify
 - `targetPath` (string): Current location of form component
 - Description of changes:
@@ -6676,7 +6678,7 @@ Remove a reactive form component and clean up references (route configurations, 
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - `formName` (string): Name of the form to delete
 - `targetPath` (string): Location of form component
 
@@ -6877,7 +6879,7 @@ Output:
 ---
 name: angular-page-composition
 description: Create, modify, or delete Angular Material pages with lazy standalone routing, sidenav navigation, and authenticated route guard support
-when_to_use: Use when build_app dispatches a page procedure node, or when a user runs /angular-page-composition to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
+when_to_use: Use when build_app selects a page command, or when a user runs /angular-page-composition to scaffold a Material page with lazy routing, sidenav navigation, and authentication guards.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -6900,7 +6902,7 @@ Read from `django-angular3.json`:
 - `angular.output`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
-Procedure-level inputs:
+Command-level inputs:
 - **`pageName`** (string, required): Page component name in kebab-case (for example `users-list`, `order-detail`, `team-dashboard`)
 - **`routePath`** (string, required): Route path segment to register in the feature route file (for example `users`, `orders/:id`, `dashboard`)
 - **`pageType`** (enum, required): Page type (`list` | `detail` | `dashboard` | `workflow`)
@@ -7143,7 +7145,7 @@ List-page templates act as the canonical scaffold for page generation. Detail, d
 ---
 name: angular-site-composition
 description: Orchestrate Angular Material site generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure
-when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /angular-site-composition to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
+when_to_use: Use when build_app selects a site-composition command (initial site generation or navigation/theme change), or when a user runs /angular-site-composition to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -7167,8 +7169,8 @@ Read from `django-angular3.json`:
 - `project.name`: Application name within the workspace
 - `openapi.source`: Path to the OpenAPI source used by `angular-api-integration` for client generation
 
-Procedure-level inputs:
-- **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/ui/`, used to discover pages, navigation structure, and forms
+Command-level inputs:
+- **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/openui/`, used to discover pages, navigation structure, and forms
 - **`defaults`** (object, optional): Fallback definitions to use when no UI spec is provided, such as default pages, route prefixes, or auth requirements
 
 #### Modes
@@ -7181,7 +7183,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 
 **Input Requirements**:
 - `angular.output` must point to an existing Angular workspace
-- `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/ui/`
+- `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/openui/`
 - `openapi.source` is optional; when provided it should resolve to a valid OpenAPI document
 
 **Process (Create Mode)**:
@@ -7193,7 +7195,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - If either the workspace or application is missing, stop and instruct the caller to run `angular-workspace-foundation` first and then `angular-app-composition`
 
 2. **Read UI spec when provided**
-   - If `uiSpecPath` is supplied, read `spec/ui/` (or the supplied equivalent) to determine:
+   - If `uiSpecPath` is supplied, read `spec/openui/` (or the supplied equivalent) to determine:
      - top-level pages
      - route structure
      - navigation labels
@@ -7280,7 +7282,7 @@ Remove the Angular application that owns the generated site from the workspace.
 
 Read from `django-angular3.json`: `angular.output`, `project.name`
 
-Procedure-level inputs:
+Command-level inputs:
 - Explicit confirmation before removal
 
 **Process**:
@@ -7320,7 +7322,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    ```bash
    django-angular3 ng_build django-angular3.json --dry-run
    ```
-   - Confirm the dry-run build preview is valid without executing a full deployment build
+  - Confirm the resolved build invocation is valid without executing it
 
 3. **Manual route review**:
    - Confirm the app shell exposes the expected navigation structure
@@ -7335,7 +7337,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
    - Resolution: run `angular-workspace-foundation` first, then `angular-app-composition`, before invoking `angular-site-composition`
 
 2. **UI spec missing or incomplete**:
-   - Resolution: fall back to defaults or stop and request a valid `spec/ui/` source when page/form inference is required
+   - Resolution: fall back to defaults or stop and request a valid `spec/openui/` source when page/form inference is required
 
 3. **OpenAPI source unavailable**:
    - Resolution: skip `angular-api-integration` orchestration when no OpenAPI source is provided, or request a valid source path before generating resource-backed pages/forms
@@ -7372,13 +7374,13 @@ Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`,
 
 ```json
 {
-  "uiSpecPath": "spec/ui/"
+  "uiSpecPath": "spec/openui/"
 }
 ```
 
 **Process**:
 1. Verify the workspace and app already exist
-2. Read `spec/ui/` to discover pages and forms
+2. Read `spec/openui/` to discover pages and forms
 3. Create the Material app shell and root routes
 4. Invoke `angular-api-integration`
 5. Invoke `angular-page-composition` for each discovered page

@@ -34,7 +34,7 @@ def load_project_config(path: str | Path) -> ProjectConfig:
 
     project: dict[str, Any] = _require_mapping(document, "project")
     openapi: dict[str, Any] = _require_mapping(document, "openapi")
-    openui: dict[str, Any] = _require_mapping(document, "ui")
+    openui: dict[str, Any] = _require_mapping(document, "openui")
     angular: dict[str, Any] = _require_mapping(document, "angular")
 
     root = config_path.parent
@@ -42,7 +42,9 @@ def load_project_config(path: str | Path) -> ProjectConfig:
     openapi_source = _resolve_path(
         root, _require_string(openapi, "source", section="openapi")
     )
-    openui_source = _resolve_path(root, _require_string(openui, "source", section="ui"))
+    openui_source = _resolve_path(
+        root, _require_string(openui, "source", section="openui")
+    )
     angular_output_value = angular.get("output", angular.get("package"))
     if not isinstance(angular_output_value, str) or not angular_output_value.strip():
         raise ConfigError(

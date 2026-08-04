@@ -20,14 +20,22 @@ run-through using a ready-made sample, start with
 ## The cycle
 
 ```mermaid
-flowchart LR
+flowchart TD
+  config[django-angular3.json] --> validate[Validate project inputs]
   drf[DRF backend] -->|export_schema| schema[OpenAPI schema]
-  schema --> validate[validate-project]
-  openui[UI definition] --> validate
-  validate --> plan[build_app<br/>validates and plans]
-  plan --> workspace[ng_workspace + ng_openapi_gen]
-  workspace --> build[ng_build]
-  build --> angular[Angular Material app]
+  schema --> validate
+  openui[OpenUI document] --> validate
+  validate --> identify[build_app: identify changes]
+  identify --> configChanges[Configuration changes]
+  identify --> schemaChanges[OpenAPI changes]
+  identify --> openuiChanges[OpenUI changes]
+  configChanges --> project[Implement project-level changes]
+  schemaChanges --> dataModel[Implement data-model changes]
+  openuiChanges --> angularUi[Implement Angular UI changes]
+  project --> execute[Execute in dependency order]
+  dataModel --> execute
+  angularUi --> execute
+  execute --> verify[Validate generated app]
 ```
 
 ### 1. Export the OpenAPI contract
@@ -46,20 +54,14 @@ python manage.py export_schema django-angular3.json
 
 ### 2. Supply the UI definition
 
-Author or update the structured UI definition referenced by `ui.source` in your
-`django-angular3.json`. This describes non-CRM pages and forms, for example:
-
-```yaml
-pages:
-  - route: /dashboard
-    kind: dashboard
-
-forms:
-  - id: invite-user
-    mode: reactive
-    submit:
-      action: createUser
-```
+Author or update the OpenUI concrete UI document referenced by `openui.source` in
+your `django-angular3.json`. The generated app convention names this document
+`app.openui.json`. Its grammar and vocabulary are defined by
+[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec), not by djng;
+consult the [OpenUI per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
+when authoring non-CRM pages, forms, and workflows. The repository fixture at
+[`spec/openui/app.openui.json`](https://github.com/shlomoa/django-angular3/blob/main/spec/openui/app.openui.json)
+shows the accepted concrete-document structure.
 
 ### 3. Validate
 
@@ -72,23 +74,30 @@ django-angular3 validate-openapi schema.yaml
 django-angular3 validate-openui openui.json
 ```
 
-### 4. Generate the build plan
+### 4. Build and validate the generated app
 
-Produce a deterministic build plan. Use `--dry-run` to preview it:
+Run `build_app` to validate inputs, compare the current and prior OpenAPI and
+OpenUI documents, execute the required construction commands in dependency
+order, and validate the resulting generated app. Use `--dry-run` only for
+validation and debugging: it validates inputs, identifies changes, and reports
+the derived commands without executing them or modifying the workspace:
 
 ```bash
-# Inside a generated app — validate sources, then produce a schema-change-driven plan:
+# Inside a generated app:
+python manage.py build_app django-angular3.json
+# Diagnose validation or change-translation results without execution:
 python manage.py build_app django-angular3.json --dry-run
 ```
 
 `build_app` is a management command. It validates the configured OpenAPI and UI
-sources before it drives the plan from schema change detection and maps
-skill/mode pairs to management command names for AI-automation workflows.
+sources before executing change-derived construction commands and terminal
+validation.
 
-### 5. Scaffold and build the Angular app
+### 5. Run individual Angular wrappers when needed
 
 The `ng_*` commands wrap the Angular toolchain. They require Node.js and pnpm.
-Preview any of them with `--dry-run`:
+Use `--dry-run` only to validate and debug a wrapper invocation without
+executing it:
 
 ```bash
 django-angular3 ng_workspace django-angular3.json     # bootstrap the workspace
@@ -224,8 +233,8 @@ each cycle.
 
 ## Which interface should I use?
 
-- Use the **standalone CLI** (`django-angular3 <command>`) for validation,
-  build-plan generation, and Angular wrappers without a Django project — for
+- Use the **standalone CLI** (`django-angular3 <command>`) for validation and
+  Angular wrappers without a Django project — for
   example in CI or while working in this repository.
 - Use the **Django management commands** (`python manage.py <command>`) inside a
   generated app — especially for `export_schema`, `build_app`, and full

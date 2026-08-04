@@ -1,7 +1,7 @@
 """Management command: validate_project
 
 Validate the django-angular3.json project config and its referenced OpenAPI
-and UI sources.
+and OpenUI sources.
 
 Usage::
 
@@ -19,7 +19,7 @@ from ...validation import validate_project_config
 
 
 class Command(BaseCommand):
-    help = "Validate the project config and its referenced OpenAPI and UI sources."
+    help = "Validate the project config and its referenced OpenAPI and OpenUI sources."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(

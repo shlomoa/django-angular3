@@ -4,7 +4,7 @@
 ---
 name: angular-app-composition
 description: Manage Angular Material application within a workspace - create app structure with Material theme, modify providers and routing, or delete app
-when_to_use: Use when build_app dispatches an app-creation, app-modification, or app-deletion procedure node, or when a user runs /angular-app-composition to scaffold or update an Angular Material application inside an existing workspace.
+when_to_use: Use when build_app selects an app-creation, app-modification, or app-deletion command, or when a user runs /angular-app-composition to scaffold or update an Angular Material application inside an existing workspace.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -147,7 +147,7 @@ Update an existing Angular Material application with changes to providers, globa
 **Input Requirements**:
 - `project.name` (from `django-angular3.json`, required): Name of the existing application to modify
 - `angular.output` (from `django-angular3.json`, required): Absolute path to the Angular workspace
-- `modifications` (from procedure inputs, required): Object describing changes to make:
+- `modifications` (from command inputs, required): Object describing changes to make:
   - `providers`: Array of provider configurations to add/remove
   - `styles`: CSS/SCSS rules to add to global styles
   - `routes`: Route definitions to register (lazy-loaded or eager)
@@ -363,7 +363,7 @@ Optional dependencies:
 // Inputs from django-angular3.json:
 //   project.name = "admin-dashboard"
 //   angular.output = "/workspace/my-project"
-// Procedure-level: prefix = "admin"
+// Command-level: prefix = "admin"
 
 // Executes:
 // 1. django-admin ng_gen_app django-angular3.json
@@ -382,7 +382,7 @@ Optional dependencies:
 // Inputs from django-angular3.json:
 //   project.name = "admin-dashboard"
 //   angular.output = "/workspace/my-project"
-// Procedure-level: add provideAuth provider + styles
+// Command-level: add provideAuth provider + styles
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.config.ts
@@ -415,7 +415,7 @@ Optional dependencies:
 // Inputs from django-angular3.json:
 //   project.name = "old-admin"
 //   angular.output = "/workspace/my-project"
-// Procedure-level: confirm = true
+// Command-level: confirm = true
 
 // Executes:
 // 1. Verifies projects/old-admin/ exists

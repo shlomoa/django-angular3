@@ -302,14 +302,14 @@ class ExportSchemaCommandTests(unittest.TestCase):
                     {
                         "project": {"name": "invalid-ui"},
                         "openapi": {"source": "openapi.json"},
-                        "ui": {"source": "missing.ui.json"},
+                        "openui": {"source": "missing.openui.json"},
                         "angular": {"output": "build/angular"},
                     }
                 ),
                 encoding="utf-8",
             )
 
-            with self.assertRaisesRegex(CommandError, "UI source does not exist"):
+            with self.assertRaisesRegex(CommandError, "OpenUI source does not exist"):
                 call_command("build_app", str(config_path), dry_run=True)
 
     def test_build_app_uses_ng_workspace_command_for_workspace_setup_create_steps(

@@ -22,13 +22,15 @@ procedure graph. For every run it performs this ordered algorithm:
 
 1. Validate the current `django-angular3.json`, OpenAPI schema, and OpenUI
    document.
-2. Identify the difference between the previous and current OpenAPI schemas.
-3. Identify the structural difference between the previous and current OpenUI
+2. Identify the difference between the previous and current project
+  configurations.
+3. Identify the difference between the previous and current OpenAPI schemas.
+4. Identify the structural difference between the previous and current OpenUI
    document trees, including each node's `id`, `type`, `attrs`, and ordered
    `children`.
-4. Translate both identified change sets into the required change commands.
-5. Execute those commands against the generated-app workspace.
-6. Validate the generated outputs and the resulting integrated application.
+5. Translate the identified change sets into the required change commands.
+6. Execute those commands against the generated-app workspace.
+7. Validate the generated outputs and the resulting integrated application.
 
 The comparison inputs determine what changes; command execution performs those
 changes; validation decides whether the build succeeded. A command failure or
@@ -43,17 +45,26 @@ normal command error reporting.
 
 | Input | Source | Format | Notes |
 |---|---|---|---|
-| `django-angular3.json` | Tool configuration file | JSON | Must contain `project.name`, `openapi.source`, `ui.source`, and `angular.output`. Read as current and always authoritative. |
+| `django-angular3.json` | Tool configuration file | JSON | Must contain `project.name`, `openapi.source`, `openui.source`, and `angular.output`. Read as current and always authoritative. |
 | Current OpenAPI schema | `openapi.source` | YAML or JSON (OAS 3.x) | The current schema version. |
-| Previous OpenAPI schema | `--previous-schema <path>` | YAML or JSON (OAS 3.x) | Prior schema. Absent on a first run; the schema change type is `start-from-scratch`. |
-| Current `app.ui.json` | `ui.source` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
-| Previous `app.ui.json` | Interface pending: `--previous-config` or `--previous-ui <path>` | JSON (`openui.schema.json`) | Prior OpenUI document. Absent on a first run; OpenUI-specific changes are not derived. See `TODO.md` §2.0. |
+| Previous project configuration | `--previous-config <path>` | JSON | Prior `django-angular3.json`; used only for the `config` change lane. |
+| Previous OpenAPI schema | `--previous-schema <path>`, otherwise the current source's `.previous` sibling | YAML or JSON (OAS 3.x) | The explicit flag takes precedence. Absent on a first run; the schema change type is `start-from-scratch`. |
+| Current `app.openui.json` | `openui.source` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
+| Previous `app.openui.json` | `--previous-openui <path>`, otherwise the current source's `.previous` sibling | JSON (`openui.schema.json`) | Resolved by the same explicit-override then adjacent-artifact algorithm as the previous OpenAPI schema. Absent on a first run; the OpenUI change type is `start-from-scratch`. |
+
+`openui.source` selects the current OpenUI document; it does not name the document
+format or the ChangeSet lane. `app.openui.json` is the generated-app filename
+convention. Its grammar is defined by
+`openui.schema.json` and its vocabulary by `openui.json` in
+[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec); djng owns only
+the configured input path and its build-stage handling. See
+`ARCHITECTURE.md` §8.5.
 
 ### Optional
 
 | Input | Flag | Notes |
 |---|---|---|
-| Dry run | `--dry-run` | Show the ordered change commands without executing them or modifying the generated-app workspace. |
+| Dry run | `--dry-run` | Diagnostic validation and debugging mode: validate inputs, identify changes, and show ordered change commands without executing them or modifying the generated-app workspace. |
 | Force mode | `--force start-from-scratch` | Override comparison results and execute the full initial-build command set. |
 | Breaking-change acknowledgement | `--acknowledge-breaking` | Permit execution after the breaking-change gate reports OpenAPI breaking changes. |
 
@@ -62,8 +73,8 @@ normal command error reporting.
 | Key | Required | Purpose |
 |---|---|---|
 | `project.name` | yes | Workspace and app name |
-| `openapi.source` | yes | Current OpenAPI schema path |
-| `ui.source` | yes | Current OpenUI document path |
+| `openapi.source` | yes | Current OpenAPI schema path and schema-lane input selector |
+| `openui.source` | yes | Current `app.openui.json` path and OpenUI-lane input selector |
 | `angular.output` | yes | Generated-app workspace root |
 | `angular.workspace.*` | no | Workspace settings such as package manager, style, and routing |
 
@@ -99,12 +110,31 @@ Re-run with --acknowledge-breaking to continue.
 
 ### OpenUI change detection
 
-OpenUI comparison is a structural diff of current and previous `app.ui.json`
+OpenUI comparison is a structural diff of current and previous `app.openui.json`
 document trees. It compares each node's `id`, `type`, `attrs`, and ordered
 `children`, and records affected node IDs and their add, modify, or delete
 operation. If no previous OpenUI document is available, OpenUI-specific change
 detection is skipped; the first-run command set still creates the configured UI
 artifacts required by the generated app.
+
+### Project-configuration change detection
+
+The `config` lane compares every supported `django-angular3.json` key with the
+previous configuration. A changed source key remains an input selector for its
+own lane; it is nevertheless reported in `config.affected_keys` because source
+selection is build-relevant.
+
+| Configuration key change | `config` type | Required effect |
+|---|---|---|
+| `project.name` | `replace-things` | Replace the project-level workspace and application foundation for the new identity. |
+| `angular.output` | `replace-things` | Materialize the generated application at the new workspace root. |
+| `angular.workspace.*` | `modify-things` | Apply the changed workspace settings. |
+| `openapi.source`, `openapi.openapiGeneratorConfig`, or `openapi.ngOpenApiGenConfig` | `modify-things` | Use the selected contract and generator settings for schema comparison and API-client generation. |
+| `openui.source` | `modify-things` | Use the selected OpenUI document for OpenUI comparison and UI construction. |
+
+Any supported configuration-key addition, removal, or value replacement must
+be represented in `affected_keys`. Unsupported configuration keys or changes
+without a defined command translation must fail explicitly.
 
 ### ChangeSet
 
@@ -114,6 +144,10 @@ execution.
 
 ```json
 {
+  "config": {
+    "type": "modify-things | replace-things | no-change | start-from-scratch",
+    "affected_keys": ["angular.workspace.style"]
+  },
   "schema": {
     "type": "add-things | remove-things | replace-things | start-from-scratch | no-change | breaking",
     "affected_resources": ["Customer", "Order"],
@@ -158,6 +192,9 @@ by the automation naming layers in `ARCHITECTURE.md` §2.23.
 
 | Source change | Selected command category | Mode |
 |---|---|---|
+| Configuration start-from-scratch | Workspace and application foundation commands | create |
+| Configuration replacement (`project.name` or `angular.output`) | Project-level workspace and application foundation commands | replace |
+| Configuration modification | The command category for each affected configuration key | modify |
 | Schema start-from-scratch | Workspace, app, API-integration, data-service, and required OpenUI commands | create |
 | Schema addition | API-integration and data-service commands for affected resources, followed by dependent UI commands | create |
 | Schema removal | Dependent UI, data-service, and API-integration commands for affected resources | delete |
@@ -221,6 +258,8 @@ they are not a substitute for execution.
 ### FR-1: Change detection
 
 - The builder must validate current project sources before comparison.
+- The builder must compare all supported project-configuration keys and carry
+  their changes in the `config` lane.
 - The builder must detect schema changes using `oasdiff`.
 - The builder must detect non-CRM changes by structurally diffing OpenUI
   document trees.
@@ -241,8 +280,9 @@ they are not a substitute for execution.
 
 ### FR-3: Dry run `[DEBUG]`
 
-- `--dry-run` must report translated commands without invoking automation or
-  modifying the generated-app workspace.
+- `--dry-run` is for validation and debugging only. It must validate inputs,
+  identify changes, and report translated commands without invoking automation
+  or modifying the generated-app workspace.
 - The preview must be human-readable and include command order, mode, inputs,
   and reason.
 
@@ -327,5 +367,5 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **SKILLS** | Bounded AI skills that guide selected agent sessions. | `ARCHITECTURE.md` §2.14 |
 | **TOOLS** | Deterministic callable capabilities for bounded operations. | `GENERATE_AI_AUTOMATIONS.md` |
 | **HOOKS / gates** | Deterministic lifecycle-triggered or blocking automations. | `GENERATE_AI_AUTOMATIONS.md` |
-| **ChangeSet** | Typed OpenAPI and OpenUI comparison results used to select change commands. | §Change Derivation |
-| **`app.ui.json`** | The generated app's OpenUI concrete UI document. | `ARCHITECTURE.md` §8.5 |
+| **ChangeSet** | Typed project-configuration, OpenAPI, and OpenUI comparison results used to select change commands. | §Change Derivation |
+| **`app.openui.json`** | The generated app's OpenUI concrete UI document. | `ARCHITECTURE.md` §8.5 |

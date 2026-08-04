@@ -110,7 +110,7 @@ functions the agent calls directly).
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.1 stage 2, §11.2, §11.4, §17 |
 | **Current approach** | Running `oasdiff` as an external CLI tool during the contract normalization stage |
-| **Why a Tool is better** | Schema diffing is entirely deterministic. The agent needs structured output (breaking changes list, non-breaking changes list, version delta) to derive the procedure graph. As a registered MCP tool, `oasdiff` output can be returned as typed JSON that the agent reads, rather than the agent having to parse raw CLI output via Bash. |
+| **Why a Tool is better** | Schema diffing is entirely deterministic. `build_app` needs structured output (breaking changes list, non-breaking changes list, version delta) to translate changes into direct commands. As a registered MCP tool, `oasdiff` output can be returned as typed JSON that the agent reads, rather than the agent having to parse raw CLI output via Bash. |
 | **Recommended form** | MCP tool wrapping `oasdiff` invocation, returning structured diff result with `breaking: []`, `non_breaking: []`, and `schema_changed: bool` fields. |
 
 ### 2.3 Angular TypeScript Client Generation (`ng-openapi-gen`)
@@ -193,9 +193,9 @@ instructions.
 |---|---|
 | **Location in ARCHITECTURE.md** | §7.2, §7.4 |
 | **Current approach** | Not described — cleanup and build artifact management are implicit |
-| **Why a Hook is better** | A `Stop` hook runs when the agent session ends, whether successfully or due to an error. It provides a guaranteed opportunity to archive the procedure graph output, clean up temporary files, and record session metadata (schema version, procedures completed, errors encountered) without depending on the agent to carry out these steps. |
+| **Why a Hook is better** | A `Stop` hook runs when the agent session ends, whether successfully or due to an error. It provides a guaranteed opportunity to archive command-execution evidence, clean up temporary files, and record session metadata (schema version, completed commands, errors encountered) without depending on the agent to carry out these steps. |
 | **Hook event** | `Stop` |
-| **Hook action** | Archive `build/procedure-graph.*` to `build/history/<timestamp>/`; write session summary to `build/session-log.json`. |
+| **Hook action** | Archive `build/command-execution.*` to `build/history/<timestamp>/`; write session summary to `build/session-log.json`. |
 
 ### 3.5 Pre-Construction Contract Validation Gate
 

@@ -4,7 +4,7 @@
 ---
 name: angular-api-integration
 description: Generate TypeScript API client code from an OpenAPI specification using ng-openapi-gen.
-when_to_use: Use when build_app dispatches an api-generation procedure node (initial generation or schema-change regeneration), or when a user runs /angular-api-integration to regenerate API clients after OpenAPI schema changes.
+when_to_use: Use when build_app selects an API-generation command (initial generation or schema-change regeneration), or when a user runs /angular-api-integration to regenerate API clients after OpenAPI schema changes.
 user-invocable: false
 context: fork
 allowed-tools:

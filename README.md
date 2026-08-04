@@ -93,7 +93,8 @@ Commands are only executed when the resolved django-angular3 command name is in
 `command_allowlist`. The default allowlist only permits `ng_openapi_gen`.
 
 Once installed, Django and the standalone CLI expose the same Angular command
-resolution flow:
+resolution flow. Use `--dry-run` only for diagnostic validation and debugging;
+it resolves commands without executing Angular tooling:
 
 ```bash
 ./manage.py ng_new django-angular3.json --dry-run
@@ -124,8 +125,9 @@ execute packages at runtime.
 > **SKILL names** are AI-guided session identifiers (e.g. `angular-workspace-foundation`,
 > `angular-api-integration`). See `doc/ARCHITECTURE.md §2.23` for the authoritative definition.
 
-If you want these commands to execute instead of only dry-run, configure the
-command allowlist to include the django-angular3 commands you want to permit.
+To execute these commands, configure the command allowlist to include the
+django-angular3 commands you want to permit, then invoke them without
+`--dry-run`.
 
 Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
 application name.
@@ -242,7 +244,7 @@ paths:
       operationId: updateUser
 ```
 
-Non-CRM pages and bespoke workflows are then supplied in `spec/ui/app.ui.json`
+Non-CRM pages and bespoke workflows are then supplied in `spec/openui/app.openui.json`
 as an [OpenUI concrete UI document](https://github.com/shlomoa/openui-spec).
 It conforms to `openui.schema.json` and uses the vocabulary defined by
 `openui.json`; see the [OpenUI examples](https://openui-spec.readthedocs.io/en/latest/examples/)

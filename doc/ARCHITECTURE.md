@@ -38,7 +38,9 @@ A UI component library for Angular that implements Google's Material Design. It 
 
 ### 2.5 djng
 `djng` is Django Angular in short, where dj stands for Django and ng is the known two letters representing Angular. This repository, the Django package, and the
-tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files required for construction. See §19 Glossary.
+tool. Contains the agentic orchestrator, the AI automation subsystem, and the
+construction configuration required for generated applications. See §19
+Glossary.
 
 ### 2.6 ngdj
 `ngdj` stands for Angular Django, `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`.
@@ -58,22 +60,24 @@ The versioned OpenAPI schema exported from the DRF layer, serving as the source 
 ### 2.11 Angular integration artifacts
 Generated Angular outputs derived from the OpenAPI contract and related tooling, including typed API clients, resource adapters, transport helpers, reusable Angular Material-oriented integration helpers, and supporting metadata.
 
-### 2.12 [Claude Agent SDK][Claude Agent SDK - Python]
-Anthropic's official agent-construction SDK. The agent (§2.16) uses it to run each procedure as a guided agent session via `query()` calls. Installed as `pip install claude-agent-sdk`. Implementation repository: [Claude Agent SDK - Python - GitHub].
+### 2.12 provider adapter
+A portability boundary that connects an agent executor to a compatible AI
+runtime. It isolates provider-specific session, tool-dispatch, lifecycle, and
+cancellation concerns from the architecture's construction and acceptance
+model. Provider implementations and their runtime contracts are defined in
+`doc/GENERATE_AI_AUTOMATIONS.md`.
 
 ### 2.13 agentic orchestration
-An orchestration model in which the orchestrator delegates construction work to
-an AI agent rather than executing it through a fixed procedural pipeline. The
-orchestrator derives a procedure graph from change requirements and configuration,
-then executes each procedure through the appropriate automation primitive or
-combination of primitives. Guided agent sessions carry out AI-guided
-construction work guided by the specified SKILL(s); deterministic TOOLS handle
-bounded operations; HOOKS enforce lifecycle gates and mandatory side effects.
+An orchestration model in which an agentic orchestrator derives construction
+work from contract and configuration changes, coordinates deterministic and
+AI-guided automations, and enforces dependency, lifecycle, and acceptance
+boundaries. Guided agent sessions carry out bounded AI-guided work; TOOLS
+handle deterministic operations; and HOOKS enforce mandatory lifecycle
+behavior. The resulting construction remains inspectable and subject to
+deterministic validation.
 
-### 2.14 [SKILLS][Claude Skills]
+### 2.14 SKILLS
 Bounded AI skills that guide the agent within each guided agent session. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
-
-The formal skill format is defined by Anthropic: see [Claude Skills] for the conceptual overview, [Claude Code Skills] for the CLI-facing reference (extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] for SDK-side discovery and invocation. Authoring guidance is at [Claude Skills Best Practices].
 
 SKILLS are one primitive family within the broader AI automation subsystem of `django-angular3`. That automation subsystem architecture is defined in `doc/GENERATE_AI_AUTOMATIONS.md`, and the implementation and authoring plan for the SKILLS subset is defined in `doc/SKILL_AUTHORING_PLAN.md`. This document defines the role of SKILLS in the overall architecture and does not restate their internal design.
 
@@ -82,14 +86,18 @@ A construction model in which bounded AI automations are the execution units for
 
 The normative selection rule for classifying a new capability as a SKILL, TOOL, HOOK, or PLUGIN is defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Primitive-selection policy. New capabilities added to the automation subsystem MUST be classified through that policy before implementation begins.
 
-### 2.16 agent
-The agentic orchestrator in this architecture, bundled in `djng`. It consumes
-change requirements, configuration files, and contract-derived inputs, derives a
-procedure graph, and coordinates the execution of each procedure to build the
-generated application. For AI-guided procedures it runs guided agent sessions;
-for deterministic procedures it relies on tool contracts and lifecycle hooks.
-At implementation level, driven by the Claude Agent SDK.
-The `build_app` Django management command is its entry point.
+### 2.16 agentic orchestrator
+The architectural actor that coordinates construction in `djng`. It identifies
+the work required by contract and configuration changes, selects the applicable
+automation primitives, enforces their dependency and lifecycle boundaries, and
+accepts the resulting generated application only after deterministic
+validation. It delegates bounded AI-guided work to an agent executor and
+delegates provider-specific concerns to a provider adapter.
+
+### 2.16.1 agent executor
+The execution capability that carries out a bounded AI-guided task within a
+guided agent session. It operates under the constraints supplied by the
+agentic orchestrator and reports its result for deterministic acceptance.
 
 ### 2.17 correct working application
 An application that assembles into a runnable whole and satisfies the deterministic validations and tests defined by this architecture. Individual generated artifacts alone do not establish correctness.
@@ -148,7 +156,7 @@ separate prevents name collision between the CLI surface, the agent API, and
 the AI-guided session API.
 
 - **Concern key** — A stable, dot-namespaced semantic identifier for a
-  construction concern. Used in planning and documentation only; never appears
+  construction concern. Used in documentation and command selection only; never appears
   in filenames, code identifiers, or command names. The canonical concern keys
   are:
 
@@ -175,20 +183,16 @@ the AI-guided session API.
   | `contract.schema-export` | OpenAPI schema extraction from DRF |
   | `contract.schema-validate` | Schema validation (OAS 3.1 conformance) |
   | `contract.schema-diff` | Schema diff and change detection |
-- **CLI wrapper command** — The Django management command name for a `djng`
-  wrapper (e.g. `ng_workspace`, `ng_openapi_gen`, `export_schema`). Frozen:
-  these names are part of the public operator interface and MUST NOT be renamed
+- **Operator wrapper identifier** — The stable public identifier for a `djng`
+  wrapper. It forms part of the operator interface and MUST NOT be renamed
   without a deprecation cycle.
 - **TOOL contract** — The deterministic operation name exposed to the agent and
-  the procedure graph (e.g. `angular_workspace_scaffold`,
-  `angular_api_client_generate`, `openapi_schema_export`). Defined in
-  `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. The `tool` field
-  of every `tool` procedure node MUST equal one of these names.
-- **SKILL name** — The AI-guided session name passed to `build_app`'s
-  `query(skills=[...])` call (e.g. `angular-workspace-foundation`,
-  `angular-app-composition`, `angular-api-integration`). Defined in
-  `doc/GENERATE_AI_AUTOMATIONS.md` §Skills Catalog. The `skill` field of every
-  `skill-session` procedure node MUST equal one of these names.
+  to deterministic automation execution. Defined in
+  `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. Every selected
+  deterministic operation MUST use one of these names.
+- **SKILL name** — The AI-guided session identifier selected by the agentic
+  orchestrator. Defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Skills Catalog.
+  Every selected AI-guided operation MUST use one of these names.
 
 The complete mapping of all four layers for every construction concern is
 maintained in `doc/GENERATE_AI_AUTOMATIONS.md` §Automation Naming Crosswalk.
@@ -217,8 +221,8 @@ maintained in `doc/GENERATE_AI_AUTOMATIONS.md` §Automation Naming Crosswalk.
 ### 3.3 djng
 
 `djng` is the `django-angular3` solution — this repository, the Django package,
-and the tool. It contains the agent, the AI automation subsystem, `build_app`, and all configuration
-files. See §2.5 and §19 Glossary.
+and the tool. It contains the agentic orchestrator, the AI automation subsystem,
+and construction configuration. See §2.5 and §19 Glossary.
 
 - Purpose: The backend owner.
   - Govern the overall integration process
@@ -226,9 +230,9 @@ files. See §2.5 and §19 Glossary.
     - Manage Python/Django/DRF side of integration.
     - Define the work that must be carried out by the orchestrator and construction subsystems.
 - Responsibilities:
-  - djng-o-1: Provide a set of complementing django-admin commands:
+  - djng-o-1: Provide governed construction interfaces:
     - For creating, building, and modifying Angular UI.
-    - Manage OpenAPI contract lifecycle, including: contract extraction from DRF, validation, versioning
+    - Manage OpenAPI contract lifecycle, including contract extraction from DRF, validation, and versioning.
   - djng-o-2: Define, author, and evolve the AI automations required for building, generating, validating, and integrating Angular building blocks.
     - SKILLS for AI-guided generation and integration work.
     - TOOLS for deterministic construction and contract operations.
@@ -236,12 +240,14 @@ files. See §2.5 and §19 Glossary.
     - PLUGINS for reusable capability bundles where distribution boundaries matter.
   - djng-o-3: Manage and drive Angular app change requirements through:
     - Detection of change requirements.
-    - Converting change requirements into procedure graph inputs
-  - djng-o-4: Provide the orchestration entry points and work definitions consumed by the agent:
-    - The agent runs each procedure as a guided agent session to generate Angular building blocks.
-    - The agent integrates those building blocks into an [Angular Material] frontend app using the DRF `contract`.
+    - Translating change requirements into ordered automation work.
+  - djng-o-4: Provide the work definitions consumed by the agentic orchestrator:
+    - Selected AI-guided work runs as guided agent sessions to generate Angular building blocks.
+    - Selected automations integrate those building blocks into an [Angular Material] frontend app using the DRF `contract`.
 
-- `djng` defines and governs the work to be performed; the agent derives the procedure graph and runs each procedure as a guided agent session.
+- `djng` defines and governs the work to be performed. Its agentic orchestrator
+  coordinates the selected automations and accepts the resulting generated app
+  only after deterministic validation.
 
 ### 3.4 ngdj
 
@@ -257,7 +263,7 @@ implemented in [angular-django2-github] and deployed to [angular-django2] npm pa
 ### 3.5 Toolchain components
 
 - A contract-governing, work-deriving component - in `djng`.
-- The agent: the agentic orchestrator that derives the procedure graph and coordinates the execution of each procedure.
+- The agent: the AI-guided execution capability used by selected SKILL commands.
 - An AI automation subsystem containing SKILLS, TOOLS, HOOKS, and PLUGINS used to guide, execute, enforce, and package construction work.
 - An Angular-side construction substrate and application generator - in `ngdj`.
 - An OpenAPI schema extraction process - in `djng`.
@@ -353,15 +359,16 @@ This model simplifies:
 
 ## 7. Integration Workflow
 
-The integration process is an agentic construction flow. `djng` governs contract
-lifecycle, validation, and work derivation; the agent derives the procedure graph
-and executes a mixed automation flow toward an acceptable application state.
-Guided agent sessions handle AI-guided work, TOOLS handle deterministic bounded
-operations, and HOOKS enforce lifecycle gates and mandatory side effects.
+The integration process is an agentic construction flow. `djng` governs
+contract lifecycle, validation, and work derivation; its agentic orchestrator
+coordinates the selected automations toward an acceptable application state.
+Guided agent sessions handle selected AI-guided work, TOOLS handle deterministic
+bounded operations, and HOOKS enforce lifecycle gates and mandatory side
+effects.
 
 The workflow is not a one-pass pipeline. The stages below describe the
 architectural work domains involved in construction. Within each guided agent
-session, the agent iterates as needed to satisfy the procedure's acceptance
+session, the agent iterates as needed to satisfy the selected command's acceptance
 criteria.
 
 ### 7.1 Control-loop stages
@@ -374,7 +381,7 @@ criteria.
 3. Angular integration artifacts generation stage: the OpenAPI contract produces typed
    clients, resource adapters, and reusable Angular Material-oriented
    integration helpers
-4. Non-CRM content stage: the `app.ui.json` OpenUI concrete UI document
+4. Non-CRM content stage: the `app.openui.json` OpenUI concrete UI document
    provides bespoke reactive forms, standalone pages, and workflow definitions
 5. Application assembly stage: the Angular app composes CRM-derived outputs from
    generated integration artifacts with the non-CRM content stream
@@ -389,13 +396,13 @@ reused across iterations without hidden assumptions.
 A typical construction cycle is:
 
 1. Derive required work from contract changes, configuration, and structured inputs
-2. Execute each procedure through the required automation primitive(s): guided
+2. Execute each selected command through the required automation primitive(s): guided
   agent session, deterministic tool call, lifecycle hook, or an explicit
   combination of them
 3. Within each guided agent session, inspect emitted artifacts and validation results
 4. Within each guided agent session, repair, refine, or retry construction when
    outputs are incomplete, inconsistent, or invalid
-5. Within each guided agent session, continue until the procedure's acceptance
+5. Within each guided agent session, continue until the selected command's acceptance
    criteria are satisfied or a blocking issue is surfaced explicitly
 
 This loop is part of the architecture, not an implementation accident. Convergence
@@ -407,8 +414,8 @@ global correctness. A session can satisfy its own acceptance criteria while the
 composed generated app is still incorrect because of cross-session interface
 drift, stale backend-contract/client alignment, or runtime integration failure.
 The architecture therefore requires a distinct global acceptance gate after all
-guided sessions, deterministic tool procedures, and lifecycle hooks complete.
-That gate is owned by terminal verification procedures, not by any individual
+guided sessions, deterministic TOOL commands, and lifecycle hooks complete.
+That gate is owned by terminal verification commands, not by any individual
 Skill, and a run is a correct working application only when the global gate
 passes.
 
@@ -423,7 +430,7 @@ Verification in this architecture occurs throughout construction and integration
 
 Terminal verification applies these categories to the complete generated app.
 It consumes recorded construction results from deterministic tools and guided
-sessions, then fails the run if local procedure success does not compose into
+sessions, then fails the run if local command success does not compose into
 cross-Skill interface consistency, backend-contract / Angular-client alignment,
 and runnable application flows.
 
@@ -489,7 +496,7 @@ does not get mixed with manually-authored UI definitions.
 
 ### 8.5 Non-CRM Input Source
 
-Use `spec/ui/app.ui.json` as the dedicated structured input source for
+Use `spec/openui/app.openui.json` as the dedicated structured input source for
 non-CRM content. It is an [OpenUI concrete UI document][openui-spec] that
 conforms to `openui.schema.json` and uses the vocabulary defined by
 `openui.json`.
@@ -756,16 +763,16 @@ Key actors and terms. Full definitions are in §2.
 | Term | Definition | See |
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `doc/GENERATE_AI_AUTOMATIONS.md` |
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | §2.5 |
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agentic orchestrator, the AI automation subsystem, and construction configuration. | §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | §2.6 |
-| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `doc/APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | §2.16 |
+| **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.16 |
+| **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.16.1 |
+| **provider adapter** | The portability boundary between an agent executor and a compatible AI runtime. | §2.12 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | §2.14, `doc/GENERATE_AI_AUTOMATIONS.md` |
 | **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | `doc/GENERATE_AI_AUTOMATIONS.md` |
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | `doc/GENERATE_AI_AUTOMATIONS.md` |
 | **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | `doc/GENERATE_AI_AUTOMATIONS.md` |
-| **procedure graph** | The directed acyclic graph of construction procedures derived from the ChangeSet. Nodes may represent guided agent sessions, deterministic tool steps, verification steps, or other governed automation procedures. | `doc/APP_BUILDER_REQUIREMENTS.md` §Procedure Graph |
-| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | §2.13 |
+| **guided agent session** | A bounded session in which an agent executor carries out AI-guided work. | §2.13, §2.16.1 |
 
 ## 20. References
 
@@ -782,12 +789,6 @@ Key actors and terms. Full definitions are in §2.
 [datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/
 [datamodel-code-generator-github]: https://github.com/koxudaxi/datamodel-code-generator
 [datamodel-code-generator-playground]: https://datamodel-code-generator.koxudaxi.dev/playground/
-[Claude Agent SDK - Python]: https://platform.claude.com/docs/en/agent-sdk/python
-[Claude Agent SDK - Python - GitHub]: https://github.com/anthropics/claude-agent-sdk-python
-[Claude Skills]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
-[Claude Code Skills]: https://code.claude.com/docs/en/skills
-[Claude Agent SDK Skills]: https://code.claude.com/docs/en/agent-sdk/skills
-[Claude Skills Best Practices]: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
 [oasdiff]: https://www.oasdiff.com/
 [oasdiff-github]: https://github.com/oasdiff/oasdiff
 [DRF - Django REST Framework]: https://www.django-rest-framework.org/

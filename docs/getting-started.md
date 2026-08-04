@@ -45,7 +45,7 @@ This creates:
 - A `simple_crm/` folder containing a Django project (`simple_crm`),
 - A DRF app (`shop`)
 - `schema.yaml` exported from the above DRF app.
-- `ui.json` containing the UI requirements.
+- `app.openui.json` containing the OpenUI requirements.
 - `django-angular3.json` configuration file.
 The command prints the next steps on success.
 
@@ -65,7 +65,7 @@ superuser you just created.
 ## 4. Validate the project configuration
 
 From inside the tutorial directory, validate the configuration and its
-referenced OpenAPI and UI sources:
+referenced OpenAPI and OpenUI sources:
 
 ```bash
 python manage.py validate_project django-angular3.json
@@ -78,8 +78,8 @@ for the full schema.
 ## 5. Scaffold the Angular workspace
 
 These steps require Node.js and pnpm. Each `ng_*` command accepts `--dry-run`
-to print the resolved Angular subprocess calls without executing them — start
-there to preview what will happen:
+for diagnostic validation and debugging, printing the resolved Angular
+subprocess calls without executing them:
 
 ```bash
 python manage.py ng_workspace django-angular3.json --dry-run

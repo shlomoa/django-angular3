@@ -85,7 +85,7 @@ Now I have complete coverage. Here's a thorough read-only analysis of all ngdj c
 
 ---
 
-## Build Plan Integration (Automation Naming Layer)
+## Direct Build Execution Integration (Automation Naming Layer)
 
 [build_app.py](django_angular3/management/commands/build_app.py#L15-L39) defines `_command_for_skill(skill, mode)` mapping:
 
@@ -114,13 +114,13 @@ Now I have complete coverage. Here's a thorough read-only analysis of all ngdj c
 
 ### Skills with No Command/Schematic Implementation
 
-[build_app.py](django_angular3/management/commands/build_app.py#L370-L430) references these plan steps but **no command builder exists**:
+[build_app.py](django_angular3/management/commands/build_app.py#L370-L430) requires these direct-execution commands, but **no command builder exists**:
 
-| Plan Skill | Mode | Fallback Behavior | Status | Docs Reference |
+| Construction concern | Mode | Fallback Behavior | Status | Docs Reference |
 |---|---|---|---|---|
 | `ng-data-service` | `create`, `modify`, `delete` | Falls through to `skill.replace("-", "_")` → `ng_data_service` | ❌ Command builder missing | [e2e_enabling_documentation_plan.md](e2e_enabling_documentation_plan.md#L113), [GENERATE_AI_AUTOMATIONS.md](doc/GENERATE_AI_AUTOMATIONS.md#L6635) |
 
-### Skills in ARCHITECTURE (Plan Layer Only, No CLI/Command Exposure)
+### Skills in ARCHITECTURE with no CLI/Command Exposure
 
 From [GENERATE_AI_AUTOMATIONS.md](doc/GENERATE_AI_AUTOMATIONS.md#L46-L53), these are defined in the automation naming crosswalk **without CLI wrappers or TOOL contracts**:
 
@@ -175,4 +175,6 @@ that behavior.
 "command_allowlist": ("ng_openapi_gen",)
 ```
 
-Only `ng_openapi_gen` executes by default. All other `ng_*` commands plan dry-runs unless allowlist is explicitly broadened in project settings ([GENERATE_AI_AUTOMATIONS.md](doc/GENERATE_AI_AUTOMATIONS.md#L2300)).
+Only `ng_openapi_gen` executes by default. All other `ng_*` commands require
+explicit allowlist configuration before execution; use `--dry-run` only for
+diagnostic validation and debugging ([GENERATE_AI_AUTOMATIONS.md](GENERATE_AI_AUTOMATIONS.md)).

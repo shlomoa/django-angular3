@@ -8,7 +8,7 @@
 ---
 name: angular-site-composition
 description: Orchestrate Angular Material site generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure
-when_to_use: Use when build_app dispatches a site-composition procedure node (initial site generation or navigation/theme change), or when a user runs /angular-site-composition to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
+when_to_use: Use when build_app selects a site-composition command (initial site generation or navigation/theme change), or when a user runs /angular-site-composition to orchestrate site-level generation across app shell, routing, OpenAPI clients, pages, forms, theme, and auth infrastructure.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -30,7 +30,7 @@ The `angular-site-composition` skill coordinates complete Angular Material site 
 **From invocation context**:
 - **`workspacePath`** (string, required): Absolute path to the Angular workspace root
 - **`appName`** (string, optional): Angular application name when the workspace contains more than one app and for validation commands
-- **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/ui/`, used to discover pages, navigation structure, and forms
+- **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/openui/`, used to discover pages, navigation structure, and forms
 - **`openapi_source_path`** (string, optional): Path to the OpenAPI source used by `angular-api-integration` for client generation
 - **`defaults`** (object, optional): Fallback definitions to use when no UI spec is provided, such as default pages, route prefixes, or auth requirements
 
@@ -45,7 +45,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 **Input Requirements**:
 - `workspacePath` must point to an existing Angular workspace
 - `appName` is required when the workspace contains multiple applications
-- `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/ui/`
+- `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/openui/`
 - `openapi_source_path` is optional; when provided it should resolve to a valid OpenAPI document
 
 **Process (Create Mode)**:
@@ -56,7 +56,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - If either the workspace or application is missing, stop and instruct the caller to run `angular-workspace-foundation` first and then `angular-app-composition`
 
 2. **Read UI spec when provided**
-   - If `uiSpecPath` is supplied, read `spec/ui/` (or the supplied equivalent) to determine:
+   - If `uiSpecPath` is supplied, read `spec/openui/` (or the supplied equivalent) to determine:
      - top-level pages
      - route structure
      - navigation labels
@@ -129,7 +129,7 @@ Update an existing Angular Material site without regenerating the entire applica
    - `navigation`: update sidenav structure, nav labels, route bindings, or shell responsiveness
    - `routing`: update root route composition, lazy route entries, redirects, and guard references
    - `auth`: update `AuthGuard`, protected route coverage, and CSRF interceptor/provider wiring
-4. Re-run compile validation and a dry-run build
+4. Re-run compile validation and diagnostic dry-run validation
 
 **Output**:
 - Updated site-level shell, routes, theme, and/or auth infrastructure
@@ -177,11 +177,11 @@ Remove the Angular application that owns the generated site from the workspace.
    ```
    - Confirm the complete generated site compiles successfully
 
-2. **Dry-run build**:
+2. **Diagnostic dry-run validation**:
    ```bash
    django-angular3 ng_build django-angular3.json --dry-run
    ```
-   - Confirm the dry-run build preview is valid without executing a full deployment build
+   - Confirm the resolved build invocation is valid without executing it
 
 3. **Manual route review**:
    - Confirm the app shell exposes the expected navigation structure
@@ -196,7 +196,7 @@ Remove the Angular application that owns the generated site from the workspace.
    - Resolution: run `angular-workspace-foundation` first, then `angular-app-composition`, before invoking `angular-site-composition`
 
 2. **UI spec missing or incomplete**:
-   - Resolution: fall back to defaults or stop and request a valid `spec/ui/` source when page/form inference is required
+   - Resolution: fall back to defaults or stop and request a valid `spec/openui/` source when page/form inference is required
 
 3. **OpenAPI source unavailable**:
    - Resolution: skip `angular-api-integration` orchestration when no OpenAPI source is provided, or request a valid source path before generating resource-backed pages/forms
@@ -233,14 +233,14 @@ Remove the Angular application that owns the generated site from the workspace.
 {
   "workspacePath": "/workspace/admin-portal",
   "appName": "admin-portal",
-  "uiSpecPath": "spec/ui/",
+  "uiSpecPath": "spec/openui/",
   "openapi_source_path": "spec/openapi.yaml"
 }
 ```
 
 **Process**:
 1. Verify the workspace and app already exist
-2. Read `spec/ui/` to discover pages and forms
+2. Read `spec/openui/` to discover pages and forms
 3. Create the Material app shell and root routes
 4. Invoke `angular-api-integration`
 5. Invoke `angular-page-composition` for each discovered page
@@ -260,6 +260,6 @@ Remove the Angular application that owns the generated site from the workspace.
 **Process**:
 1. Read the existing app shell and root route tree
 2. Update the `MatSidenav` navigation entries and bindings
-3. Re-run compile validation and dry-run build
+3. Re-run compile validation and diagnostic dry-run validation
 
 ---

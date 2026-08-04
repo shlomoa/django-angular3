@@ -5,8 +5,8 @@
   "openapi": {
     "source": "spec/openapi/source/example.openapi.json"
   },
-  "ui": {
-    "source": "spec/ui/example.ui.json"
+  "openui": {
+    "source": "spec/openui/app.openui.json"
   },
   "angular": {
     "output": "build/angular",

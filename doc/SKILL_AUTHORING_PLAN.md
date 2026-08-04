@@ -33,20 +33,19 @@ There are two configuration files that skills must not conflate.
 `django-angular3.json` is the `djng` tool configuration. It tells the tool
 how to behave: workspace root path (`angular.output`), project name
 (`project.name`), OpenAPI source path (`openapi.source`), package manager,
-stylesheet format, routing settings, and so on. This file is **golden** —
-`build_app` reads it as current and authoritative on every run; it is never
-diffed between runs and its changes take effect immediately on the next
-invocation. The eleven skills authored from `GENERATE_AI_AUTOMATIONS.md` operate on a
-generated app. Their run-time inputs are sourced from the generated app's
-`django-angular3.json`.
+stylesheet format, routing settings, and so on. `build_app` reads the current
+file as authoritative and compares it with its previously accepted version to
+derive project-level changes. The eleven skills authored from
+`GENERATE_AI_AUTOMATIONS.md` operate on a generated app. Their run-time inputs
+are sourced from the generated app's `django-angular3.json`.
 
-`<project>.project.json` is the generated app configuration file (placeholder
-name — schema and final name are not yet defined; see `TODO.md`). It defines
-the UI artifacts — pages, components, forms — used for non-CRM change
-detection. `build_app` diffs this file between runs to detect non-CRM changes;
-it is not golden. Skills that depend on non-CRM changes receive them as part
-of the `ChangeSet` procedure input, not by reading `<project>.project.json`
-directly.
+`app.openui.json` is the generated app's OpenUI concrete UI document. It defines
+the non-CRM UI artifacts and is selected by `openui.source`. Its grammar is
+defined by `openui.schema.json` and its vocabulary by `openui.json` in
+[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). `build_app`
+compares current and previous `app.openui.json` documents to detect non-CRM UI
+changes. Skills that depend on those changes receive them as part of the
+`ChangeSet` command input rather than reading `app.openui.json` directly.
 
 Either configuration file may legitimately contain pointers to other files
 that are not yet present. A pointer to a missing-but-promised file is a valid
@@ -72,16 +71,15 @@ the skill. For these eleven skills, run-time input comes from two sources:
   generated app's tool configuration file (e.g., `angular.output`,
   `project.name`, `openapi.source`). This file is golden; the skill reads it
   as current.
-- **Procedure-level inputs** — supplied by `build_app` as the prompt for each
-  guided agent session. These include resource names, component names, form
-  names, placement hints, and similar procedure-specific values that vary per
-  procedure node in the graph.
+- **Command-level inputs** — supplied by `build_app` as the prompt for each
+  selected guided agent session. These include resource names, component names,
+  form names, placement hints, and similar command-specific values.
 
 Run-time input is never typed in chat by a human end user.
 
 Each skill's `Inputs` section in `GENERATE_AI_AUTOMATIONS.md` is best understood as a
 schema describing both layers: which keys are read directly from the generated
-app's `django-angular3.json`, and which are procedure-level values supplied by
+app's `django-angular3.json`, and which are command-level values supplied by
 `build_app`. The authored SKILL.md will be explicit about the layer for every
 input.
 
@@ -124,7 +122,7 @@ TOOLS, HOOKS, or PLUGINS in the broader automation model; it only defines how
 the authored SKILLS must behave within the current governed construction flow.
 
 `oasdiff` is run by `build_app` during the Change Derivation phase, before
-any skill is invoked. Skills receive the resulting `ChangeSet` as procedure
+any skill is invoked. Skills receive the resulting `ChangeSet` as command
 input. A skill must never re-run `oasdiff` itself.
 
 For Angular operations, skills invoke this repository's Python wrappers
@@ -137,10 +135,10 @@ its `scripts/` directory.
 The default settings surface for this repository (per `README.md`) is `pnpm`
 as the package manager, `scss` as the stylesheet format, routing enabled,
 `build_configuration` of `production`, and a command allowlist that defaults
-to only `ng_openapi_gen` — meaning wrappers plan dry-runs by default and only
-`ng_openapi_gen` actually executes unless the user explicitly broadens the
-allowlist. Skills must respect this surface and not assume executability of
-other planned commands.
+to only `ng_openapi_gen` — meaning only `ng_openapi_gen` actually executes
+unless the user explicitly broadens the allowlist. Other wrappers support
+`--dry-run` for diagnostic validation and debugging only. Skills must respect
+this surface and not assume executability of other commands.
 
 ## Per-skill cadence
 
@@ -157,8 +155,8 @@ Implementation including test generation. Write the SKILL.md body, create
 `scripts/`, `references/`, and `assets/` as needed, and author the test
 prompts and assertions agreed in Plan.
 
-App builder procedure integration. Once the skill is created, add a procedure
-that uses it in the app builder program.
+App builder command integration. Once the skill is created, add the selected
+SKILL command that uses it in the app builder program.
 
 Verification. Run the tests (with-skill versus baseline), grade them, render
 the result for review, and incorporate feedback. Once Verification is
@@ -212,7 +210,8 @@ needed files from `skill_creation/shared/`. `GENERATE_AI_AUTOMATIONS.md` remains
 original design specification; if the split copy is incomplete or inconsistent,
 resolve against `GENERATE_AI_AUTOMATIONS.md` and update the split file.
 
-For the authoritative dependency chain and ordering, see `APP_BUILDER_REQUIREMENTS.md` §Procedure Graph.
+For the authoritative dependency chain and ordering, see
+`APP_BUILDER_REQUIREMENTS.md` §Execution order.
 
 ## Ongoing and open items
 
@@ -246,10 +245,10 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. This document addresses only the SKILLS subset. | `ARCHITECTURE.md` §19, `GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
+| **`build_app`** | The `djng` Django management command. It compares inputs, translates changes to ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
-| **guided agent session** | A single agent session in which the agent carries out one procedure, guided by the specified SKILL(s). | `ARCHITECTURE.md` §2.13 |
+| **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
 
 ## References
 
