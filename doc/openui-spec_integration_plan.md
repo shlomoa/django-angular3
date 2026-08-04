@@ -7,6 +7,9 @@ The `openui-spec` defines three layered artifacts:
 - **`openui.schema.json`** — grammar: validates the shape of any OpenUI JSON document
 - **`openui.json`** — catalog: machine-readable vocabulary of all scope objects (Application, Controls, Behaviors, Pages, Views, Containers, Widgets, …)
 - **concrete UI document** (`input.json`) — a schema-valid document using vocabulary from the catalog; this is the user-authored UI description
+- **`OpenUiJson` tooling API** — the published validation and editing boundary
+	that validates a concrete document against both the grammar and catalog and
+	rejects duplicate object IDs
 
 The concrete document format defines the non-CRM input consumed by the djng
 integration contract.
@@ -88,16 +91,25 @@ the root and tutorial configurations select `app.openui.json`. The loader
 rejects the legacy `ui` mapping and project validation reports missing OpenUI
 sources clearly.
 
-### Step 2.2 — Replace legacy UI-shape validation **(next)**
+### Step 2.2 — Delegate OpenUI validation to openui-spec **(next)**
 
-**Target:** `django_angular3/validation.py`.
+**Targets:** `pyproject.toml`, `requirements.txt`,
+`django_angular3/validation.py`,
+`django_angular3/examples/01_simple_crm/app.openui.json`, and the associated
+tests.
 
-Replace the legacy `pages`/`forms` validation with deterministic validation of
-the OpenUI concrete-document format: root `version`, `id: "root"`, `type`,
-optional `attrs`, and recursive `children`; element ID/type naming rules;
-`attrs` string-or-null values; and no loose properties. Return stable,
-path-qualified errors suitable for the existing CLI and Django management-command
-wrappers. Keep document-loading errors separate from format errors.
+Raise djng's minimum supported Python version to 3.12 and declare
+`openui-spec` as a runtime dependency. Replace the legacy `pages`/`forms`
+validator with the published `OpenUiJson` API from `openui-spec`; djng must not
+duplicate the OpenUI grammar, catalog, or duplicate-ID rules. Delegate concrete
+document validation to `OpenUiJson.from_file(...).validate()` and surface its
+diagnostics through the existing CLI and Django management-command wrappers.
+Keep djng document-loading and dependency-boundary failures separate from
+OpenUI format failures. Add concise docstrings to the public validation
+functions: `validate_openapi_document`, `validate_openui_document`,
+`validate_openapi_file`, `validate_openui_file`, and `validate_project_config`.
+Migrate the tutorial `app.openui.json` from its legacy shape to a valid OpenUI
+concrete document in the same step.
 
 ### Step 2.3 — Align the OpenUI document with generated-project configuration
 
@@ -107,8 +119,8 @@ Treat `django-angular3.json` as the generated-project configuration and its
 `openui.source` as the selected `app.openui.json`. Validate the OpenUI document in
 that project context: it is the non-CRM input used alongside the configured
 OpenAPI source and Angular output. Add only cross-input validation that the
-document format and implemented assembly contract require; do not introduce
-OpenUI catalog validation in this task.
+implemented assembly contract requires. OpenUI grammar, catalog-type, and
+duplicate-ID validation remain delegated to `openui-spec`.
 
 ### Step 2.4 — Preserve generated-app build boundaries
 
@@ -123,18 +135,18 @@ assembly in this task.
 
 ## Task 3: Validation and test updates
 
-### Step 3.1 — Unit coverage for grammar validation
+### Step 3.1 — Unit coverage for delegated OpenUI validation
 
 **Targets:** new `tests/test_validation.py` and
 `tests/test_cli_scaffold.py`.
 
 Create `tests/test_validation.py` for direct unit tests of
-`validate_openui_document()`. Cover a valid OpenUI concrete document and invalid
-cases for: a non-object document; missing or invalid top-level `version`, `id`,
-or `type`; invalid element IDs/types; invalid `attrs` value types; unrecognized
-loose properties; and malformed `children`. Assert path-qualified,
-deterministic diagnostics. Update `tests/test_cli_scaffold.py` so its example
-and tutorial UI-document tests load the new OpenUI fixtures.
+`validate_openui_document()` and `validate_openui_file()`. Cover a valid
+concrete document and upstream validation failures for schema shape, unsupported
+catalog types, and duplicate IDs. Assert that djng preserves actionable
+upstream diagnostics and keeps document-loading failures distinct. Update
+`tests/test_cli_scaffold.py` so its example and migrated tutorial fixtures are
+validated through the delegated boundary.
 
 ### Step 3.2 — Generated-project configuration integration coverage
 
@@ -148,7 +160,7 @@ The root scaffold and tutorial configuration already point at
 `tests/test_cli_scaffold.py` to retain coverage that
 `load_project_config()` resolves `openui.source`, `validate_project_config()`
 accepts the complete project. Add failures for a missing OpenUI source and an
-invalid OpenUI document through `validate_project_config()`.
+invalid document reported by `openui-spec` through `validate_project_config()`.
 
 ### Step 3.3 — CLI and build-command integration coverage
 

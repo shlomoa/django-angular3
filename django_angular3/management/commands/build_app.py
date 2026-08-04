@@ -261,6 +261,7 @@ class Command(BaseCommand):
             SystemExit: With status 2 when breaking schema changes are found
                 without ``--acknowledge-breaking``.
         """
+        old_implementation ='''
         config_path: str | Any = options["config"]
 
         try:
@@ -526,14 +527,17 @@ class Command(BaseCommand):
                     )
                 )
 
-        build_plan: dict[str, Any] = {
-            "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
-            "config": config_path,
-            "change_set": change_set,
-            "steps": steps,
-        }
+
         if options["dry_run"]:
+            build_plan: dict[str, Any] = {
+                "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
+                "config": config_path,
+                "change_set": change_set,
+                "steps": steps,
+            }
             self._print_debug_change_set(build_plan, options)
+        '''
+        raise NotImplementedError("Old implementation is: \n" + old_implementation)
 
     def _print_debug_change_set(self, build_plan: dict[str, Any], options: dict[str, Any]) -> None:
         plan_str: str = json.dumps(build_plan, indent=2)
