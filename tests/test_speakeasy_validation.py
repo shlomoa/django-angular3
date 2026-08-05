@@ -6,15 +6,14 @@ import os
 import unittest
 import warnings
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from django_angular3.tools import check_go_available, ensure_speakeasy_openapi
-from django_angular3.tools import find_speakeasy_openapi
-from django_angular3.validation import (
-
-    _run_speakeasy_validate,
-    validate_openapi_file,
+from django_angular3.tools import (
+    check_go_available,
+    ensure_speakeasy_openapi,
+    find_speakeasy_openapi,
 )
+from django_angular3.validation import validate_openapi_file
 
 ROOT = Path(__file__).resolve().parent.parent
 EXAMPLE_OPENAPI = ROOT / "spec" / "openapi" / "source" / "example.openapi.json"
@@ -56,50 +55,6 @@ class FindSpeakeasyTests(unittest.TestCase):
             )
 
 
-class RunSpeakeasyValidateTests(unittest.TestCase):
-    def test_raises_runtime_error_when_binary_missing(self) -> None:
-        with patch(
-            "django_angular3.validation.find_speakeasy_openapi", return_value=None
-        ):
-            with self.assertRaises(RuntimeError) as ctx:
-                _run_speakeasy_validate(EXAMPLE_OPENAPI)
-        self.assertIn("not installed", str(ctx.exception))
-
-    def test_returns_empty_list_for_valid_spec_when_available(self) -> None:
-        binary = find_speakeasy_openapi()
-        if binary is None:
-            self.skipTest("Speakeasy openapi binary not installed.")
-        errors = _run_speakeasy_validate(EXAMPLE_OPENAPI)
-        self.assertIsInstance(errors, list)
-        # A valid spec should produce no errors
-        self.assertEqual(errors, [], f"Unexpected errors: {errors}")
-
-    def test_returns_errors_for_invalid_spec_when_available(self) -> None:
-        binary = find_speakeasy_openapi()
-        if binary is None:
-            self.skipTest("Speakeasy openapi binary not installed.")
-        import json
-        import tempfile
-
-        bad_spec = {"openapi": "3.0.0", "info": {}, "paths": {}}
-        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as tmp:
-            json.dump(bad_spec, tmp)
-            tmp_path = tmp.name
-        try:
-            errors = _run_speakeasy_validate(tmp_path)
-            self.assertIsInstance(errors, list)
-        finally:
-            Path(tmp_path).unlink(missing_ok=True)
-
-    def test_returns_error_when_binary_not_found_at_path(self) -> None:
-        with patch(
-            "django_angular3.validation.find_speakeasy_openapi",
-            return_value="/nonexistent/openapi",
-        ):
-            with self.assertRaises(RuntimeError):
-                _run_speakeasy_validate(EXAMPLE_OPENAPI)
-
-
 class ValidateOpenapiFileTests(unittest.TestCase):
     def test_valid_file_passes_with_speakeasy(self) -> None:
         """validate_openapi_file returns [] for the example spec."""
@@ -115,14 +70,60 @@ class ValidateOpenapiFileTests(unittest.TestCase):
     def test_falls_back_gracefully_when_binary_missing(self) -> None:
         """When speakeasy is not available, a warning is issued but no crash."""
         with patch(
-            "django_angular3.validation._run_speakeasy_validate",
-            side_effect=RuntimeError("not installed"),
+            "django_angular3.validation.find_speakeasy_openapi", return_value=None
         ):
             with warnings.catch_warnings(record=True) as caught:
                 warnings.simplefilter("always")
                 errors = validate_openapi_file(EXAMPLE_OPENAPI)
             self.assertEqual(errors, [])
             self.assertTrue(any("Speakeasy" in str(w.message) for w in caught))
+
+    def test_returns_cli_errors(self) -> None:
+        """CLI validation errors are returned through the public API."""
+        result = Mock(returncode=1, stderr="OpenAPI document is invalid", stdout="")
+        with (
+            patch(
+                "django_angular3.validation.find_speakeasy_openapi",
+                return_value="openapi",
+            ),
+            patch("django_angular3.validation.subprocess.run", return_value=result),
+        ):
+            errors = validate_openapi_file(EXAMPLE_OPENAPI)
+
+        self.assertEqual(errors, ["OpenAPI document is invalid"])
+
+    def test_returns_no_errors_when_cli_validation_succeeds(self) -> None:
+        """A successful CLI result is reported as a valid OpenAPI file."""
+        result = Mock(returncode=0, stderr="", stdout="")
+        with (
+            patch(
+                "django_angular3.validation.find_speakeasy_openapi",
+                return_value="openapi",
+            ),
+            patch("django_angular3.validation.subprocess.run", return_value=result),
+        ):
+            errors = validate_openapi_file(EXAMPLE_OPENAPI)
+
+        self.assertEqual(errors, [])
+
+    def test_falls_back_when_cli_binary_cannot_execute(self) -> None:
+        """An unavailable discovered binary follows the documented fallback."""
+        with (
+            patch(
+                "django_angular3.validation.find_speakeasy_openapi",
+                return_value="/nonexistent/openapi",
+            ),
+            patch(
+                "django_angular3.validation.subprocess.run",
+                side_effect=FileNotFoundError("missing executable"),
+            ),
+            warnings.catch_warnings(record=True) as caught,
+        ):
+            warnings.simplefilter("always")
+            errors = validate_openapi_file(EXAMPLE_OPENAPI)
+
+        self.assertEqual(errors, [])
+        self.assertTrue(any("Speakeasy" in str(w.message) for w in caught))
 
     def test_structural_errors_reported_without_cli(self) -> None:
         """Structural issues are caught before calling the CLI."""
