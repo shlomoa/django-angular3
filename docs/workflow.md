@@ -19,7 +19,7 @@ run-through using a ready-made sample, start with
 
 ## The cycle
 
-```mermaid
+```{mermaid}
 flowchart TD
   config[django-angular3.json] --> validate[Validate project inputs]
   drf[DRF backend] -->|export_schema| schema[OpenAPI schema]

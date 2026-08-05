@@ -31,7 +31,7 @@ if not settings.configured:
 # Project information
 # ---------------------------------------------------------------------------
 project = "django-angular3"
-copyright = "2024, shlomoa"
+copyright = "2026, shlomoa"
 author = "shlomoa"
 release = "0.1.0a1"
 
@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "myst_parser",
+    "sphinxcontrib.mermaid",
 ]
 
 templates_path = ["_templates"]
