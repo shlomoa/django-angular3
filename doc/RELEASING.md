@@ -8,7 +8,7 @@ stages or publish from a dirty or un-verified working tree.
 
 ## Assumptions
 
-- You are running **Python 3.11 or later**. Check with `python --version`.
+- You are running **Python 3.12 or later**. Check with `python --version`.
 - **Git** is installed and your local `main` is up to date with `origin/main`.
 - You have already completed the normal contributor workflow (all tests pass,
   all linting is clean) on the commit you intend to release.
@@ -25,7 +25,7 @@ them in your current environment you can skip to stage 1.
 
 **System tools**
 
-- Python 3.11+ with `pip`
+- Python 3.12+ with `pip`
 - Git with write access to `shlomoa/django-angular3` on GitHub
 - A browser to create the GitHub release and monitor Actions
 

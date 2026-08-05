@@ -744,6 +744,11 @@ switch environments.
 - OpenAPI is the source of truth for CRM-facing contracts.
 - Contract validation and `oasdiff`-based change detection are required before downstream construction continues.
 - [oasdiff] is the OpenAPI schema diff and change detection tool (source: [oasdiff-github]).
+- [Speakeasy OpenAPI CLI] is used for full OAS compliance validation of OpenAPI documents in `djng`.
+  It is invoked as a CLI subprocess (`openapi spec validate`) from `django_angular3/validation.py`.
+  The binary is installed via `go install github.com/speakeasy-api/openapi/cmd/openapi@latest` and
+  requires Go as a build-time dependency.  When the binary is not present, `djng` falls back to a
+  lightweight structural pre-check and emits a warning.
 - [ng-openapi-gen] is the Angular client OpenAPI code-generation tool (source: [ng-openapi-gen-github]).
 - [datamodel-code-generator] is the contract-first backend generator (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]). For the use case where no Django model exists yet, it generates the Django data model from an existing OpenAPI Schema using djng-owned custom Django templates. This is the inverse origination path to the model-first [drf-spectacular] export; see §2.22.
 - Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.
@@ -791,6 +796,7 @@ Key actors and terms. Full definitions are in §2.
 [datamodel-code-generator-playground]: https://datamodel-code-generator.koxudaxi.dev/playground/
 [oasdiff]: https://www.oasdiff.com/
 [oasdiff-github]: https://github.com/oasdiff/oasdiff
+[Speakeasy OpenAPI CLI]: https://github.com/speakeasy-api/openapi
 [DRF - Django REST Framework]: https://www.django-rest-framework.org/
 [DRF-github]: https://github.com/encode/django-rest-framework
 [Angular]: https://angular.dev/

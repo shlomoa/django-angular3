@@ -25,7 +25,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedCustomerList'
-          description: ''
+          description: 'Success.'
     post:
       operationId: customers_create
       tags:
@@ -52,7 +52,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customer'
-          description: ''
+          description: 'Success.'
   /api/v1/customers/{id}/:
     get:
       operationId: customers_retrieve
@@ -75,7 +75,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customer'
-          description: ''
+          description: 'Success.'
     patch:
       operationId: customers_partial_update
       parameters:
@@ -108,7 +108,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customer'
-          description: ''
+          description: 'Success.'
     delete:
       operationId: customers_destroy
       parameters:
@@ -149,7 +149,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedProductList'
-          description: ''
+          description: 'Success.'
 components:
   schemas:
     Customer:

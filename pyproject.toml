@@ -43,6 +43,7 @@ docs = [
   "sphinx>=8.0",
   "furo>=2024.1.29",
   "myst-parser>=3.0",
+  "sphinxcontrib-mermaid",
 ]
 dev = [
   "ruff>=0.4",

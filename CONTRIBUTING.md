@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-- You are running **Python 3.11 or later**. Check with `python --version`.
+- You are running **Python 3.12 or later**. Check with `python --version`.
 - You have **Git** installed and configured with your GitHub identity.
 - You have cloned the repository and your working directory is the repo root.
 - No Node.js, Angular CLI, or other frontend tooling is required to contribute
