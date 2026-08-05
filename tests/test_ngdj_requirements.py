@@ -111,7 +111,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
         source = ds_index_path.read_text(encoding="utf-8")
         self.assertIn("DataService", source)
-        self.assertIn("search", source)
+        self.assertIn("generateServiceContent(options, names)", source)
 
 
 class DjngNgdjIntegrationContractTests(unittest.TestCase):
