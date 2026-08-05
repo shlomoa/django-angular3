@@ -11,7 +11,7 @@ requirements and available commands.
 | **Invoked as** | `django-angular3 <command>` | `django-admin <command>` or `python manage.py <command>` |
 | **Requires Django project** | No | Yes — `django_angular3` must be in `INSTALLED_APPS` and `DJANGO_SETTINGS_MODULE` must be set |
 | **Requires DRF / drf-spectacular** | No | Only for `export_schema` |
-| **Primary use** | Validation and Angular wrappers without a project | Full app lifecycle — including schema export, AI-automation plans, and workspace management |
+| **Primary use** | Validation and Angular wrappers without a project | Full app lifecycle — including schema export, direct app construction, and workspace management |
 
 ## Use cases
 
@@ -24,7 +24,7 @@ requirements and available commands.
 **Use the Django management commands** when:
 - Operating inside a generated app that has `django_angular3` in `INSTALLED_APPS`.
 - Exporting the OpenAPI schema from a live DRF backend (`export_schema`).
-- Generating an AI-automation build plan that reacts to schema changes (`build_app`).
+- Directly constructing and validating the generated app from schema and OpenUI changes (`build_app`).
 - Managing the full Angular workspace lifecycle, including modify and delete operations.
 
 ## Standalone CLI commands
@@ -47,8 +47,9 @@ Invoked as `django-angular3 <command> [args]`.
 | `install-tutorial [dest]` | Copy the bundled `simple_crm` tutorial project to `dest` (default: `simple_crm`). Prints migration and run steps on success. |
 
 Commands shown with `[path]` default to `django-angular3.json` when omitted. All
-`ng_*` commands accept `--dry-run` to print the resolved Angular subprocess call
-list without invoking Angular tooling.
+`ng_*` commands accept `--dry-run` for diagnostic validation and debugging. It
+prints the resolved Angular subprocess call list without invoking Angular
+tooling.
 
 ## Django management commands
 
@@ -57,7 +58,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema <config>` | Export the OpenAPI schema from DRF (via drf-spectacular) and persist it as a versioned artifact. Rotates the previous schema alongside the current one for `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app <config>` | Validate the configured OpenAPI and UI sources, then generate a deterministic build plan driven by schema change detection. Maps skill/mode pairs to the corresponding management command names for AI-automation workflows. Accepts `--previous-schema <path>`, `--previous-config <path>`, `--output-format {json,yaml,text}` (default: `json`), `--output <dir>` (default: `build`), `--dry-run`, `--force start-from-scratch`, and `--acknowledge-breaking`. |
+| `build_app <config>` | Validate the configured OpenAPI and OpenUI sources, compare them with prior inputs, execute the required construction commands in dependency order, and validate the generated app. `--dry-run` is diagnostic-only: it validates inputs, identifies changes, and reports selected commands without modifying the workspace. Accepts `--previous-schema <path>`, the selected previous-OpenUI interface, `--dry-run`, `--force start-from-scratch`, and `--acknowledge-breaking`. |
 | `ng_new [path]` | Create an empty Angular workspace. |
 | `ng_workspace [path]` | Bootstrap the configured workspace. |
 | `ng_workspace_modify [path]` | Reapply angular-django2 workspace bootstrap and django-angular3 defaults to an existing workspace. |
@@ -69,8 +70,9 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | `ng_openapi_gen [path]` | Run `ng-openapi-gen` via `pnpm exec`. |
 | `ng_build [path]` | Build the configured Angular application. |
 
-All management `ng_*` commands accept `--dry-run` to print the resolved Angular
-subprocess call list without invoking Angular tooling.
+All management `ng_*` commands accept `--dry-run` for diagnostic validation and
+debugging, printing the resolved Angular subprocess call list without invoking
+Angular tooling.
 
 ## Command availability summary
 

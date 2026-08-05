@@ -4,8 +4,7 @@ This folder splits `doc/GENERATE_AI_AUTOMATIONS.md` into smaller working files f
 skill authoring cadence described in `doc/SKILL_AUTHORING_PLAN.md`.
 
 This folder is intentionally skill-specific. It is the working set for the
-SKILLS subset of the broader AI automation model; it is not the planning or
-execution workspace for TOOLS, HOOKS, or PLUGINS.
+SKILLS subset of the broader AI automation model; it is not the execution workspace for TOOLS, HOOKS, or PLUGINS.
 
 No sibling `tools_creation/` workspace is defined today. Tool candidates are
 still tracked at the design and analysis level in `doc/` rather than as a

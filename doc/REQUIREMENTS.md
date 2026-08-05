@@ -46,7 +46,7 @@ process for AI automations; those subjects are covered separately in
 skills-specific authoring sub-plan within that broader automation model.
 
 This document also does not define the detailed app-builder command contract,
-change-set structure, build-plan serialization, or scenario-by-scenario test
+change-set structure, command translation, or scenario-by-scenario test
 examples. Those are covered separately in
 [APP_BUILDER_REQUIREMENTS.md] and [TEST_EXAMPLES.md].
 
@@ -128,7 +128,7 @@ External dependencies and services include:
 - Swagger Studio / SwaggerHub-style authoring flow for designing or updating
   the OpenAPI specification before export
 - versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) exported into `spec/openapi/source/`. OAS 3.1 is the pinned version; the toolchain ([drf-spectacular], [oasdiff], [ng-openapi-gen]) does not yet support OAS 3.2.
-- structured non-CRM UI inputs maintained in `spec/ui/`
+- structured non-CRM UI inputs maintained in `spec/openui/`
 - [oasdiff] for OpenAPI schema diffing and change detection
 - [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
 - [datamodel-code-generator] (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]) for the contract-first use case: generating the Django data model from an existing OpenAPI Schema, using djng-owned custom Django templates, when no Django model exists yet (see [ARCHITECTURE.md] §§ 2.22 and 11.2)
@@ -284,7 +284,7 @@ The platform must support the following primary user workflows:
   business modules.
 - **Run the first-time build from OpenAPI and UI inputs**: a user exports the
   OpenAPI artifact into `spec/openapi/source/`, provides non-CRM UI inputs in
-  `spec/ui/`, triggers the build, and receives stage-specific feedback from
+  `spec/openui/`, triggers the build, and receives stage-specific feedback from
   validation, generation, and final assembly.
 
 ### 3.3. Preconditions and postconditions
@@ -332,7 +332,7 @@ endpoints that enforce validation and authorization on the server side.
 
 - **Run the first-time build from OpenAPI and UI inputs**
   - Preconditions: a versioned OpenAPI schema artifact is available in
-    `spec/openapi/source/`; non-CRM inputs are available in `spec/ui/`; the
+    `spec/openapi/source/`; non-CRM inputs are available in `spec/openui/`; the
     OpenAPI contract is valid and generation-compatible; and non-CRM inputs are
     valid.
   - Postconditions: the build either produces generated CRM-facing artifacts,
@@ -382,7 +382,7 @@ role-appropriate, and validated through backend-enforced operations.
   1. A user designs or updates the OpenAPI specification in the authoring
     tool.
   2. The user exports the schema artifact into `spec/openapi/source/`.
-  3. The user provides non-CRM UI inputs in `spec/ui/`.
+  3. The user provides non-CRM UI inputs in `spec/openui/`.
   4. The user triggers the build from the repository.
   5. The build validates the contract and non-CRM inputs, generates CRM-facing
     artifacts, assembles the Angular application, and reports the stage
@@ -403,7 +403,7 @@ recoverable.
 - **Contract invalid**: if the OpenAPI contract is invalid or incompatible
   with generation, the build must fail fast before downstream construction
   continues.
-- **Non-CRM input invalid**: if structured UI inputs in `spec/ui/` are
+- **Non-CRM input invalid**: if structured UI inputs in `spec/openui/` are
   invalid, the build must fail fast and identify the non-CRM input stage as
   the point of failure.
 - **Build failure**: when generation or assembly fails, the flow must surface
@@ -517,12 +517,11 @@ boundaries, architectural control-loop, verification, and build-flow model.
   AI automation model, using SKILLS for AI-guided construction work, TOOLS for
   deterministic bounded operations, and HOOKS for lifecycle gates or mandatory
   side effects
-- Governed construction must be driven by an agentically orchestrated procedure
-  graph derived from change detection, with procedure kinds broad enough to
-  represent AI-guided SKILL sessions, deterministic TOOL procedures,
-  verification procedures, and enforced gate boundaries, and with each
-  procedure producing or validating output directly in relation to the
-  generated app workspace
+- Governed construction must translate change-detection results into an
+  ordered command sequence that can select AI-guided SKILL sessions,
+  deterministic TOOL commands, validation commands, and enforced gate
+  boundaries. Each selected command must produce or validate output directly
+  in relation to the generated-app workspace.
 - Primitive selection must follow an explicit policy: deterministic work must
   prefer TOOL contracts, AI-guided generation or repair work may use SKILLS,
   and mandatory lifecycle enforcement must not rely on optional agent behavior
@@ -556,7 +555,7 @@ The initial authoring and build flow must support this sequence:
    OpenAPI authoring tools (Swagger Studio or SwaggerHub)
 2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
 3. The user adds non-CRM changes such as bespoke reactive forms, page
-   definitions, or workflow-specific UI content into `spec/ui/`
+   definitions, or workflow-specific UI content into `spec/openui/`
 4. The user fires a build from the repository
 5. The build validates the OAS artifact and non-CRM inputs, generates
    CRM-facing artifacts, assembles the Angular app, and reports any stage-
@@ -567,7 +566,7 @@ For this flow:
 - The repository must provide a clear location for the source OAS artifact at
   `spec/openapi/source/`
 - The repository must provide a separate location for non-CRM content inputs at
-  `spec/ui/`
+  `spec/openui/`
 - The build must fail fast when the OpenAPI contract is invalid or incompatible
   with generation
 - The build must fail fast when non-CRM content inputs are invalid
@@ -928,14 +927,15 @@ following scenario classes:
   the full automation chain from workspace creation through app assembly and
   verification
 - **Schema evolution — add**: an incremental schema change that adds a
-  resource; only the required automation procedures run, and existing
+  resource; only the required automation commands run, and existing
   workspace, app, and components are preserved
 - **Schema evolution — breaking change blocked**: a breaking schema change is
-  detected by `oasdiff`; construction halts before emitting a plan, and the
-  explicit acknowledgement path must be available to unblock and resume
-- **Config-only change**: a structured UI input change with no schema change;
-  only config-derived automation procedures run
-- **Combined schema and config change**: both the contract and the non-CRM
+  detected by `oasdiff`; construction halts before downstream command
+  execution, and the explicit acknowledgement path must be available to
+  unblock and resume
+- **OpenUI-only change**: an `app.openui.json` change with no schema change; only
+  OpenUI-derived automation commands run
+- **Combined schema and OpenUI change**: both the contract and the non-CRM
   input source change in the same build; both change paths activate and
   interleave correctly
 - **Full replacement**: a resource is removed and a different resource is
@@ -955,13 +955,13 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `ARCHITECTURE.md` §19, `GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. Entry point that drives the agent through the procedure graph. | `APP_BUILDER_REQUIREMENTS.md` |
+| **`build_app`** | The `djng` Django management command. It compares inputs, translates changes to ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the [Claude Agent SDK - Python] (implementation repository: [Claude Agent SDK - Python - GitHub]). | `ARCHITECTURE.md` §2.16 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
 | **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | `GENERATE_AI_AUTOMATIONS.md` |
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | `GENERATE_AI_AUTOMATIONS.md` |
 | **PLUGINS** | Packaging units that bundle related automations, templates, or supporting assets without changing the primitive responsibilities themselves. | `GENERATE_AI_AUTOMATIONS.md` |
-| **AI-automation-based construction** | The construction model in which the agent executes each procedure through the appropriate governed primitive or combination of primitives, using SKILLS for AI-guided work, TOOLS for deterministic operations, and HOOKS for enforced lifecycle behavior. | `ARCHITECTURE.md` §2.15 |
+| **AI-automation-based construction** | The construction model in which the agent executes each selected command through the appropriate governed primitive or combination of primitives, using SKILLS for AI-guided work, TOOLS for deterministic operations, and HOOKS for enforced lifecycle behavior. | `ARCHITECTURE.md` §2.15 |
 
 ### B. References diagrams
 
@@ -1010,7 +1010,7 @@ sequenceDiagram
 - [spec/examples/01_simple_crm/] — runnable example workspace with schema,
   UI, and build artifacts.
 - [spec/openapi/source/example.openapi.json] — example OpenAPI source input.
-- [spec/ui/example.ui.json] — example non-CRM UI input.
+- [spec/openui/app.openui.json] — example non-CRM UI input.
 
 ### D. References
 
@@ -1024,7 +1024,7 @@ Labels used in this document are defined in the link-definitions block at the en
 [TEST_EXAMPLES.md]: TEST_EXAMPLES.md
 [spec/examples/01_simple_crm/]: ../spec/examples/01_simple_crm/
 [spec/openapi/source/example.openapi.json]: ../spec/openapi/source/example.openapi.json
-[spec/ui/example.ui.json]: ../spec/ui/example.ui.json
+[spec/openui/app.openui.json]: ../spec/openui/app.openui.json
 [Django]: https://www.djangoproject.com/
 [DRF - Django REST Framework]: https://www.django-rest-framework.org/
 [Angular]: https://angular.dev/

@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from django_angular3.cli import _run_install_tutorial
-from django_angular3.config import load_project_config
+from django_angular3.config import ConfigError, load_project_config
 from django_angular3.documents import load_document
 from django_angular3.validation import (
     validate_openapi_document,
@@ -22,12 +22,12 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(validate_openapi_document(document), [])
 
     def test_example_openui_document_is_valid(self) -> None:
-        document = load_document(ROOT / "spec" / "ui" / "example.ui.json")
+        document = load_document(ROOT / "spec" / "openui" / "app.openui.json")
         self.assertEqual(validate_openui_document(document), [])
 
     def test_tutorial_openui_document_is_valid(self) -> None:
         document = load_document(
-            ROOT / "django_angular3" / "examples" / "01_simple_crm" / "ui.json"
+            ROOT / "django_angular3" / "examples" / "01_simple_crm" / "app.openui.json"
         )
         self.assertEqual(validate_openui_document(document), [])
 
@@ -47,6 +47,25 @@ class ScaffoldTests(unittest.TestCase):
         self.assertTrue(config.openui_source.is_file())
         self.assertEqual(config.angular_output, ROOT / "build" / "angular")
         self.assertEqual(validate_project_config(config), [])
+
+    def test_project_config_rejects_legacy_ui_mapping(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "django-angular3.json"
+            config_path.write_text(
+                """{
+  "project": { "name": "legacy-ui" },
+  "openapi": { "source": "schema.yaml" },
+  "openui": { "source": "app.openui.json" },
+  "angular": { "output": "build/angular" }
+}
+""",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ConfigError, "Configuration section 'openui' must be a mapping"
+            ):
+                load_project_config(config_path)
 
     def test_requirements_file_exists_with_runtime_dependencies(self) -> None:
         requirements_path = ROOT / "requirements.txt"
@@ -85,7 +104,7 @@ class ScaffoldTests(unittest.TestCase):
             dest_path = Path(dest)
             self.assertTrue((dest_path / "manage.py").is_file())
             self.assertTrue((dest_path / "django-angular3.json").is_file())
-            self.assertTrue((dest_path / "ui.json").is_file())
+            self.assertTrue((dest_path / "app.openui.json").is_file())
             self.assertTrue((dest_path / "simple_crm" / "settings.py").is_file())
 
     def test_install_tutorial_fails_if_dest_exists(self) -> None:

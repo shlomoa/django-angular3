@@ -251,7 +251,7 @@ def validate_project_config(config: ProjectConfig) -> list[str]:
         errors.extend(validate_openapi_file(config.openapi_source))
 
     if not config.openui_source.exists():
-        errors.append(f"UI source does not exist: {config.openui_source}")
+        errors.append(f"OpenUI source does not exist: {config.openui_source}")
     else:
         errors.extend(validate_openui_file(config.openui_source))
 

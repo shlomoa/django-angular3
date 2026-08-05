@@ -8,7 +8,7 @@
 ---
 name: angular-workspace-foundation
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
-when_to_use: Use when build_app dispatches a workspace-creation or workspace-modification procedure node, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
+when_to_use: Use when build_app selects a workspace-creation or workspace-modification command, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -27,7 +27,7 @@ The `angular-workspace-foundation` skill manages the creation, modification, and
 
 ### Inputs
 
-All inputs are read from `django-angular3.json` passed as the procedure input.
+All inputs are read from `django-angular3.json` passed as the command input.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
@@ -65,7 +65,8 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    ```bash
    django-admin ng_new django-angular3.json --dry-run
    ```
-   Review the dry-run output (the previewed command invocation). When `ng_new` is in `command_allowlist`, execute:
+   Use the dry-run output to diagnose the resolved command invocation. When
+   `ng_new` is in `command_allowlist`, execute:
    ```bash
    django-admin ng_new django-angular3.json
    ```
@@ -79,7 +80,9 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    django-admin ng_add django-angular3.json
    ```
 
-   > **Note**: `ng_new` and `ng_add` are not in `command_allowlist` by default — they plan dry-runs unless the allowlist is explicitly broadened. See `django_angular3/settings.py`.
+   > **Note**: `ng_new` and `ng_add` are not in `command_allowlist` by default.
+   > Use `--dry-run` only for diagnostic validation and debugging until the
+   > allowlist is explicitly broadened. See `django_angular3/settings.py`.
 
 3. **Configure custom Material theme**:
    - Read the generated `src/styles.scss`
@@ -252,7 +255,8 @@ Remove the workspace directory completely, typically when starting fresh is simp
    ```bash
    django-admin ng_workspace_delete django-angular3.json --dry-run
    ```
-   Review the dry-run output (the previewed command invocation). When `ng_workspace_delete` is in `command_allowlist`, execute:
+   Use the dry-run output to diagnose the resolved command invocation. When
+   `ng_workspace_delete` is in `command_allowlist`, execute:
    ```bash
    django-admin ng_workspace_delete django-angular3.json
    ```
@@ -411,7 +415,7 @@ After modifying a workspace, verify:
 - `project.name`: `"my-shop"`
 - `angular.output`: `"/home/user/projects/my-shop"`
 
-Procedure-level input: `confirmDelete: true`
+Command-level input: `confirmDelete: true`
 
 **Execution**:
 1. Check for uncommitted changes (warn if present)

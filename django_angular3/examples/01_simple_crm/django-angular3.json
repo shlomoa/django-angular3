@@ -2,7 +2,7 @@
   "project": { "name": "simple_crm" },
   "app": { "name": "shop" },
   "openapi": { "source": "schema.yaml" },
-  "ui": { "source": "ui.json" },
+  "openui": { "source": "app.openui.json" },
   "angular": {
     "output": "build/angular",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }

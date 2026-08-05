@@ -93,11 +93,12 @@ After step 6: the app shell loads in a browser. There are no Customer/Product pa
 
 ---
 
-**7. Define the non-CRM project config schema** *(TODO item 1 — currently blocked)*
+**7. Implement OpenUI input validation and change detection** *(TODO item 1 —
+resolved format, implementation pending)*
 
 | Repo | Issue | Context |
 |---|---|---|
-| **djng** | `Define JSON schema and filename for <project>.project.json (non-CRM UI config)` ([django-angular3#74](https://github.com/shlomoa/django-angular3/issues/74)) | `build_app` non-CRM change derivation is entirely blocked until this schema exists; also gates step 10 non-CRM pages |
+| **djng** | `Implement OpenUI validation and structural diffing for app.openui.json` ([django-angular3#74](https://github.com/shlomoa/django-angular3/issues/74)) | The OpenUI format and filename are settled; `build_app` still needs validation, structural change derivation, and Angular UI command dispatch. |
 
 ---
 
@@ -127,9 +128,9 @@ Each djng SKILL issue must include local acceptance criteria per `SKILL_AUTHORIN
 
 | Repo | Issue | Context |
 |---|---|---|
-| **djng** | `Replace build_app ChangeSet plan emission with structured ProcedureGraph nodes` ([django-angular3#59](https://github.com/shlomoa/django-angular3/issues/59)) | Current `build_app.py` emits CLI command strings; structured nodes are required before SDK integration |
-| **djng** | `Wire Claude Agent SDK into build_app: call sdk.query() per SKILL procedure node` ([django-angular3#59](https://github.com/shlomoa/django-angular3/issues/59)) | Core of TODO item 8; without it `build_app` cannot drive any SKILL session |
-| **djng** | `Implement build_app failure policy for SKILL sessions that end without satisfying local acceptance criteria` ([django-angular3#60](https://github.com/shlomoa/django-angular3/issues/60)) | Currently unspecified; `build_app` advances to the next procedure node regardless of outcome |
+| **djng** | `Implement structured build_app command translation and execution` ([django-angular3#59](https://github.com/shlomoa/django-angular3/issues/59)) | Replace CLI command-string reporting with structured command inputs and results that can be executed directly or delegated to an SDK session. |
+| **djng** | `Wire Claude Agent SDK into build_app: call sdk.query() per selected SKILL command` ([django-angular3#59](https://github.com/shlomoa/django-angular3/issues/59)) | Core of TODO item 8; without it `build_app` cannot drive any selected SKILL session. |
+| **djng** | `Implement build_app failure policy for SKILL sessions that end without satisfying local acceptance criteria` ([django-angular3#60](https://github.com/shlomoa/django-angular3/issues/60)) | `build_app` must halt command execution when a selected session fails or lacks evidence of success. |
 
 ---
 
@@ -143,8 +144,8 @@ Triggers all 11 SKILL sessions in dependency order against the simple_crm schema
 
 | Repo | Issue | Context |
 |---|---|---|
-| **djng** | `Verify simple_crm cold-start procedure graph: all 11 SKILL sessions emitted in dependency order (TEST_EXAMPLES.md example 1)` ([django-angular3#84](https://github.com/shlomoa/django-angular3/issues/84)) | Input files exist at `django_angular3/examples/01_simple_crm/`; full chain not yet run end-to-end |
-| **ngdj** | `Integration test: all 11 schematics accept build_app procedure inputs for simple_crm schema` ([angular-django2#24](https://github.com/shlomoa/angular-django2/issues/24)) | Each schematic is the execution counterpart of a SKILL; correctness is currently unverified |
+| **djng** | `Verify simple_crm cold-start command sequence: all 11 SKILL sessions execute in dependency order (TEST_EXAMPLES.md example 1)` ([django-angular3#84](https://github.com/shlomoa/django-angular3/issues/84)) | Input files exist at `django_angular3/examples/01_simple_crm/`; the full direct-execution chain is not yet run end-to-end. |
+| **ngdj** | `Integration test: all 11 schematics accept build_app command inputs for simple_crm schema` ([angular-django2#24](https://github.com/shlomoa/angular-django2/issues/24)) | Each schematic is the execution counterpart of a SKILL; correctness is currently unverified. |
 
 ---
 
@@ -153,7 +154,7 @@ Triggers all 11 SKILL sessions in dependency order against the simple_crm schema
 | Repo | Issue | Context |
 |---|---|---|
 | **djng** | `Populate REQUIREMENTS.md §6.4: global acceptance criteria covering cross-SKILL type consistency, backend/Angular contract alignment, and runtime smoke tests` ([django-angular3#84](https://github.com/shlomoa/django-angular3/issues/84)) | Section exists but is empty; `ng_build` compiling is not sufficient to declare the app correct (see TODO §9.3) |
-| **djng** | `Add terminal verification procedure node to build_app procedure graph: run §6.4 acceptance tests after all SKILL sessions` ([django-angular3#84](https://github.com/shlomoa/django-angular3/issues/84)) | Without this, the pipeline has no deterministic pass/fail signal |
+| **djng** | `Add terminal validation command to build_app: run §6.4 acceptance tests after all SKILL sessions` ([django-angular3#84](https://github.com/shlomoa/django-angular3/issues/84)) | Without this, direct execution has no deterministic pass/fail signal. |
 | **ngdj** | `Define and implement ngdj schematic test harness against a real Angular workspace` ([angular-django2#24](https://github.com/shlomoa/angular-django2/issues/24)) | Schematic correctness is entirely unverified; TODO §9.2 identifies this as a blocking gap |
 
 ---

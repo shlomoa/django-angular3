@@ -1,7 +1,27 @@
 # Open Items — djng/ngdj
 
-Generated: 2026-06-14. Items are ordered by implementation sequence. Status is
-shown for each item.
+
+---
+
+## Priority 0. Classify configuration files and align documentation and code
+
+**Status: Not started — high priority**
+
+Define and apply the following configuration-file categories consistently in
+djng documentation and code. Each configuration file must identify its category,
+owner, input mechanism, and relationship to command-line arguments.
+
+| Category | Purpose | Examples |
+|---|---|---|
+| **Tool-internal configuration** | Configures djng itself. | `django-angular3.json` |
+| **Command input configuration set** | Supplies command inputs, implicitly by default or explicitly by path; may replace or duplicate command-line arguments. | A command's default or explicitly selected input set |
+| **Specification configuration** | Defines or supplies an external contract or grammar consumed by djng. | OpenAPI 3.0 schema; OpenUI `openui.schema.json` |
+
+Review and align `README.md`, `docs/`, `doc/`, command help, configuration
+loading, validation, and tests to use these categories without conflating tool
+settings, command inputs, and specifications. Establish the authoritative
+configuration-file reference and make other documentation link to it rather
+than restating these definitions.
 
 ---
 
@@ -9,7 +29,7 @@ shown for each item.
 
 **Status: Resolved — pending implementation**
 
-The generated app's non-CRM UI source is `spec/ui/app.ui.json`, an OpenUI
+The generated app's non-CRM UI source is `spec/openui/app.openui.json`, an OpenUI
 concrete UI document. It conforms to `openui.schema.json` and uses the
 vocabulary in `openui.json` from
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). Non-CRM change
@@ -20,7 +40,7 @@ validating and structurally diffing the OpenUI document tree.
 |---|---|
 | **Remaining work** | Implement OpenUI document validation and structural diffing in `django_angular3/validation.py`. |
 | **Origin** | `APP_BUILDER_REQUIREMENTS.md` §Inputs, §Change Derivation; `ARCHITECTURE.md` §7.1 stage 4; `REQUIREMENTS.md` §4.2.2 |
-| **Input sources** | `spec/ui/app.ui.json`, `django_angular3/validation.py` |
+| **Input sources** | `spec/openui/app.openui.json`, `django_angular3/validation.py` |
 
 ---
 
@@ -30,13 +50,13 @@ validating and structurally diffing the OpenUI document tree.
 
 ### 2.0 Previous OpenUI input interface
 
-**Status: Decision required**
+**Status: Resolved — pending implementation**
 
-`build_app` must compare the current OpenUI document with the accepted
-previous document. Decide whether the command keeps `--previous-config`,
-resolving the prior OpenUI source through that configuration file, or instead
-accepts an explicit `--previous-ui <path>` argument. The chosen interface must
-be used consistently by `build_app`, `APP_BUILDER_REQUIREMENTS.md`, examples,
+`build_app` resolves the previous OpenUI document by the same algorithm used
+for the previous OpenAPI schema: `--previous-openui <path>` takes precedence;
+otherwise it uses the `.previous` sibling of the current `openui.source`. The
+`--previous-config` argument is reserved for the project-configuration change
+lane. This interface must be implemented consistently by `build_app`, examples,
 and tests.
 
 Derive the complete set of `angular-django2` capabilities and `djng` command
@@ -62,9 +82,9 @@ wrappers needed to materialize the required Angular-side outputs.
 
 `angular-django2` (ngdj) was released with new and clarified schematic
 capabilities. Each ngdj change below is mapped to the corresponding djng
-alignment action (wrapper, build-plan step, or SKILL/doc wording) and its
+alignment action (wrapper, direct-build command, or SKILL/doc wording) and its
 current status. `Done` items already have djng-side evidence; `Pending` items
-still require a djng wrapper, build-plan step, or SKILL/doc alignment.
+still require a djng wrapper, direct-build command, or SKILL/doc alignment.
 
 | ngdj change | djng alignment action | Status |
 |---|---|---|
@@ -72,10 +92,10 @@ still require a djng wrapper, build-plan step, or SKILL/doc alignment.
 | Non-interactive app generation (`--defaults`) | Emitted by `ng_gen_app` (`angular.py`). | Done |
 | SSR disabled by default in generated app (`--ssr=false`) | Emitted by `ng_gen_app` from the `ssr` setting default (`settings.py`). | Done |
 | Zoneless app generation (`--zoneless=true`) | Emitted by `ng_gen_app` from the `zoneless` setting default (`settings.py`). | Done |
-| Positional names for `component`/`service`/`class` pass-through generators | Add djng wrappers (or build-plan steps) that pass the generator name as a positional argument, not `--name=...`. | Pending |
+| Positional names for `component`/`service`/`class` pass-through generators | Add djng wrappers (or direct-build commands) that pass the generator name as a positional argument, not `--name=...`. | Pending |
 | Project-relative `--path` for `component`/`service`/`class` | Wrappers must pass `--project=<app> --path=src/app/features/...` and expect output under `projects/<app>/src/app/features/...`. | Pending |
 | Component generation seeds embedding hooks (begin/end markers in TS/HTML) | Marker contract documented in the component-composition SKILL (`skill_creation/skills/07-angular-component-composition.md` §Component embedding, mirrored in `doc/GENERATE_AI_AUTOMATIONS.md`) and the user workflow (`docs/workflow.md` §6). | Done |
-| New `embed-component` command (local mode) | File-mode `embed-component` usage documented in `docs/workflow.md` §6, `README.md`, and SKILL 07; a djng `embed-component` wrapper / build-plan step is still to be added. | Doc done; wrapper pending |
+| New `embed-component` command (local mode) | File-mode `embed-component` usage documented in `docs/workflow.md` §6, `README.md`, and SKILL 07; a djng `embed-component` wrapper / direct-build command is still to be added. | Doc done; wrapper pending |
 | Embed generated component into app root | Documented as embedding a feature component into `projects/<app>/src/app/app.ts` in `docs/workflow.md` §6 and SKILL 07; wrapper composition pending. | Doc done; wrapper pending |
 | Compose nested component hierarchy | Repeated child→parent, parent→app-root `embed-component` flow documented in `docs/workflow.md` §6 and SKILL 07; wrapper support pending. | Doc done; wrapper pending |
 | Embed existing package component (package mode, `--from=<module>`) | Package-mode usage (`--from`, exported class as `--component`) documented in `docs/workflow.md` §6 and SKILL 07; a djng wrapper is still to be added. | Doc done; wrapper pending |
@@ -83,8 +103,8 @@ still require a djng wrapper, build-plan step, or SKILL/doc alignment.
 | Explicit inputs/outputs for package component (`--inputs`/`--outputs`) | Support comma-separated `--inputs`/`--outputs` in the package-mode wrapper. | Pending |
 | Angular Material component embedding example | Add a SKILL/doc example embedding a Material package component (e.g. `MatDateRangePicker`). | Pending |
 | Rebuild after embedding (`ng build <app>`) | Reuse the existing `ng_build` wrapper as the post-embedding verification step. | Pending |
-| OpenAPI bootstrap command (`openapi-setup --openapi_spec_file`, `npm install`, `npm run generate:api`) | `build_app` already emits `openapi-setup` build-plan steps; add a standalone djng `openapi-setup` wrapper and align the bootstrap workflow (`--openapi_spec_file`, install, `generate:api`). | Pending |
-| Data service wrapper command (`data-service <resource> --project=<app>`) | `build_app` already emits `ng-data-service` steps; add a standalone djng `data-service` wrapper passing `--project`. | Pending |
+| OpenAPI bootstrap command (`openapi-setup --openapi_spec_file`, `npm install`, `npm run generate:api`) | `build_app` must execute `openapi-setup` when selected by schema changes; add a standalone djng `openapi-setup` wrapper and align the bootstrap workflow (`--openapi_spec_file`, install, `generate:api`). | Pending |
+| Data service wrapper command (`data-service <resource> --project=<app>`) | `build_app` must execute the required `ng-data-service` command; add a standalone djng `data-service` wrapper passing `--project`. | Pending |
 | `data-service` schematic must generate a typed `search` method | `test_data_service_schematic_generates_typed_wrapper` in `tests/test_ngdj_requirements.py` asserts `"search"` is present in `projects/angular-django2/schematics/data-service/index.ts`. The assertion currently fails — the method is absent from the schematic. Either restore the `search` method in ngdj or update the contract requirement and the test to reflect the agreed interface. | Failing — ngdj/djng contract gap |
 | Lower-level app setup alternative (`application` → `material-setup` → `project-structure` → `app-shell`) | Document/derive wrappers for the lower-level schematic flow as an alternative to one-shot `material-app`. | Pending |
 | `workspace-setup` file hooks are not normal CLI flags | Document for wrapper authors that advanced `workspace-setup` `files` hooks are programmatic (wrapper schematic, test runner, or direct factory), not nested CLI flags. | Pending |
@@ -145,24 +165,24 @@ construction.
 
 ---
 
-## 6. app-builder Change Detection and Plan Emission
+## 6. app-builder Change Detection and Direct Execution
 
 **Status: Partially implemented**
 
-Implement app-builder change detection, change classification, and deterministic
-build-plan emission from current and previous schema/config inputs.
+Implement app-builder change detection, change classification, direct execution
+of the selected construction commands, and terminal validation from current and
+previous schema/OpenUI inputs.
 
-- Schema change detection, classification (start-from-scratch, add-things,
-  remove-things, replace-things, breaking), and plan emission implemented in
-  `build_app.py`.
-- Start-from-scratch workspace steps now emit `ng_workspace` so build plans use
-  the same upstream-aligned workspace bootstrap contract as the CLI wrappers.
-- Config change detection covers only project rename; pages, components, and
-  forms change detection not implemented (blocked by item 1).
-- Plan currently emits CLI command strings. Must be replaced with SDK call
-  specs (procedure graph) once item 8 is underway.
+- Schema change detection and classification (start-from-scratch, add-things,
+  remove-things, replace-things, breaking) are implemented in `build_app.py`.
+- Start-from-scratch selection identifies `ng_workspace` as the upstream-aligned
+  workspace bootstrap contract used by the CLI wrappers.
+- Config change detection covers only project rename. OpenUI document-tree
+  change detection and Angular UI command dispatch are not implemented yet.
+- Current command selection produces CLI command strings. It must be replaced
+  with direct wrapper and SDK execution, failure handling, and terminal validation.
 - Example 1 input files now exist at `django_angular3/examples/01_simple_crm/` (see item 9);
-  examples 2–6 still need their own input files before scenarios 2–6 can be verified.
+  examples 2–12 still need their own input files before scenarios 2–12 can be verified.
 
 ---
 
@@ -172,7 +192,7 @@ build-plan emission from current and previous schema/config inputs.
 
 Author each of the eleven SKILLS using the per-skill cadence defined in
 `doc/SKILL_AUTHORING_PLAN.md`: plan, implementation including tests, app-builder
-procedure integration, and verification.
+command integration, and verification.
 
 Per-SKILL acceptance criteria must be defined during the Plan phase of each
 SKILL — the exact conditions the agent must verify before declaring a procedure
@@ -207,8 +227,9 @@ error, or roll back partial changes. Currently unspecified; blocks
 | SDK timeout | Session runs too long | Hard stop; no guarantee of rollback |
 
 `build_app` currently has no mechanism to detect that the agent ended without
-satisfying its acceptance criteria. It makes one SDK call per procedure and
-advances to the next node regardless.
+satisfying its acceptance criteria. It makes one SDK call per selected SKILL
+command and continues regardless of whether that command produced evidence of
+success.
 
 ---
 
@@ -221,26 +242,35 @@ integration checks, and test-based verification.
 
 ### 9.1 Example Input Files
 
-The six scenarios in `doc/TEST_EXAMPLES.md` require input files for each example.
+The twelve scenarios in `doc/TEST_EXAMPLES.md` require input files for each example.
 Example 1 is now bundled in the package at `django_angular3/examples/01_simple_crm/`.
-Examples 2–6 still need their input files under `spec/examples/<example-name>/`.
+Examples 2–12 still need their input files under `spec/examples/<example-name>/`.
 
 | Example | Location | Status |
 |---|---|---|
 | 1 Simple CRM | `django_angular3/examples/01_simple_crm/` | ✓ exists |
 | 2 Add Resource | `spec/examples/02-add-order/` | missing |
 | 3 Breaking Change | `spec/examples/03-breaking-change/` | missing |
-| 4 Config Change | `spec/examples/04-add-dashboard/` | missing; blocked by item 1 (MR1) |
-| 5 Combined | `spec/examples/05-combined-change/` | missing |
-| 6 Replace Resource | `spec/examples/06-replace-resource/` | missing |
+| 4 Workspace Configuration | `spec/examples/04-workspace-style/` | missing; config-diff implementation pending |
+| 5 OpenUI-Source Configuration | `spec/examples/05-openui-source/` | missing; config/OpenUI diff implementation pending |
+| 6 OpenUI Change | `spec/examples/06-add-dashboard/` | missing; OpenUI diffing pending |
+| 7 Combined | `spec/examples/07-combined-change/` | missing |
+| 8 Replace Resource | `spec/examples/08-replace-resource/` | missing |
+| 9 No Change | `spec/examples/09-no-change/` | missing |
+| 10 Configuration + OpenAPI | `spec/examples/10-config-openapi/` | missing; config-diff implementation pending |
+| 11 Configuration + OpenUI | `spec/examples/11-config-openui/` | missing; config/OpenUI diff implementation pending |
+| 12 Configuration + OpenAPI + OpenUI | `spec/examples/12-all-change-lanes/` | missing; config/OpenUI diff implementation pending |
 
-Example 1 is runnable. Examples 2, 3, 5, and 6 are unblocked pending their files. Example 4 depends on item 1.
+Example 1 is runnable. Examples 2, 3, 7, 8, and 9 have no remaining
+change-derivation dependency beyond their fixtures. Examples 4, 5, 10, 11, and
+12 require complete configuration diffing; Examples 6, 7, 11, and 12 require
+OpenUI structural diffing.
 
 ### 9.2 E2E Verification Specification Missing
 
 | Aspect | Current state | What is missing | Why it matters |
 |---|---|---|---|
-| Terminal procedure | `ng_build` is the final verification procedure in the procedure graph. | `ng_build` only confirms the Angular app compiles. It does not verify backend API / Angular client alignment, runtime integration, or business-logic correctness. | A build that compiles is not the same as a working integrated application. |
+| Terminal validation | `ng_build` is the final validation command in the direct build sequence. | `ng_build` only confirms the Angular app compiles. It does not verify backend API / Angular client alignment, runtime integration, or business-logic correctness. | A build that compiles is not the same as a working integrated application. |
 | Backend/frontend alignment | REQUIREMENTS.md §4.2.2 requires "alignment between backend behavior, generated Angular integration artifacts, and frontend composition." | No specification of how this alignment is verified programmatically. | Alignment can silently break when the OpenAPI schema diverges from the running backend. |
 | Full-stack E2E test spec | REQUIREMENTS.md §4.16 defines four verification categories. | None has a concrete acceptance test specification. §6.4 Mandatory Acceptance Scenarios header exists but content is not populated. | No pass/fail criterion beyond "Angular compiled." |
 | ngdj test surface | ngdj schematics are not tested by the djng test suite. | No specification for how SKILL-generated ngdj outputs are tested against a real Angular workspace. | Correctness of the generated Angular application depends on ngdj schematic outputs, which are currently unverified. |

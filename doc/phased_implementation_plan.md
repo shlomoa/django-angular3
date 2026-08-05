@@ -19,8 +19,8 @@ the full automation model (Skills + Tools + Hooks + Plugins), not Skills alone.
   before the phase is considered done), and **test / verification coverage**.
 - Phases are ordered by dependency. A phase must not start while an upstream
   phase it is blocked on is unsatisfied — the same dependency-gating principle
-  the procedure graph enforces at runtime (`APP_BUILDER_REQUIREMENTS.md` FR-2,
-  FR-8).
+  direct command execution enforces at runtime (`APP_BUILDER_REQUIREMENTS.md`
+  FR-2, FR-8).
 - Authoritative sources are the contracts in `doc/GENERATE_AI_AUTOMATIONS.md`
   and the functional requirements in `doc/APP_BUILDER_REQUIREMENTS.md`. Where
   this plan and those documents disagree, the contracts and FRs win; update this
@@ -64,9 +64,9 @@ for this plan:
   authored as runnable `SKILL.md` units (`TODO.md` item 7).
 
 What is *not* yet implemented and is therefore scheduled below: the deterministic
-tool wrappers, the lifecycle hook scripts, the procedure-graph traversal that
-calls them, the SDK-driven Skill orchestration, the terminal verification
-procedures, and the plugin packaging.
+tool wrappers, the lifecycle hook scripts, the direct command translation and
+execution that calls them, the SDK-driven Skill orchestration, terminal
+validation commands, and the plugin packaging.
 
 ---
 
@@ -131,12 +131,12 @@ structured outputs, and a structured error object whose `category` is one of
 - Each tool surfaces failures through the structured error object — never as an
   unstructured exception or stdout-only message — so FR-9 handling can act on
   `category`.
-- Tool names exactly match the contract names emitted in the procedure graph
-  `tool` field (FR-8).
+- Tool names exactly match the contract names selected during command
+  translation (FR-8).
 
 **Test / verification coverage**:
-- Unit tests per tool: success path, each error `category`, and dry-run/plan
-  output where applicable.
+- Unit tests per tool: success path, each error `category`, and diagnostic
+  dry-run output where applicable.
 - A contract-conformance test asserting each tool's output keys match its
   contract.
 
@@ -164,15 +164,15 @@ and mandatory side effects always run, independent of agent choices.
   summary; MUST NOT change the session exit code (FR-9a).
 
 **Acceptance criteria**:
-- `Pre*` hook non-zero exit blocks the wrapped tool and every dependent
-  procedure (FR-9a).
+- `Pre*` hook non-zero exit blocks the wrapped tool and every dependent command
+  (FR-9a).
 - `breaking-change` returns the dedicated breaking-change exit code (FR-4); other
   hook failures return a distinct hook-failure exit code (FR-9a).
 - `session-stop` only appends warnings and never alters the exit code.
 - Each hook writes its structured error fields to stderr / `build/hook-log.jsonl`.
 
 **Test / verification coverage**:
-- Per-hook tests: trigger event fires the hook, blocking hook halts traversal,
+- Per-hook tests: trigger event fires the hook, blocking hook halts command execution,
   non-blocking `Post*` failure halts and records, `Stop` hook cannot change exit
   code.
 - Exit-code distinctness tests (breaking-change vs other hook failure vs tool
@@ -180,32 +180,34 @@ and mandatory side effects always run, independent of agent choices.
 
 ---
 
-## Phase 3 — Procedure graph and `build_app` traversal
+## Phase 3 — `build_app` command translation and execution
 
-**Goal**: Make `build_app` traverse the procedure graph in dependency order and
-dispatch each node to the right primitive.
+**Goal**: Make `build_app` translate changes into ordered commands and execute
+each command through the right primitive.
 
 **Dependencies**: Phases 1–2.
 
 **Work items**:
-- Emit `tool`, `gate`, and `skill-session` nodes whose `tool` / `hook` fields
-  equal the contract names (FR-8).
-- Traverse in dependency order; for `tool` nodes call the Phase 1 tools, for
-  `gate` nodes apply the Phase 2 hooks.
-- Implement FR-9 / FR-9a failure handling: halt at the failed node, refuse to
-  start dependents, emit structured error, exit with the contract-specific code.
-- Keep `--dry-run` emitting the graph without invoking any automation (FR-3).
+- Translate selected TOOL, HOOK, and SKILL contracts into ordered commands whose
+  contract names match the documented surfaces (FR-8).
+- Execute in dependency order; TOOL commands call the Phase 1 tools and HOOK
+  boundaries apply the Phase 2 hooks.
+- Implement FR-9 / FR-9a failure handling: halt at the failed command, refuse
+  to start dependents, emit a structured error, and exit with the
+  contract-specific code.
+- Keep `--dry-run` validating inputs, identifying changes, and reporting the
+  ordered diagnostic command output without invoking automation (FR-3).
 
 **Acceptance criteria**:
-- A node never starts while a dependency it is blocked on is unsatisfied
+- A command never starts while a dependency it is blocked on is unsatisfied
   (FR-2, FR-8).
-- A failed tool or `Pre*`/`Post*` hook stops traversal and produces the correct,
+- A failed tool or `Pre*`/`Post*` hook stops execution and produces the correct,
   distinct exit code.
 - `--dry-run` output is deterministic and human-readable for the same inputs.
 
 **Test / verification coverage**:
-- Graph-determinism tests (same inputs → same graph).
-- Traversal tests: dependency ordering, halt-on-failure, dependent-skip,
+- Command-translation determinism tests (same inputs → same command sequence).
+- Execution tests: dependency ordering, halt-on-failure, dependent-skip,
   exit-code mapping.
 - Dry-run snapshot tests for the documented `TEST_EXAMPLES.md` scenarios.
 
@@ -216,11 +218,11 @@ dispatch each node to the right primitive.
 **Goal**: Author the eleven Angular construction Skills as runnable `SKILL.md`
 units with per-skill acceptance criteria.
 
-**Dependencies**: Phase 3 (Skills run as `skill-session` nodes the graph emits).
+**Dependencies**: Phase 3 (Skills run as selected AI-guided commands).
 
 **Work items**:
 - Author each Skill per `doc/SKILL_AUTHORING_PLAN.md` (plan, implementation +
-  tests, app-builder procedure integration, verification).
+  tests, app-builder command integration, verification).
 - Keep `skill_creation/skills/` working copies aligned with the authoritative
   `GENERATE_AI_AUTOMATIONS.md` Skills Catalog.
 - Define each Skill's local acceptance criteria during its Plan phase: the exact
@@ -230,8 +232,8 @@ units with per-skill acceptance criteria.
 **Acceptance criteria**:
 - Each Skill declares explicit, checkable acceptance criteria (no arbitrary
   termination).
-- The Skill dependency chain matches the dependency edges the procedure graph
-  emits within the Skill-session subset (FR-2).
+- The Skill dependency chain matches the dependency ordering selected for
+  AI-guided commands (FR-2).
 
 **Test / verification coverage**:
 - Per-skill component tests for the generated Angular artifacts.
@@ -242,14 +244,14 @@ units with per-skill acceptance criteria.
 
 ## Phase 5 — Orchestration flow (Claude Agent SDK)
 
-**Goal**: Drive each `skill-session` node through the Claude Agent SDK until its
-acceptance criteria are satisfied.
+**Goal**: Drive each selected AI-guided command through the Claude Agent SDK
+until its acceptance criteria are satisfied.
 
 **Dependencies**: Phases 3–4.
 
 **Work items**:
-- For each `skill-session` node, make a Claude Agent SDK call with the Skill(s)
-  enabled, procedure inputs as the prompt, and the working directory set to
+- For each selected AI-guided command, make a Claude Agent SDK call with the
+  Skill(s) enabled, command inputs as the prompt, and the working directory set to
   `angular.output` (FR-8).
 - Specify and implement what `build_app` does when an agent session ends without
   evidence of success — halt, surface a structured error, and refuse to advance
@@ -268,20 +270,20 @@ acceptance criteria are satisfied.
 
 ## Phase 6 — Terminal verification
 
-**Goal**: Make every run terminate in verification procedures that decide success
+**Goal**: Make every run terminate in validation commands that decide success
 on recorded construction results, not a separate filesystem rescan.
 
 **Dependencies**: Phases 3–5.
 
 **Work items**:
-- Implement the terminal verification procedures the procedure graph always ends
+- Implement the terminal validation commands that direct execution always ends
   in (FR-10), consuming structured tool outputs (for example the
   `generated_files` array from `angular_api_client_generate`).
 - Cover the four verification categories in `doc/ARCHITECTURE.md` §7.3: contract,
   construction-output, integration, and test-based verification.
 
 **Acceptance criteria**:
-- A run is reported successful only when every terminal verification procedure
+- A run is reported successful only when every terminal validation command
   reports success (FR-10).
 - A failed terminal verification follows FR-9 failure handling.
 
@@ -305,7 +307,7 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 > Local acceptance by an individual Skill session is necessary but **not
 > sufficient** for global correctness. The architecture therefore requires a
 > distinct **global acceptance gate**, applied after all Skill sessions and
-> deterministic procedures complete, that verifies properties no single Skill
+> deterministic commands complete, that verifies properties no single Skill
 > can see:
 >
 > 1. **Cross-Skill interface consistency** — types and signatures produced by one
@@ -316,7 +318,7 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 > 3. **Runtime smoke tests** — the composed application starts and the main
 >    flows run.
 >
-> This gate is owned by the terminal verification procedures (Phase 6 / FR-10),
+> This gate is owned by the terminal validation commands (Phase 6 / FR-10),
 > not by any Skill. A run is "a correct working application"
 > (`doc/ARCHITECTURE.md` §2.17) only when this global gate passes. This decision
 > belongs in `doc/ARCHITECTURE.md` §7.2/§7.3 and the global acceptance criteria
@@ -366,7 +368,7 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 Phase 0 (design)
   └─ Phase 1 (tools)
        └─ Phase 2 (hooks)
-            └─ Phase 3 (procedure graph + traversal)
+            └─ Phase 3 (command translation + execution)
                  ├─ Phase 4 (skills)
                  │    └─ Phase 5 (orchestration / SDK)
                  │         └─ Phase 6 (terminal verification)

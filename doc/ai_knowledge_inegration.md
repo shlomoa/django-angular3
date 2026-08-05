@@ -17,7 +17,7 @@ There is **no implemented Claude SDK import, `query()` call, or orchestration ad
 
 - `pyproject.toml:33` — declares `claude-agent-sdk`.
 - `TODO.md:184–201` — planned Claude Code Python SDK orchestration and failure modes.
-- `e2e_enabling_documentation_plan.md:131` — planned `sdk.query()` per skill procedure.
+- `e2e_enabling_documentation_plan.md:131` — planned `sdk.query()` per selected SKILL command.
 - `doc/phased_implementation_plan.md:236–259` — Phase 5 is explicitly “Claude Agent SDK.”
 - `doc/APP_BUILDER_REQUIREMENTS.md:436–560` — FR-8 requires a Claude Agent SDK call for each `skill-session`; glossary and non-functional requirements also name it.
 - `doc/ARCHITECTURE.md:73–91, 758, 779–784` — Anthropic skill format, Claude Agent SDK as agent implementation, and upstream links.
@@ -32,13 +32,15 @@ There is **no implemented Claude SDK import, `query()` call, or orchestration ad
 ## Proposed document-update plan
 
 1. **Add a “Provider portability and evidence” section** to GENERATE_AI_AUTOMATIONS.md.
-   - Declare the existing TOOL contract shape, procedure graph, structured errors, acceptance evidence, and terminal verification as provider-neutral.
+    - Declare the existing TOOL contract shape, ordered command execution,
+       structured errors, acceptance evidence, and terminal validation as
+       provider-neutral.
    - State that a provider adapter owns session creation, prompt/skill loading, tool dispatch, hook enforcement, event normalization, cancellation/timeouts, and credential configuration.
 
 2. **Replace the Claude-only assumption in Phase 5** of phased_implementation_plan.md.
    - Rename it to **“Orchestration flow and provider adapters.”**
    - Keep the Claude Agent SDK adapter as the first implementation target.
-   - Add acceptance criteria requiring a stubbed adapter interface, so OpenAI, Gemini, and Copilot can be integrated without changing graph traversal semantics.
+   - Add acceptance criteria requiring a stubbed adapter interface, so OpenAI, Gemini, and Copilot can be integrated without changing direct command-execution semantics.
 
 3. **Add an adapter capability matrix** in ARCHITECTURE.md and reference it from APP_BUILDER_REQUIREMENTS.md.
    - Rows: skill loading, tool calling, pre-tool gate, post-tool observation, stop/session teardown, structured result, timeout/cancellation.
@@ -47,7 +49,8 @@ There is **no implemented Claude SDK import, `query()` call, or orchestration ad
 
 4. **Revise hook language in GENERATE_AI_AUTOMATIONS.md.**
    - Preserve Claude Code event mappings as the Claude adapter mapping, not the normative hook definition.
-   - Make `build_app` procedure-graph gates the cross-provider enforcement point.
+    - Make `build_app` command-execution gates the cross-provider enforcement
+       point.
    - Document OpenAI’s hook-manager pattern, Gemini decorator/wrapper pattern, and Copilot session-hook pattern as reference implementations learned from `shlomoa/ai`.
 
 5. **Clarify skill/plugin portability.**

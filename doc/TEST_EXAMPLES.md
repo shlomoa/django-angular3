@@ -14,10 +14,11 @@ Each example consists of:
 ### Shared conventions across all examples
 
 - **Django project name**: varies per example (e.g. `simple_crm`)
-- **Django app name / Angular app name**: `shop` — all six examples use the same
-  primary app. None of the schema or config changes replace the app itself;
-  they evolve the schema and UI configuration within the same `shop` app.
-- The expected build plan / ordered procedure sequence
+- **Django app name / Angular app name**: `shop` — all twelve examples use the same
+  primary app. None of the schema, project-configuration, or OpenUI changes
+  replace the app itself; they evolve the generated app within the same `shop`
+  app.
+- The expected executed command sequence
 - The aspect of the solution it demonstrates
 
 Example 1 is bundled in the package under `django_angular3/examples/01_simple_crm/` and
@@ -27,7 +28,7 @@ can be installed locally via `django-angular3 install-tutorial`. Future examples
 ```bash
 django-admin build_app spec/examples/<example-name>/django-angular3.json \
   [--previous-schema spec/examples/<example-name>/previous-schema.yaml] \
-  [--previous-project-config spec/examples/<example-name>/previous-project-config.json] \
+  [--previous-config spec/examples/<example-name>/previous-config.json] \
   --dry-run
 ```
 
@@ -317,27 +318,14 @@ components:
       name: sessionid
 ```
 
-### Input: `<project>.project.json` (placeholder name — schema TBD)
+### Input: `app.openui.json`
 
-> ⚠️ The generated app configuration file name and schema are not yet defined
-> (see `TODO.md` item 1). The content and path shown below are illustrative;
-> the actual file name and schema will be specified when that item is resolved.
-
-```json
-{
-  "pages": [
-    { "route": "/customers",     "kind": "list" },
-    { "route": "/customers/:id", "kind": "detail" },
-    { "route": "/products",      "kind": "list" }
-  ],
-  "site": {
-    "nav": [
-      { "label": "Customers", "route": "/customers" },
-      { "label": "Products",  "route": "/products" }
-    ]
-  }
-}
-```
+The non-CRM input is the OpenUI concrete UI document selected by `openui.source`.
+It conforms to `openui.schema.json` and uses the vocabulary in `openui.json`
+from [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). Use the
+[per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
+as the vocabulary reference; the local `spec/openui/app.openui.json` fixture is a
+repository example.
 
 ### Input: `django-angular3.json`
 
@@ -346,6 +334,7 @@ components:
   "project": { "name": "simple_crm" },
   "app": { "name": "shop" },
   "openapi": { "source": "schema.yaml" },
+  "openui": { "source": "app.openui.json" },
   "angular": {
     "output": "build/examples/01_simple_crm",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
@@ -357,14 +346,15 @@ components:
 
 ```json
 {
+  "config": { "type": "start-from-scratch" },
   "schema": { "type": "start-from-scratch" },
-  "config": { "type": "start-from-scratch" }
+  "openui": { "type": "start-from-scratch" }
 }
 ```
 
-### Expected build plan steps (ordered)
+### Expected executed command sequence (ordered)
 
-Deterministic tool procedures (see `GENERATE_AI_AUTOMATIONS.md` §Tool
+Deterministic TOOL commands (see `GENERATE_AI_AUTOMATIONS.md` §Tool
 Contracts Catalog) precede the SKILL sessions:
 
 1. `openapi_schema_export` *(tool)* — produce the current OpenAPI artifact at
@@ -390,9 +380,9 @@ Contracts Catalog) precede the SKILL sessions:
 15. `angular-page-composition` *(skill)* — generate `customer-detail` page
 16. `angular-page-composition` *(skill)* — generate `product-list` page
 17. `angular-site-composition` *(skill)* — assemble site with navigation
-18. *(verification)* — terminal verification procedure (per
+18. *(verification)* — terminal verification command (per
     `APP_BUILDER_REQUIREMENTS.md` FR-10) consuming the structured outputs of
-    the tool procedures above
+    the TOOL commands above
 
 ---
 
@@ -455,18 +445,19 @@ Example 1's `schema.yaml`.
 
 ```json
 {
+  "config": { "type": "no-change" },
   "schema": {
     "type": "add-things",
     "affected_resources": ["Order"],
     "breaking": false
   },
-  "config": { "type": "no-change" }
+  "openui": { "type": "no-change" }
 }
 ```
 
-### Expected build plan steps
+### Expected executed command sequence
 
-Deterministic tool procedures precede the schema-derived SKILL sessions:
+Deterministic TOOL commands precede the schema-derived SKILL sessions:
 
 1. `openapi_schema_export` *(tool)* — re-export the schema; archive previous version
 2. `validate_openapi_schema` *(tool)* — validate the new schema
@@ -477,7 +468,7 @@ Deterministic tool procedures precede the schema-derived SKILL sessions:
 5. `angular-api-integration` *(skill)* — integrate the regenerated API client (new `Order`
    endpoints)
 6. `angular-data-service-composition` *(skill)* — generate data service for `Order`
-7. *(verification)* — terminal verification procedure (per FR-10)
+7. *(verification)* — terminal verification command (per FR-10)
 
 No workspace, app, or existing component steps — they are not affected.
 
@@ -485,8 +476,8 @@ No workspace, app, or existing component steps — they are not affected.
 
 ## Example 3: Schema Evolution — Breaking Change Blocked
 
-**Demonstrates**: oasdiff breaking-change gate. Builder halts before emitting
-a plan. Verifies the `--acknowledge-breaking` bypass.
+**Demonstrates**: oasdiff breaking-change gate. The builder halts before
+executing construction commands. Verifies the `--acknowledge-breaking` bypass.
 
 ### Scenario
 
@@ -502,11 +493,13 @@ Example 1's schema with `email` removed from `Customer.required` and
 
 ```json
 {
+  "config": { "type": "no-change" },
   "schema": {
     "type": "breaking",
     "breaking": true,
     "affected_resources": ["Customer"]
-  }
+  },
+  "openui": { "type": "no-change" }
 }
 ```
 
@@ -542,69 +535,132 @@ field. Steps include:
 
 ---
 
-## Example 4: Config Change — Add Page (No Schema Change)
+## Example 4: Project-Configuration Change — Modify Workspace Style
 
-**Demonstrates**: Config-only change path. Schema is identical to Example 1.
-Only config-derived automation procedures run. In the current examples, that
-means the config-derived skill procedures. Uses `add-things` on the config
-side.
-
-> ⚠️ This example is blocked by `TODO.md` item 1. The `<project>.project.json`
-> file name and schema are not yet defined; neither the config diff function
-> nor the config-derived skill dispatch are implementable until they are. The
-> inputs and expected output below are illustrative.
+**Demonstrates**: Project-configuration-only change path. The OpenAPI schema
+and OpenUI document are unchanged; only project-level workspace configuration
+is modified.
 
 ### Scenario
 
-A dashboard page is added to the generated app configuration. No schema change.
+The project changes `angular.workspace.style` from `scss` to `css`. The
+project name and output root remain unchanged, so this is a configuration
+modification rather than a project replacement.
 
-### Input: `django-angular3.json`
-
-Same as Example 1 — no change (this file is golden; it is never diffed).
-
-### Input: current `<project>.project.json` (placeholder name — schema TBD)
-
-Example 1's generated app configuration plus a new page and two new components:
+### Input: current `django-angular3.json`
 
 ```json
 {
-  "pages": [
-    { "route": "/customers",     "kind": "list" },
-    { "route": "/customers/:id", "kind": "detail" },
-    { "route": "/products",      "kind": "list" },
-    { "route": "/dashboard",     "kind": "custom",       "components": ["customer-summary", "product-summary"] }
-  ],
-  "components": [
-    { "name": "customer-summary", "type": "small-field", "resource": "Customer", "fields": ["name", "active"] },
-    { "name": "product-summary",  "type": "small-field", "resource": "Product",  "fields": ["name", "price"] }
-  ],
-  "site": {
-    "nav": [
-      { "label": "Customers", "route": "/customers" },
-      { "label": "Products",  "route": "/products" }
-    ]
+  "project": { "name": "simple_crm" },
+  "app": { "name": "shop" },
+  "openapi": { "source": "schema.yaml" },
+  "openui": { "source": "app.openui.json" },
+  "angular": {
+    "output": "build/examples/01_simple_crm",
+    "workspace": { "packageManager": "pnpm", "style": "css", "routing": true }
   }
 }
 ```
 
-### Input: previous `<project>.project.json`
+### Input: previous `django-angular3.json`
 
-Example 1's `<project>.project.json` (the state before this change).
+Example 1's configuration, with `angular.workspace.style` set to `scss`.
 
 ### Expected ChangeSet
 
 ```json
 {
-  "schema": { "type": "no-change" },
   "config": {
+    "type": "modify-things",
+    "affected_keys": ["angular.workspace.style"]
+  },
+  "schema": { "type": "no-change" },
+  "openui": { "type": "no-change" }
+}
+```
+
+### Expected executed command sequence
+
+1. `angular-workspace-foundation` *(modify)* — apply the changed workspace
+   style setting through the workspace-modification wrapper
+2. *(verification)* — validate the resulting workspace configuration and
+   generated application
+
+Schema-derived and OpenUI-derived commands must not run.
+
+---
+
+## Example 5: OpenUI-Source Configuration Change
+
+**Demonstrates**: An `openui.source` configuration change. This is distinct
+from a structural change inside an OpenUI document: the `config` lane records
+the selected input path, while the `openui` lane compares the selected document
+with its own prior `.previous` artifact.
+
+### Scenario
+
+The project changes `openui.source` from `legacy.openui.json` to
+`app.openui.json`. The current `app.openui.previous.json` is structurally
+identical to `app.openui.json`, so selection changes but no OpenUI-derived
+artifact changes are required.
+
+### Expected ChangeSet
+
+```json
+{
+  "config": {
+    "type": "modify-things",
+    "affected_keys": ["openui.source"]
+  },
+  "schema": { "type": "no-change" },
+  "openui": { "type": "no-change" }
+}
+```
+
+### Expected executed command sequence
+
+1. *(verification)* — validate the newly selected OpenUI document and record
+   it as the source for subsequent OpenUI comparisons
+
+The builder must not infer a document-tree change solely from a source-path
+change. Schema-derived and OpenUI-derived construction commands must not run
+when the selected document has no structural diff.
+
+---
+
+## Example 6: OpenUI Change — Add Page (No Schema Change)
+
+**Demonstrates**: OpenUI-only change path. The OpenAPI schema is identical to
+Example 1; only OpenUI-derived automation commands run.
+
+### Scenario
+
+A dashboard page is added to `app.openui.json`. No schema change.
+
+### Input: current `app.openui.json`
+
+Example 1's OpenUI document plus `dashboardPage`, `customerSummary`, and
+`productSummary` nodes, authored using the vocabulary defined by
+[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec).
+
+### Input: previous `app.openui.json`
+
+Example 1's OpenUI document before those nodes were added.
+
+### Expected ChangeSet
+
+```json
+{
+  "config": { "type": "no-change" },
+  "schema": { "type": "no-change" },
+  "openui": {
     "type": "add-things",
-    "affected_pages": ["dashboard"],
-    "affected_components": ["customer-summary", "product-summary"]
+    "affected_nodes": ["dashboardPage", "customerSummary", "productSummary"]
   }
 }
 ```
 
-### Expected build plan steps
+### Expected executed command sequence
 
 1. `angular-field-component-composition` — generate `customer-summary` component
 2. `angular-field-component-composition` — generate `product-summary` component
@@ -612,48 +668,45 @@ Example 1's `<project>.project.json` (the state before this change).
 
 ---
 
-## Example 5: Combined Schema and Config Change
+## Example 7: Combined Schema and OpenUI Change
 
-**Demonstrates**: Schema and config change in the same run. Both change paths
-activate. Verifies that schema steps run before config steps at the same
-dependency level, and that the plan correctly interleaves the two streams.
-
-> ⚠️ The config-side portion of this example is blocked by `TODO.md` item 1.
-> The schema-side portion (new `Invoice` resource) is unblocked and can be
-> verified independently.
+**Demonstrates**: Schema and OpenUI change in the same run. Both change paths
+activate. Schema-derived commands run before OpenUI-derived commands at the
+same dependency level.
 
 ### Scenario
 
 Starting from Example 2's state (Customer, Product, Order):
 - Schema: a new `Invoice` resource is added.
-- Config: a new `invoice-list` page is added to the generated app configuration.
+- OpenUI: a new `invoiceListPage` node is added to `app.openui.json`.
 
 ### Expected ChangeSet
 
 ```json
 {
+  "config": { "type": "no-change" },
   "schema": {
     "type": "add-things",
     "affected_resources": ["Invoice"],
     "breaking": false
   },
-  "config": {
+  "openui": {
     "type": "add-things",
-    "affected_pages": ["invoice-list"]
+    "affected_nodes": ["invoiceListPage"]
   }
 }
 ```
 
-### Expected build plan steps (order matters)
+### Expected executed command sequence (order matters)
 
 1. `angular-api-integration` — regenerate API client (new `Invoice` endpoints) ← schema step
 2. `angular-data-service-composition` — generate `Invoice` data service ← schema step
 3. `angular-component-composition` — generate `Invoice` list component ← schema step
-4. `angular-page-composition` — generate `invoice-list` page ← config step (depends on step 3)
+4. `angular-page-composition` — generate `invoice-list` page ← OpenUI step (depends on step 3)
 
 ---
 
-## Example 6: Full Replacement — Remove Resource, Add Resource
+## Example 8: Full Replacement — Remove Resource, Add Resource
 
 **Demonstrates**: `replace-things` change type. One resource is removed
 (`Product`) and one is added (`Supplier`). Remove steps precede add steps at
@@ -663,6 +716,7 @@ the same dependency level.
 
 ```json
 {
+  "config": { "type": "no-change" },
   "schema": {
     "type": "replace-things",
     "affected_resources": ["Product", "Supplier"],
@@ -671,7 +725,7 @@ the same dependency level.
 }
 ```
 
-### Expected build plan steps
+### Expected executed command sequence
 
 1. `angular-data-service-composition` — delete `Product` data service
 2. `angular-component-composition` — delete `Product` list and detail components
@@ -682,6 +736,162 @@ the same dependency level.
 7. `angular-component-composition` — generate `Supplier` list component
 8. `angular-page-composition` — generate `supplier-list` page
 9. `angular-site-composition` — update navigation (add Suppliers link)
+
+---
+
+## Example 9: No Change
+
+**Demonstrates**: The accepted-state no-op. Current project configuration,
+OpenAPI schema, and OpenUI document all match their respective prior inputs.
+
+### Expected ChangeSet
+
+```json
+{
+  "config": { "type": "no-change" },
+  "schema": { "type": "no-change" },
+  "openui": { "type": "no-change" }
+}
+```
+
+### Expected executed command sequence
+
+1. *(verification)* — validate the configured inputs and confirm the existing
+   generated app remains valid
+
+No construction command may run.
+
+---
+
+## Example 10: Combined Project-Configuration and OpenAPI Change
+
+**Demonstrates**: A configuration modification and an OpenAPI change in the
+same run, without an OpenUI document change.
+
+### Scenario
+
+Starting from Example 1, the project changes `angular.workspace.style` from
+`scss` to `css` and adds the `Order` resource to the OpenAPI schema. The
+OpenUI document is unchanged.
+
+### Expected ChangeSet
+
+```json
+{
+  "config": {
+    "type": "modify-things",
+    "affected_keys": ["angular.workspace.style"]
+  },
+  "schema": {
+    "type": "add-things",
+    "affected_resources": ["Order"],
+    "breaking": false
+  },
+  "openui": { "type": "no-change" }
+}
+```
+
+### Expected executed command sequence
+
+1. `angular-workspace-foundation` *(modify)* — apply the changed workspace
+   style setting
+2. `angular-api-integration` *(modify)* — regenerate the API client for
+   `Order`
+3. `angular-data-service-composition` *(create)* — generate the `Order` data
+   service
+4. *(verification)* — validate the workspace and generated application
+
+OpenUI-derived construction commands must not run.
+
+---
+
+## Example 11: Combined Project-Configuration and OpenUI Change
+
+**Demonstrates**: A configuration modification and a structural OpenUI change
+in the same run, without an OpenAPI change.
+
+### Scenario
+
+Starting from Example 1, the project changes `angular.workspace.style` from
+`scss` to `css` and adds `dashboardPage`, `customerSummary`, and
+`productSummary` to `app.openui.json`. The OpenAPI schema is unchanged.
+
+### Expected ChangeSet
+
+```json
+{
+  "config": {
+    "type": "modify-things",
+    "affected_keys": ["angular.workspace.style"]
+  },
+  "schema": { "type": "no-change" },
+  "openui": {
+    "type": "add-things",
+    "affected_nodes": ["dashboardPage", "customerSummary", "productSummary"]
+  }
+}
+```
+
+### Expected executed command sequence
+
+1. `angular-workspace-foundation` *(modify)* — apply the changed workspace
+   style setting
+2. `angular-field-component-composition` *(create)* — generate
+   `customer-summary`
+3. `angular-field-component-composition` *(create)* — generate
+   `product-summary`
+4. `angular-page-composition` *(create)* — generate the `dashboard` page
+5. *(verification)* — validate the workspace and generated application
+
+Schema-derived construction commands must not run.
+
+---
+
+## Example 12: Combined Project-Configuration, OpenAPI, and OpenUI Change
+
+**Demonstrates**: All three independent change lanes active in one run.
+
+### Scenario
+
+Starting from Example 2, the project changes `angular.workspace.style` from
+`scss` to `css`, adds the `Invoice` resource to the OpenAPI schema, and adds an
+`invoiceListPage` node to `app.openui.json`.
+
+### Expected ChangeSet
+
+```json
+{
+  "config": {
+    "type": "modify-things",
+    "affected_keys": ["angular.workspace.style"]
+  },
+  "schema": {
+    "type": "add-things",
+    "affected_resources": ["Invoice"],
+    "breaking": false
+  },
+  "openui": {
+    "type": "add-things",
+    "affected_nodes": ["invoiceListPage"]
+  }
+}
+```
+
+### Expected executed command sequence (order matters)
+
+1. `angular-workspace-foundation` *(modify)* — apply the changed workspace
+   style setting
+2. `angular-api-integration` *(modify)* — regenerate the API client for
+   `Invoice`
+3. `angular-data-service-composition` *(create)* — generate the `Invoice`
+   data service
+4. `angular-component-composition` *(create)* — generate the `Invoice` list
+   component
+5. `angular-page-composition` *(create)* — generate the `invoice-list` page
+6. *(verification)* — validate the workspace and generated application
+
+The configuration command runs before dependent construction. Schema-derived
+commands run before the dependent OpenUI page command.
 
 ---
 
@@ -696,12 +906,11 @@ django-admin build_app \
   django_angular3/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
-# Example 2: add resource (schema change only; previous project config passed to confirm no-change)
-# Note: --previous-project-config path uses a placeholder name pending TODO.md item 1
+# Example 2: add resource (schema change only)
 django-admin build_app \
   spec/examples/02-add-order/django-angular3.json \
   --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --previous-project-config django_angular3/examples/01_simple_crm/simple_crm.project.json \
+  --previous-config django_angular3/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
 # Example 3: breaking change blocked
@@ -709,7 +918,7 @@ django-admin build_app \
   spec/examples/03-breaking-change/django-angular3.json \
   --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
   --dry-run
-# Expected: non-zero exit, no plan emitted
+# Expected: non-zero exit; no construction command executes
 
 # Example 3b: breaking change acknowledged
 django-admin build_app \
@@ -718,36 +927,70 @@ django-admin build_app \
   --acknowledge-breaking \
   --dry-run
 
-# Example 4: config-only change (blocked by TODO.md item 1 — illustrative only)
+# Example 4: project-configuration-only change
 django-admin build_app \
-  spec/examples/04-add-dashboard/django-angular3.json \
+  spec/examples/04-workspace-style/django-angular3.json \
   --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --previous-project-config django_angular3/examples/01_simple_crm/simple_crm.project.json \
+  --previous-config django_angular3/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
-# Example 5: combined schema + config (config side blocked by TODO.md item 1 — illustrative only)
+# Example 5: OpenUI-source configuration change
 django-admin build_app \
-  spec/examples/05-combined-change/django-angular3.json \
-  --previous-schema spec/examples/02-add-order/schema.yaml \
-  --previous-project-config spec/examples/02-add-order/simple_crm.project.json \
+  spec/examples/05-openui-source/django-angular3.json \
+  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
+  --previous-config django_angular3/examples/01_simple_crm/django-angular3.json \
   --dry-run
 
-# Example 6: replace resource
+# Example 6: OpenUI-only document change (illustrative until OpenUI diffing is implemented)
 django-admin build_app \
-  spec/examples/06-replace-resource/django-angular3.json \
+  spec/examples/06-add-dashboard/django-angular3.json \
+  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
+  --previous-openui django_angular3/examples/01_simple_crm/app.openui.json \
+  --dry-run
+
+# Example 7: combined schema + OpenUI (OpenUI side illustrative until diffing is implemented)
+django-admin build_app \
+  spec/examples/07-combined-change/django-angular3.json \
+  --previous-schema spec/examples/02-add-order/schema.yaml \
+  --previous-openui spec/examples/02-add-order/app.openui.json \
+  --dry-run
+
+# Example 8: replace resource
+django-admin build_app \
+  spec/examples/08-replace-resource/django-angular3.json \
   --previous-schema spec/examples/02-add-order/schema.yaml \
   --dry-run
+
+# Examples 9–12: use the corresponding prior inputs for the three-lane matrix
+# cases. The scenario fixtures are pending implementation.
 ```
 
 ---
 
-## Coverage Matrix
+## Three-Lane Change Matrix
 
-| Example | start-from-scratch | add-things | remove-things | replace-things | breaking gate | config-only | combined |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 1 Simple CRM | ✓ | | | | | | |
-| 2 Add Resource | | ✓ | | | | | |
-| 3 Breaking Change | | | | | ✓ | | |
-| 4 Config Change | | | | | | ✓ | |
-| 5 Combined | | ✓ | | | | | ✓ |
-| 6 Replace Resource | | ✓ | ✓ | ✓ | | | |
+The following matrix covers every Boolean combination of incremental changes
+in the `config`, `schema`, and `openui` lanes. A check mark means the lane has
+a change; a blank means `no-change`. Examples 1, 3, 5, and 8 provide
+additional coverage for first-run, breaking, source-selection, and replacement
+semantics respectively.
+
+| Config change | OpenAPI change | OpenUI change | Required example |
+|:---:|:---:|:---:|---|
+| | | | 9 No Change |
+| ✓ | | | 4 Workspace Configuration |
+| | ✓ | | 2 Add Resource |
+| | | ✓ | 6 OpenUI Change |
+| ✓ | ✓ | | 10 Configuration + OpenAPI |
+| ✓ | | ✓ | 11 Configuration + OpenUI |
+| | ✓ | ✓ | 7 OpenAPI + OpenUI |
+| ✓ | ✓ | ✓ | 12 Configuration + OpenAPI + OpenUI |
+
+### Additional scenario coverage
+
+| Concern | Example |
+|---|---|
+| Start from scratch | 1 Simple CRM |
+| Breaking OpenAPI change | 3 Breaking Change |
+| `openui.source` selection without structural OpenUI change | 5 OpenUI-Source Configuration |
+| OpenAPI replacement | 8 Full Replacement |

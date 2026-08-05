@@ -3,7 +3,7 @@
 `django-angular3` reads two kinds of configuration:
 
 - **`django-angular3.json`** — a per-project file describing the project, its
-  OpenAPI and UI sources, and Angular workspace settings. Used by both the
+  OpenAPI and OpenUI sources, and Angular workspace settings. Used by both the
   standalone CLI and the Django management commands.
 - **`DJANGO_ANGULAR3`** — an optional dictionary in your Django project's
   `settings.py` that controls executable paths, the command allowlist, and
@@ -19,7 +19,7 @@ directory when omitted.
 {
   "project": { "name": "simple_crm" },
   "openapi": { "source": "schema.yaml" },
-  "ui": { "source": "ui.json" },
+  "openui": { "source": "app.openui.json" },
   "angular": {
     "output": "build/angular",
     "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
@@ -38,13 +38,13 @@ configuration file.
 | `openapi.source` | ✓ | Path to the OpenAPI source document (JSON or YAML). |
 | `openapi.openapiGeneratorConfig` | — | Path to an OpenAPI Generator config file. |
 | `openapi.ngOpenApiGenConfig` | — | Path to an `ng-openapi-gen` config file. |
-| `ui.source` | ✓ | Path to the UI definition document. |
+| `openui.source` | ✓ | Path to the OpenUI document; the generated-app convention is `app.openui.json`. |
 | `angular.output` | ✓ | Output directory for generated Angular artifacts. `angular.package` is accepted as an alias. |
 | `angular.workspace.packageManager` | — | Package manager for the workspace (e.g. `pnpm`). |
 | `angular.workspace.style` | — | Stylesheet format (e.g. `scss`). |
 | `angular.workspace.routing` | — | Whether to enable Angular routing. |
 
-`project`, `openapi`, `ui`, and `angular` must all be present and must be
+`project`, `openapi`, `openui`, and `angular` must all be present and must be
 mappings. Validate the file at any time:
 
 ```bash
@@ -109,8 +109,9 @@ DJANGO_ANGULAR3 = {
 }
 ```
 
-Commands not in the allowlist still work with `--dry-run`, which prints the
-resolved Angular subprocess calls without executing them.
+Commands not in the allowlist still support `--dry-run` for diagnostic
+validation and debugging, which prints the resolved Angular subprocess calls
+without executing them.
 
 ```{note}
 The legacy `npm_executable` and `npx_executable` overrides are still accepted
