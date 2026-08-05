@@ -1,6 +1,6 @@
 import argparse
 
-#import datetime
+# import datetime
 import json
 import subprocess
 from pathlib import Path
@@ -8,10 +8,10 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...config import ConfigError, load_project_config  #, get_previous_schema_path
+from ...config import ConfigError, load_project_config  # , get_previous_schema_path
 from ...tools import ensure_oasdiff
 
-#from ...validation import validate_project_config
+# from ...validation import validate_project_config
 
 
 def _command_for_skill(skill: str, mode: str) -> str:
@@ -263,7 +263,7 @@ class Command(BaseCommand):
             SystemExit: With status 2 when breaking schema changes are found
                 without ``--acknowledge-breaking``.
         """
-        old_implementation ='''
+        old_implementation = """
         config_path: str | Any = options["config"]
 
         try:
@@ -538,12 +538,12 @@ class Command(BaseCommand):
                 "steps": steps,
             }
             self._print_debug_change_set(build_plan, options)
-        '''
+        """
         raise NotImplementedError("Old implementation is: \n" + old_implementation)
 
     def _print_debug_change_set(
-            self, build_plan: dict[str, Any], options: dict[str, Any]
-        ) -> None:
+        self, build_plan: dict[str, Any], options: dict[str, Any]
+    ) -> None:
         plan_str: str = json.dumps(build_plan, indent=2)
 
         out_dir = Path(options["output"])
