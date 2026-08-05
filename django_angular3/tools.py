@@ -203,12 +203,9 @@ def ensure_speakeasy_openapi() -> str:
 
     installed = find_speakeasy_openapi()
     if installed is None:
-        exe_name = (
-            "openapi.exe" if platform.system().lower() == "windows" else "openapi"
-        )
         raise RuntimeError(
-            f"Installation succeeded but '{exe_name}' was not found. "
-            "Ensure $GOPATH/bin is in your PATH."
+            f"Installation of '{_SPEAKEASY_OPENAPI_BIN}' succeeded but the binary "
+            "was not found. Ensure $GOPATH/bin is in your PATH."
         )
 
     print("Speakeasy OpenAPI CLI installed and ready.")
