@@ -9,8 +9,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django_angular3.tools import check_go_available, ensure_speakeasy_openapi
+from django_angular3.tools import find_speakeasy_openapi
 from django_angular3.validation import (
-    _find_speakeasy_openapi,
+
     _run_speakeasy_validate,
     validate_openapi_file,
 )
@@ -38,16 +39,16 @@ class GoAvailabilityTests(unittest.TestCase):
 
 class FindSpeakeasyTests(unittest.TestCase):
     def test_find_speakeasy_openapi_returns_none_or_str(self) -> None:
-        result = _find_speakeasy_openapi()
+        result = find_speakeasy_openapi()
         self.assertIsInstance(result, (str, type(None)))
 
     def test_find_speakeasy_openapi_found_when_installed(self) -> None:
         """If Go is available and the binary exists in GOPATH/bin, it is found."""
         if not check_go_available():
             self.skipTest("Go not available; skipping binary-location test.")
-        # If the binary is installed (as CI does), _find_speakeasy_openapi()
+        # If the binary is installed (as CI does), find_speakeasy_openapi()
         # returns a str path.
-        result = _find_speakeasy_openapi()
+        result = find_speakeasy_openapi()
         if result is not None:
             self.assertTrue(
                 os.path.isfile(result),
@@ -58,14 +59,14 @@ class FindSpeakeasyTests(unittest.TestCase):
 class RunSpeakeasyValidateTests(unittest.TestCase):
     def test_raises_runtime_error_when_binary_missing(self) -> None:
         with patch(
-            "django_angular3.validation._find_speakeasy_openapi", return_value=None
+            "django_angular3.validation.find_speakeasy_openapi", return_value=None
         ):
             with self.assertRaises(RuntimeError) as ctx:
                 _run_speakeasy_validate(EXAMPLE_OPENAPI)
         self.assertIn("not installed", str(ctx.exception))
 
     def test_returns_empty_list_for_valid_spec_when_available(self) -> None:
-        binary = _find_speakeasy_openapi()
+        binary = find_speakeasy_openapi()
         if binary is None:
             self.skipTest("Speakeasy openapi binary not installed.")
         errors = _run_speakeasy_validate(EXAMPLE_OPENAPI)
@@ -74,7 +75,7 @@ class RunSpeakeasyValidateTests(unittest.TestCase):
         self.assertEqual(errors, [], f"Unexpected errors: {errors}")
 
     def test_returns_errors_for_invalid_spec_when_available(self) -> None:
-        binary = _find_speakeasy_openapi()
+        binary = find_speakeasy_openapi()
         if binary is None:
             self.skipTest("Speakeasy openapi binary not installed.")
         import json
@@ -92,7 +93,7 @@ class RunSpeakeasyValidateTests(unittest.TestCase):
 
     def test_returns_error_when_binary_not_found_at_path(self) -> None:
         with patch(
-            "django_angular3.validation._find_speakeasy_openapi",
+            "django_angular3.validation.find_speakeasy_openapi",
             return_value="/nonexistent/openapi",
         ):
             with self.assertRaises(RuntimeError):
@@ -145,7 +146,7 @@ class EnsureSpeakeasyOpenapiTests(unittest.TestCase):
         """ensure_speakeasy_openapi returns the binary path without reinstalling."""
         if not check_go_available():
             self.skipTest("Go not available.")
-        binary = _find_speakeasy_openapi()
+        binary = find_speakeasy_openapi()
         if binary is None:
             self.skipTest("Speakeasy openapi binary not installed.")
         # Binary already installed — calling ensure_speakeasy_openapi should
