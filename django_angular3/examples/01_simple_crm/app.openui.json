@@ -1,13 +1,37 @@
 {
-  "pages": [
-    { "route": "/customers",     "kind": "list" },
-    { "route": "/customers/:id", "kind": "detail" },
-    { "route": "/products",      "kind": "list" }
-  ],
-  "site": {
-    "nav": [
-      { "label": "Customers", "route": "/customers" },
-      { "label": "Products",  "route": "/products" }
-    ]
-  }
+  "id": "root",
+  "version": "0.0.1",
+  "type": "Application",
+  "children": [
+    {
+      "id": "appRouting",
+      "type": "Routing",
+      "children": [
+        {
+          "id": "customersRoute",
+          "type": "Route",
+          "attrs": {
+            "[path]": "\"customers\"",
+            "[target]": "\"customersPage\""
+          }
+        },
+        {
+          "id": "productsRoute",
+          "type": "Route",
+          "attrs": {
+            "[path]": "\"products\"",
+            "[target]": "\"productsPage\""
+          }
+        }
+      ]
+    },
+    {
+      "id": "customersPage",
+      "type": "DashboardPage"
+    },
+    {
+      "id": "productsPage",
+      "type": "DashboardPage"
+    }
+  ]
 }

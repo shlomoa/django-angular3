@@ -1,49 +1,19 @@
 from __future__ import annotations
 
-import shutil
 import subprocess
+import warnings
 from pathlib import Path
 from typing import Any
 
+from bin.openui_json import OpenUiJson, OpenUiJsonError
+
 from .config import ProjectConfig
 from .documents import DocumentError, load_document
+from .tools import find_speakeasy_openapi
 
 
 class ValidationError(ValueError):
     """Raised when validation cannot continue."""
-
-
-# ---------------------------------------------------------------------------
-# Speakeasy OpenAPI CLI helpers
-# ---------------------------------------------------------------------------
-
-_SPEAKEASY_OPENAPI_BIN = "openapi"
-
-
-def _find_speakeasy_openapi() -> str | None:
-    """Return the path to the Speakeasy ``openapi`` binary, or None."""
-    # Prefer the binary installed via ensure_speakeasy_openapi() in GOPATH/bin
-    import os
-    import platform
-
-    try:
-        result = subprocess.run(
-            ["go", "env", "GOPATH"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        gopath = result.stdout.strip()
-    except Exception:
-        gopath = ""
-
-    if gopath:
-        exe = "openapi.exe" if platform.system().lower() == "windows" else "openapi"
-        candidate = Path(gopath) / "bin" / exe
-        if candidate.exists() and os.access(candidate, os.X_OK):
-            return str(candidate)
-
-    return shutil.which(_SPEAKEASY_OPENAPI_BIN)
 
 
 def _run_speakeasy_validate(path: str | Path) -> list[str]:
@@ -52,7 +22,7 @@ def _run_speakeasy_validate(path: str | Path) -> list[str]:
     Returns a list of error strings (empty if valid).
     Raises ``RuntimeError`` if the binary cannot be found.
     """
-    binary = _find_speakeasy_openapi()
+    binary = find_speakeasy_openapi()
     if binary is None:
         raise RuntimeError(
             "Speakeasy OpenAPI CLI ('openapi') is not installed. "
@@ -75,7 +45,6 @@ def _run_speakeasy_validate(path: str | Path) -> list[str]:
     if result.returncode == 0:
         return []
 
-    # Collect error output
     output = (result.stderr or result.stdout or "").strip()
     if output:
         return [output]
@@ -83,11 +52,7 @@ def _run_speakeasy_validate(path: str | Path) -> list[str]:
 
 
 def validate_openapi_document(document: Any) -> list[str]:
-    """Lightweight structural pre-check for an in-memory OpenAPI document.
-
-    This is intentionally minimal — full OAS compliance is delegated to the
-    Speakeasy ``openapi spec validate`` CLI (see :func:`validate_openapi_file`).
-    """
+    """Return structural validation errors for an in-memory OpenAPI document."""
     errors: list[str] = []
     if not isinstance(document, dict):
         return ["OpenAPI document must be a mapping."]
@@ -144,56 +109,12 @@ def validate_openapi_document(document: Any) -> list[str]:
 
 
 def validate_openui_document(document: Any) -> list[str]:
-    errors: list[str] = []
-    if not isinstance(document, dict):
-        return ["UI definition document must be a mapping."]
-
-    pages = document.get("pages", [])
-    forms = document.get("forms", [])
-
-    if not isinstance(pages, list):
-        errors.append("'pages' must be a list when provided.")
-    else:
-        for index, page in enumerate(pages):
-            if not isinstance(page, dict):
-                errors.append(f"pages[{index}] must be an object.")
-                continue
-            route = page.get("route")
-            kind = page.get("kind")
-            if not isinstance(route, str) or not route.startswith("/"):
-                errors.append(
-                    f"pages[{index}].route must be a string starting with '/'."
-                )
-            if not isinstance(kind, str) or not kind.strip():
-                errors.append(f"pages[{index}].kind must be a non-empty string.")
-
-    if not isinstance(forms, list):
-        errors.append("'forms' must be a list when provided.")
-    else:
-        for index, form in enumerate(forms):
-            if not isinstance(form, dict):
-                errors.append(f"forms[{index}] must be an object.")
-                continue
-            form_id = form.get("id")
-            mode = form.get("mode")
-            submit = form.get("submit")
-            if not isinstance(form_id, str) or not form_id.strip():
-                errors.append(f"forms[{index}].id must be a non-empty string.")
-            if not isinstance(mode, str) or not mode.strip():
-                errors.append(f"forms[{index}].mode must be a non-empty string.")
-            if submit is not None:
-                if not isinstance(submit, dict):
-                    errors.append(
-                        f"forms[{index}].submit must be an object when provided."
-                    )
-                else:
-                    action = submit.get("action")
-                    if not isinstance(action, str) or not action.strip():
-                        errors.append(
-                            f"forms[{index}].submit.action must be a non-empty string."
-                        )
-
-    return errors
+    """Return OpenUI validation errors from the openui-spec tooling API."""
+    try:
+        OpenUiJson(document).validate()
+    except OpenUiJsonError as exc:
+        return str(exc).splitlines()
+    return []
 
 
 def validate_openapi_file(path: str | Path) -> list[str]:
@@ -213,17 +134,13 @@ def validate_openapi_file(path: str | Path) -> list[str]:
     except DocumentError as exc:
         return [str(exc)]
 
-    # Run quick structural checks first — fast feedback for obviously broken docs
     structural_errors = validate_openapi_document(document)
     if structural_errors:
         return structural_errors
 
-    # Delegate to the Speakeasy CLI for full OAS compliance validation
     try:
         return _run_speakeasy_validate(path)
     except RuntimeError as exc:
-        import warnings
-
         warnings.warn(
             f"Speakeasy OpenAPI CLI unavailable; falling back to basic validation. "
             f"Install it with 'python -c \"from django_angular3.tools import "
@@ -235,14 +152,17 @@ def validate_openapi_file(path: str | Path) -> list[str]:
 
 
 def validate_openui_file(path: str | Path) -> list[str]:
+    """Load an OpenUI JSON document and return openui-spec validation errors."""
     try:
-        document = load_document(path)
-    except DocumentError as exc:
+        document = OpenUiJson.load(path)
+        document.validate()
+    except OpenUiJsonError as exc:
         return [str(exc)]
-    return validate_openui_document(document)
+    return []
 
 
 def validate_project_config(config: ProjectConfig) -> list[str]:
+    """Return validation errors for all sources and outputs in a project config."""
     errors: list[str] = []
 
     if not config.openapi_source.exists():

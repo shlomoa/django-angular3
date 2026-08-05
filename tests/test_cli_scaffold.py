@@ -55,7 +55,7 @@ class ScaffoldTests(unittest.TestCase):
                 """{
   "project": { "name": "legacy-ui" },
   "openapi": { "source": "schema.yaml" },
-  "openui": { "source": "app.openui.json" },
+    "ui": { "source": "app.openui.json" },
   "angular": { "output": "build/angular" }
 }
 """,
@@ -82,6 +82,7 @@ class ScaffoldTests(unittest.TestCase):
             "djangorestframework",
             "django-filter",
             "drf-spectacular",
+            "openui-spec==0.0.1",
         }
         self.assertEqual(set(requirements_lines), expected_runtime_dependencies)
 

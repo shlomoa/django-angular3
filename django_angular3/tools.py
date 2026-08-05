@@ -139,6 +139,35 @@ def check_go_available() -> bool:
     return shutil.which("go") is not None
 
 
+def find_speakeasy_openapi() -> str | None:
+    """Return the path to the Speakeasy ``openapi`` binary, or None if not found.
+
+    Checks ``$GOPATH/bin`` first (where ``go install`` places binaries), then
+    falls back to a standard PATH search.  Does **not** install anything.
+    """
+    exe_name = "openapi.exe" if platform.system().lower() == "windows" else "openapi"
+
+    gopath = os.environ.get("GOPATH", "")
+    if not gopath:
+        try:
+            result = subprocess.run(
+                ["go", "env", "GOPATH"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            gopath = result.stdout.strip()
+        except Exception:
+            gopath = ""
+
+    if gopath:
+        candidate = Path(gopath) / "bin" / exe_name
+        if candidate.exists() and os.access(candidate, os.X_OK):
+            return str(candidate)
+
+    return shutil.which(exe_name)
+
+
 def ensure_speakeasy_openapi() -> str:
     """Ensure the Speakeasy OpenAPI CLI is installed and return its path.
 
@@ -154,26 +183,9 @@ def ensure_speakeasy_openapi() -> str:
             "found on PATH.  Install Go from https://go.dev/dl/ and retry."
         )
 
-    exe_name = "openapi.exe" if platform.system().lower() == "windows" else "openapi"
-
-    # Determine GOPATH/bin — honour the GOPATH env var when set
-    gopath = os.environ.get("GOPATH", "")
-    if not gopath:
-        try:
-            result = subprocess.run(
-                ["go", "env", "GOPATH"],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            gopath = result.stdout.strip()
-        except subprocess.CalledProcessError as exc:
-            raise RuntimeError(f"Failed to determine GOPATH: {exc}") from exc
-
-    gobin = Path(gopath) / "bin" / exe_name
-
-    if gobin.exists() and os.access(gobin, os.X_OK):
-        return str(gobin)
+    existing = find_speakeasy_openapi()
+    if existing is not None:
+        return existing
 
     print(
         f"Speakeasy OpenAPI CLI not found. Installing via "
@@ -189,14 +201,16 @@ def ensure_speakeasy_openapi() -> str:
             f"'go install {_SPEAKEASY_OPENAPI_MODULE}' failed: {exc}"
         ) from exc
 
-    if not gobin.exists():
+    installed = find_speakeasy_openapi()
+    if installed is None:
+        exe_name = "openapi.exe" if platform.system().lower() == "windows" else "openapi"
         raise RuntimeError(
-            f"Installation succeeded but '{exe_name}' was not found at {gobin}. "
+            f"Installation succeeded but '{exe_name}' was not found. "
             "Ensure $GOPATH/bin is in your PATH."
         )
 
     print("Speakeasy OpenAPI CLI installed and ready.")
-    return str(gobin)
+    return installed
 
 
 if __name__ == "__main__":

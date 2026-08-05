@@ -91,10 +91,12 @@ the root and tutorial configurations select `app.openui.json`. The loader
 rejects the legacy `ui` mapping and project validation reports missing OpenUI
 sources clearly.
 
-### Step 2.2 — Delegate OpenUI validation to openui-spec **(next)**
+### Step 2.2 — Delegate OpenUI validation to openui-spec
+
+**Status: Complete.**
 
 **Targets:** `pyproject.toml`, `requirements.txt`,
-`django_angular3/validation.py`,
+`django_angular3/validation.py`, `spec/openui/app.openui.json`,
 `django_angular3/examples/01_simple_crm/app.openui.json`, and the associated
 tests.
 
@@ -102,14 +104,15 @@ Raise djng's minimum supported Python version to 3.12 and declare
 `openui-spec` as a runtime dependency. Replace the legacy `pages`/`forms`
 validator with the published `OpenUiJson` API from `openui-spec`; djng must not
 duplicate the OpenUI grammar, catalog, or duplicate-ID rules. Delegate concrete
-document validation to `OpenUiJson.from_file(...).validate()` and surface its
+document validation to `OpenUiJson.load(...).validate()` and surface its
 diagnostics through the existing CLI and Django management-command wrappers.
 Keep djng document-loading and dependency-boundary failures separate from
 OpenUI format failures. Add concise docstrings to the public validation
 functions: `validate_openapi_document`, `validate_openui_document`,
 `validate_openapi_file`, `validate_openui_file`, and `validate_project_config`.
 Migrate the tutorial `app.openui.json` from its legacy shape to a valid OpenUI
-concrete document in the same step.
+concrete document in the same step. The root fixture must also use types
+supported by the released OpenUI catalog.
 
 ### Step 2.3 — Align the OpenUI document with generated-project configuration
 

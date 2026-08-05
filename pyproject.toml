@@ -7,7 +7,7 @@ name = "django-angular3"
 version = "0.2.0a1"
 description = "Contract-first integration tooling for Django REST framework and Angular Material."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = ["django", "djangorestframework", "angular", "openapi"]
@@ -20,7 +20,6 @@ classifiers = [
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Code Generators",
@@ -31,6 +30,7 @@ dependencies = [
   "django-filter",
   "drf-spectacular",
   "claude-agent-sdk",
+  "openui-spec==0.0.1",
 ]
 
 [project.urls]
@@ -49,7 +49,7 @@ dev = [
 ]
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 88
 
 [tool.ruff.lint]
