@@ -34,7 +34,7 @@
     },
     {
       "id": "inviteUserForm",
-      "type": "FormView",
+      "type": "Grid",
       "attrs": {
         "title": "\"Invite user\"",
         "(submit)": "createUser(form.value)"
@@ -42,7 +42,7 @@
       "children": [
         {
           "id": "emailField",
-          "type": "Field",
+          "type": "input",
           "attrs": {
             "[label]": "\"Email\"",
             "[required]": "true"
@@ -50,7 +50,7 @@
         },
         {
           "id": "submitButton",
-          "type": "button",
+          "type": "ToolAction",
           "attrs": {
             "text": "\"Invite\"",
             "(click)": "createUser(form.value)"
