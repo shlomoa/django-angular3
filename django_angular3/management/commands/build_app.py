@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 from ...config import ConfigError, load_project_config  # , get_previous_schema_path
 from ...tools import ensure_oasdiff
 
-# from ...validation import validate_project_config
+from ...validation import validate_project_config
 
 
 def _command_for_skill(skill: str, mode: str) -> str:
@@ -42,7 +42,7 @@ def _command_for_skill(skill: str, mode: str) -> str:
 
 
 class Command(BaseCommand):
-    help = "Generates a deterministic build plan based on OpenAPI and config changes."
+    help = "Build the application frontend as described by the configuration files."     
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -52,21 +52,18 @@ class Command(BaseCommand):
             "--previous-schema", help="Path to previous OpenAPI schema."
         )
         parser.add_argument(
-            "--previous-config", help="Path to previous django-angular3.json."
+            "--previous-config",
+            help="Path to previous django-angular3.json."
         )
         parser.add_argument(
-            "--output-format",
-            choices=["json", "yaml", "text"],
-            default="json",
-            help="Format of the printed command execution plan.",
-        )
-        parser.add_argument(
-            "--dry-run", action="store_true", help="Print plan without writing to disk."
+            "--dry-run",
+            action="store_true",
+            help="Print the build stages without running them"
         )
         parser.add_argument(
             "--output",
             default="build",
-            help="Directory to write the plan (build-plan.ext).",
+            help="Directory to write the stagesplan (build-plan.ext).",
         )
         parser.add_argument(
             "--force",
@@ -235,7 +232,8 @@ class Command(BaseCommand):
             raise CommandError(f"Config load failed: {e}") from e
 
     def handle(self, *args: list[str], **options: dict[str, Any]) -> None:
-        """Create a deterministic Angular build plan from project changes.
+        """build the missing pieces for a complete Angular implementation
+        of the requested changes.
 
         The command loads and validates the supplied project configuration, then
         compares its OpenAPI schema with either ``--previous-schema`` or the
@@ -263,6 +261,18 @@ class Command(BaseCommand):
             SystemExit: With status 2 when breaking schema changes are found
                 without ``--acknowledge-breaking``.
         """
+        config_path: str | Any = options["config"]
+        try:
+            current_config = load_project_config(config_path)
+        except ConfigError as exc:
+            raise CommandError(str(exc)) from exc
+        validation_errors: list[str] = validate_project_config(current_config)
+        if validation_errors:
+            raise CommandError(
+                "Project configuration is invalid:\n"
+                + "\n".join(f"  - {error}" for error in validation_errors)
+            )
+        
         old_implementation = """
         config_path: str | Any = options["config"]
 
@@ -548,8 +558,6 @@ class Command(BaseCommand):
 
         out_dir = Path(options["output"])
         out_dir.mkdir(parents=True, exist_ok=True)
-        ext = options["output_format"]
-
-        out_file = out_dir / f"build-plan.{ext}"
+        out_file = out_dir / f"build-stages.json"
         out_file.write_text(plan_str, encoding="utf-8")
-        self.stdout.write(f"Build plan written to {out_file}")
+        self.stdout.write(f"Build stages were written to {out_file}")

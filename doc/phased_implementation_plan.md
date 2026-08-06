@@ -364,16 +364,25 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 
 ## Dependency summary
 
-```
-Phase 0 (design)
-  └─ Phase 1 (tools)
-       └─ Phase 2 (hooks)
-            └─ Phase 3 (command translation + execution)
-                 ├─ Phase 4 (skills)
-                 │    └─ Phase 5 (orchestration / SDK)
-                 │         └─ Phase 6 (terminal verification)
-                 │              └─ Phase 7 (local-to-global gate)
-                 └─ Phase 8 (plugin packaging — after 1–7)
+```mermaid
+flowchart TD
+    phase0["Phase 0: Design alignment"] --> phase1["Phase 1: Deterministic tool contracts"]
+    phase1 --> phase2["Phase 2: Lifecycle hook contracts"]
+    phase2 --> phase3["Phase 3: Command translation and execution"]
+    phase3 --> phase4["Phase 4: Skills authoring"]
+    phase4 --> phase5["Phase 5: Orchestration flow"]
+    phase3 --> phase6["Phase 6: Terminal verification"]
+    phase5 --> phase6
+    phase4 --> phase7["Phase 7: Local-to-global acceptance gate"]
+    phase5 --> phase7
+    phase6 --> phase7
+    phase1 --> phase8["Phase 8: Plugin packaging and distribution"]
+    phase2 --> phase8
+    phase3 --> phase8
+    phase4 --> phase8
+    phase5 --> phase8
+    phase6 --> phase8
+    phase7 --> phase8
 ```
 
 ## Test and verification coverage migration

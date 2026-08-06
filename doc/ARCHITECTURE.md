@@ -51,8 +51,11 @@ A specification for building APIs that allows both humans and computers to under
 ### 2.8 CRM
 CRM stands for Customer Relationship Management. In this architecture, it is shorthand for contract-derived business-domain content represented by the backend schema and API. It is not limited to a literal customer-sales system.
 
-### 2.9 non-CRM content
+### 2.9 non-CRM content (non-OAS-originating functionality)
 Content that is not directly derived from the OpenAPI contract, such as bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata. This content is defined in a separate structured input source and complements the CRM-derived Angular integration artifacts.
+
+### 2.9.1 [OpenUI]
+A technology-independent UI-description specification language and supporting tools, maintained by [shlomoa/openui-spec][openui-spec]. It defines the schema and canonical vocabulary used by concrete UI documents, with tooling to validate and process them. In this architecture, OpenUI provides the versioned, schema-validated structured input for non-CRM content (§2.9).
 
 ### 2.10 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for CRM-facing functionality and the basis for generating Angular integration artifacts.
