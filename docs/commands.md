@@ -1,8 +1,8 @@
 # Command reference
 
-`django-angular3` exposes two distinct command interfaces that serve different
-contexts. They share the `ng_*` Angular wrapper layer but differ in invocation
-requirements and available commands.
+`djng` exposes two distinct command interfaces that serve different contexts.
+They share the `ng_*` Angular wrapper layer but differ in invocation requirements
+and available commands.
 
 ## The two interfaces
 
@@ -11,7 +11,19 @@ requirements and available commands.
 | **Invoked as** | `django-angular3 <command>` | `django-admin <command>` or `python manage.py <command>` |
 | **Requires Django project** | No | Yes — `django_angular3` must be in `INSTALLED_APPS` and `DJANGO_SETTINGS_MODULE` must be set |
 | **Requires DRF / drf-spectacular** | No | Only for `export_schema` |
-| **Primary use** | Validation and Angular wrappers without a project | Full app lifecycle — including schema export, direct app construction, and workspace management |
+| **Primary use** | Validation and Angular wrappers without a project | Schema export and Angular workspace management inside a generated app |
+
+## Project configuration discovery
+
+Commands that operate on the generated app discover its user-owned
+`django-angular3-project.json`; they do **not** accept a project-configuration
+path. The standalone CLI searches the current working directory. Django
+management commands search the Django project `BASE_DIR`.
+
+The static `djng` tool configuration, `django-angular3.json`, supplies derived
+tool settings and is likewise not a command argument. Document validation
+commands retain their document path because that is the artifact to validate,
+not application configuration.
 
 ## Use cases
 
@@ -35,20 +47,20 @@ Invoked as `django-angular3 <command> [args]`.
 |---|---|
 | `validate-openapi <path>` | Validate an OpenAPI source document. |
 | `validate-openui <path>` | Validate a UI definition document. |
-| `validate-project [path]` | Validate a `django-angular3` project configuration. Defaults to `django-angular3.json`. |
-| `ng_new [path]` | Create an empty Angular workspace. |
-| `ng_workspace [path]` | Bootstrap the configured workspace: `ng new`, workspace defaults, `ng add angular-django2`, and schematic generation. |
-| `ng_config [path]` | Apply workspace defaults (package manager, style, routing). |
-| `ng_add [path]` | Run `ng add` for an Angular package. Accepts `--package <name>`. |
-| `ng_gen_app [path]` | Generate an Angular application inside the configured workspace via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from the project configuration. |
-| `ng_complex_component [path]` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
-| `ng_openapi_gen [path]` | Run a locally installed `ng-openapi-gen` via `pnpm exec` for the configured OpenAPI source. |
-| `ng_build [path]` | Build the configured Angular application. |
+| `validate-project` | Validate the discovered project configuration. |
+| `ng_new` | Create an empty Angular workspace. |
+| `ng_workspace` | Bootstrap the configured workspace: `ng new`, workspace defaults, `ng add angular-django2`, and schematic generation. |
+| `ng_config` | Apply workspace defaults (package manager, style, routing). |
+| `ng_add` | Run `ng add` for an Angular package. Accepts `--package <name>`. |
+| `ng_gen_app` | Generate an Angular application inside the configured workspace via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from the derived tool configuration. |
+| `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
+| `ng_openapi_gen` | Run a locally installed `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
+| `ng_build` | Build the discovered Angular application. |
 | `install-tutorial [dest]` | Copy the bundled `simple_crm` tutorial project to `dest` (default: `simple_crm`). Prints migration and run steps on success. |
 
-Commands shown with `[path]` default to `django-angular3.json` when omitted. All
-`ng_*` commands accept `--dry-run` for diagnostic validation and debugging. It
-prints the resolved Angular subprocess call list without invoking Angular
+All `ng_*` commands accept `--dry-run` for diagnostic validation and debugging.
+It prints the discovered project and static tool configuration paths, derived
+artifact paths, and resolved Angular subprocess calls without invoking Angular
 tooling.
 
 ## Django management commands
@@ -57,22 +69,22 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 
 | Command | Description |
 |---|---|
-| `export_schema <config>` | Export the OpenAPI schema from DRF (via drf-spectacular) and persist it as a versioned artifact. Rotates the previous schema alongside the current one for `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app <config>` | Validate the configured OpenAPI and OpenUI sources, compare them with prior inputs, execute the required construction commands in dependency order, and validate the generated app. `--dry-run` is diagnostic-only: it validates inputs, identifies changes, and reports selected commands without modifying the workspace. Accepts `--previous-schema <path>`, the selected previous-OpenUI interface, `--dry-run`, `--force start-from-scratch`, and `--acknowledge-breaking`. |
-| `ng_new [path]` | Create an empty Angular workspace. |
-| `ng_workspace [path]` | Bootstrap the configured workspace. |
-| `ng_workspace_modify [path]` | Reapply angular-django2 workspace bootstrap and django-angular3 defaults to an existing workspace. |
-| `ng_workspace_delete [path]` | Delete the generated Angular workspace entirely. |
-| `ng_config [path]` | Apply workspace defaults. |
-| `ng_add [path]` | Run `ng add` for an Angular package. Accepts `--package <name>`; defaults to the `ng_add_package` project setting. |
-| `ng_gen_app [path]` | Generate an Angular application via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from the project configuration. |
-| `ng_complex_component [path]` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
-| `ng_openapi_gen [path]` | Run `ng-openapi-gen` via `pnpm exec`. |
-| `ng_build [path]` | Build the configured Angular application. |
+| `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one for future `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
+| `build_app` | Validate the discovered project inputs and begin the app-build planning workflow. The planner is not implemented yet. Accepts `--previous-schema <path>`, `--dry-run`, `--force start-from-scratch`, and `--acknowledge-breaking`. |
+| `ng_new` | Create an empty Angular workspace. |
+| `ng_workspace` | Bootstrap the discovered workspace. |
+| `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |
+| `ng_workspace_delete` | Delete the discovered Angular workspace entirely. |
+| `ng_config` | Apply derived workspace defaults. |
+| `ng_add` | Run `ng add` for an Angular package. Accepts `--package <name>`; defaults to the derived `ngAddPackage` setting. |
+| `ng_gen_app` | Generate an Angular application via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from derived tool settings. |
+| `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
+| `ng_openapi_gen` | Run `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
+| `ng_build` | Build the discovered Angular application. |
 
 All management `ng_*` commands accept `--dry-run` for diagnostic validation and
-debugging, printing the resolved Angular subprocess call list without invoking
-Angular tooling.
+debugging, printing discovery and derived-path metadata with the resolved
+Angular subprocess call list without invoking Angular tooling.
 
 ## Command availability summary
 

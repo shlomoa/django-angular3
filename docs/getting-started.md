@@ -3,7 +3,8 @@
 This walkthrough takes you from an empty machine to a running tutorial project
 in a few minutes. It uses the bundled `simple_crm` tutorial — a small Django +
 DRF project that already ships an OpenAPI schema, a UI definition, and a
-`django-angular3.json` configuration file — so you can see the full
+`django-angular3.json` tool configuration and a
+`django-angular3-project.json` project configuration — so you can see the full
 contract-first workflow without writing a backend from scratch.
 
 ## Prerequisites
@@ -46,7 +47,8 @@ This creates:
 - A DRF app (`shop`)
 - `schema.yaml` exported from the above DRF app.
 - `app.openui.json` containing the OpenUI requirements.
-- `django-angular3.json` configuration file.
+- `django-angular3.json` static tool configuration file.
+- `django-angular3-project.json` generated-app project configuration file.
 The command prints the next steps on success.
 
 ## 3. Run the Django backend
@@ -68,29 +70,28 @@ From inside the tutorial directory, validate the configuration and its
 referenced OpenAPI and OpenUI sources:
 
 ```bash
-python manage.py validate_project django-angular3.json
+python manage.py validate_project
 ```
 
-`validate_project` defaults to `django-angular3.json` in the current directory,
-so you can also run it with no arguments. See [Configuration](configuration.md)
-for the full schema.
+`validate_project` discovers `django-angular3-project.json` in the Django
+project directory. See [Command reference](commands.md) for discovery behavior.
 
 ## 5. Scaffold the Angular workspace
 
 These steps require Node.js and pnpm. Each `ng_*` command accepts `--dry-run`
-for diagnostic validation and debugging, printing the resolved Angular
-subprocess calls without executing them:
+for diagnostic validation and debugging, printing discovered configuration,
+derived paths, and resolved Angular subprocess calls without executing them:
 
 ```bash
-python manage.py ng_workspace django-angular3.json --dry-run
+python manage.py ng_workspace --dry-run
 ```
 
 When you are ready to execute, drop `--dry-run`:
 
 ```bash
-python manage.py ng_workspace django-angular3.json
-python manage.py ng_openapi_gen django-angular3.json
-python manage.py ng_build django-angular3.json
+python manage.py ng_workspace
+python manage.py ng_openapi_gen
+python manage.py ng_build
 ```
 
 `ng_workspace` runs the full bootstrap flow (`ng new`, workspace defaults,
@@ -100,8 +101,7 @@ configured Angular application.
 
 ## Next steps
 
-- [Configuration](configuration.md) — the `django-angular3.json` schema and the
-  `DJANGO_ANGULAR3` Django settings.
+- [Configuration](configuration.md) — configuration guidance and references.
 - [Usage workflow](workflow.md) — the end-to-end contract-first cycle for your
   own project.
 - [Command reference](commands.md) — every command, in both the standalone CLI

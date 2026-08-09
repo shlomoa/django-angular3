@@ -1,0 +1,10 @@
+{
+  "project": {
+    "name": "simple_crm"
+  },
+  "artifacts": {
+    "openapiSchema": "schema.yaml",
+    "openuiSpecification": "app.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

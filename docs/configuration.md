@@ -1,119 +1,64 @@
 # Configuration
 
-`django-angular3` reads two kinds of configuration:
+`djng` keeps tool behavior separate from generated-app identity and inputs.
+The authoritative definitions, fields, defaults, ownership, and lifecycle are
+in `doc/REQUIREMENTS.md` §4.2.
 
-- **`django-angular3.json`** — a per-project file describing the project, its
-  OpenAPI and OpenUI sources, and Angular workspace settings. Used by both the
-  standalone CLI and the Django management commands.
-- **`DJANGO_ANGULAR3`** — an optional dictionary in your Django project's
-  `settings.py` that controls executable paths, the command allowlist, and
-  workspace defaults. Only relevant when running inside a Django project.
+## Configuration and inputs
 
-## The `django-angular3.json` file
-
-This file lives in the root of your project. Most commands accept its path as a
-positional argument and default to `django-angular3.json` in the current
-directory when omitted.
-
-```json
-{
-  "project": { "name": "simple_crm" },
-  "openapi": { "source": "schema.yaml" },
-  "openui": { "source": "app.openui.json" },
-  "angular": {
-    "output": "build/angular",
-    "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
-  }
-}
-```
-
-All relative paths are resolved against the directory that contains the
-configuration file.
-
-### Fields
-
-| Key | Required | Description |
-|---|:---:|---|
-| `project.name` | ✓ | Non-empty project name. |
-| `openapi.source` | ✓ | Path to the OpenAPI source document (JSON or YAML). |
-| `openapi.openapiGeneratorConfig` | — | Path to an OpenAPI Generator config file. |
-| `openapi.ngOpenApiGenConfig` | — | Path to an `ng-openapi-gen` config file. |
-| `openui.source` | ✓ | Path to the OpenUI document; the generated-app convention is `app.openui.json`. |
-| `angular.output` | ✓ | Output directory for generated Angular artifacts. `angular.package` is accepted as an alias. |
-| `angular.workspace.packageManager` | — | Package manager for the workspace (e.g. `pnpm`). |
-| `angular.workspace.style` | — | Stylesheet format (e.g. `scss`). |
-| `angular.workspace.routing` | — | Whether to enable Angular routing. |
-
-`project`, `openapi`, `openui`, and `angular` must all be present and must be
-mappings. Validate the file at any time:
-
-```bash
-django-angular3 validate-project django-angular3.json
-```
-
-## Django settings: `DJANGO_ANGULAR3`
-
-When `django_angular3` is installed in a Django project, add it to
-`INSTALLED_APPS` to enable the `ng_*` management commands:
-
-```python
-INSTALLED_APPS = [
-    # ...
-    "django_angular3",
-]
-```
-
-Override only the values you need under `DJANGO_ANGULAR3`. The example below
-shows the full supported surface together with its defaults:
-
-```python
-DJANGO_ANGULAR3 = {
-    "config_path": "django-angular3.json",
-    "node_executable": "node",
-    "pnpm_executable": "pnpm",
-    "ng_executable": "ng",
-    "command_allowlist": ["ng_openapi_gen"],
-    "package_manager": "pnpm",
-    "build_configuration": "production",
-    "style": "scss",
-    "routing": True,
-}
-```
-
-| Setting | Default | Description |
+| Item | Owner | Purpose |
 |---|---|---|
-| `config_path` | `"django-angular3.json"` | Default project config path used when a command's path argument is omitted. |
-| `node_executable` | `"node"` | Node.js executable. |
-| `pnpm_executable` | `"pnpm"` | pnpm executable. |
-| `ng_executable` | `"ng"` | Angular CLI executable. |
-| `command_allowlist` | `("ng_openapi_gen",)` | Commands permitted to actually execute Angular tooling. |
-| `package_manager` | `"pnpm"` | Workspace package manager. |
-| `build_configuration` | `"production"` | Angular build configuration. |
-| `style` | `"scss"` | Workspace stylesheet format. |
-| `routing` | `True` | Whether the workspace enables routing. |
+| `django-angular3.json` | `djng` | Static tool configuration: Angular execution settings, global `ng-openapi-gen` settings, and `drf-spectacular` settings. |
+| `django-angular3-project.json` | generated-app user | Generated-app identity and locations for the OpenAPI schema, OpenUI specification, and Angular workspace. |
+| OpenAPI schema | generated-app user | CRM-facing contract input or the artifact exported from Django/DRF. |
+| OpenUI specification | generated-app user | Structured non-CRM UI input. |
 
-### The command allowlist
+`DJANGO_ANGULAR3` and `AngularSettings` are derived from the static tool
+configuration; they are not independent configuration authorities. Likewise,
+the workspace's `ng-openapi-gen.json` is a per-run artifact derived by `djng`;
+do not maintain it as production configuration.
 
-Angular commands only execute when the resolved command name is in
-`command_allowlist`. The default allowlist permits only `ng_openapi_gen`. To let
-other commands run, add them explicitly:
+## Static tool configuration
 
-```python
-DJANGO_ANGULAR3 = {
-  "command_allowlist": [
-    "ng_workspace",
-    "ng_openapi_gen",
-    "ng_build",
-    "ng_complex_component",
-  ],
-}
-```
+`django-angular3.json` configures `djng` itself. It supplies:
 
-Commands not in the allowlist still support `--dry-run` for diagnostic
-validation and debugging, which prints the resolved Angular subprocess calls
-without executing them.
+- global `ngOpenApiGen` options;
+- `drfSpectacular.settings`, scoped to schema export;
+- Angular workspace, application, and build defaults; and
+- tool executable names, command allowlist, and default `ng add` package.
 
-```{note}
-The legacy `npm_executable` and `npx_executable` overrides are still accepted
-and mapped to `pnpm_executable` for compatibility with older settings modules.
-```
+Start with the packaged `django-angular3.json` template. Commands consume this
+static configuration; they do not accept its path as an argument.
+
+## Generated-app project configuration
+
+`django-angular3-project.json` identifies a generated app and names the paths
+that a command uses for its OpenAPI schema, OpenUI specification, and Angular
+workspace. Start with the packaged project-configuration template and keep all
+artifact paths relative to that file.
+
+Commands discover this file rather than accepting its path:
+
+- standalone CLI commands search the current working directory;
+- Django management commands search `settings.BASE_DIR`.
+
+Use `django-angular3 validate-project` or `python manage.py validate_project`
+to validate the discovered project configuration and referenced inputs.
+
+## Derived run-time configuration
+
+When `ng_openapi_gen` runs, `djng` combines the global `ngOpenApiGen` settings
+with the discovered project's schema and workspace paths. It writes a derived
+`ng-openapi-gen.json` in the Angular workspace, then invokes the locally
+installed generator with `pnpm exec ng-openapi-gen -c <generated-config-path>`.
+
+When `export_schema` runs, `djng` scopes the derived
+`drfSpectacular.settings` to the direct `drf-spectacular` management-command
+invocation. Neither derived configuration is a user-maintained command input.
+
+## Command behavior
+
+Project-operating commands do not accept configuration-file path arguments.
+Their `--dry-run` output shows the discovered project and static tool
+configuration paths, derived artifact paths, and resolved subprocess calls.
+See the [command reference](commands.md) for the supported command interfaces.

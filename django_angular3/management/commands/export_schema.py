@@ -1,7 +1,7 @@
 """Management command: export_schema
 
-Export the OpenAPI schema from DRF using drf-spectacular and persist it as a
-durable, versioned artifact at the path configured in ``openapi.source``.
+Export the OpenAPI schema from DRF using drf-spectacular's command and persist it as a
+durable, versioned artifact at the discovered project configuration's OAS path.
 
 Before writing, the command rotates the existing schema to its ``.previous``
 counterpart (e.g. ``api.json`` → ``api.previous.json``) so that ``build_app``
@@ -10,18 +10,24 @@ to manage file paths explicitly.
 
 Usage::
 
-    django-admin export_schema django-angular3.json
-    django-admin export_schema django-angular3.json --format yaml
-    django-admin export_schema django-angular3.json --dry-run
+    django-admin export_schema
+    django-admin export_schema --format yaml
+    django-admin export_schema --dry-run
 """
 
 from __future__ import annotations
 
 import argparse
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
 from ...config import ConfigError, get_previous_schema_path, load_project_config
+from ...settings import (
+    AngularCommandError,
+    load_drf_spectacular_settings,
+    use_drf_spectacular_settings,
+)
 
 
 class Command(BaseCommand):
@@ -32,10 +38,6 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "config",
-            help="Path to the django-angular3.json project config file.",
-        )
         parser.add_argument(
             "--format",
             dest="format",
@@ -54,15 +56,16 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         try:
-            config = load_project_config(options["config"])
+            config = load_project_config()
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
 
-        destination = config.openapi_source
+        destination = config.openapi_schema
         previous_path = get_previous_schema_path(destination)
 
         if options["dry_run"]:
             self.stdout.write("--- DRY RUN: export_schema ---")
+            self.stdout.write(f"  project config : {config.config_path}")
             self.stdout.write(f"  destination : {destination}")
             if destination.exists():
                 self.stdout.write(
@@ -71,30 +74,16 @@ class Command(BaseCommand):
             self.stdout.write("  (no files written)")
             return
 
-        # Generate the schema via drf-spectacular.
+        # Generate the schema through drf-spectacular's command interface.
         try:
-            from drf_spectacular.generators import (
-                SchemaGenerator,  # type: ignore[import-untyped]
-            )
-            from drf_spectacular.renderers import (  # type: ignore[import-untyped]
-                OpenApiJsonRenderer,
-                OpenApiYamlRenderer,
-            )
+            spectacular_settings = load_drf_spectacular_settings()
         except ImportError as exc:  # pragma: no cover
             raise CommandError(
                 "drf-spectacular is required for schema export. "
                 "Install it with: pip install drf-spectacular"
             ) from exc
-
-        generator = SchemaGenerator()
-        schema = generator.get_schema(request=None, public=True)
-
-        renderer = (
-            OpenApiYamlRenderer()
-            if options["format"] == "yaml"
-            else OpenApiJsonRenderer()
-        )
-        schema_bytes: bytes = renderer.render(schema, renderer_context={})
+        except AngularCommandError as exc:
+            raise CommandError(str(exc)) from exc
 
         # Rotate current → previous before writing the new schema.
         if destination.exists():
@@ -102,5 +91,12 @@ class Command(BaseCommand):
             self.stdout.write(f"Previous schema archived to: {previous_path}")
 
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(schema_bytes)
+        with use_drf_spectacular_settings(spectacular_settings):
+            call_command(
+                "spectacular",
+                file=str(destination),
+                format="openapi" if options["format"] == "yaml" else "openapi-json",
+                stdout=self.stdout,
+                stderr=self.stderr,
+            )
         self.stdout.write(self.style.SUCCESS(f"Schema exported to: {destination}"))

@@ -125,10 +125,12 @@ own models, views, serializers, admin registrations, and migrations. A project
 contains one or more apps. App names are domain-driven (e.g. `shop`, `accounts`,
 `inventory`) and must be distinct from the project name.
 
-In `django-angular3.json`:
-- `project.name` — names the Django project and the Angular workspace.
-- `app.name` — names the primary Django app **and** the Angular application
-  generated inside that workspace. Both share this name by convention.
+In `django-angular3-project.json`, `project.name` names the generated
+application and supplies the default name used by workspace and application
+wrappers. The project configuration does not define a Django app name: Django
+apps remain domain modules selected by the generated application. The static
+`django-angular3.json` configures `djng` tooling, not generated-app identity.
+See `REQUIREMENTS.md` §4.2 for the authoritative configuration model.
 
 ### 2.22 model-first and contract-first backend origination
 

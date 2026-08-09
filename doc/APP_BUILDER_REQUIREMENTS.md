@@ -7,21 +7,27 @@ The **generated app** is the integrated Django-Angular application that
 
 `djng` provides deterministic Django management commands for bounded work such
 as schema extraction and ngdj wrapper invocation. `build_app` is the generated
-app's orchestration command. It is invoked as:
+app's planned orchestration command. Its public interface discovers the project
+configuration; it is invoked as:
 
 ```bash
-django-admin build_app <config> [options]
+django-admin build_app [options]
 # or equivalently:
-python manage.py build_app <config> [options]
+python manage.py build_app [options]
 ```
+
+> **Implementation status:** the current command validates discovered project
+> inputs, then raises `NotImplementedError` because planning and execution are
+> not implemented. This document specifies the target behavior; it must not be
+> read as a claim that those target behaviors are already available.
 
 ### Build algorithm
 
 `build_app` builds the generated app; it does not emit a build plan or a
 procedure graph. For every run it performs this ordered algorithm:
 
-1. Validate the current `django-angular3.json`, OpenAPI schema, and OpenUI
-   document.
+1. Validate the discovered project configuration, static tool configuration,
+  OpenAPI schema, and OpenUI document.
 2. Identify the difference between the previous and current project
   configurations.
 3. Identify the difference between the previous and current OpenAPI schemas.
@@ -45,15 +51,16 @@ normal command error reporting.
 
 | Input | Source | Format | Notes |
 |---|---|---|---|
-| `django-angular3.json` | Tool configuration file | JSON | Must contain `project.name`, `openapi.source`, `openui.source`, and `angular.output`. Read as current and always authoritative. |
-| Current OpenAPI schema | `openapi.source` | YAML or JSON (OAS 3.x) | The current schema version. |
-| Previous project configuration | `--previous-config <path>` | JSON | Prior `django-angular3.json`; used only for the `config` change lane. |
+| `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. |
+| `django-angular3-project.json` | Project configuration | JSON | Discovered project identity and artifact locations. |
+| Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
+| Previous project configuration | Accepted prior project state | JSON | A persisted prior state for the `config` change lane; no public configuration-path flag exists. |
 | Previous OpenAPI schema | `--previous-schema <path>`, otherwise the current source's `.previous` sibling | YAML or JSON (OAS 3.x) | The explicit flag takes precedence. Absent on a first run; the schema change type is `start-from-scratch`. |
-| Current `app.openui.json` | `openui.source` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
-| Previous `app.openui.json` | `--previous-openui <path>`, otherwise the current source's `.previous` sibling | JSON (`openui.schema.json`) | Resolved by the same explicit-override then adjacent-artifact algorithm as the previous OpenAPI schema. Absent on a first run; the OpenUI change type is `start-from-scratch`. |
+| Current `app.openui.json` | `artifacts.openuiSpecification` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
+| Previous `app.openui.json` | Accepted prior state | JSON (`openui.schema.json`) | A persisted prior state for OpenUI change detection. Absent on a first run; the OpenUI change type is `start-from-scratch`. |
 
-`openui.source` selects the current OpenUI document; it does not name the document
-format or the ChangeSet lane. `app.openui.json` is the generated-app filename
+`artifacts.openuiSpecification` selects the current OpenUI document; it does
+not name the document format or the ChangeSet lane. `app.openui.json` is the generated-app filename
 convention. Its grammar is defined by
 `openui.schema.json` and its vocabulary by `openui.json` in
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec); djng owns only
@@ -68,15 +75,12 @@ the configured input path and its build-stage handling. See
 | Force mode | `--force start-from-scratch` | Override comparison results and execute the full initial-build command set. |
 | Breaking-change acknowledgement | `--acknowledge-breaking` | Permit execution after the breaking-change gate reports OpenAPI breaking changes. |
 
-### Configuration keys read from `django-angular3.json`
+### Configuration model
 
-| Key | Required | Purpose |
-|---|---|---|
-| `project.name` | yes | Workspace and app name |
-| `openapi.source` | yes | Current OpenAPI schema path and schema-lane input selector |
-| `openui.source` | yes | Current `app.openui.json` path and OpenUI-lane input selector |
-| `angular.output` | yes | Generated-app workspace root |
-| `angular.workspace.*` | no | Workspace settings such as package manager, style, and routing |
+`django-angular3-project.json` supplies `project.name` and the `artifacts`
+locations used by the builder. Static tool settings remain in
+`django-angular3.json`. The authoritative field definitions and derivation
+rules are in `REQUIREMENTS.md` §4.2; this document does not duplicate them.
 
 ---
 
@@ -119,18 +123,17 @@ artifacts required by the generated app.
 
 ### Project-configuration change detection
 
-The `config` lane compares every supported `django-angular3.json` key with the
-previous configuration. A changed source key remains an input selector for its
-own lane; it is nevertheless reported in `config.affected_keys` because source
-selection is build-relevant.
+The `config` lane compares every supported project-configuration field with the
+accepted prior project state. A changed artifact location remains an input
+selector for its own lane; it is nevertheless reported in
+`config.affected_keys` because source selection is build-relevant.
 
 | Configuration key change | `config` type | Required effect |
 |---|---|---|
 | `project.name` | `replace-things` | Replace the project-level workspace and application foundation for the new identity. |
-| `angular.output` | `replace-things` | Materialize the generated application at the new workspace root. |
-| `angular.workspace.*` | `modify-things` | Apply the changed workspace settings. |
-| `openapi.source`, `openapi.openapiGeneratorConfig`, or `openapi.ngOpenApiGenConfig` | `modify-things` | Use the selected contract and generator settings for schema comparison and API-client generation. |
-| `openui.source` | `modify-things` | Use the selected OpenUI document for OpenUI comparison and UI construction. |
+| `artifacts.angularWorkspace` | `replace-things` | Materialize the generated application at the new workspace root. |
+| `artifacts.openapiSchema` | `modify-things` | Use the selected contract for schema comparison and API-client generation. |
+| `artifacts.openuiSpecification` | `modify-things` | Use the selected OpenUI document for OpenUI comparison and UI construction. |
 
 Any supported configuration-key addition, removal, or value replacement must
 be represented in `affected_keys`. Unsupported configuration keys or changes
@@ -193,7 +196,7 @@ by the automation naming layers in `ARCHITECTURE.md` §2.23.
 | Source change | Selected command category | Mode |
 |---|---|---|
 | Configuration start-from-scratch | Workspace and application foundation commands | create |
-| Configuration replacement (`project.name` or `angular.output`) | Project-level workspace and application foundation commands | replace |
+| Configuration replacement (`project.name` or `artifacts.angularWorkspace`) | Project-level workspace and application foundation commands | replace |
 | Configuration modification | The command category for each affected configuration key | modify |
 | Schema start-from-scratch | Workspace, app, API-integration, data-service, and required OpenUI commands | create |
 | Schema addition | API-integration and data-service commands for affected resources, followed by dependent UI commands | create |
@@ -241,12 +244,12 @@ not a build-plan artifact.
 ## Durable Artifacts
 
 The durable artifact of a successful run is the generated application at
-`angular.output`. Diagnostic artifacts support troubleshooting and validation;
+`artifacts.angularWorkspace`. Diagnostic artifacts support troubleshooting and validation;
 they are not a substitute for execution.
 
 | Artifact | Format | Storage path |
 |---|---|---|
-| Generated application files | TypeScript / HTML / SCSS / JSON | `angular.output` workspace root |
+| Generated application files | TypeScript / HTML / SCSS / JSON | `artifacts.angularWorkspace` workspace root |
 | oasdiff report | JSON or YAML | `build/` |
 | ChangeSet | JSON | `build/` |
 | Command execution and validation log | JSONL or text | `build/` |
@@ -315,7 +318,7 @@ they are not a substitute for execution.
 
 - Each selected SKILL command must make a Claude Agent SDK call with the
   specified SKILL(s) enabled, command inputs as the prompt, and
-  `angular.output` as the generated-app workspace.
+  `artifacts.angularWorkspace` as the generated-app workspace.
 - Each selected tool command must execute the corresponding deterministic tool
   contract with structured inputs and outputs.
 - Each selected gate must enforce its blocking check or lifecycle side effect

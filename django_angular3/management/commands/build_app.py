@@ -10,7 +10,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from ...config import ConfigError, load_project_config  # , get_previous_schema_path
 from ...tools import ensure_oasdiff
-
 from ...validation import validate_project_config
 
 
@@ -42,23 +41,16 @@ def _command_for_skill(skill: str, mode: str) -> str:
 
 
 class Command(BaseCommand):
-    help = "Build the application frontend as described by the configuration files."     
+    help = "Build the application frontend as described by the configuration files."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "config", help="Path to the django-angular3.json config file."
-        )
         parser.add_argument(
             "--previous-schema", help="Path to previous OpenAPI schema."
         )
         parser.add_argument(
-            "--previous-config",
-            help="Path to previous django-angular3.json."
-        )
-        parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the build stages without running them"
+            help="Print the build stages without running them",
         )
         parser.add_argument(
             "--output",
@@ -82,11 +74,10 @@ class Command(BaseCommand):
         skill: str,
         mode: str,
         reason: str,
-        config_path: str,
         resource_name: str | None = None,
     ) -> dict[str, object]:
         cmd_name = _command_for_skill(skill, mode)
-        base_cmd = f"django-admin {cmd_name} {config_path}"
+        base_cmd = f"django-admin {cmd_name}"
         if resource_name:
             base_cmd += f" --resource {resource_name}"
         step: dict[str, Any] = {
@@ -235,7 +226,7 @@ class Command(BaseCommand):
         """build the missing pieces for a complete Angular implementation
         of the requested changes.
 
-        The command loads and validates the supplied project configuration, then
+        The command discovers and validates the project configuration, then
         compares its OpenAPI schema with either ``--previous-schema`` or the
         conventional previous-schema artifact. When no prior schema is available
         (or ``--force start-from-scratch`` is used), it treats the current schema
@@ -245,9 +236,6 @@ class Command(BaseCommand):
         For incremental schema changes, this method obtains structural and
         breaking-change reports from ``oasdiff``. Breaking changes stop planning
         unless the caller explicitly supplies ``--acknowledge-breaking``. If a
-        previous configuration is supplied, it is also compared to capture
-        configuration-level changes.
-
         The resulting change set is translated into ordered, inspectable
         ``django-admin`` commands: workspace and app creation precede API client
         generation, and resource removals precede regeneration and additions.
@@ -261,9 +249,8 @@ class Command(BaseCommand):
             SystemExit: With status 2 when breaking schema changes are found
                 without ``--acknowledge-breaking``.
         """
-        config_path: str | Any = options["config"]
         try:
-            current_config = load_project_config(config_path)
+            current_config = load_project_config()
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
         validation_errors: list[str] = validate_project_config(current_config)
@@ -272,9 +259,9 @@ class Command(BaseCommand):
                 "Project configuration is invalid:\n"
                 + "\n".join(f"  - {error}" for error in validation_errors)
             )
-        
-        old_implementation = """
-        config_path: str | Any = options["config"]
+
+        _old_implementation = """
+        config_path = str(current_config.config_path)
 
         try:
             current_config = load_project_config(config_path)
@@ -549,7 +536,7 @@ class Command(BaseCommand):
             }
             self._print_debug_change_set(build_plan, options)
         """
-        raise NotImplementedError("Old implementation is: \n" + old_implementation)
+        raise NotImplementedError("build_app planning is not implemented.")
 
     def _print_debug_change_set(
         self, build_plan: dict[str, Any], options: dict[str, Any]
@@ -558,6 +545,6 @@ class Command(BaseCommand):
 
         out_dir = Path(options["output"])
         out_dir.mkdir(parents=True, exist_ok=True)
-        out_file = out_dir / f"build-stages.json"
+        out_file = out_dir / "build-stages.json"
         out_file.write_text(plan_str, encoding="utf-8")
         self.stdout.write(f"Build stages were written to {out_file}")

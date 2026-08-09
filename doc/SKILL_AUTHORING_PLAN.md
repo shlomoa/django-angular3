@@ -31,16 +31,17 @@ only with the SKILLS subset of that automation subsystem. See §Glossary.
 There are two configuration files that skills must not conflate.
 
 `django-angular3.json` is the `djng` tool configuration. It tells the tool
-how to behave: workspace root path (`angular.output`), project name
-(`project.name`), OpenAPI source path (`openapi.source`), package manager,
-stylesheet format, routing settings, and so on. `build_app` reads the current
-file as authoritative and compares it with its previously accepted version to
-derive project-level changes. The eleven skills authored from
-`GENERATE_AI_AUTOMATIONS.md` operate on a generated app. Their run-time inputs
-are sourced from the generated app's `django-angular3.json`.
+how to behave: package-manager, stylesheet, routing, application, build, and
+executable settings, plus global generator configuration. The generated app's
+`django-angular3-project.json` separately identifies its project name, OpenAPI
+schema, OpenUI specification, and Angular workspace. `build_app` must receive
+those locations through discovered project configuration rather than through a
+public configuration-file argument. The authoritative distinction is in
+`REQUIREMENTS.md` §4.2.
 
 `app.openui.json` is the generated app's OpenUI concrete UI document. It defines
-the non-CRM UI artifacts and is selected by `openui.source`. Its grammar is
+the non-CRM UI artifacts and is selected by
+`artifacts.openuiSpecification`. Its grammar is
 defined by `openui.schema.json` and its vocabulary by `openui.json` in
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). `build_app`
 compares current and previous `app.openui.json` documents to detect non-CRM UI
@@ -67,10 +68,10 @@ not an instance.
 Run-time input is the concrete values an orchestrator provides when invoking
 the skill. For these eleven skills, run-time input comes from two sources:
 
-- **`django-angular3.json` keys** — read directly by the skill from the
-  generated app's tool configuration file (e.g., `angular.output`,
-  `project.name`, `openapi.source`). This file is golden; the skill reads it
-  as current.
+- **Discovered configuration and artifact paths** — supplied by the
+  orchestrator from `django-angular3-project.json` and derived static tool
+  settings. Skills must not reinterpret either configuration file as the other
+  or accept their paths as public command inputs.
 - **Command-level inputs** — supplied by `build_app` as the prompt for each
   selected guided agent session. These include resource names, component names,
   form names, placement hints, and similar command-specific values.

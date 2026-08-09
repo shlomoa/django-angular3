@@ -60,8 +60,8 @@ tree comparison, and the three-lane `config` / `schema` / `openui` ChangeSet.
 
 ### Step 1.4. — Update the spec/openui example
 **Target:** app.openui.json
-Complete for `spec/openui/app.openui.json`. The tutorial fixture remains a legacy
-`pages` / `forms` document and is migrated by Task 2.2.
+Complete. Both `spec/openui/app.openui.json` and the tutorial fixture use valid
+OpenUI concrete documents.
 
 ### Step 1.5. — Update README.md
 **Target:** `README.md` (line 231 area)  
@@ -116,6 +116,8 @@ supported by the released OpenUI catalog.
 
 ### Step 2.3 — Align the OpenUI document with generated-project configuration
 
+**Status: Complete.**
+
 **Targets:** `django_angular3/config.py` and `django_angular3/validation.py`.
 
 Treat `django-angular3.json` as the generated-project configuration and its
@@ -126,6 +128,8 @@ implemented assembly contract requires. OpenUI grammar, catalog-type, and
 duplicate-ID validation remain delegated to `openui-spec`.
 
 ### Step 2.4 — Preserve generated-app build boundaries
+
+**Status: Complete.**
 
 **Target:** `django_angular3/management/commands/build_app.py`.
 
@@ -138,7 +142,11 @@ assembly in this task.
 
 ## Task 3: Validation and test updates
 
+**Status: Partial.** Steps 3.2, 3.3, 3.5, and 3.6 remain outstanding.
+
 ### Step 3.1 — Unit coverage for delegated OpenUI validation
+
+**Status: Complete.**
 
 **Targets:** new `tests/test_validation.py` and
 `tests/test_cli_scaffold.py`.
@@ -152,6 +160,10 @@ upstream diagnostics and keeps document-loading failures distinct. Update
 validated through the delegated boundary.
 
 ### Step 3.2 — Generated-project configuration integration coverage
+
+**Status: Partial.** Valid project configurations and legacy `ui` rejection are
+covered. Coverage for missing OpenUI sources and invalid OpenUI documents through
+`validate_project_config()` remains outstanding.
 
 **Targets:** `tests/test_cli_scaffold.py`, `django-angular3.json`,
 `spec/openui/app.openui.json`,

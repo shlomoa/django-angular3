@@ -481,12 +481,308 @@ These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 - API schema generation and browsable documentation should be available in
   non-production environments
 
-### 4.2. Construction Workflow
+### 4.2. Configuration classification and details
+
+#### 4.2.1. Configuration and input categories
+The platform uses these distinct configuration and input categories:
+
+- **Tool configurations** configure `djng` and its integrated tools:
+  - `django-angular3.json` configures `djng`.
+  - Its `ngOpenApiGen` clause configures the global `ng-openapi-gen` behavior.
+  - Its `drfSpectacular.settings` clause configures the global
+    `drf-spectacular` behavior.
+- **Project configuration** identifies the generated application and provides
+  command run-time locations for its OAS schema, OpenUI specification, and
+  Angular workspace. It does not duplicate tool settings or OAS/OpenUI content.
+- **OAS schema** defines CRM-facing contract content. In model-first workflows,
+  it is extracted from the Django/DRF layer; it drives generation of Angular
+  interfaces to that content and uses the OpenAPI Specification (OAS).
+- **OpenUI specification** defines UI requirements from user-provided and
+  predefined parts. It drives Angular generation for the required UI and uses
+  the `openui-spec` schema and catalog.
+
+Their ownership is:
+
+| Main category | Subcategory | Item / file | Owner | Purpose and relationship |
+|---|---|---|---|---|
+| Project configuration | — | `django-angular3-project.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI specification, and Angular workspace. |
+| Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `AngularSettings` are derived from it. |
+| Tool configurations | `ng-openapi-gen` | `ngOpenApiGen` clause in `django-angular3.json` | `djng` | Global `ng-openapi-gen` settings, including `serviceSuffix` and `modelIndex`. |
+| Tool configurations | `ng-openapi-gen` | `ng-openapi-gen.json` in the project Angular workspace | `djng` | Derived per-run tool-configuration file. It combines global settings with command run-time `input` and `output` parameters. |
+| Tool configurations | `ng-openapi-gen` | `spec/openapi/ng-openapi-gen/ng-openapi-gen.json` | This repository | Validation-only fixture; it is not production configuration and is not released. |
+| Tool configurations | `drf-spectacular` | `drfSpectacular.settings` clause in `django-angular3.json` | `djng` | Global `drf-spectacular` settings from which `SPECTACULAR_SETTINGS` is derived for schema export. |
+| OAS schema | — | OpenAPI document | `djng` package user | Defines CRM-facing contract content consumed during a command run. |
+| OpenUI specification | — | OpenUI document | `djng` package user | Defines UI requirements consumed during a command run. |
+
+The table classifies sources and artifacts only. The requirements below define
+their fields, defaults, ownership boundaries, lifecycle, discovery,
+derivation, and validation.
+
+#### 4.2.2. Configuration and tool relationships
+
+```mermaid
+flowchart TB
+  subgraph ProjectDefinitions["Project definitions"]
+    direction LR
+    PROJECT["django-angular3-project.json"]
+    OAS["OpenAPI contract"]
+    UI["OpenUI specification"]
+
+    PROJECT ~~~ OAS ~~~ UI
+  end
+
+  subgraph ToolDefinitions["django-angular3.json tool definitions"]
+    direction LR
+    DRFSETTINGS["drfSpectacular.settings"]
+    NGOPENAPISETTINGS["ngOpenApiGen"]
+
+    DRFSETTINGS ~~~ NGOPENAPISETTINGS
+  end
+
+  subgraph DRF["drf-spectacular"]
+    direction TB
+    BACKEND["Django/DRF backend"]
+    EXPORT["Export OpenAPI schema"]
+    REST["REST API"]
+
+    BACKEND --> EXPORT
+    BACKEND -->|implements| REST
+  end
+
+  subgraph Agent["Agent + AI automations build flow"]
+    direction TB
+    DERIVE["Derive changes from<br/>OAS and OpenUI"]
+    SELECT["Select ordered<br/>construction work"]
+
+    SKILLS["SKILLS"]
+    TOOLS["TOOLS"]
+    HOOKS["HOOKS"]
+
+    EXECUTE["Generate, assemble,<br/>and repair"]
+    NGCONFIG["Derive<br/>ng-openapi-gen.json"]
+    VALIDATE["Validate outputs<br/>and integration"]
+
+    DERIVE --> SELECT
+
+    SELECT --> SKILLS
+    SELECT --> TOOLS
+    SELECT --> HOOKS
+
+    SKILLS ~~~ TOOLS ~~~ HOOKS
+
+    SKILLS --> EXECUTE
+    TOOLS --> EXECUTE
+    HOOKS --> EXECUTE
+
+    EXECUTE --> NGCONFIG
+  end
+
+  subgraph NGDJ["ngdj"]
+    direction TB
+    CLI["ngdj CLI"]
+
+    WORKSPACE["Workspace and<br/>application generation"]
+    CONTRACT["Contract-derived<br/>Angular generation"]
+    NONCRM["Non-CRM Angular<br/>generation"]
+
+    NGOPENAPI["ng-openapi-gen"]
+    ASSEMBLE["Angular application<br/>assembly"]
+
+    CLI --> WORKSPACE
+    CLI --> CONTRACT
+    CLI --> NONCRM
+
+    WORKSPACE ~~~ CONTRACT ~~~ NONCRM
+
+    NGOPENAPI --> CONTRACT
+
+    WORKSPACE --> ASSEMBLE
+    CONTRACT --> ASSEMBLE
+    NONCRM --> ASSEMBLE
+  end
+
+  subgraph Output["Generated application"]
+    direction TB
+    ANGULAR["Angular application"]
+    APP["Composed full-stack<br/>application"]
+    ACCEPTED["Accepted full-stack<br/>application"]
+
+    ANGULAR --> APP
+    APP --> VALIDATE
+    VALIDATE -->|accepted| ACCEPTED
+  end
+
+  %% Contract creation and inputs
+  DRFSETTINGS --> EXPORT
+  EXPORT --> OAS
+
+  OAS --> DERIVE
+  UI --> DERIVE
+
+  PROJECT --> NGCONFIG
+  OAS --> NGCONFIG
+  NGOPENAPISETTINGS --> NGCONFIG
+
+  %% Generation flow
+  EXECUTE --> CLI
+  NGCONFIG --> NGOPENAPI
+  ASSEMBLE --> ANGULAR
+
+  %% Application composition
+  BACKEND --> APP
+
+  %% Semantic dependencies
+  OAS -->|describes| REST
+  REST -->|consumed by| ANGULAR
+
+  %% Validation feedback loop
+  VALIDATE -.->|repair required| SELECT
+
+  linkStyle 40 stroke:#c62828,stroke-width:2px
+```
+
+#### 4.2.3. planned `django-angular3.json` contents
+
+`django-angular3.json` is the canonical, user-editable static configuration
+for `djng`; it configures the tool, not project configuration. The package
+must release it at
+`django_angular3/templates/django_angular3/django-angular3.json`. Normal
+commands consume the file without creating, replacing, or resetting it, and
+released examples must use its schema.
+
+Its derivation chain is:
+
+`django-angular3.json` → `DJANGO_ANGULAR3` → `AngularSettings`
+
+`DJANGO_ANGULAR3` is derived from the file and is not independently editable;
+`AngularSettings` is extracted from it. `config_path` is only a reference to
+the static tool configuration, and public command interfaces must not accept
+configuration-file paths.
+
+#### 4.2.4. Planned `django-angular3.json` contents
+
+```json
+{
+  "ngOpenApiGen": {
+    "serviceSuffix": "Api",
+    "modelIndex": true
+  },
+  "drfSpectacular": {
+    "settings": {
+      "TITLE": "Example API",
+      "VERSION": "1.0.0",
+      "SERVE_INCLUDE_SCHEMA": false
+    }
+  },
+  "angular": {
+    "workspace": {
+      "packageManager": "pnpm",
+      "style": "scss",
+      "routing": true
+    },
+    "application": {
+      "ssr": false,
+      "zoneless": true
+    },
+    "build": {
+      "configuration": "production"
+    }
+  },
+  "tool": {
+    "executables": {
+      "node": "node",
+      "pnpm": "pnpm",
+      "ng": "ng"
+    },
+    "commandAllowlist": ["ng_openapi_gen"],
+    "ngAddPackage": "angular-django2"
+  }
+}
+```
+
+#### 4.2.5. Planned `django-angular3-project.json` contents
+
+Project configuration must be a separate, `djng` package user-owned
+configuration source named `django-angular3-project.json`. It supplies the
+project identity and command run-time artifact locations used by `djng`. The
+package must release its template at
+`django_angular3/templates/django_angular3/django-angular3-project.json`; the
+generated-application scaffold must create the file at the application root
+alongside `manage.py`, preserve an existing file by default, and replace it
+only with an explicit `--force`.
+
+The project configuration must have these required fields:
+
+- `project.name`: a non-empty generated-application name;
+- `artifacts.openapiSchema`: a non-empty relative path to the OAS schema;
+- `artifacts.openuiSpecification`: a non-empty relative path to the OpenUI
+  specification;
+- `artifacts.angularWorkspace`: a non-empty relative path to the Angular
+  workspace.
+
+All artifact paths must be resolved relative to the project configuration file.
+For Django management commands, `djng` must discover the file at
+`Path(settings.BASE_DIR) / "django-angular3-project.json"`; for the standalone
+CLI, it must discover the file at
+`Path.cwd() / "django-angular3-project.json"`. Public command interfaces must
+not accept a project-configuration path.
+
+The project configuration must remain outside the
+`django-angular3.json` → `DJANGO_ANGULAR3` → `AngularSettings` derivation
+chain. It defines the generated application's identity and the locations of
+its OAS schema, OpenUI specification, and Angular workspace. It must not
+duplicate `djng` tool settings or OAS/OpenUI document content.
+
+#### 4.2.6. planned `ng-openapi-gen.json` contents
+
+For `ng_openapi_gen`, `djng` must derive a per-run `ng-openapi-gen.json` in
+the configured project Angular workspace immediately before invocation. The
+derived file must combine the global `ngOpenApiGen` settings with the command
+run-time `input` from `ProjectConfig.artifacts.openapiSchema`, the derived
+`output` `<ProjectConfig.artifacts.angularWorkspace>/generated/ng-openapi-gen`,
+and the upstream `$schema` property. `djng` must invoke the workspace-local
+generator through:
+
+`pnpm exec ng-openapi-gen -c <generated-config-path>`
+
+The derived file is an implementation artifact and must not be independently
+editable. `ngOpenApiGen` must not contain per-run `input` or `output` values.
+
+For example, a derived file for a project with an OAS schema at
+`spec/openapi/source/example.openapi.json` and an Angular workspace at
+`build/angular` is:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/master/ng-openapi-gen-schema.json",
+  "input": "spec/openapi/source/example.openapi.json",
+  "output": "build/angular/generated/ng-openapi-gen",
+  "serviceSuffix": "Api",
+  "modelIndex": true
+}
+```
+
+`spec/openapi/ng-openapi-gen/ng-openapi-gen.json` is a validation-only fixture,
+not a released or production configuration source.
+
+#### 4.2.7. planned `drfSpectacular.settings` contents
+`drfSpectacular.settings` is derived from django-angular3.json and used by `djng` for schema export. 
+The resulting OpenAPI document is an OAS schema, not `drf-spectacular` tool configuration.
+See example `drfSpectacular.settings` clause in `django-angular3.json` schema above.
+
+#### 4.2.8. Configuration validation
+
+Configuration loading must reject missing required clauses, invalid field
+types, and invalid values before the affected command runs. The configuration
+model must have one authority for every setting; duplicated runtime-setting
+authority is not permitted.
+
+### 4.3. Construction Workflow
 
 See `ARCHITECTURE.md` §§ 4.1-4.3 and 7.1-7.4 for the governing ownership
 boundaries, architectural control-loop, verification, and build-flow model.
 
-#### 4.2.1. Platform ownership
+#### 4.3.1. Platform ownership
 
 - Django and DRF must own the data model, persistence layer, backend business
   logic, authenticated APIs, authentication services, authorization
@@ -502,7 +798,7 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - Angular must consume Django and DRF APIs as the backend contract surface and
   must not be the final trust boundary for security decisions
 
-#### 4.2.2. Governed construction
+#### 4.3.2. Governed construction
 
 - `djng` must provide the generation entry points that drive integrated Django-
   Angular construction, including backend contract lifecycle governance,
@@ -547,9 +843,58 @@ boundaries, architectural control-loop, verification, and build-flow model.
 - Any backend data model change that produces a Django migration must trigger
   OpenAPI schema re-extraction before the contract normalization stage proceeds
 
-#### 4.2.3. First-time build flow
+#### 4.3.3. First-time build flow
 
 The initial authoring and build flow must support this sequence:
+
+##### Build (app-generation) sequence
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant Djng as djng
+  participant Project as Project configuration and inputs
+  participant Backend as Django/DRF backend
+  participant Drf as drf-spectacular
+  participant OAS as OAS validation and diff
+  participant UI as OpenUI validation
+  participant Agent as Agent and AI automations
+  participant Automation as SKILLS, TOOLS, and HOOKS
+  participant NgOpenApiGen as ng-openapi-gen
+  participant Ngdj as ngdj
+  participant Rest as REST API
+  participant Angular as Angular application
+  participant App as Composed full-stack application
+  participant Verify as Terminal verification
+
+  User->>Djng: Trigger build
+  Djng->>Project: Load project configuration, OAS, and OpenUI inputs
+  Djng->>Drf: Export OpenAPI schema using drfSpectacular.settings
+  Drf->>Backend: Export schema from DRF endpoints
+  Backend-->>Drf: OpenAPI artifact
+  Backend->>Rest: Implement REST API
+  Drf-->>Djng: OpenAPI artifact
+  Djng->>OAS: Validate, diff, and normalize contract
+  OAS-->>Djng: Accepted contract or blocking result
+  Djng->>UI: Validate OpenUI specification
+  UI-->>Djng: Accepted input or blocking result
+  Djng->>Agent: Derive changes from OAS and OpenUI
+  loop Until terminal verification accepts the generated application
+    Agent->>Automation: Select and execute ordered SKILLS, TOOLS, and HOOKS
+    Automation->>Ngdj: Run ngdj CLI with generated ng-openapi-gen.json
+    Ngdj->>NgOpenApiGen: Generate typed Angular client artifacts
+    NgOpenApiGen-->>Ngdj: Generated client artifacts
+    Ngdj->>Ngdj: Generate workspace, application, and non-CRM content
+    Ngdj->>Angular: Materialize Angular application
+    Angular->>Rest: Consume REST API through generated client
+    Backend->>App: Provide Django/DRF part
+    Angular->>App: Provide Angular part
+    Agent->>Verify: Verify contracts, artifacts, integration, and tests
+    Verify-->>Agent: Acceptance result or repair findings
+  end
+  Agent-->>Djng: Accepted application or stage-specific failure
+  Djng-->>User: Report result
+```
 
 1. A user designs or updates the OpenAPI specification using SmartBear's
    OpenAPI authoring tools (Swagger Studio or SwaggerHub)
@@ -576,7 +921,7 @@ For this flow:
   contract validation, code generation, non-CRM input validation, or final app
   assembly
 
-### 4.3. Authentication and Identity
+### 4.4. Authentication and Identity
 
 - Users must be able to sign in and sign out securely
 - The system must support password-based authentication at minimum
@@ -584,7 +929,7 @@ For this flow:
 - Password reset and account recovery flows must be supported
 - Session expiration and idle timeout behavior must be configurable
 
-### 4.4. Authorization
+### 4.5. Authorization
 
 - Access must be restricted to authenticated users unless a route is explicitly
   public
@@ -593,7 +938,7 @@ For this flow:
 - Sensitive actions must be restricted by role and, where needed, object-level
   ownership or scope
 
-### 4.5. User Management
+### 4.6. User Management
 
 - Administrators must be able to create, activate, deactivate, and update users
 - Administrators must be able to assign roles or permission groups
@@ -601,7 +946,7 @@ For this flow:
 - The system must track basic account status metadata such as creation date,
   last login, and active state
 
-### 4.6. Application Shell and Navigation
+### 4.7. Application Shell and Navigation
 
 - The frontend must provide a consistent shell with top-level navigation,
   breadcrumbs, and page titles
@@ -613,7 +958,7 @@ For this flow:
   states
 - User-facing product screens should be implemented in Angular Material
 
-### 4.7. Business Module Pattern
+### 4.8. Business Module Pattern
 
 - The platform must support modular feature areas with isolated backend apps and
   frontend feature modules
@@ -623,7 +968,7 @@ For this flow:
 - Detail views must show key metadata and related records where relevant
 - Forms must include client-side and server-side validation
 
-### 4.8. Search and Data Discovery
+### 4.9. Search and Data Discovery
 
 - Users must be able to search records by primary identifying fields
 - Filters must support common business cases such as status, owner, date range,
@@ -631,7 +976,7 @@ For this flow:
 - Large result sets must be paginated
 - Default sorting must be deterministic
 
-### 4.9. Auditability
+### 4.10. Auditability
 
 - The application must record important security and business events
 - Changes to sensitive data should capture who made the change and when
@@ -639,25 +984,25 @@ For this flow:
 - Authentication events such as login, logout, failed login, and password reset
   should be traceable
 
-### 4.10. Notifications
+### 4.11. Notifications
 
 - The platform should support system notifications for important events
 - Email delivery should be supported for account and workflow notifications
 - In-app notifications are desirable but not required for the first release
 
-### 4.11. File Handling
+### 4.12. File Handling
 
 - The platform should support file attachments for business records where needed
 - File upload validation must enforce size and type restrictions
 - Download access must respect record-level permissions
 
-### 4.12. Administration and Reference Data
+### 4.13. Administration and Reference Data
 
 - The system must provide administrative screens for core configuration
 - Reference data used across business modules must be centrally manageable
 - Administrative changes must be audited
 
-### 4.13. Content Source Strategy
+### 4.14. Content Source Strategy
 
 See `ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
 content-boundary and generated-artifact model.
@@ -691,13 +1036,13 @@ content-boundary and generated-artifact model.
   that belongs to the main frontend application, or backend data administration
   concerns that belong to Django and DRF
 
-### 4.14. Error Handling and Recovery
+### 4.15. Error Handling and Recovery
 
 - Validation errors must be presented clearly at field and form level
 - Unexpected server errors must be logged and surfaced with user-safe messages
 - Users must not lose unsaved form state because of recoverable UI errors
 
-### 4.15. Development Experience and Tooling
+### 4.16. Development Experience and Tooling
 
 - When the generated app's Django server runs with `DEBUG=True`, any failure
   during app generation (Python exceptions raised by djng management commands
@@ -713,7 +1058,7 @@ content-boundary and generated-artifact model.
   gated behind `DEBUG=True` or an explicit `ENABLE_NG_BUILD_PAGE=True` flag and
   must never be exposed in production.
 
-### 4.16. Verification Requirements
+### 4.17. Verification Requirements
 
 See `ARCHITECTURE.md` §7.3 for the architectural verification model.
 
@@ -735,11 +1080,11 @@ final check. The platform must support the following verification categories:
   and composed application flows and must be linked to the staged verification
   model rather than treated as a separate final phase.
 
-### 4.17. Generated Application Structure
+### 4.18. Generated Application Structure
 
 See `ARCHITECTURE.md` §§ 9-10 for the architectural structure model.
 
-#### 4.17.1. Backend structure
+#### 4.18.1. Backend structure
 
 The generated application backend must be organized as discrete Django apps
 with bounded responsibilities:
@@ -753,7 +1098,7 @@ with bounded responsibilities:
 - Domain-specific business modules must be implemented as separate apps,
   keeping module logic isolated from the shared platform apps
 
-#### 4.17.2. Frontend structure
+#### 4.18.2. Frontend structure
 
 The generated Angular application must be organized into areas with clearly
 bounded responsibilities:
@@ -768,7 +1113,7 @@ bounded responsibilities:
 - The frontend must not depend on Django template rendering or DRF UI
   facilities for the main product experience
 
-#### 4.17.3. UI patterns
+#### 4.18.3. UI patterns
 
 The generated application must standardize and reuse patterns for tables,
 lists, detail views, forms, dialogs, snackbars, and confirmation flows rather
@@ -908,7 +1253,8 @@ The first implementation should include:
 - Authentication and role-based authorization
 - User profile and user administration
 - OpenAPI export and consumption flow for CRM-facing features
-- OpenAPI generator configuration committed to the repository and runnable in CI
+- `ng-openapi-gen` configuration generated from the canonical tool and project
+  configurations and runnable in CI
 - A structured non-CRM content input source for reactive forms and pages
 - One complete business module implemented end to end
 - Shared list, detail, and form patterns
@@ -963,48 +1309,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **PLUGINS** | Packaging units that bundle related automations, templates, or supporting assets without changing the primitive responsibilities themselves. | `GENERATE_AI_AUTOMATIONS.md` |
 | **AI-automation-based construction** | The construction model in which the agent executes each selected command through the appropriate governed primitive or combination of primitives, using SKILLS for AI-guided work, TOOLS for deterministic operations, and HOOKS for enforced lifecycle behavior. | `ARCHITECTURE.md` §2.15 |
 
-### B. References diagrams
-
-```mermaid
-flowchart LR
-  subgraph Inputs[Inputs]
-    OAS[OpenAPI contract]
-    UI[Non-CRM UI inputs]
-  end
-
-  subgraph Control[Governed construction]
-    DJNG[djng]
-    AGENT[Agent + AI automations]
-    NGDJ[ngdj]
-  end
-
-  subgraph Output[Generated app]
-    APP[Django + Angular application]
-  end
-
-  OAS --> DJNG
-  UI --> DJNG
-  DJNG --> AGENT --> NGDJ --> APP
-```
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant Djng as djng
-  participant OAS as Contract validation
-  participant UI as UI validation
-  participant Ngdj as ngdj
-  participant App as Generated app
-
-  User->>Djng: Trigger build
-  Djng->>OAS: Validate and diff OpenAPI
-  Djng->>UI: Validate non-CRM inputs
-  Djng->>Ngdj: Generate and assemble frontend outputs
-  Ngdj->>App: Materialize the app
-  App-->>User: Report stage-specific result
-```
-
-### C. Examples
+### B. Examples
 
 - [TEST_EXAMPLES.md] — scenario definitions and expected outputs.
 - [spec/examples/01_simple_crm/] — runnable example workspace with schema,
@@ -1012,7 +1317,7 @@ sequenceDiagram
 - [spec/openapi/source/example.openapi.json] — example OpenAPI source input.
 - [spec/openui/app.openui.json] — example non-CRM UI input.
 
-### D. References
+### C. References
 
 Labels used in this document are defined in the link-definitions block at the end of this file. Internal labels (other docs in this repo and `spec/*` artifacts) are owned here. External labels mirror `ARCHITECTURE.md` §20 — update both files when changing an external URL.
 

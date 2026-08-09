@@ -2,11 +2,13 @@ import json
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 from django_angular3.angular import resolve_angular_command
 
 ROOT: Path = Path(__file__).resolve().parent.parent
 NGDJ_ROOT: Path = ROOT.parent / "angular-django2"
+PROJECT_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.json"
 
 
 @unittest.skipUnless(
@@ -115,29 +117,33 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
 
 class DjngNgdjIntegrationContractTests(unittest.TestCase):
-    def test_ng_workspace_uses_angular_django2_workspace_setup_schematic(self) -> None:
-        invocations = resolve_angular_command(
-            "ng_workspace", ROOT / "django-angular3.json"
+    def setUp(self) -> None:
+        self.project_config_discovery = patch(
+            "django_angular3.config.discover_project_config_path",
+            return_value=PROJECT_CONFIG_PATH,
         )
+        self.project_config_discovery.start()
+        self.addCleanup(self.project_config_discovery.stop)
+
+    def test_ng_workspace_uses_angular_django2_workspace_setup_schematic(self) -> None:
+        invocations = resolve_angular_command("ng_workspace")
         self.assertEqual(len(invocations), 6)
 
         argv = invocations[-1].argv
-        from django_angular3.settings import DEFAULT_ANGULAR_SETTINGS
+        from django_angular3.settings import load_angular_settings
 
-        self.assertEqual(argv[0], DEFAULT_ANGULAR_SETTINGS["ng_executable"])
+        self.assertEqual(argv[0], load_angular_settings().ng_executable)
         self.assertEqual(argv[1], "generate")
         self.assertEqual(argv[2], "angular-django2:workspace-setup")
 
     def test_ng_gen_app_uses_angular_django2_material_app_schematic(self) -> None:
-        invocations = resolve_angular_command(
-            "ng_gen_app", ROOT / "django-angular3.json"
-        )
+        invocations = resolve_angular_command("ng_gen_app")
         self.assertEqual(len(invocations), 1)
 
         argv = invocations[0].argv
-        from django_angular3.settings import DEFAULT_ANGULAR_SETTINGS
+        from django_angular3.settings import load_angular_settings
 
-        self.assertEqual(argv[0], DEFAULT_ANGULAR_SETTINGS["ng_executable"])
+        self.assertEqual(argv[0], load_angular_settings().ng_executable)
         self.assertEqual(argv[1], "generate")
         self.assertEqual(argv[2], "angular-django2:material-app")
 

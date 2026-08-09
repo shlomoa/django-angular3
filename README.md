@@ -77,56 +77,24 @@ INSTALLED_APPS = [
 ]
 ```
 
-The specialized Node/Angular tool settings live in
-`django_angular3/settings.py` and are configured through `DJANGO_ANGULAR3` in
-your Django project's `settings.py`. Only set the values you want to override;
-the example below shows the full supported settings surface, including an
-optional `config_path` override:
-
-```python
-DJANGO_ANGULAR3 = {
-    "config_path": "django-angular3.json",
-    "ng_executable": "ng",
-    "pnpm_executable": "pnpm",
-    "node_executable": "node",
-    "command_allowlist": ["ng_openapi_gen"],
-    "package_manager": "pnpm",
-    "build_configuration": "production",
-    "style": "scss",
-    "routing": True,
-}
-```
-
-The current settings surface and defaults are:
-
-- `config_path`: `"django-angular3.json"` - default project config path used
-  when a CLI or management command path is omitted
-- `node_executable`: `"node"`
-- `pnpm_executable`: `"pnpm"`
-- `ng_executable`: `"ng"`
-- `command_allowlist`: `("ng_openapi_gen",)`
-- `package_manager`: `"pnpm"`
-- `build_configuration`: `"production"`
-- `style`: `"scss"`
-- `routing`: `True`
-
-Legacy `npm_executable` and `npx_executable` overrides are still accepted and
-mapped to `pnpm_executable` for compatibility with older settings modules.
-Commands are only executed when the resolved django-angular3 command name is in
-`command_allowlist`. The default allowlist only permits `ng_openapi_gen`.
+The static `django-angular3.json` configures djng's Angular tool settings,
+including executable resolution and its command allowlist. `DJANGO_ANGULAR3`
+and `AngularSettings` are derived from that file; they are not independent
+configuration authorities. The generated app's identity and artifact locations
+are instead supplied by its discovered `django-angular3-project.json`.
 
 Once installed, Django and the standalone CLI expose the same Angular command
 resolution flow. Use `--dry-run` only for diagnostic validation and debugging;
 it resolves commands without executing Angular tooling:
 
 ```bash
-./manage.py ng_new django-angular3.json --dry-run
-./manage.py ng_workspace django-angular3.json --dry-run
-./manage.py ng_config django-angular3.json --dry-run
-./manage.py ng_add django-angular3.json --dry-run
-./manage.py ng_gen_app django-angular3.json --dry-run
-./manage.py ng_openapi_gen django-angular3.json --dry-run
-./manage.py ng_build django-angular3.json --dry-run
+./manage.py ng_new --dry-run
+./manage.py ng_workspace --dry-run
+./manage.py ng_config --dry-run
+./manage.py ng_add --dry-run
+./manage.py ng_gen_app --dry-run
+./manage.py ng_openapi_gen --dry-run
+./manage.py ng_build --dry-run
 ```
 
 - `ng_new` creates an empty Angular workspace
@@ -148,9 +116,8 @@ execute packages at runtime.
 > **SKILL names** are AI-guided session identifiers (e.g. `angular-workspace-foundation`,
 > `angular-api-integration`). See `doc/ARCHITECTURE.md §2.23` for the authoritative definition.
 
-To execute these commands, configure the command allowlist to include the
-django-angular3 commands you want to permit, then invoke them without
-`--dry-run`.
+To execute these commands, include the relevant commands in the static tool
+configuration's `tool.commandAllowlist`, then invoke them without `--dry-run`.
 
 Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
 application name.
@@ -171,13 +138,13 @@ child composition, projection slots, CDK overlay support, and create/modify/
 delete lifecycle handling:
 
 ```bash
-./manage.py ng_complex_component django-angular3.json \
+./manage.py ng_complex_component \
   --name dashboard-card --target-path src/app/features/dashboard \
   --features mixins,nested,projection --dry-run
 ```
 
-Use `--mode delete --confirm` for deletion. Add `ng_complex_component` to the
-`DJANGO_ANGULAR3.command_allowlist` before running without `--dry-run`.
+Use `--mode delete --confirm` for deletion. Add `ng_complex_component` to
+`tool.commandAllowlist` before running without `--dry-run`.
 
 At the moment this reusable Django app contributes configuration helpers and
 management commands; it does not yet ship models, URLs, templates, static
@@ -307,7 +274,7 @@ User-facing usage documentation is published at
 <https://django-angular3.readthedocs.io/>:
 
 - [Getting started](https://django-angular3.readthedocs.io/en/latest/getting-started.html) — install, run the bundled tutorial, and complete the workflow end to end.
-- [Configuration](https://django-angular3.readthedocs.io/en/latest/configuration.html) — the `django-angular3.json` schema and the `DJANGO_ANGULAR3` settings.
+- [Configuration](https://django-angular3.readthedocs.io/en/latest/configuration.html) — configuration guidance and references.
 - [Usage workflow](https://django-angular3.readthedocs.io/en/latest/workflow.html) — the contract-first cycle for your own project.
 - [Command reference](https://django-angular3.readthedocs.io/en/latest/commands.html) — every command in both the standalone CLI and management-command form.
 

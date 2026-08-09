@@ -15,15 +15,34 @@ class ConfigError(ValueError):
 class ProjectConfig:
     config_path: Path
     project_name: str
-    openapi_source: Path
-    openui_source: Path
-    angular_output: Path
-    openapi_generator_config: Path | None = None
-    ng_openapi_gen_config: Path | None = None
+    openapi_schema: Path
+    openui_specification: Path
+    angular_workspace: Path
 
 
-def load_project_config(path: str | Path) -> ProjectConfig:
-    config_path = Path(path).resolve()
+PROJECT_CONFIG_FILENAME = "django-angular3-project.json"
+
+
+def discover_project_config_path() -> Path:
+    """Return the canonical project configuration path for this runtime."""
+    try:
+        from django.conf import settings as django_settings
+        from django.core.exceptions import ImproperlyConfigured
+
+        if getattr(django_settings, "configured", False):
+            return Path(django_settings.BASE_DIR).resolve() / PROJECT_CONFIG_FILENAME
+    except (ImportError, ImproperlyConfigured, AttributeError):
+        pass
+    return Path.cwd().resolve() / PROJECT_CONFIG_FILENAME
+
+
+def load_project_config(path: str | Path | None = None) -> ProjectConfig:
+    """Load project configuration.
+
+    ``path`` remains available for callers that supply a project configuration
+    explicitly. When omitted, the canonical project file is discovered.
+    """
+    config_path = Path(path or discover_project_config_path()).resolve()
     try:
         document: dict[str, Any] | None = load_document(config_path)
     except DocumentError as exc:
@@ -32,41 +51,37 @@ def load_project_config(path: str | Path) -> ProjectConfig:
     if not isinstance(document, dict):
         raise ConfigError("Project configuration must be a mapping.")
 
-    project: dict[str, Any] = _require_mapping(document, "project")
-    openapi: dict[str, Any] = _require_mapping(document, "openapi")
-    openui: dict[str, Any] = _require_mapping(document, "openui")
-    angular: dict[str, Any] = _require_mapping(document, "angular")
-
-    root = config_path.parent
-    project_name = _require_string(project, "name", section="project")
-    openapi_source = _resolve_path(
-        root, _require_string(openapi, "source", section="openapi")
-    )
-    openui_source = _resolve_path(
-        root, _require_string(openui, "source", section="openui")
-    )
-    angular_output_value = angular.get("output", angular.get("package"))
-    if not isinstance(angular_output_value, str) or not angular_output_value.strip():
+    legacy_fields = {"openapi", "openui", "angular"} & document.keys()
+    if legacy_fields:
+        labels = ", ".join(sorted(legacy_fields))
         raise ConfigError(
-            "Configuration value 'angular.output' must be a non-empty string."
+            "Legacy project configuration field(s) are not supported: "
+            f"{labels}. Use the 'artifacts' mapping."
         )
-    angular_output = _resolve_path(root, angular_output_value)
+    return _load_project_configuration(document, config_path)
 
-    openapi_generator_config = _optional_path(
-        root, openapi.get("openapiGeneratorConfig"), "openapi.openapiGeneratorConfig"
-    )
-    ng_openapi_gen_config = _optional_path(
-        root, openapi.get("ngOpenApiGenConfig"), "openapi.ngOpenApiGenConfig"
-    )
+
+def _load_project_configuration(
+    document: dict[str, Any], config_path: Path
+) -> ProjectConfig:
+    project: dict[str, Any] = _require_mapping(document, "project")
+    artifacts: dict[str, Any] = _require_mapping(document, "artifacts")
+    root = config_path.parent
 
     return ProjectConfig(
         config_path=config_path,
-        project_name=project_name,
-        openapi_source=openapi_source,
-        openui_source=openui_source,
-        angular_output=angular_output,
-        openapi_generator_config=openapi_generator_config,
-        ng_openapi_gen_config=ng_openapi_gen_config,
+        project_name=_require_string(project, "name", section="project"),
+        openapi_schema=_resolve_path(
+            root, _require_string(artifacts, "openapiSchema", section="artifacts")
+        ),
+        openui_specification=_resolve_path(
+            root,
+            _require_string(artifacts, "openuiSpecification", section="artifacts"),
+        ),
+        angular_workspace=_resolve_path(
+            root,
+            _require_string(artifacts, "angularWorkspace", section="artifacts"),
+        ),
     )
 
 
@@ -88,14 +103,6 @@ def _require_string(document: dict[str, Any], key: str, *, section: str) -> str:
 
 def _resolve_path(root: Path, raw_path: str) -> Path:
     return (root / raw_path).resolve()
-
-
-def _optional_path(root: Path, value: Any, label: str) -> Path | None:
-    if value is None:
-        return None
-    if not isinstance(value, str) or not value.strip():
-        raise ConfigError(f"Configuration value '{label}' must be a non-empty string.")
-    return (root / value).resolve()
 
 
 def get_previous_schema_path(source: Path) -> Path:

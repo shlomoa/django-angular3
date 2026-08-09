@@ -130,9 +130,13 @@ class ValidateOpenapiFileTests(unittest.TestCase):
         import json
         import tempfile
 
+        from tests.workspace_temp import WORKSPACE_TEMP_DIR
+
         # Document missing 'openapi'/'swagger' key
         bad = {"paths": {"/items": {"get": {}}}}
-        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(
+            suffix=".json", mode="w", delete=False, dir=WORKSPACE_TEMP_DIR
+        ) as tmp:
             json.dump(bad, tmp)
             tmp_path = tmp.name
         try:

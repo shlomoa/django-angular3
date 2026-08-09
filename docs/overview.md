@@ -26,8 +26,8 @@ INSTALLED_APPS = [
 ## Core commands
 
 ```bash
-django-admin validate-project django-angular3.json
-django-admin build_app django-angular3.json --dry-run
-django-admin ng_workspace django-angular3.json --dry-run
-django-admin ng_openapi_gen django-angular3.json --dry-run
+django-admin validate-project
+django-admin build_app --dry-run
+django-admin ng_workspace --dry-run
+django-admin ng_openapi_gen --dry-run
 ```

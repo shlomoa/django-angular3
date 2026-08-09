@@ -21,7 +21,8 @@ run-through using a ready-made sample, start with
 
 ```{mermaid}
 flowchart TD
-  config[django-angular3.json] --> validate[Validate project inputs]
+  toolConfig[django-angular3.json<br/>static tool configuration] --> validate[Validate project inputs]
+  projectConfig[django-angular3-project.json<br/>project configuration] --> validate
   drf[DRF backend] -->|export_schema| schema[OpenAPI schema]
   schema --> validate
   openui[OpenUI document] --> validate
@@ -45,8 +46,8 @@ versioned artifact. This is a Django management command (it needs DRF and
 `drf-spectacular`):
 
 ```bash
-python manage.py export_schema django-angular3.json
-# or: python manage.py export_schema django-angular3.json --format yaml --dry-run
+python manage.py export_schema
+# or: python manage.py export_schema --format yaml --dry-run
 ```
 
 `export_schema` rotates the previous schema alongside the current one (inserting
@@ -54,9 +55,9 @@ python manage.py export_schema django-angular3.json
 
 ### 2. Supply the UI definition
 
-Author or update the OpenUI concrete UI document referenced by `openui.source` in
-your `django-angular3.json`. The generated app convention names this document
-`app.openui.json`. Its grammar and vocabulary are defined by
+Author or update the OpenUI concrete UI document referenced by
+`artifacts.openuiSpecification` in the discovered project configuration. The
+generated app convention names this document `app.openui.json`. Its grammar and vocabulary are defined by
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec), not by djng;
 consult the [OpenUI per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 when authoring non-CRM pages, forms, and workflows. The repository fixture at
@@ -69,29 +70,19 @@ Validate the project configuration and its referenced sources before building.
 Each piece can also be validated in isolation:
 
 ```bash
-django-angular3 validate-project django-angular3.json
+django-angular3 validate-project
 django-angular3 validate-openapi schema.yaml
 django-angular3 validate-openui openui.json
 ```
 
 ### 4. Build and validate the generated app
 
-Run `build_app` to validate inputs, compare the current and prior OpenAPI and
-OpenUI documents, execute the required construction commands in dependency
-order, and validate the resulting generated app. Use `--dry-run` only for
-validation and debugging: it validates inputs, identifies changes, and reports
-the derived commands without executing them or modifying the workspace:
-
-```bash
-# Inside a generated app:
-python manage.py build_app django-angular3.json
-# Diagnose validation or change-translation results without execution:
-python manage.py build_app django-angular3.json --dry-run
-```
-
-`build_app` is a management command. It validates the configured OpenAPI and UI
-sources before executing change-derived construction commands and terminal
-validation.
+`build_app` is reserved for the generated-app construction planner. The current
+implementation discovers and validates the project inputs, but its planning and
+execution workflow is not implemented yet. Do not rely on it to build or
+validate a generated app; use the individual wrappers below while the planner
+is completed. Its target requirements are documented in
+`doc/APP_BUILDER_REQUIREMENTS.md`.
 
 ### 5. Run individual Angular wrappers when needed
 
@@ -100,9 +91,9 @@ Use `--dry-run` only to validate and debug a wrapper invocation without
 executing it:
 
 ```bash
-django-angular3 ng_workspace django-angular3.json     # bootstrap the workspace
-django-angular3 ng_openapi_gen django-angular3.json   # generate API client from OpenAPI
-django-angular3 ng_build django-angular3.json          # build the Angular app
+django-angular3 ng_workspace     # bootstrap the workspace
+django-angular3 ng_openapi_gen   # generate API client from OpenAPI
+django-angular3 ng_build         # build the Angular app
 ```
 
 `ng_openapi_gen` runs a locally installed `ng-openapi-gen` via `pnpm exec`, so
@@ -126,7 +117,7 @@ projection slots, or CDK overlay behavior, use the `ng_complex_component`
 wrapper rather than assembling those features through `embed-component` alone:
 
 ```bash
-django-angular3 ng_complex_component django-angular3.json \
+django-angular3 ng_complex_component \
   --name dashboard-card --target-path src/app/features/dashboard \
   --features mixins,nested,projection --dry-run
 ```
@@ -221,7 +212,7 @@ the `imports` array entry, or the `on<Output>()` handler stubs. After embedding,
 rebuild to verify the composition compiles:
 
 ```bash
-django-angular3 ng_build django-angular3.json
+django-angular3 ng_build
 ```
 
 ### 7. Iterate

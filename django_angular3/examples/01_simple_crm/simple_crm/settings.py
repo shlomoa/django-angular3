@@ -92,16 +92,3 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
-
-DJANGO_ANGULAR3 = {
-    "command_allowlist": (
-        "ng_new",
-        "ng_add",
-        "ng_config",
-        "ng_gen_app",
-        "ng_openapi_gen",
-        "ng_build",
-        "ng_workspace_modify",
-        "ng_workspace_delete",
-    ),
-}

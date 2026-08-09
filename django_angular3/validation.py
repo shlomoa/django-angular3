@@ -165,31 +165,20 @@ def validate_project_config(config: ProjectConfig) -> list[str]:
     """Return validation errors for all sources and outputs in a project config."""
     errors: list[str] = []
 
-    if not config.openapi_source.exists():
-        errors.append(f"OpenAPI source does not exist: {config.openapi_source}")
+    if not config.openapi_schema.exists():
+        errors.append(f"OpenAPI source does not exist: {config.openapi_schema}")
     else:
-        errors.extend(validate_openapi_file(config.openapi_source))
+        errors.extend(validate_openapi_file(config.openapi_schema))
 
-    if not config.openui_source.exists():
-        errors.append(f"OpenUI source does not exist: {config.openui_source}")
+    if not config.openui_specification.exists():
+        errors.append(f"OpenUI source does not exist: {config.openui_specification}")
     else:
-        errors.extend(validate_openui_file(config.openui_source))
+        errors.extend(validate_openui_file(config.openui_specification))
 
-    if config.angular_output.exists() and not config.angular_output.is_dir():
+    if config.angular_workspace.exists() and not config.angular_workspace.is_dir():
         errors.append(
             "Angular output path must be a directory when it exists: "
-            f"{config.angular_output}"
-        )
-
-    if config.openapi_generator_config and not config.openapi_generator_config.exists():
-        errors.append(
-            "OpenAPI Generator config does not exist: "
-            f"{config.openapi_generator_config}"
-        )
-
-    if config.ng_openapi_gen_config and not config.ng_openapi_gen_config.exists():
-        errors.append(
-            f"ng-openapi-gen config does not exist: {config.ng_openapi_gen_config}"
+            f"{config.angular_workspace}"
         )
 
     return errors

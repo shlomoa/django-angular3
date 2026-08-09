@@ -1,66 +1,82 @@
 import io
 import json
 import os
+import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
+
+import django
+from django.core.management.base import CommandError
+from django.test import override_settings
 
 from django_angular3.angular import (
     AngularCommandError,
     AngularInvocation,
     execute_invocations,
 )
-from django_angular3.cli import main
+from django_angular3.cli import build_parser, main
+from django_angular3.config import (
+    PROJECT_CONFIG_FILENAME,
+    discover_project_config_path,
+)
+from django_angular3.management.commands.ng_build import Command as NgBuildCommand
 from django_angular3.settings import (
-    DEFAULT_ANGULAR_SETTINGS,
     AngularSettings,
     load_angular_settings,
+    load_drf_spectacular_settings,
+    load_ng_openapi_gen_settings,
+    validate_ng_openapi_gen_configuration,
+    validate_tool_configuration,
 )
+from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
-CONFIG_PATH = ROOT / "django-angular3.json"
+PROJECT_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.json"
 
-try:
-    import django
-except ImportError:  # pragma: no cover - exercised when Django is not installed
-    DJANGO_AVAILABLE = False
-else:
-    DJANGO_AVAILABLE = True
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
-    django.setup()
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
+django.setup()
 
 
 class AngularCliCommandTests(unittest.TestCase):
-    def test_load_angular_settings_with_and_without_overrides(self) -> None:
-        overridden_settings = DEFAULT_ANGULAR_SETTINGS | {
+    def setUp(self) -> None:
+        self.project_config_discovery = patch(
+            "django_angular3.config.discover_project_config_path",
+            return_value=PROJECT_CONFIG_PATH,
+        )
+        self.project_config_discovery.start()
+        self.addCleanup(self.project_config_discovery.stop)
+
+    def test_django_project_config_discovery_uses_base_directory(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            project_root = Path(tmp)
+            with override_settings(BASE_DIR=project_root):
+                self.assertEqual(
+                    discover_project_config_path(),
+                    project_root / PROJECT_CONFIG_FILENAME,
+                )
+
+    def test_load_angular_settings_from_static_tool_configuration(self) -> None:
+        settings = load_angular_settings()
+        self.assertEqual(settings.package_manager, "pnpm")
+        self.assertEqual(settings.style, "scss")
+        self.assertTrue(settings.routing)
+        self.assertFalse(settings.ssr)
+        self.assertTrue(settings.zoneless)
+        self.assertEqual(settings.build_configuration, "production")
+        self.assertEqual(settings.ng_add_package, "angular-django2")
+
+    def test_load_angular_settings_applies_explicit_overrides(self) -> None:
+        overridden_settings = load_angular_settings().__dict__ | {
             "ng_executable": "ng.cmd",
             "package_manager": "npm",
         }
-
-        self.assertEqual(
-            load_angular_settings(), AngularSettings(**DEFAULT_ANGULAR_SETTINGS)
-        )
         self.assertEqual(
             load_angular_settings(
                 {"ng_executable": "ng.cmd", "package_manager": "npm"}
             ),
             AngularSettings(**overridden_settings),
-        )
-
-    def test_load_angular_settings_supports_legacy_package_executable_aliases(
-        self,
-    ) -> None:
-        with_npx_alias = DEFAULT_ANGULAR_SETTINGS | {"pnpm_executable": "corepack-pnpm"}
-        with_npm_alias = DEFAULT_ANGULAR_SETTINGS | {"pnpm_executable": "pnpm.cmd"}
-
-        self.assertEqual(
-            load_angular_settings({"npx_executable": "corepack-pnpm"}),
-            AngularSettings(**with_npx_alias),
-        )
-        self.assertEqual(
-            load_angular_settings({"npm_executable": "pnpm.cmd"}),
-            AngularSettings(**with_npm_alias),
         )
 
     def test_load_angular_settings_normalizes_command_allowlist(self) -> None:
@@ -70,6 +86,65 @@ class AngularCliCommandTests(unittest.TestCase):
 
         self.assertEqual(settings.command_allowlist, ("ng_openapi_gen",))
 
+    def test_loads_global_generator_settings_from_tool_configuration(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as temporary_directory:
+            config_path = Path(temporary_directory) / "django-angular3.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "ngOpenApiGen": {
+                            "serviceSuffix": "Client",
+                            "modelIndex": True,
+                        },
+                        "drfSpectacular": {
+                            "settings": {"TITLE": "Portal API", "VERSION": "2.0"}
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            self.assertEqual(
+                load_ng_openapi_gen_settings(config_path),
+                {"serviceSuffix": "Client", "modelIndex": True},
+            )
+            self.assertEqual(
+                load_drf_spectacular_settings(config_path),
+                {"TITLE": "Portal API", "VERSION": "2.0"},
+            )
+
+    def test_global_generator_configuration_rejects_invalid_values(self) -> None:
+        errors = validate_ng_openapi_gen_configuration(
+            {"ngOpenApiGen": {"serviceSuffix": "", "modelIndex": "yes"}}
+        )
+
+        self.assertIn("ngOpenApiGen.serviceSuffix must be a non-empty string.", errors)
+        self.assertIn("ngOpenApiGen.modelIndex must be a boolean.", errors)
+
+    def test_global_generator_configuration_rejects_per_run_values(self) -> None:
+        errors = validate_ng_openapi_gen_configuration(
+            {
+                "ngOpenApiGen": {
+                    "serviceSuffix": "Client",
+                    "modelIndex": True,
+                    "$schema": "https://example.test/schema.json",
+                    "input": "schema.yaml",
+                    "output": "generated/api",
+                }
+            }
+        )
+
+        self.assertIn(
+            "ngOpenApiGen must not define per-run setting(s): $schema, input, output.",
+            errors,
+        )
+
+    def test_validate_tool_configuration_rejects_missing_required_clauses(self) -> None:
+        errors = validate_tool_configuration({"angular": {}})
+        self.assertIn("ngOpenApiGen must be a mapping.", errors)
+        self.assertIn("drfSpectacular must be a mapping.", errors)
+        self.assertIn("tool must be a mapping.", errors)
+
     def run_cli(self, *args: str) -> tuple[int, str, str]:
         stdout = io.StringIO()
         stderr = io.StringIO()
@@ -77,23 +152,43 @@ class AngularCliCommandTests(unittest.TestCase):
             exit_code = main(args)
         return exit_code, stdout.getvalue(), stderr.getvalue()
 
-    def test_ng_new_dry_run_prints_empty_workspace_command(self) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_new", str(CONFIG_PATH), "--dry-run"
+    def test_cli_project_commands_reject_configuration_path_arguments(self) -> None:
+        parser = build_parser()
+
+        with self.assertRaises(SystemExit):
+            parser.parse_args(["ng_build", str(PROJECT_CONFIG_PATH)])
+
+        with self.assertRaises(SystemExit):
+            parser.parse_args(["validate-project", str(PROJECT_CONFIG_PATH)])
+
+    def test_cli_project_command_help_has_no_path_parameter(self) -> None:
+        help_text = (
+            build_parser()
+            ._subparsers._group_actions[0]
+            .choices["ng_build"]
+            .format_help()
         )
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        self.assertNotIn("[path]", help_text)
+        self.assertNotIn("project config", help_text.lower())
+
+    def test_ng_new_dry_run_prints_empty_workspace_command(self) -> None:
+        exit_code, stdout, stderr = self.run_cli("ng_new", "--dry-run")
+
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
-        # ng new runs from angular_output.parent, so --directory is
+        self.assertEqual(plan["projectConfig"], str(PROJECT_CONFIG_PATH))
+        self.assertEqual(plan["toolConfig"], "django-angular3.json")
+        # ng new runs from angular_workspace.parent, so --directory is
         # just the final component.
         self.assertEqual(
-            plan[0]["argv"],
+            plan["invocations"][0]["argv"],
             [
                 ng,
                 "new",
-                "django-angular3-scaffold",
+                "django-angular3-test",
                 "--defaults",
                 "--skip-git",
                 "--skip-install",
@@ -106,21 +201,19 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_ng_workspace_dry_run_bootstraps_workspace_with_ngdj_schematic(
         self,
     ) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_workspace", str(CONFIG_PATH), "--dry-run"
-        )
+        exit_code, stdout, stderr = self.run_cli("ng_workspace", "--dry-run")
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
-        self.assertEqual(len(plan), 6)
+        self.assertEqual(len(plan["invocations"]), 6)
         self.assertEqual(
-            plan[0]["argv"],
+            plan["invocations"][0]["argv"],
             [
                 ng,
                 "new",
-                "django-angular3-scaffold",
+                "django-angular3-test",
                 "--defaults",
                 "--skip-git",
                 "--skip-install",
@@ -130,32 +223,33 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
         self.assertEqual(
-            plan[-1]["argv"],
+            plan["invocations"][-1]["argv"],
             [
                 ng,
                 "generate",
                 "angular-django2:workspace-setup",
-                "django-angular3-scaffold",
+                "django-angular3-test",
             ],
         )
 
     def test_ng_config_dry_run_prints_workspace_configuration_commands(self) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_config", str(CONFIG_PATH), "--dry-run"
-        )
+        exit_code, stdout, stderr = self.run_cli("ng_config", "--dry-run")
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
-        self.assertEqual(len(plan), 3)
-        self.assertEqual(plan[0]["argv"], [ng, "config", "cli.packageManager", "pnpm"])
+        self.assertEqual(len(plan["invocations"]), 3)
         self.assertEqual(
-            plan[1]["argv"],
+            plan["invocations"][0]["argv"],
+            [ng, "config", "cli.packageManager", "pnpm"],
+        )
+        self.assertEqual(
+            plan["invocations"][1]["argv"],
             [ng, "config", "schematics.@schematics/angular:application.style", "scss"],
         )
         self.assertEqual(
-            plan[2]["argv"],
+            plan["invocations"][2]["argv"],
             [
                 ng,
                 "config",
@@ -165,30 +259,28 @@ class AngularCliCommandTests(unittest.TestCase):
         )
 
     def test_ng_build_dry_run_prints_project_build_command(self) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_build", str(CONFIG_PATH), "--dry-run"
-        )
+        exit_code, stdout, stderr = self.run_cli("ng_build", "--dry-run")
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
-            plan[0]["argv"],
-            [ng, "build", "django-angular3-scaffold", "--configuration=production"],
+            plan["invocations"][0]["argv"],
+            [ng, "build", "django-angular3-test", "--configuration=production"],
         )
 
     def test_ng_gen_app_dry_run_supports_app_name_override(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
-            "ng_gen_app", str(CONFIG_PATH), "--app-name", "portal", "--dry-run"
+            "ng_gen_app", "--app-name", "portal", "--dry-run"
         )
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
-            plan[0]["argv"],
+            plan["invocations"][0]["argv"],
             [
                 ng,
                 "generate",
@@ -206,9 +298,9 @@ class AngularCliCommandTests(unittest.TestCase):
         from django_angular3.angular import build_ng_gen_app_invocations
         from django_angular3.config import load_project_config
 
-        config = load_project_config(CONFIG_PATH)
+        config = load_project_config(PROJECT_CONFIG_PATH)
         overridden = AngularSettings(
-            **(DEFAULT_ANGULAR_SETTINGS | {"ssr": True, "zoneless": False})
+            **(load_angular_settings().__dict__ | {"ssr": True, "zoneless": False})
         )
 
         invocations = build_ng_gen_app_invocations(config, overridden)
@@ -221,7 +313,6 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_ng_complex_component_dry_run_resolves_ngdj_schematic(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
             "ng_complex_component",
-            str(CONFIG_PATH),
             "--name",
             "dashboard-card",
             "--target-path",
@@ -233,12 +324,12 @@ class AngularCliCommandTests(unittest.TestCase):
             "--dry-run",
         )
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
-            plan[0]["argv"],
+            plan["invocations"][0]["argv"],
             [
                 ng,
                 "generate",
@@ -254,7 +345,6 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_ng_complex_component_delete_requires_confirmation(self) -> None:
         exit_code, _stdout, stderr = self.run_cli(
             "ng_complex_component",
-            str(CONFIG_PATH),
             "--name",
             "dashboard-card",
             "--target-path",
@@ -272,7 +362,6 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_ng_complex_component_rejects_invalid_options(self) -> None:
         exit_code, _stdout, stderr = self.run_cli(
             "ng_complex_component",
-            str(CONFIG_PATH),
             "--name",
             "DashboardCard",
             "--target-path",
@@ -285,56 +374,73 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("Complex component name must be kebab-case.", stderr)
 
-    def test_ng_openapi_gen_dry_run_uses_openapi_source(self) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_openapi_gen", str(CONFIG_PATH), "--dry-run"
-        )
+    def test_ng_openapi_gen_dry_run_uses_derived_configuration_file(self) -> None:
+        exit_code, stdout, stderr = self.run_cli("ng_openapi_gen", "--dry-run")
 
-        pnpm = DEFAULT_ANGULAR_SETTINGS["pnpm_executable"]
+        pnpm = load_angular_settings().pnpm_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
-            plan[0]["argv"],
+            plan["invocations"][0]["argv"],
             [
                 pnpm,
                 "exec",
                 "ng-openapi-gen",
-                "-i",
-                str(ROOT / "spec" / "openapi" / "source" / "example.openapi.json"),
+                "-c",
+                str(ROOT / "tmparea" / "angular" / "ng-openapi-gen.json"),
             ],
         )
+        generated_config = ROOT / "tmparea" / "angular" / "ng-openapi-gen.json"
+        document = json.loads(generated_config.read_text(encoding="utf-8"))
+        self.assertEqual(
+            document["$schema"],
+            "https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/"
+            "master/ng-openapi-gen-schema.json",
+        )
+        self.assertEqual(document["serviceSuffix"], "Api")
+        self.assertTrue(document["modelIndex"])
+        self.assertEqual(
+            document["input"],
+            str(ROOT / "spec" / "openapi" / "source" / "example.openapi.json"),
+        )
+        self.assertEqual(
+            document["output"],
+            str(ROOT / "tmparea" / "angular" / "generated" / "ng-openapi-gen"),
+        )
+        generated_config.unlink()
 
     def test_ng_add_dry_run_defaults_to_angular_django2(self) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_add", str(CONFIG_PATH), "--dry-run"
-        )
+        exit_code, stdout, stderr = self.run_cli("ng_add", "--dry-run")
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
-            plan[0]["argv"],
+            plan["invocations"][0]["argv"],
             [ng, "add", "angular-django2", "--skip-confirmation"],
         )
 
     def test_ng_add_dry_run_accepts_custom_package(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
-            "ng_add", str(CONFIG_PATH), "--package", "@angular/material", "--dry-run"
+            "ng_add",
+            "--package",
+            "@angular/material",
+            "--dry-run",
         )
 
-        ng = DEFAULT_ANGULAR_SETTINGS["ng_executable"]
+        ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(
-            plan[0]["argv"],
+            plan["invocations"][0]["argv"],
             [ng, "add", "@angular/material", "--skip-confirmation"],
         )
 
     def test_execute_invocations_rejects_commands_outside_allowlist(self) -> None:
-        settings = load_angular_settings()
+        settings = load_angular_settings({"command_allowlist": ["ng_openapi_gen"]})
         invocation = AngularInvocation(
             command_name="ng_build",
             argv=("pnpm", "exec", "ng-openapi-gen"),
@@ -367,10 +473,22 @@ class AngularCliCommandTests(unittest.TestCase):
         run.assert_called_once_with(invocation.argv, cwd=invocation.cwd, check=True)
 
 
-@unittest.skipUnless(
-    DJANGO_AVAILABLE, "Django is required for management command tests."
-)
 class AngularManagementCommandTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.project_config_discovery = patch(
+            "django_angular3.config.discover_project_config_path",
+            return_value=PROJECT_CONFIG_PATH,
+        )
+        self.project_config_discovery.start()
+        self.addCleanup(self.project_config_discovery.stop)
+
+    def test_management_command_rejects_configuration_path_arguments(self) -> None:
+        parser = NgBuildCommand().create_parser("django-admin", "ng_build")
+        with self.assertRaisesRegex(CommandError, "unrecognized arguments"):
+            parser.parse_args([str(PROJECT_CONFIG_PATH)])
+
+        self.assertNotIn("project config", parser.format_help().lower())
+
     def test_management_commands_support_dry_run(self) -> None:
         cases = (
             ("ng_new", {}),
@@ -397,9 +515,10 @@ class AngularManagementCommandTests(unittest.TestCase):
                 stdout = io.StringIO()
                 call_command(
                     command_name,
-                    str(CONFIG_PATH),
                     dry_run=True,
                     stdout=stdout,
                     **options,
                 )
-                self.assertIn('"argv"', stdout.getvalue())
+                plan = json.loads(stdout.getvalue())
+                self.assertEqual(plan["projectConfig"], str(PROJECT_CONFIG_PATH))
+                self.assertIn("argv", plan["invocations"][0])

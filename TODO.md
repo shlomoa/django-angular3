@@ -353,3 +353,12 @@ umbrella design spec for the full automation model rather than SKILLS alone.
   including test and verification coverage updates where behavior moves from
   AI-guided flow to deterministic tool/hook enforcement.
   See `doc/phased_implementation_plan.md`.
+
+---
+
+## Platform-Aware command execution
+
+- Add unit tests for platform-aware Angular executable resolution. Simulate
+  Windows and non-Windows defaults, and verify the intended behavior when
+  `tool.executables` supplies explicit executable values.
+- Validate all Python subprocess calls for cross-platform compatibility, including path resolution, environment variables, and shell invocation.

@@ -1,16 +1,10 @@
-"""Management command: validate_project
+"""Management command: validate_project.
 
-Validate the django-angular3.json project config and its referenced OpenAPI
+Validate the discovered django-angular3-project.json and its referenced OAS
 and OpenUI sources.
-
-Usage::
-
-    django-admin validate_project django-angular3.json
 """
 
 from __future__ import annotations
-
-import argparse
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -21,17 +15,9 @@ from ...validation import validate_project_config
 class Command(BaseCommand):
     help = "Validate the project config and its referenced OpenAPI and OpenUI sources."
 
-    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "config",
-            nargs="?",
-            default="django-angular3.json",
-            help="Path to the django-angular3.json config file (default: django-angular3.json).",  # noqa: E501
-        )
-
     def handle(self, *args, **options) -> None:
         try:
-            config = load_project_config(options["config"])
+            config = load_project_config()
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
 

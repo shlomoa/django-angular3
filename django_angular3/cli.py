@@ -9,7 +9,7 @@ from .angular import (
     AngularCommandError,
     execute_invocations,
     format_invocations,
-    resolve_angular_command,
+    resolve_angular_command_context,
 )
 from .config import ConfigError, load_project_config
 from .validation import (
@@ -33,26 +33,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     validate_openui.add_argument("path", help="Path to the UI definition document.")
 
-    validate_project = subparsers.add_parser(
+    subparsers.add_parser(
         "validate-project", help="Validate a django-angular3 project configuration."
-    )
-    validate_project.add_argument(
-        "path",
-        nargs="?",
-        default="django-angular3.json",
-        help="Path to the project config.",
     )
 
     ng_new = subparsers.add_parser("ng_new", help="Create an empty Angular workspace.")
     ng_new.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
-    )
-    ng_new.add_argument(
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
@@ -61,14 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Bootstrap the configured Angular workspace with angular-django2.",
     )
     ng_workspace.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
-    )
-    ng_workspace.add_argument(
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
@@ -76,14 +64,11 @@ def build_parser() -> argparse.ArgumentParser:
         "ng_config", help="Configure Angular workspace defaults."
     )
     ng_config.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
-    )
-    ng_config.add_argument(
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
@@ -91,14 +76,11 @@ def build_parser() -> argparse.ArgumentParser:
         "ng_build", help="Build the configured Angular application."
     )
     ng_build.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
-    )
-    ng_build.add_argument(
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
@@ -107,26 +89,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="Generate an Angular application in the configured workspace.",
     )
     ng_gen_app.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
-    )
-    ng_gen_app.add_argument(
         "--app-name", default=None, help="Optional Angular application name."
     )
     ng_gen_app.add_argument(
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
     ng_complex_component = subparsers.add_parser(
         "ng_complex_component",
         help="Generate, update, or delete an advanced Angular Material component.",
-    )
-    ng_complex_component.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
     )
     ng_complex_component.add_argument("--name", required=True, help="Kebab-case name.")
     ng_complex_component.add_argument(
@@ -152,8 +128,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
@@ -161,21 +137,15 @@ def build_parser() -> argparse.ArgumentParser:
         "ng_openapi_gen", help="Run ng-openapi-gen for the configured OpenAPI source."
     )
     ng_openapi_gen.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
-    )
-    ng_openapi_gen.add_argument(
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
     ng_add = subparsers.add_parser("ng_add", help="Run ng add for an Angular package.")
-    ng_add.add_argument(
-        "path", nargs="?", default=None, help="Path to the project config."
-    )
     ng_add.add_argument(
         "--package",
         default=None,
@@ -185,8 +155,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help=(
-            "Print the resolved Angular subprocess call list instead of "
-            "invoking Angular tooling."
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
         ),
     )
 
@@ -220,12 +190,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "validate-project":
         try:
-            config = load_project_config(args.path)
+            config = load_project_config()
         except ConfigError as exc:
             print(f"Configuration error: {exc}", file=sys.stderr)
             return 1
         return _run_validation(
-            validate_project_config(config), f"Project configuration {Path(args.path)}"
+            validate_project_config(config),
+            f"Project configuration {config.config_path}",
         )
 
     if args.command == "install-tutorial":
@@ -255,9 +226,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "mode": args.mode,
                 "confirm": args.confirm,
             }
-        return _run_angular_command(
-            args.command, args.path, dry_run=args.dry_run, **plan_options
-        )
+        return _run_angular_command(args.command, dry_run=args.dry_run, **plan_options)
 
     parser.error("Unknown command")
     return 2
@@ -275,20 +244,22 @@ def _run_validation(errors: list[str], label: str) -> int:
 
 
 def _run_angular_command(
-    command_name: str, path: str | Path | None, *, dry_run: bool, **options: str | None
+    command_name: str, *, dry_run: bool, **options: str | bool | None
 ) -> int:
     try:
-        invocations = resolve_angular_command(command_name, path, **options)
+        config, settings, invocations = resolve_angular_command_context(
+            command_name, **options
+        )
     except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
         print(exc, file=sys.stderr)
         return 1
 
     if dry_run:
-        print(format_invocations(invocations))
+        print(format_invocations(invocations, config, settings))
         return 0
 
     try:
-        execute_invocations(invocations)
+        execute_invocations(invocations, settings)
     except AngularCommandError as exc:
         print(exc, file=sys.stderr)
         return 1

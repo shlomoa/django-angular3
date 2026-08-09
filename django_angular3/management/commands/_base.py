@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -8,7 +9,7 @@ from ...angular import (
     AngularCommandError,
     execute_invocations,
     format_invocations,
-    resolve_angular_command,
+    resolve_angular_command_context,
 )
 from ...config import ConfigError
 
@@ -21,36 +22,32 @@ class AngularBaseCommand(BaseCommand):
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            "path", nargs="?", default=None, help="Path to the project config."
-        )
-        parser.add_argument(
             "--dry-run",
             action="store_true",
             help=(
-                "Print the resolved subprocess call list instead of invoking "
-                "Angular tooling."
+                "Print discovered configuration, derived paths, and resolved "
+                "subprocess calls instead of invoking Angular tooling."
             ),
         )
 
     def get_invocation_options(self, _options: dict[str, object]) -> dict[str, object]:
         return {}
 
-    def handle(self, *args, **options) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:
         try:
-            invocations = resolve_angular_command(
+            config, settings, invocations = resolve_angular_command_context(
                 self.angular_command_name,
-                options.get("path"),
                 **self.get_invocation_options(options),
             )
         except (AngularCommandError, ConfigError, TypeError, ValueError) as exc:
             raise CommandError(str(exc)) from exc
 
         if options["dry_run"]:
-            self.stdout.write(format_invocations(invocations))
+            self.stdout.write(format_invocations(invocations, config, settings))
             return
 
         try:
-            execute_invocations(invocations)
+            execute_invocations(invocations, settings)
         except AngularCommandError as exc:
             raise CommandError(str(exc)) from exc
 

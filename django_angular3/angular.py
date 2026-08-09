@@ -9,7 +9,12 @@ from pathlib import Path
 from typing import Any
 
 from .config import ProjectConfig, load_project_config
-from .settings import AngularCommandError, AngularSettings, load_angular_settings
+from .settings import (
+    AngularCommandError,
+    AngularSettings,
+    load_angular_settings,
+    load_ng_openapi_gen_settings,
+)
 
 
 @dataclass(frozen=True)
@@ -28,7 +33,7 @@ AngularInvocationBuilder = Callable[..., list[AngularInvocation]]
 
 
 def resolve_angular_command(
-    command_name: str, config_path: str | Path | None = None, **options: Any
+    command_name: str, **options: Any
 ) -> list[AngularInvocation]:
     """Resolve one logical djng command into an ordered list of subprocess calls.
 
@@ -37,19 +42,47 @@ def resolve_angular_command(
     builder, and returns the concrete ``AngularInvocation`` list that a dry run
     can print or ``execute_invocations`` can later run.
     """
+    _, _, invocations = resolve_angular_command_context(command_name, **options)
+    return invocations
+
+
+def resolve_angular_command_context(
+    command_name: str, **options: Any
+) -> tuple[ProjectConfig, AngularSettings, list[AngularInvocation]]:
+    """Resolve a command with its discovered project and derived tool settings."""
     settings = load_angular_settings()
-    config = load_project_config(config_path or settings.config_path)
+    config = load_project_config()
 
     builder = _COMMAND_BUILDERS.get(command_name)
     if builder is None:
         raise AngularCommandError(f"Unknown Angular command '{command_name}'.")
 
-    return builder(config, settings, **options)
+    return config, settings, builder(config, settings, **options)
 
 
-def format_invocations(invocations: list[AngularInvocation]) -> str:
-    """Serialize resolved subprocess calls for dry-run output."""
-    return json.dumps([invocation.to_dict() for invocation in invocations], indent=2)
+def format_invocations(
+    invocations: list[AngularInvocation],
+    config: ProjectConfig | None = None,
+    settings: AngularSettings | None = None,
+) -> str:
+    """Serialize dry-run configuration, derived paths, and subprocess calls."""
+    serialized_invocations = [invocation.to_dict() for invocation in invocations]
+    if config is None or settings is None:
+        return json.dumps(serialized_invocations, indent=2)
+
+    return json.dumps(
+        {
+            "projectConfig": str(config.config_path),
+            "toolConfig": settings.config_path,
+            "derivedPaths": {
+                "openapiSchema": str(config.openapi_schema),
+                "openuiSpecification": str(config.openui_specification),
+                "angularWorkspace": str(config.angular_workspace),
+            },
+            "invocations": serialized_invocations,
+        },
+        indent=2,
+    )
 
 
 def execute_invocations(
@@ -76,7 +109,7 @@ def build_ng_new_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     # Ensure the parent directory exists before calling subprocess.run
-    config.angular_output.parent.mkdir(parents=True, exist_ok=True)
+    config.angular_workspace.parent.mkdir(parents=True, exist_ok=True)
     return [
         AngularInvocation(
             command_name="ng_new",
@@ -89,9 +122,9 @@ def build_ng_new_invocations(
                 "--skip-install",
                 "--no-create-application",
                 f"--package-manager={settings.package_manager}",
-                f"--directory={config.angular_output.name}",
+                f"--directory={config.angular_workspace.name}",
             ),
-            cwd=config.angular_output.parent,
+            cwd=config.angular_workspace.parent,
         )
     ]
 
@@ -108,7 +141,7 @@ def build_ng_workspace_schematic_invocations(
                 "angular-django2:workspace-setup",
                 config.project_name,
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         )
     ]
 
@@ -125,7 +158,7 @@ def build_ng_config_invocations(
                 "cli.packageManager",
                 settings.package_manager,
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         ),
         AngularInvocation(
             command_name="ng_config",
@@ -135,7 +168,7 @@ def build_ng_config_invocations(
                 "schematics.@schematics/angular:application.style",
                 settings.style,
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         ),
         AngularInvocation(
             command_name="ng_config",
@@ -145,7 +178,7 @@ def build_ng_config_invocations(
                 "schematics.@schematics/angular:application.routing",
                 _stringify_bool(settings.routing),
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         ),
     ]
 
@@ -162,7 +195,7 @@ def build_ng_build_invocations(
                 config.project_name,
                 f"--configuration={settings.build_configuration}",
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         )
     ]
 
@@ -189,7 +222,7 @@ def build_ng_gen_app_invocations(
                 f"--zoneless={_stringify_bool(settings.zoneless)}",
                 "--defaults",
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         )
     ]
 
@@ -227,7 +260,7 @@ def build_ng_complex_component_invocations(
         AngularInvocation(
             command_name="ng_complex_component",
             argv=tuple(argv),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         )
     ]
 
@@ -235,8 +268,7 @@ def build_ng_complex_component_invocations(
 def build_ng_openapi_gen_invocations(
     config: ProjectConfig, settings: AngularSettings, **_: Any
 ) -> list[AngularInvocation]:
-    source = config.ng_openapi_gen_config or config.openapi_source
-    source_flag = "-c" if config.ng_openapi_gen_config else "-i"
+    generated_config_path = _write_ng_openapi_gen_config(config, settings)
     return [
         AngularInvocation(
             command_name="ng_openapi_gen",
@@ -244,12 +276,34 @@ def build_ng_openapi_gen_invocations(
                 settings.pnpm_executable,
                 "exec",
                 "ng-openapi-gen",
-                source_flag,
-                str(source),
+                "-c",
+                str(generated_config_path),
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         )
     ]
+
+
+def _write_ng_openapi_gen_config(
+    config: ProjectConfig, settings: AngularSettings
+) -> Path:
+    """Write the derived, per-run ng-openapi-gen configuration file."""
+    generated_config_path = config.angular_workspace / "ng-openapi-gen.json"
+    output_path = config.angular_workspace / "generated" / "ng-openapi-gen"
+    document: dict[str, object] = {
+        **load_ng_openapi_gen_settings(settings.config_path),
+        "$schema": (
+            "https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/"
+            "master/ng-openapi-gen-schema.json"
+        ),
+        "input": str(config.openapi_schema),
+        "output": str(output_path),
+    }
+    generated_config_path.parent.mkdir(parents=True, exist_ok=True)
+    generated_config_path.write_text(
+        json.dumps(document, indent=2) + "\n", encoding="utf-8"
+    )
+    return generated_config_path
 
 
 def build_ng_add_invocations(
@@ -269,7 +323,7 @@ def build_ng_add_invocations(
                 target_package,
                 "--skip-confirmation",
             ),
-            cwd=config.angular_output,
+            cwd=config.angular_workspace,
         )
     ]
 
@@ -323,14 +377,15 @@ def build_ng_workspace_delete_invocations(
     import sys
 
     py_code = (
-        f"import shutil; shutil.rmtree(r'{config.angular_output}', ignore_errors=True)"
+        "import shutil; shutil.rmtree("
+        f"r'{config.angular_workspace}', ignore_errors=True)"
     )
 
     return [
         AngularInvocation(
             command_name="ng_workspace_delete",
             argv=(sys.executable, "-c", py_code),
-            cwd=config.angular_output.parent,
+            cwd=config.angular_workspace.parent,
         )
     ]
 

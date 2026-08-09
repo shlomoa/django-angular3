@@ -8,7 +8,8 @@ in `APP_BUILDER_REQUIREMENTS.md`.
 
 Each example consists of:
 - A named scenario with a description
-- Input files: OpenAPI schema and `django-angular3.json` config
+- Input files: discovered project configuration, OpenAPI schema, OpenUI
+  specification, and static tool configuration
 - The expected `ChangeSet` output from the builder
 
 ### Shared conventions across all examples
@@ -26,11 +27,15 @@ can be installed locally via `django-angular3 install-tutorial`. Future examples
 `spec/examples/<example-name>/` convention and can be run via:
 
 ```bash
-django-admin build_app spec/examples/<example-name>/django-angular3.json \
-  [--previous-schema spec/examples/<example-name>/previous-schema.yaml] \
-  [--previous-config spec/examples/<example-name>/previous-config.json] \
+cd spec/examples/<example-name>
+django-admin build_app \
+  [--previous-schema previous-schema.yaml] \
   --dry-run
 ```
+
+`build_app` discovers `django-angular3-project.json`; it does not accept a
+configuration-file path. Its planner remains unimplemented, so these are
+target scenario examples rather than runnable current behavior.
 
 ---
 
@@ -320,27 +325,28 @@ components:
 
 ### Input: `app.openui.json`
 
-The non-CRM input is the OpenUI concrete UI document selected by `openui.source`.
+The non-CRM input is the OpenUI concrete UI document selected by
+`artifacts.openuiSpecification`.
 It conforms to `openui.schema.json` and uses the vocabulary in `openui.json`
 from [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). Use the
 [per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 as the vocabulary reference; the local `spec/openui/app.openui.json` fixture is a
 repository example.
 
-### Input: `django-angular3.json`
+### Input: configuration
 
 ```json
 {
   "project": { "name": "simple_crm" },
-  "app": { "name": "shop" },
-  "openapi": { "source": "schema.yaml" },
-  "openui": { "source": "app.openui.json" },
-  "angular": {
-    "output": "build/examples/01_simple_crm",
-    "workspace": { "packageManager": "pnpm", "style": "scss", "routing": true }
+  "artifacts": {
+    "openapiSchema": "schema.yaml",
+    "openuiSpecification": "app.openui.json",
+    "angularWorkspace": "build/examples/01_simple_crm"
   }
 }
 ```
+
+The static `django-angular3.json` supplies the separate `djng` tool settings.
 
 ### Expected ChangeSet
 
@@ -592,14 +598,14 @@ Schema-derived and OpenUI-derived commands must not run.
 
 ## Example 5: OpenUI-Source Configuration Change
 
-**Demonstrates**: An `openui.source` configuration change. This is distinct
+**Demonstrates**: An `artifacts.openuiSpecification` configuration change. This is distinct
 from a structural change inside an OpenUI document: the `config` lane records
 the selected input path, while the `openui` lane compares the selected document
 with its own prior `.previous` artifact.
 
 ### Scenario
 
-The project changes `openui.source` from `legacy.openui.json` to
+The project changes `artifacts.openuiSpecification` from `legacy.openui.json` to
 `app.openui.json`. The current `app.openui.previous.json` is structurally
 identical to `app.openui.json`, so selection changes but no OpenUI-derived
 artifact changes are required.
@@ -610,7 +616,7 @@ artifact changes are required.
 {
   "config": {
     "type": "modify-things",
-    "affected_keys": ["openui.source"]
+    "affected_keys": ["artifacts.openuiSpecification"]
   },
   "schema": { "type": "no-change" },
   "openui": { "type": "no-change" }
