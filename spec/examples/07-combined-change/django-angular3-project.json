@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-combined-change" },
+  "artifacts": {
+    "openapiSchema": "../shared/add-order.openapi.json",
+    "openuiSpecification": "../shared/invoice.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

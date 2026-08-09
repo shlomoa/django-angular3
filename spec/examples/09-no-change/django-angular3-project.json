@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-no-change" },
+  "artifacts": {
+    "openapiSchema": "../shared/baseline.openapi.json",
+    "openuiSpecification": "../shared/base.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

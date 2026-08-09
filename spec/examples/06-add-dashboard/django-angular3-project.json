@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-add-dashboard" },
+  "artifacts": {
+    "openapiSchema": "../shared/baseline.openapi.json",
+    "openuiSpecification": "../shared/dashboard.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

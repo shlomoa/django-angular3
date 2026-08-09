@@ -1,0 +1,19 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Scenario fixture API",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/api/suppliers/": {
+      "get": {
+        "operationId": "listSuppliers",
+        "responses": {
+          "200": {
+            "description": "A list of suppliers."
+          }
+        }
+      }
+    }
+  }
+}

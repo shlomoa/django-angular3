@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-workspace-style" },
+  "artifacts": {
+    "openapiSchema": "../shared/baseline.openapi.json",
+    "openuiSpecification": "../shared/base.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

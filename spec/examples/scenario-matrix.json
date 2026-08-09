@@ -1,0 +1,13 @@
+[
+  {"id": "02-add-order", "lanes": {"config": false, "openapi": true, "openui": false}},
+  {"id": "03-breaking-change", "lanes": {"config": false, "openapi": true, "openui": false}, "exception": "breaking"},
+  {"id": "04-workspace-style", "lanes": {"config": true, "openapi": false, "openui": false}},
+  {"id": "05-openui-source", "lanes": {"config": true, "openapi": false, "openui": false}, "exception": "source-selection"},
+  {"id": "06-add-dashboard", "lanes": {"config": false, "openapi": false, "openui": true}},
+  {"id": "07-combined-change", "lanes": {"config": false, "openapi": true, "openui": true}},
+  {"id": "08-replace-resource", "lanes": {"config": false, "openapi": true, "openui": false}, "exception": "replacement"},
+  {"id": "09-no-change", "lanes": {"config": false, "openapi": false, "openui": false}},
+  {"id": "10-config-openapi", "lanes": {"config": true, "openapi": true, "openui": false}},
+  {"id": "11-config-openui", "lanes": {"config": true, "openapi": false, "openui": true}},
+  {"id": "12-all-change-lanes", "lanes": {"config": true, "openapi": true, "openui": true}}
+]

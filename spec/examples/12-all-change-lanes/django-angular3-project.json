@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-all-change-lanes" },
+  "artifacts": {
+    "openapiSchema": "../shared/add-order.openapi.json",
+    "openuiSpecification": "../shared/invoice.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

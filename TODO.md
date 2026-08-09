@@ -362,3 +362,27 @@ umbrella design spec for the full automation model rather than SKILLS alone.
   Windows and non-Windows defaults, and verify the intended behavior when
   `tool.executables` supplies explicit executable values.
 - Validate all Python subprocess calls for cross-platform compatibility, including path resolution, environment variables, and shell invocation.
+
+---
+
+## 13. Direct OpenUI validation management command
+
+**Status: Planned**
+
+Add `django_angular3/management/commands/validate_openui.py`, exposed as:
+
+```text
+django-admin validate_openui <path>
+```
+
+The command must be a thin wrapper around `validate_openui_file(path)`:
+
+- write each validation diagnostic to stderr and raise `CommandError` when the
+  document is invalid;
+- report success only when validation returns no errors;
+- contain no OpenUI grammar, catalog, or duplicate-ID validation logic.
+
+Add command tests for a valid document and for propagation of an upstream
+`openui-spec` diagnostic. This keeps `OpenUiJson` as the single validation
+authority while providing the explicit Django command surface required by
+Task 2.2 of `doc/openui-spec_integration_plan.md`.

@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-add-order" },
+  "artifacts": {
+    "openapiSchema": "../shared/add-order.openapi.json",
+    "openuiSpecification": "../shared/base.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

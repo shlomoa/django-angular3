@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-breaking-change" },
+  "artifacts": {
+    "openapiSchema": "../shared/replace-resource.openapi.json",
+    "openuiSpecification": "../shared/base.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

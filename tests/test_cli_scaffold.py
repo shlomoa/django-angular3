@@ -92,6 +92,77 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(config.openui_specification, root / "spec" / "app.openui.json")
         self.assertEqual(config.angular_workspace, root / "frontend")
 
+    def test_project_validation_reports_missing_openui_source(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            root = Path(tmp)
+            openapi_path = root / "api.json"
+            openapi_path.write_text(
+                json.dumps(
+                    {
+                        "openapi": "3.0.3",
+                        "paths": {"/items/": {"get": {}}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            config_path = root / PROJECT_CONFIG_FILENAME
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "project": {"name": "portal"},
+                        "artifacts": {
+                            "openapiSchema": "api.json",
+                            "openuiSpecification": "missing.openui.json",
+                            "angularWorkspace": "frontend",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            errors = validate_project_config(load_project_config(config_path))
+
+        self.assertEqual(
+            errors,
+            ["OpenUI source does not exist: " + str(root / "missing.openui.json")],
+        )
+
+    def test_project_validation_reports_invalid_openui_source(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            root = Path(tmp)
+            openapi_path = root / "api.json"
+            openapi_path.write_text(
+                json.dumps(
+                    {
+                        "openapi": "3.0.3",
+                        "paths": {"/items/": {"get": {}}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (root / "app.openui.json").write_text(
+                json.dumps({"version": "0.0.1", "id": "root", "type": "UnknownType"}),
+                encoding="utf-8",
+            )
+            config_path = root / PROJECT_CONFIG_FILENAME
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "project": {"name": "portal"},
+                        "artifacts": {
+                            "openapiSchema": "api.json",
+                            "openuiSpecification": "app.openui.json",
+                            "angularWorkspace": "frontend",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            errors = validate_project_config(load_project_config(config_path))
+
+        self.assertEqual(errors, ["unsupported object type: UnknownType"])
+
     def test_consumer_project_template_uses_canonical_schema(self) -> None:
         template_path = (
             ROOT
@@ -142,6 +213,44 @@ class ScaffoldTests(unittest.TestCase):
                 "Legacy project configuration field\\(s\\) are not supported",
             ):
                 load_project_config(config_path)
+
+    def test_scenario_matrix_covers_all_change_lanes_with_valid_inputs(self) -> None:
+        examples_root = ROOT / "spec" / "examples"
+        matrix = json.loads(
+            (examples_root / "scenario-matrix.json").read_text(encoding="utf-8")
+        )
+
+        expected_lane_combinations = {
+            (False, False, False),
+            (False, False, True),
+            (False, True, False),
+            (False, True, True),
+            (True, False, False),
+            (True, False, True),
+            (True, True, False),
+            (True, True, True),
+        }
+        lane_combinations = {
+            (
+                entry["lanes"]["config"],
+                entry["lanes"]["openapi"],
+                entry["lanes"]["openui"],
+            )
+            for entry in matrix
+        }
+
+        self.assertEqual(lane_combinations, expected_lane_combinations)
+        self.assertEqual(
+            {entry["exception"] for entry in matrix if "exception" in entry},
+            {"breaking", "replacement", "source-selection"},
+        )
+        for entry in matrix:
+            with self.subTest(scenario=entry["id"]):
+                config_path = examples_root / entry["id"] / PROJECT_CONFIG_FILENAME
+                self.assertTrue(config_path.is_file())
+                self.assertEqual(
+                    validate_project_config(load_project_config(config_path)), []
+                )
 
     def test_validation_only_generator_fixture_is_not_packaged(self) -> None:
         fixture_path = (
