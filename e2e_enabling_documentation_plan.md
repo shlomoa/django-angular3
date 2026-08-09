@@ -129,7 +129,7 @@ Each djng SKILL issue must include local acceptance criteria per `SKILL_AUTHORIN
 | Repo | Issue | Context |
 |---|---|---|
 | **djng** | `Implement structured build_app command translation and execution` ([django-angular3#59](https://github.com/shlomoa/django-angular3/issues/59)) | Replace CLI command-string reporting with structured command inputs and results that can be executed directly or delegated to an SDK session. |
-| **djng** | `Wire Claude Agent SDK into build_app: call sdk.query() per selected SKILL command` ([django-angular3#59](https://github.com/shlomoa/django-angular3/issues/59)) | Core of TODO item 8; without it `build_app` cannot drive any selected SKILL session. |
+| **djng** | `Implement provider-adapter orchestration for selected SKILL commands` ([django-angular3#59](https://github.com/shlomoa/django-angular3/issues/59)) | Core of TODO item 8; `build_app` must create the selected provider session, load canonical Skills, and normalize its result without delegating direct-command acceptance. |
 | **djng** | `Implement build_app failure policy for SKILL sessions that end without satisfying local acceptance criteria` ([django-angular3#60](https://github.com/shlomoa/django-angular3/issues/60)) | `build_app` must halt command execution when a selected session fails or lacks evidence of success. |
 
 ---

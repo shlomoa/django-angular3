@@ -141,8 +141,7 @@ integration, covering SKILLS, TOOLS, HOOKS, and PLUGINS.
   prompts for each SKILL.
 - Keep SKILL dependencies, shared context expectations, templates, invocation
   boundaries, and mixed automation execution-model references aligned with
-  `doc/GENERATE_AI_AUTOMATIONS.md`, `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md`, and
-  `doc/SKILL_AUTHORING_PLAN.md`.
+  `doc/GENERATE_AI_AUTOMATIONS.md` and `doc/SKILL_AUTHORING_PLAN.md`.
 - `GENERATE_AI_AUTOMATIONS.md` now carries normative per-capability catalogs for
   all four primitives (Tool Contracts, Hook Contracts, Plugin Contracts, Skills)
   alongside the primitive-selection policy; the umbrella framing no longer
@@ -233,20 +232,18 @@ Copilot adapters must preserve the same direct-command execution semantics.
 Construction invokes a selected provider session with canonical SKILLS enabled
 until acceptance conditions are satisfied.
 
-Failure handling must be specified: what `build_app` does when the agent ends
-without evidence of success — halt, retry the SDK call, surface a structured
-error, or roll back partial changes. Currently unspecified; blocks
-`build_app` implementation.
+Failure handling must be specified: `build_app` must halt and surface a
+structured error when a provider session ends without evidence of success. The
+first implementation does not retry automatically or promise rollback.
 
 | Failure mode | Mechanism | Consequence |
 |---|---|---|
 | Agent context exhaustion | Long repair loops fill the session context window | Session ends mid-work; partial output written to disk |
 | SDK timeout | Session runs too long | Hard stop; no guarantee of rollback |
 
-`build_app` currently has no mechanism to detect that the agent ended without
-satisfying its acceptance criteria. It makes one SDK call per selected SKILL
-command and continues regardless of whether that command produced evidence of
-success.
+`build_app` currently has no mechanism to detect that a provider session ended
+without satisfying its acceptance criteria. It has no adapter orchestration or
+normalized session evidence boundary.
 
 ### Provider-adapter verification backlog
 
@@ -363,10 +360,10 @@ tests.
 **Status: Planned — design alignment recorded in
 `doc/phased_implementation_plan.md`; implementation phases remain open.**
 
-Incorporate the architectural recommendations captured in
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` into implementation planning and design
-docs. This item feeds item 3 so `doc/GENERATE_AI_AUTOMATIONS.md` becomes the
-umbrella design spec for the full automation model rather than SKILLS alone.
+Implement the architectural contracts recorded in
+`doc/GENERATE_AI_AUTOMATIONS.md`. This item feeds item 3 so that document
+remains the umbrella design specification for the full automation model rather
+than SKILLS alone.
 
 - Convert deterministic construction and contract operations currently treated
   as SKILL/script responsibilities into explicit tool contracts (for example:

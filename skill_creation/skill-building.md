@@ -10,7 +10,8 @@ introduced for them.
 **1. Intent — required, conversational**
 
 Three short answers:
-- What should the skill enable Claude to do? (the capability)
+- What should the canonical Skill enable the selected provider session to do?
+	(the capability)
 - When should it trigger? (user phrases, file types, contexts — this becomes the `description` field, which is what actually decides whether the skill fires)
 - What's the expected output? (a file, a code change, a report, etc.)
 

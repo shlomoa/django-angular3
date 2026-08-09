@@ -1,6 +1,13 @@
 # Skill Architecture
 
-All skills in this document follow the **Agent Skills** format — reusable capabilities designed to be auto-invoked by an outer Claude API agent pipeline.
+> **Rendering note:** This historical authoring guide describes the planned
+> Claude Agent Skills rendering. The canonical Skill contract is defined in
+> `doc/GENERATE_AI_AUTOMATIONS.md`; provider adapters render that contract into
+> native formats. The `.claude/` layout and YAML fields below are not canonical
+> requirements for OpenAI, Gemini, or Copilot renderings.
+
+The Claude rendering uses the **Agent Skills** format — reusable capabilities
+designed to be auto-invoked by the Claude adapter.
 
 This file describes the architecture of the SKILLS primitive only. It does not
 define TOOLS, HOOKS, or PLUGINS as automation primitives; those belong to the
@@ -105,7 +112,7 @@ Skills are invoked by an **outer agent**, not by users:
 
 **Key Principle**: Skills are designed as composable units that can be chained together by the outer agent to accomplish complex tasks. In the broader automation model, they are one execution primitive alongside deterministic TOOLS, enforced HOOKS, and packaging-oriented PLUGINS.
 
-## Canonical SKILL.md Template Structure
+## Claude `SKILL.md` Template Structure
 
 Every `SKILL.md` file follows this structure:
 
@@ -202,5 +209,7 @@ List any skills that must be executed before this skill (e.g., workspace must ex
 Brief examples demonstrating typical usage patterns.
 ```
 
-This canonical structure ensures consistency across all 11 skills and provides clear guidance for both outer agent invocation and skill implementation.
+This Claude rendering structure provides consistent guidance for Claude adapter
+invocation and rendering. It must preserve the canonical Skill contract rather
+than become a second source of truth.
 

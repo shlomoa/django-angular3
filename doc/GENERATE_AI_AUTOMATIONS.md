@@ -19,15 +19,15 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 | Term | Definition | See |
 |---|---|---|
-| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md`, `ARCHITECTURE.md` |
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | This document, `ARCHITECTURE.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
 | **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14 |
-| **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
-| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
-| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
+| **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | §Tools |
+| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | §Hooks |
+| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §Plugins |
 | **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
 | **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
 | **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `ai_knowledge_inegration.md` |
@@ -128,9 +128,7 @@ families. Every new capability added to the `djng`/`ngdj` automation subsystem
 that capabilities are categorized consistently and the boundaries between
 SKILLS, TOOLS, HOOKS, and PLUGINS remain stable as the system grows.
 
-The policy is distilled from `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §1
-(comparison table and key distinctions). When this document and the analysis
-document disagree, this section is authoritative.
+This section is the authoritative primitive-selection policy.
 
 #### Decision axes
 
@@ -233,8 +231,7 @@ Use TOOLS for deterministic operations that do not require AI judgment. In the
 validation, Angular/client generation wrappers, and similar bounded
 construction operations.
 
-Per-capability tool contracts for the deterministic operations identified in
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` are defined in the
+Per-capability tool contracts are defined in the
 [Tool Contracts Catalog](#tool-contracts-catalog) below. Each contract follows
 the same fixed shape — **name, inputs, outputs, error behavior, allowed
 invocation context** — so the agent, `build_app` command translator, and a
@@ -281,8 +278,7 @@ umbrella documentation under `doc/`.
 ### Tool Contracts Catalog
 
 This catalog defines the deterministic tool contracts referenced from
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §2 and from `APP_BUILDER_REQUIREMENTS.md`
-§Change-to-Automations Mapping. Each entry follows the
+`APP_BUILDER_REQUIREMENTS.md` §Change-to-Automations Mapping. Each entry follows the
 [tool contract shape](#tool-contract-shape) defined above.
 
 The contracts are grouped by lifecycle stage so the command execution order is
@@ -343,8 +339,7 @@ failure after rotation, the rotation is reversed so the previous schema is
 restored.
 
 **Allowed invocation context**: `build_app` (as a TOOL command preceding
-schema-derived SKILL commands); HOOK (`post-tool` on `makemigrations`, per
-`TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2); CLI
+schema-derived SKILL commands); HOOK (`post-tool` on `makemigrations`); CLI
 (`django-admin export_schema`).
 
 **Implementation reference**:
@@ -392,8 +387,7 @@ free-form text blob.
 **Allowed invocation context**: `build_app` (as a TOOL command after
 `openapi_schema_export` and before any generation command); HOOK (`pre-tool` on
 `angular_api_client_generate`, `angular_workspace_scaffold`, and
-`angular_app_scaffold`, per `TOOLS_HOOKS_SKILLS_ANALYSIS.md`
-§3.5); agent (callable inside a guided agent session that needs to re-verify a
+`angular_app_scaffold`); agent (callable inside a guided agent session that needs to re-verify a
 hand-edited schema). Not a user-facing CLI command in the current release.
 
 **Implementation reference**: planned wrapper over an OpenAPI 3.1 validator
@@ -435,8 +429,7 @@ error — it returns the populated `breaking` array with exit zero. The
 breaking-change gate (HOOK or `build_app`) interprets the structured output.
 
 **Allowed invocation context**: `build_app` (as the TOOL command feeding
-the `ChangeSet`); HOOK (wrapped by the `pre-tool` breaking-change gate from
-`TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.1); agent (read-only diagnostic use inside
+the `ChangeSet`); HOOK (wrapped by the `pre-tool` breaking-change gate); agent (read-only diagnostic use inside
 a guided agent session that needs to re-inspect a diff).
 
 **Implementation reference**: `django_angular3/tools.py:ensure_oasdiff()` for
@@ -763,8 +756,7 @@ includes breaking-change gates, migration-triggered schema export,
 pre-construction contract validation, post-generation verification logging, and
 session-stop cleanup and audit behavior.
 
-Per-capability hook contracts for the lifecycle enforcement points identified
-in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3 are defined in the
+Per-capability hook contracts are defined in the
 [Hook Contracts Catalog](#hook-contracts-catalog) below. Each contract follows
 the same fixed shape — **name, purpose, trigger event, deterministic action,
 failure behavior, allowed wrapped tools, implementation reference** — so
@@ -824,8 +816,7 @@ The seven fields describe the provider-neutral enforcement contract:
 ### Hook Contracts Catalog
 
 This catalog defines the lifecycle hook contracts referenced from
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3 and from `APP_BUILDER_REQUIREMENTS.md`
-§Change-to-Automations Mapping. Each entry follows the
+`APP_BUILDER_REQUIREMENTS.md` §Change-to-Automations Mapping. Each entry follows the
 [hook contract shape](#hook-contract-shape) defined above.
 
 The contracts use provider-neutral lifecycle families and are grouped by when
@@ -843,8 +834,7 @@ lifecycle** fires when the agent session ends.
 
 **Purpose**: Guarantee that the OpenAPI schema artifact exists, is valid
 OAS 3.1, and is at least as fresh as the latest Django migration before any
-Angular generation tool is allowed to run. Implements the gate described in
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.5.
+Angular generation tool is allowed to run.
 
 **Trigger event**: `pre-tool` scoped to the Angular generation tools
 `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`
@@ -889,8 +879,7 @@ the applicable provider adapter.
 
 **Purpose**: Guarantee that whenever a new Django migration file is produced,
 the OpenAPI schema artifact is re-exported so downstream construction always
-sees a contract that matches the current data model. Implements the trigger
-described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
+sees a contract that matches the current data model.
 
 **Trigger event**: `post-tool` scoped to any tool invocation that runs
 `python manage.py makemigrations` (e.g. a `bash` tool call detected by the
@@ -931,8 +920,7 @@ the applicable provider adapter.
 
 **Purpose**: Block any downstream Angular generation as soon as `oasdiff_diff`
 reports breaking changes, unless the run was started with
-`--acknowledge-breaking`. Implements the gate described in
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.1 and the FR-4 builder behavior in
+`--acknowledge-breaking`. It implements the FR-4 builder behavior in
 `doc/APP_BUILDER_REQUIREMENTS.md`.
 
 **Trigger event**: `pre-tool` scoped to `angular_api_client_generate`,
@@ -982,8 +970,7 @@ provider adapter.
 **Purpose**: Guarantee that every Angular generation tool invocation is
 followed by a deterministic structural check whose pass/fail result is
 recorded to a machine-readable log, regardless of whether the agent would
-choose to re-inspect the output. Implements the enforcement described in
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.3.
+choose to re-inspect the output.
 
 **Trigger event**: `post-tool` scoped to `angular_api_client_generate`,
 `angular_workspace_scaffold`, `angular_app_scaffold`, and any future
@@ -1028,8 +1015,7 @@ registered by the applicable provider adapter.
 
 **Purpose**: Guarantee that, whenever a `build_app`-driven agent session
 ends — successfully, by user interrupt, or by error — the run's durable
-artifacts are archived and a session summary is recorded. Implements the
-cleanup described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.4.
+artifacts are archived and a session summary is recorded.
 
 **Trigger event**: `session-stop`. Fires exactly once per agent session,
 unconditionally.
@@ -1099,8 +1085,7 @@ or distribution. In the `djng` architecture, candidate bundles include the
 djng Angular construction capability, the ngdj scaffold capability, and the
 contract lifecycle capability.
 
-Per-capability plugin contracts for the bundles identified in
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §4 are defined in the
+Per-capability plugin contracts are defined in the
 [Plugin Contracts Catalog](#plugin-contracts-catalog) below. Each contract
 follows the same fixed shape — **name, purpose, bundled SKILLS, bundled TOOLS,
 bundled HOOKS, distribution, versioning, dependencies, installation, and
@@ -1178,8 +1163,7 @@ responsibilities a plugin assumes in the `djng` architecture:
 
 ### Plugin Contracts Catalog
 
-This catalog defines the plugin contracts referenced from
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §4. Each entry follows the
+This catalog defines the plugin contracts. Each entry follows the
 [plugin contract shape](#plugin-contract-shape) defined above.
 
 The contracts are grouped by domain so the command-execution and project-setup
@@ -1520,7 +1504,15 @@ allowed-tools:
 ---
 ```
 
-**Dual-mode requirement.** These skills are used both by direct CLI invocation (a user types `/<skill-name>` in Claude Code) and by `build_app` via the Claude Agent SDK (`query(skills=[...], allowedTools=[...])`). The `allowed-tools` frontmatter field is honored by the CLI but **not** by the SDK — `build_app` must mirror the same tool list in its `query()` `allowedTools` option. The canonical tool list per skill in this document is the source of truth for both surfaces. See `ARCHITECTURE.md` §2.14 references to [Claude Code Skills] and [Claude Agent SDK Skills] for the authoritative field reference.
+**Dual-mode requirement.** These rendered skills are usable by direct CLI
+invocation (a user types `/<skill-name>` in Claude Code) and, once implemented,
+by the Claude adapter through the Claude Agent SDK
+(`query(skills=[...], allowedTools=[...])`). The `allowed-tools` frontmatter
+field is honored by the CLI but **not** by the SDK — the Claude adapter must
+mirror the same tool list in its `query()` `allowedTools` option. The canonical
+tool list per skill in this document is the source of truth for both surfaces.
+See `ARCHITECTURE.md` §2.14 references to [Claude Code Skills] and [Claude
+Agent SDK Skills] for the authoritative field reference.
 
 ##### Field Definitions
 
@@ -1532,7 +1524,14 @@ allowed-tools:
 
 #### Claude skill loading model
 
-At session start, the skill loader preloads only the YAML frontmatter (`name`, `description`, `when_to_use`) of every discovered SKILL.md into the model's context. When a skill is invoked — by the user typing `/<name>` in CLI mode, or by `build_app` selecting it via `query(skills=[...])` in SDK mode — the SKILL.md body loads. Supporting files (shared references, templates, scripts) live on the filesystem and are read by Claude on demand via the Read tool when SKILL.md links to them. Scripts are executed via Bash; their source is never loaded as context.
+At session start, the skill loader preloads only the YAML frontmatter (`name`,
+`description`, `when_to_use`) of every discovered SKILL.md into the model's
+context. When a skill is invoked — by the user typing `/<name>` in CLI mode, or
+by a future Claude adapter selecting it via `query(skills=[...])` in SDK mode —
+the SKILL.md body loads. Supporting files (shared references, templates,
+scripts) live on the filesystem and are read by Claude on demand via the Read
+tool when SKILL.md links to them. Scripts are executed via Bash; their source
+is never loaded as context.
 
 **Token strategy.** Keep SKILL.md body under ~500 lines (per [Claude Skills Best Practices]). Move detailed reference material into separate files in the same skill directory and link to them. Files that Claude does not need to read incur no token cost.
 
@@ -1565,10 +1564,11 @@ guided agent sessions, not invoked by users directly:
   from schema and configuration changes. Each selected AI-guided command
   specifies which SKILL(s) apply and what inputs to provide.
 2. **Guided agent session**: For each selected AI-guided command, `build_app`
-  makes a Claude Agent SDK `query()` call with the relevant SKILL(s) enabled and the command
-   inputs as the prompt. The agent carries out the construction work, using the
-   SKILL's knowledge to guide its actions — invoking ngdj schematics, reading
-   and writing files, and verifying results.
+  delegates through the selected provider adapter with the relevant canonical
+  SKILL(s) and sanitized command inputs. Once implemented, the Claude adapter
+  renders those Skills and invokes the Claude Agent SDK `query()` call. The
+  adapter normalizes the session result; `build_app` retains authority over
+  direct TOOL/HOOK gates, terminal validation, and command acceptance.
 3. **Next command**: `build_app` proceeds to the next selected command in
   dependency order until all commands are complete.
 
@@ -1577,9 +1577,10 @@ automation model. Multiple SKILLS may be enabled for a single guided agent
 session when a selected command composes capabilities from several skills.
 
 **Implementation note**: Higher-level documents (`APP_BUILDER_REQUIREMENTS.md`,
-`ARCHITECTURE.md`) use the abstract term "Claude Agent SDK call" to describe a
-guided agent session. In the Claude Agent SDK, this is implemented as a `query()`
-call. This document uses `query()` to refer to that concrete function.
+`ARCHITECTURE.md`) use the provider-neutral term "provider adapter" for a
+guided agent session. The future Claude adapter implements its provider-specific
+session call through `query()`; this document uses `query()` only for that
+derived Claude rendering.
 
 #### Claude `SKILL.md` template structure
 

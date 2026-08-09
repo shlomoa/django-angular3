@@ -2,10 +2,9 @@
 
 ## Purpose
 
-This document derives a phased implementation plan that turns the architectural
-recommendations in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` and the normative
-contracts in `doc/GENERATE_AI_AUTOMATIONS.md` into an ordered, acceptance-gated
-sequence of implementation work.
+This document derives a phased implementation plan from the normative contracts
+in `doc/GENERATE_AI_AUTOMATIONS.md` into an ordered, acceptance-gated sequence
+of implementation work.
 
 It fulfils the "phased implementation plan" deliverable of the
 *Architecture alignment — Phased implementation plan* issue and feeds the
@@ -29,7 +28,7 @@ the full automation model (Skills + Tools + Hooks + Plugins), not Skills alone.
 ### Primitive-selection policy
 
 This plan applies the primitive-selection policy from
-`doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §5:
+`doc/GENERATE_AI_AUTOMATIONS.md` §Primitive-selection policy:
 
 | If the work… | Use |
 |---|---|
@@ -86,8 +85,7 @@ stable contracts.
 - Record the local-to-global acceptance decision (Phase 7).
 
 **Acceptance criteria**:
-- Every Tool, Hook, and Plugin recommendation in
-  `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` maps to exactly one normative contract.
+- Every planned Tool, Hook, and Plugin maps to exactly one normative contract.
 - This plan exists and references the contracts and FRs by name.
 
 **Test / verification coverage**: documentation review only — no code behaviour
@@ -458,8 +456,6 @@ enforcement, test ownership moves with it:
 
 ## Related documents
 
-- `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` — source recommendations and primitive
-  comparison.
 - `doc/GENERATE_AI_AUTOMATIONS.md` — authoritative Tool / Hook / Plugin / Skill
   contracts.
 - `doc/APP_BUILDER_REQUIREMENTS.md` — FR-1…FR-10 (traversal, failure handling,
