@@ -215,16 +215,18 @@ each command through the right primitive.
 
 ## Phase 4 — Skills authoring
 
-**Goal**: Author the eleven Angular construction Skills as runnable `SKILL.md`
-units with per-skill acceptance criteria.
+**Goal**: Author the eleven Angular construction Skills as canonical `djng`
+skill content with per-skill acceptance criteria and provider-specific renderings.
 
 **Dependencies**: Phase 3 (Skills run as selected AI-guided commands).
 
 **Work items**:
-- Author each Skill per `doc/SKILL_AUTHORING_PLAN.md` (plan, implementation +
-  tests, app-builder command integration, verification).
+- Author each canonical Skill per `doc/SKILL_AUTHORING_PLAN.md` (plan,
+  implementation + tests, app-builder command integration, verification).
 - Keep `skill_creation/skills/` working copies aligned with the authoritative
   `GENERATE_AI_AUTOMATIONS.md` Skills Catalog.
+- Define provider-specific skill renderings and packaging as derived artifacts;
+  no provider's native skill-file format is the canonical `djng` source.
 - Define each Skill's local acceptance criteria during its Plan phase: the exact
   pass/fail conditions, the tools used to verify them, and what "done" means
   locally.
@@ -234,37 +236,64 @@ units with per-skill acceptance criteria.
   termination).
 - The Skill dependency chain matches the dependency ordering selected for
   AI-guided commands (FR-2).
+- Canonical skill content has one source of truth, and each provider-specific
+  rendering is verifiably derived from it.
 
 **Test / verification coverage**:
 - Per-skill component tests for the generated Angular artifacts.
 - Skill-catalog-alignment check between `skill_creation/skills/` and
   `GENERATE_AI_AUTOMATIONS.md`.
+- Provider-package conformance tests that verify each rendering preserves the
+  canonical skill's name, purpose, inputs, and acceptance criteria.
 
 ---
 
-## Phase 5 — Orchestration flow (Claude Agent SDK)
+## Phase 5 — Orchestration flow and provider adapters
 
-**Goal**: Drive each selected AI-guided command through the Claude Agent SDK
-until its acceptance criteria are satisfied.
+**Goal**: Drive each selected AI-guided command through a provider adapter until
+its acceptance criteria are satisfied, without changing the direct
+command-execution semantics owned by `djng`.
 
 **Dependencies**: Phases 3–4.
 
 **Work items**:
-- For each selected AI-guided command, make a Claude Agent SDK call with the
-  Skill(s) enabled, command inputs as the prompt, and the working directory set to
-  `angular.output` (FR-8).
+- Define a provider-neutral adapter interface for session creation, canonical
+  skill loading, tool dispatch, lifecycle-event normalization, structured
+  results, cancellation, timeouts, and credential configuration.
+- Implement adapters against that interface. The validated reference examples
+  in `shlomoa/ai` are:
+  - **Claude:** Agent SDK `query`, native hooks, filesystem skills, and plugins.
+  - **OpenAI:** Responses API / `openai-agents`, a local function-tool guard,
+    and a hook manager.
+  - **Gemini:** `google-genai`, function tools, and decorator/wrapper hooks.
+  - **Copilot:** `github-copilot-sdk`, sessions, permission handlers, and
+    pre-/post-tool hooks.
+- Keep `djng` direct command-execution gates authoritative for correctness.
+  Provider-native hooks and local wrappers normalize provider events into the
+  adapter interface; they do not create an independent gate or permit bypassing
+  the `djng` enforcement boundary.
 - Specify and implement what `build_app` does when an agent session ends without
   evidence of success — halt, surface a structured error, and refuse to advance
   (no silent advance past unmet acceptance criteria).
 
 **Acceptance criteria**:
+- The adapter interface can be exercised with a stub without changing direct
+  command-execution, Tool, Hook, or terminal-validation semantics.
 - `build_app` detects a session that ended without satisfying its acceptance
   criteria and halts instead of advancing.
 - Session failures are surfaced as structured errors consistent with FR-9.
+- Provider-native hook or wrapper behavior cannot bypass `djng` direct
+  command-execution gates.
 
 **Test / verification coverage**:
-- Orchestration tests with a stubbed SDK: success advances, unmet-acceptance
-  halts, context-exhaustion / timeout produce a structured error.
+- Provider-independent adapter-contract tests with stubs: success advances,
+  unmet acceptance halts, context exhaustion or timeout produces a structured
+  error, tool denial is surfaced, post-tool failure halts, and teardown records
+  its outcome without changing the completed run result.
+- Credential- and runtime-gated integration suites per provider verify the
+  corresponding adapter against its provider SDK. These suites are separate from
+  provider-independent unit tests and do not claim any adapter is implemented
+  until it passes its own suite.
 
 ---
 
@@ -340,7 +369,9 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 
 ## Phase 8 — Plugin packaging and distribution
 
-**Goal**: Package the coherent capability sets as installable Claude plugins.
+**Goal**: Package the coherent capability sets through provider-specific
+distribution artifacts derived from the canonical `djng` Skills, Tools, and
+Hooks.
 
 **Dependencies**: Phases 1–7 (a plugin bundles already-implemented primitives).
 
@@ -351,14 +382,20 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 - `ngdj-scaffold` — workspace/app/feature scaffold tools.
 - `contract-lifecycle` — export → validate → diff → version → gate tools and
   hooks.
+- Define each provider's packaging and installation artifact as a derived
+  distribution representation. A Claude plugin, including `.claude-plugin`, is
+  one provider-specific representation and is not the canonical plugin source.
 
 **Acceptance criteria**:
 - Each plugin bundles exactly the Skills / Tools / Hooks named in its contract.
-- Each plugin installs and versions independently of the Python package.
+- Each provider-specific package is traceably derived from the canonical
+  plugin contract and preserves its declared contents.
+- Each package installs and versions independently of the Python package.
 
 **Test / verification coverage**:
 - Plugin-manifest conformance tests (declared contents match the contract).
-- Install / smoke test per plugin against a generated-app workspace.
+- Provider-package conformance and install / smoke tests against a generated-app
+  workspace.
 
 ---
 
@@ -370,7 +407,7 @@ flowchart TD
     phase1 --> phase2["Phase 2: Lifecycle hook contracts"]
     phase2 --> phase3["Phase 3: Command translation and execution"]
     phase3 --> phase4["Phase 4: Skills authoring"]
-    phase4 --> phase5["Phase 5: Orchestration flow"]
+    phase4 --> phase5["Phase 5: Orchestration flow and provider adapters"]
     phase3 --> phase6["Phase 6: Terminal verification"]
     phase5 --> phase6
     phase4 --> phase7["Phase 7: Local-to-global acceptance gate"]

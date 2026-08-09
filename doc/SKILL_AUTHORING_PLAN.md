@@ -86,25 +86,25 @@ input.
 
 ## Skill format and output location
 
-Skills are authored in the standard Anthropic Agent Skill format — a
-`SKILL.md` with YAML frontmatter (`name`, `description`), a markdown body, and
-optional `scripts/`, `references/`, and `assets/` subdirectories. The custom
-format described in `GENERATE_AI_AUTOMATIONS.md` (with `user-invocable: false`,
-`context: fork`, `allowed-tools`, `{{context:...}}`, `{{template:...}}`, and
-`.tpl` files) is treated as design notation only; no skill file is produced in
-that format.
+The [Skills Catalog in `GENERATE_AI_AUTOMATIONS.md`](GENERATE_AI_AUTOMATIONS.md#skills-catalog)
+is the canonical `djng` Skill source. It defines each Skill's stable name,
+purpose, modes, inputs, outputs, dependencies, and acceptance criteria.
+The numbered files in `skill_creation/skills/` are derived authoring working
+copies; when they differ from the catalog, update the working copy rather than
+creating a competing source of truth.
 
-Each finished skill is committed to `.claude/skills/<skill-name>/` in this
-repository so it is part of the codebase and reviewable. Each finished skill
-is also packaged into a `.skill` archive via the skill-creator's
-`package_skill.py` and installed into the Cowork skills folder so it is
-auto-discoverable in this session.
+Provider adapters render a completed canonical Skill into the provider's
+native representation. A Claude rendering may use an Anthropic Agent Skill
+`SKILL.md`, YAML frontmatter, a `.skill` archive, and a `.claude-plugin`
+package. Those formats, their fields, and Claude slash invocation do not apply
+unchanged to OpenAI, Gemini, or Copilot. Each provider rendering must preserve
+the canonical Skill contract and pass its provider-package conformance tests.
 
-Shared context files (`angular-conventions.md`, `angular-material-patterns.md`,
-`openapi-integration.md`) live at `.claude/skills/shared/` and are referenced
-from individual skills via relative paths. Packaging is responsible for
-inlining these shared files into each `.skill` archive so the installed
-package is self-contained.
+Shared context is maintained with the canonical Skill material. A renderer may
+inline or otherwise package that context only when the target provider requires
+it; the rendered copy is an artifact, not an independent source. See
+`GENERATE_AI_AUTOMATIONS.md` §Canonical skill contract and provider renderings
+for the authoritative rendering rules.
 
 ## Tooling boundary
 
@@ -152,17 +152,19 @@ skill: its `name`, its `description`, the run-time inputs it accepts and which
 shared context it depends on, the open questions to be resolved during
 implementation, and the test prompts that will exercise it.
 
-Implementation including test generation. Write the SKILL.md body, create
-`scripts/`, `references/`, and `assets/` as needed, and author the test
-prompts and assertions agreed in Plan.
+Implementation including test generation. Update the canonical Skill contract
+and its derived authoring working copy, create required scripts, references,
+and assets, and author the test prompts and assertions agreed in Plan. Render
+and test provider-native artifacts only through the applicable provider adapter.
 
 App builder command integration. Once the skill is created, add the selected
 SKILL command that uses it in the app builder program.
 
 Verification. Run the tests (with-skill versus baseline), grade them, render
 the result for review, and incorporate feedback. Once Verification is
-approved, the skill is packaged into a `.skill` archive and installed into the
-Cowork skills folder.
+approved, run the applicable provider-package conformance tests before
+publishing a derived provider artifact. A Claude `.skill` archive is one such
+derived artifact, not the universal completion format.
 
 Subagents may be used inside any phase where they are useful — for example,
 to run the with-skill and baseline test cases in parallel during Verification

@@ -30,6 +30,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | `TOOLS_HOOKS_SKILLS_ANALYSIS.md` |
 | **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
 | **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
+| **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `ai_knowledge_inegration.md` |
 
 ---
 
@@ -70,6 +71,43 @@ responsibilities) and a per-capability contract catalog: SKILLS in the
 [Plugin Contracts Catalog](#plugin-contracts-catalog). The selection policy
 below governs which family a new capability belongs to before it is added to
 any catalog.
+
+### Provider portability and evidence
+
+The automation contracts in this document are provider-neutral. The TOOL
+contract shape, ordered `build_app` command execution, structured error
+objects, recorded acceptance evidence, and terminal validation define `djng`'s
+construction semantics independently of an AI provider, SDK, skill format, or
+plugin format. A provider integration MUST adapt to these semantics; it MUST
+NOT redefine them.
+
+A **provider adapter** is the boundary between `djng`'s provider-neutral
+construction model and a provider runtime. It owns the provider-specific work
+needed to:
+
+- create, configure, and close provider sessions;
+- load prompts and skills into the provider's supported representation;
+- dispatch the TOOL contracts that a session is permitted to call;
+- connect provider lifecycle events or local wrappers to HOOK enforcement and
+  normalize their outcomes;
+- normalize provider responses into the structured session result consumed by
+  `build_app`, including acceptance evidence, errors, and diagnostics;
+- request and report cancellation, timeouts, and context exhaustion; and
+- obtain provider credentials and apply provider-specific runtime
+  configuration without exposing credentials through contracts or logs.
+
+The adapter does not own command selection, dependency ordering, deterministic
+TOOL behavior, acceptance criteria, terminal validation, or the durable
+construction record. Those remain `djng` responsibilities. In particular, an
+adapter MUST report a provider-native hook or wrapper outcome in the normalized
+result, but it cannot turn a failed `djng` enforcement boundary into success.
+
+**Evidence and implementation status:** this section defines the required
+portable boundary; it does not claim that a provider adapter is implemented.
+The tested provider examples in `shlomoa/ai` are design evidence for future
+adapters. An adapter is implemented only when it satisfies its provider-
+independent contract tests and its credential- and runtime-gated provider
+integration suite.
 
 ### Primitive families
 
@@ -305,7 +343,7 @@ failure after rotation, the rotation is reversed so the previous schema is
 restored.
 
 **Allowed invocation context**: `build_app` (as a TOOL command preceding
-schema-derived SKILL commands); HOOK (PostToolUse on `makemigrations`, per
+schema-derived SKILL commands); HOOK (`post-tool` on `makemigrations`, per
 `TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2); CLI
 (`django-admin export_schema`).
 
@@ -344,7 +382,7 @@ free-form text blob.
 
 - Validation failures (`valid: false`) are **not** treated as tool errors:
   the tool returns its structured report and exits zero. The `build_app`
-  command executor — or a PreToolUse hook — decides whether to halt.
+  command executor — or a `pre-tool` hook — decides whether to halt.
 - A non-zero exit / raised `ToolError` is reserved for `category` values:
   `invalid_input` (schema path missing or unreadable),
   `missing_dependency` (validator binary not installed),
@@ -352,7 +390,7 @@ free-form text blob.
   `output_invalid` (validator returned an unparseable report).
 
 **Allowed invocation context**: `build_app` (as a TOOL command after
-`openapi_schema_export` and before any generation command); HOOK (PreToolUse on
+`openapi_schema_export` and before any generation command); HOOK (`pre-tool` on
 `angular_api_client_generate`, `angular_workspace_scaffold`, and
 `angular_app_scaffold`, per `TOOLS_HOOKS_SKILLS_ANALYSIS.md`
 §3.5); agent (callable inside a guided agent session that needs to re-verify a
@@ -397,7 +435,7 @@ error — it returns the populated `breaking` array with exit zero. The
 breaking-change gate (HOOK or `build_app`) interprets the structured output.
 
 **Allowed invocation context**: `build_app` (as the TOOL command feeding
-the `ChangeSet`); HOOK (wrapped by the PreToolUse breaking-change gate from
+the `ChangeSet`); HOOK (wrapped by the `pre-tool` breaking-change gate from
 `TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.1); agent (read-only diagnostic use inside
 a guided agent session that needs to re-inspect a diff).
 
@@ -730,8 +768,12 @@ in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3 are defined in the
 [Hook Contracts Catalog](#hook-contracts-catalog) below. Each contract follows
 the same fixed shape — **name, purpose, trigger event, deterministic action,
 failure behavior, allowed wrapped tools, implementation reference** — so
-`build_app` command execution and a future Claude Code `settings.json`
-exposure layer all see the same surface.
+`build_app` command execution and every provider adapter see the same surface.
+
+`build_app` direct command-execution gates are the authoritative enforcement
+boundary. Provider-native hooks, handlers, and wrappers are adapter mechanisms
+that normalize provider-runtime events into this contract; they cannot override
+or bypass a failed `build_app` gate or terminal validation.
 
 #### Hook contract shape
 
@@ -739,11 +781,11 @@ Every hook contract in this document **MUST** specify:
 
 | Field | Meaning |
 |---|---|
-| **Name** | The stable identifier the hook is registered under. It is used during direct `build_app` command execution and as the script/handler key in a Claude Code `settings.json` lifecycle event. |
+| **Name** | The stable identifier the hook is registered under. It is used during direct `build_app` command execution and as the provider-adapter handler key. |
 | **Purpose** | One-sentence statement of the lifecycle enforcement the hook guarantees. Must be deterministic — no AI judgment inside the hook itself. |
-| **Trigger event** | The lifecycle event that fires the hook. One of the Claude Code lifecycle events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`) with, when applicable, the specific tool name(s) it is scoped to — these same events govern the hook when it runs inside a Claude Code agent session. During `build_app` command execution, `Pre*` hooks block their wrapped command before it runs, `Post*` hooks validate it after it runs, and `Stop` hooks execute at session teardown. Tool names referenced here MUST match a contract in the [Tool Contracts Catalog](#tool-contracts-catalog) or an explicitly-named external command. |
+| **Trigger event** | The provider-neutral lifecycle family that fires the hook: `pre-tool`, `post-tool`, or `session-stop`. A `pre-tool` hook blocks its wrapped command before it runs; a `post-tool` hook validates it after it runs; a `session-stop` hook runs at teardown. Tool names referenced here MUST match a contract in the [Tool Contracts Catalog](#tool-contracts-catalog) or an explicitly named external command. Provider mappings are defined in [Provider adapter hook mappings](#provider-adapter-hook-mappings). |
 | **Deterministic action** | Step-by-step description of what the hook does on the trigger event. The action must be reproducible — same inputs always produce the same outcome and side effects. When the hook performs a deterministic operation that already has a tool contract above, it MUST invoke that contract by name rather than calling the underlying binary directly. |
-| **Failure behavior** | What the hook does when its check fails or its action errors. MUST specify: (1) the hook script exit code and runtime consequence in Claude Code (`PreToolUse`: exit `2` blocks the tool; `PostToolUse`: non-zero halts further processing; `Stop`: non-zero warns only), and (2) the `build_app` process exit code used when the hook runs during direct command execution. Also MUST specify the structured message written to stderr or to the durable artifact log. |
+| **Failure behavior** | What the hook does when its check fails or its action errors. MUST specify the cross-provider consequence (`pre-tool`: block; `post-tool`: halt further processing; `session-stop`: warn only), the `build_app` process exit code for direct execution, and the structured message written to stderr or to the durable artifact log. An adapter maps this consequence to its provider runtime. |
 | **Allowed wrapped tools** | The tool contract names (from the [Tool Contracts Catalog](#tool-contracts-catalog)) or external commands the hook may scope itself to. Hooks MUST NOT silently apply themselves to tools outside this list. |
 | **Implementation reference** | Pointer to the concrete script or planned implementation that backs the contract, so the contract and the implementation can be kept aligned. |
 
@@ -752,21 +794,12 @@ contract is a bug in the implementation, not in the contract.
 
 ##### Shape rationale
 
-The seven fields are derived directly from the Claude Code hooks execution
-model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/docs/claude-code/hooks)):
+The seven fields describe the provider-neutral enforcement contract:
 
-- **Name** and **Trigger event** have a dual role. In a Claude Code agent
-  session, each entry under a lifecycle event key (`PreToolUse`, `PostToolUse`,
-  `Stop`) in `settings.json` requires a stable identifier and an explicit
-  event-plus-matcher declaration (see [Hooks reference — Claude Code
-  docs](https://docs.anthropic.com/en/docs/claude-code/hooks)). In a
-  `build_app` run the *same* lifecycle family determines the command boundary:
-  `Pre*` blocks the wrapped tool before execution, `Post*` verifies it after
-  execution, and `Stop` performs teardown. Separating the
-  *name* (catalog key used in both `gate` nodes and `settings.json`) from the
-  *trigger event* (the runtime event that fires it) lets multiple hooks share
-  the same event without name collision and lets the catalog be validated
-  against both execution contexts.
+- **Name** and **Trigger event** identify a stable catalog key and lifecycle
+  family. The command executor uses them to select a boundary before a tool,
+  after a tool, or at teardown; adapters map that family to their provider's
+  event, handler, or wrapper model.
 - **Purpose** is required so that consumers of the catalog — the
   `build_app` command translator, reviewers, and future plugin authors —
   can verify at a glance what invariant a hook enforces without reading the
@@ -776,24 +809,12 @@ model (see [Hooks reference — Claude Code docs](https://docs.anthropic.com/en/
 - **Deterministic action** and **Allowed wrapped tools** constrain the hook's
   blast radius together. The action describes *what* the hook does step by
   step; the allowed-tools list declares *which tools* the hook may scope itself
-  to via Claude Code's `matcher` field. Both fields are needed to validate a
+  to through its adapter. Both fields are needed to validate a
   hook against its contract without executing it, and to detect if an
-  implementation silently broadens its matcher beyond the catalogued boundary.
-- **Failure behavior** captures the runtime consequence of a non-zero hook
-  exit, which differs by lifecycle family. Per the Claude Code hooks model
-  ([Hooks reference](https://docs.anthropic.com/en/docs/claude-code/hooks)):
-  `Pre*` hooks exit code `2` causes the agent to **block the wrapped tool** —
-  Claude Code surfaces the stderr message as the block reason and does not
-  invoke the tool. `Post*` hooks that exit non-zero cause the agent to **halt
-  further processing** — the already-completed tool action is preserved, but
-  downstream steps are aborted and the error is surfaced to the caller. `Stop`
-  hooks that exit non-zero produce a **warning only** — the session-stop
-  outcome is not changed. The `build_app` FR-9a requirements mirror this
-  exactly: `Pre*` failure blocks the wrapped TOOL command; `Post*` failure
-  halts command execution (no further commands run); `Stop` failure appends a
-  warning to the session log. Documenting exit codes, message destinations, and
-  block/halt/warn semantics per hook prevents each implementer from inventing
-  their own convention and enables automated compliance checks.
+  implementation silently broadens its scope beyond the catalogued boundary.
+- **Failure behavior** defines the authoritative block, halt, or warning
+  consequence for `build_app` execution. Adapters preserve that consequence in
+  their provider runtime, but do not define a competing acceptance decision.
 - **Implementation reference** links the normative contract to the concrete
   backing artifact (script path, planned ticket, or external CLI) so that drift
   between the spec and the code is detectable during review. Without this
@@ -807,7 +828,8 @@ This catalog defines the lifecycle hook contracts referenced from
 §Change-to-Automations Mapping. Each entry follows the
 [hook contract shape](#hook-contract-shape) defined above.
 
-The contracts are grouped by when they fire relative to command execution:
+The contracts use provider-neutral lifecycle families and are grouped by when
+they fire relative to command execution:
 **pre-construction gates** fire before generation commands; **mid-run
 triggers** fire on backend events that invalidate prior artifacts;
 **post-generation enforcement** fires after each generation tool; **session
@@ -824,7 +846,7 @@ OAS 3.1, and is at least as fresh as the latest Django migration before any
 Angular generation tool is allowed to run. Implements the gate described in
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.5.
 
-**Trigger event**: `PreToolUse` scoped to the Angular generation tools
+**Trigger event**: `pre-tool` scoped to the Angular generation tools
 `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`
 (and any future generation tool contracts). Also runs as the very first gate of every
 `build_app` invocation, before direct execution reaches any generation
@@ -844,8 +866,7 @@ command.
 - If the schema file is missing, stale, or `validate_openapi_schema` returns
   `valid: false`, write a structured error
   `{ hook: "pre-construction", category, message, schema_path, ... }` to
-  stderr **and** to `build/hook-log.jsonl`, and exit `2` to block the wrapped
-  tool in Claude Code.
+  stderr **and** to `build/hook-log.jsonl`, and block the wrapped tool.
 - In `build_app`, hook failure MUST halt the run with this hook’s dedicated
   hook-failure exit code (distinct from the `breaking-change` exit code and
   from FR-9 tool-failure exit codes).
@@ -856,10 +877,9 @@ command.
 **Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
 `angular_app_scaffold`, future generation tools.
 
-**Implementation reference**: planned shell script
-`hooks/pre-construction.sh`, registered under the `PreToolUse` key of the
-project's Claude Code `settings.json`. Wraps `validate_openapi_schema` via
-its tool contract.
+**Implementation reference**: planned handler `hooks/pre-construction.sh`.
+It wraps `validate_openapi_schema` via its tool contract and is registered by
+the applicable provider adapter.
 
 #### Mid-run triggers
 
@@ -872,7 +892,7 @@ the OpenAPI schema artifact is re-exported so downstream construction always
 sees a contract that matches the current data model. Implements the trigger
 described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 
-**Trigger event**: `PostToolUse` scoped to any tool invocation that runs
+**Trigger event**: `post-tool` scoped to any tool invocation that runs
 `python manage.py makemigrations` (e.g. a `bash` tool call detected by the
 `makemigrations` substring in its command).
 
@@ -901,10 +921,9 @@ described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.2.
 **Allowed wrapped tools**: any tool invocation that calls
 `manage.py makemigrations`. The hook MUST NOT fire for unrelated tool calls.
 
-**Implementation reference**: planned shell script
-`hooks/migration-triggered.sh`, registered under the `PostToolUse` key of
-the project's Claude Code `settings.json`. Wraps `openapi_schema_export` via its
-tool contract.
+**Implementation reference**: planned handler `hooks/migration-triggered.sh`.
+It wraps `openapi_schema_export` via its tool contract and is registered by
+the applicable provider adapter.
 
 ##### 3. `breaking-change` — gate on schema diff
 
@@ -916,7 +935,7 @@ reports breaking changes, unless the run was started with
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.1 and the FR-4 builder behavior in
 `doc/APP_BUILDER_REQUIREMENTS.md`.
 
-**Trigger event**: `PreToolUse` scoped to `angular_api_client_generate`,
+**Trigger event**: `pre-tool` scoped to `angular_api_client_generate`,
 `angular_workspace_scaffold`, `angular_app_scaffold`, and any future generation
 tool. Also runs as the gate that consumes the structured output of the
 `oasdiff_diff` TOOL command during command execution.
@@ -935,9 +954,8 @@ tool. Also runs as the gate that consumes the structured output of the
 4. Otherwise, write a structured error
    `{ hook: "breaking-change", category: "breaking_changes_unacknowledged",
    breaking: [...] }` to stderr and to `build/hook-log.jsonl`, and exit `2` to
-   block the wrapped tool in Claude Code. In `build_app`, exit non-zero with the
-   dedicated breaking-change exit code defined in `APP_BUILDER_REQUIREMENTS.md`
-   FR-4.
+  block the wrapped tool. In `build_app`, exit non-zero with the dedicated
+  breaking-change exit code defined in `APP_BUILDER_REQUIREMENTS.md` FR-4.
 
 **Failure behavior**:
 
@@ -951,9 +969,9 @@ tool. Also runs as the gate that consumes the structured output of the
 **Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
 `angular_app_scaffold`, future generation tools.
 
-**Implementation reference**: planned shell script
-`hooks/breaking-change.sh`, registered under the `PreToolUse` key of the
-project's Claude Code `settings.json`. Consumes `oasdiff_diff` tool output.
+**Implementation reference**: planned handler `hooks/breaking-change.sh`.
+It consumes `oasdiff_diff` tool output and is registered by the applicable
+provider adapter.
 
 #### Post-generation enforcement
 
@@ -967,7 +985,7 @@ recorded to a machine-readable log, regardless of whether the agent would
 choose to re-inspect the output. Implements the enforcement described in
 `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.3.
 
-**Trigger event**: `PostToolUse` scoped to `angular_api_client_generate`,
+**Trigger event**: `post-tool` scoped to `angular_api_client_generate`,
 `angular_workspace_scaffold`, `angular_app_scaffold`, and any future
 generation tool contract.
 
@@ -999,9 +1017,8 @@ generation tool contract.
 **Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
 `angular_app_scaffold`, future generation tools.
 
-**Implementation reference**: planned shell script
-`hooks/post-generation.sh`, registered under the `PostToolUse` key of the
-project's Claude Code `settings.json`.
+**Implementation reference**: planned handler `hooks/post-generation.sh`,
+registered by the applicable provider adapter.
 
 #### Session lifecycle
 
@@ -1014,7 +1031,7 @@ ends — successfully, by user interrupt, or by error — the run's durable
 artifacts are archived and a session summary is recorded. Implements the
 cleanup described in `doc/TOOLS_HOOKS_SKILLS_ANALYSIS.md` §3.4.
 
-**Trigger event**: `Stop`. Fires exactly once per agent session,
+**Trigger event**: `session-stop`. Fires exactly once per agent session,
 unconditionally.
 
 **Deterministic action**:
@@ -1031,28 +1048,39 @@ unconditionally.
 
 **Failure behavior**:
 
-- A `Stop` hook cannot block the session from ending; failure is recorded
-  only.
+- A `session-stop` hook cannot block the session from ending; failure is
+  recorded only.
 - If archiving fails (e.g. disk full, permission error), write
   `{ hook: "session-stop", category, message, details }` to stderr and to
   whatever portion of `build/session-log.json` is still writable, then
-  exit non-zero. The non-zero exit code is surfaced by Claude Code as a
-  post-session warning but does not retroactively change the session
-  outcome.
+  return a warning outcome. The warning does not retroactively change the
+  session outcome.
 - The hook MUST be idempotent: re-running it after a partial failure must
   not duplicate archived artifacts or session summary entries.
 
-**Allowed wrapped tools**: not applicable — `Stop` is not scoped to a tool.
+**Allowed wrapped tools**: not applicable — `session-stop` is not scoped to a tool.
 
-**Implementation reference**: planned shell script `hooks/session-stop.sh`,
-registered under the `Stop` key of the project's Claude Code
-`settings.json`.
+**Implementation reference**: planned handler `hooks/session-stop.sh`,
+registered by the applicable provider adapter.
+
+#### Provider adapter hook mappings
+
+Each adapter maps the provider-neutral lifecycle families above without
+changing their authoritative `build_app` consequence:
+
+| Provider adapter | `pre-tool` / `post-tool` mapping | `session-stop` mapping |
+|---|---|---|
+| Claude Agent SDK | Native `PreToolUse` / `PostToolUse` hooks registered in Claude Code `settings.json` | Native `Stop` hook in `settings.json` |
+| OpenAI Agents / Responses | Local function-tool guard and hook manager | Adapter-managed session teardown |
+| Gemini SDK / Antigravity | Decorator or wrapper around function-tool execution | Adapter-managed session teardown |
+| Copilot SDK | `on_pre_tool_use` / `on_post_tool_use` hooks and permission handlers | Adapter-managed session teardown |
 
 #### Contract compliance
 
 - `build_app` MUST apply an enforced command boundary whose `hook` equals one
-  of the **Name** values above: before a wrapped command for `Pre*` hooks,
-  after it for `Post*` hooks, and at session teardown for `Stop`. Ad-hoc
+  of the **Name** values above: before a wrapped command for `pre-tool` hooks,
+  after it for `post-tool` hooks, and at session teardown for `session-stop`.
+  Ad-hoc
   `Bash` invocations of the actions above outside the hook mechanism are not
   permitted.
 - HOOKS that need to perform a deterministic operation also covered by the
@@ -1061,8 +1089,8 @@ registered under the `Stop` key of the project's Claude Code
   directly — so error categories and structured outputs remain uniform.
 - New lifecycle enforcement points added to `djng` MUST be documented here
   using the [hook contract shape](#hook-contract-shape) before they may
-  appear as an enforced command boundary or be registered in any
-  project's Claude Code `settings.json`.
+  appear as an enforced command boundary or be registered through a provider
+  adapter.
 
 ### Plugins
 
@@ -1085,26 +1113,41 @@ Every plugin contract in this document **MUST** specify:
 
 | Field | Meaning |
 |---|---|
-| **Name** | The stable identifier the plugin is published under. Matches the `name` field of the [Claude Code plugin manifest](https://code.claude.com/docs/en/plugins) (`.claude-plugin/plugin.json`) and the identifier used in any plugin-marketplace listing. |
+| **Name** | The stable provider-neutral identifier the plugin is published under. Each provider rendering maps it to that provider's manifest or registry identifier. |
 | **Purpose** | One-sentence statement of the coherent capability the plugin packages. The purpose MUST identify a single domain (Angular construction, Angular scaffold, contract lifecycle) so two plugins never claim the same scope. |
-| **Bundled SKILLS** | The exact list of SKILL names (matching the `name` of each `SKILL.md` frontmatter in this document) that the plugin ships under its `skills/` subdirectory. A plugin MAY ship zero skills; if so, this field is `none` and the plugin packages only TOOLS, HOOKS, or MCP server configuration. |
-| **Bundled TOOLS** | The exact list of tool contract names (from the [Tool Contracts Catalog](#tool-contracts-catalog)) that the plugin exposes, together with the MCP server or `allowed-tools` configuration that the plugin registers under its `mcp-servers/` subdirectory. A plugin MAY ship zero tools. |
-| **Bundled HOOKS** | The exact list of hook contract names (from the [Hook Contracts Catalog](#hook-contracts-catalog)) that the plugin registers under its `hooks/` subdirectory, together with the lifecycle event each hook is scoped to. A plugin MAY ship zero hooks. |
-| **Distribution** | How the plugin is shipped: the repository (or repositories) that own the source artifacts, the published package (npm package, Python distribution, plugin-marketplace entry, or in-repo `.claude-plugin/` directory), and the channel through which consumers obtain it. |
-| **Versioning** | The semantic-versioning policy the plugin follows, including which upstream packages (e.g. `django-angular3`, `angular-django2`, `oasdiff`) its version is coupled to and how breaking-change bumps are signalled. Matches the `version` field of the Claude Code plugin manifest. |
+| **Bundled SKILLS** | The exact canonical Skill names from the [Skills Catalog](#skills-catalog). A plugin MAY ship zero Skills; if so, this field is `none` and the plugin packages only TOOLS, HOOKS, or provider integration configuration. |
+| **Bundled TOOLS** | The exact list of tool contract names (from the [Tool Contracts Catalog](#tool-contracts-catalog)) that the plugin exposes. A provider rendering maps those names to its native tool registration. A plugin MAY ship zero tools. |
+| **Bundled HOOKS** | The exact list of hook contract names (from the [Hook Contracts Catalog](#hook-contracts-catalog)) that the plugin registers, including their provider-neutral lifecycle family. A plugin MAY ship zero hooks. |
+| **Distribution** | How the canonical plugin contract is rendered and shipped for each provider. The field names the source repository, provider-specific published artifact, and consumer channel. |
+| **Versioning** | The semantic-versioning policy the plugin follows, including which upstream packages (e.g. `django-angular3`, `angular-django2`, `oasdiff`) its version is coupled to and how breaking-change bumps are signalled. Provider manifests derive their version from this contract version. |
 | **Dependencies** | Other plugins, MCP servers, CLI binaries, or runtime packages that MUST be present for the plugin's bundled SKILLS / TOOLS / HOOKS to function. Dependencies are declared explicitly so installation is deterministic and so a plugin cannot silently rely on capabilities outside its catalog entry. |
-| **Installation** | The single command (or single sequence of commands) a consumer runs to install the plugin into a Claude Code project, plus any post-install configuration step the plugin requires (for example a registration entry in the project's `settings.json`). |
+| **Installation** | The provider-specific command or configuration sequence that installs the derived package. The canonical contract does not prescribe a provider's package format or invocation syntax. |
 | **Implementation reference** | Pointer to the concrete plugin source (repository path, planned ticket, or external package) that backs the contract today, so the contract and the implementation can be kept aligned. |
 
 Contracts are normative. A plugin that ships SKILLS, TOOLS, or HOOKS not
 listed in its catalog entry — or that omits a listed entry — is a bug in the
 plugin, not in the contract.
 
+##### Provider package rendering
+
+The Plugin Contracts Catalog is the canonical plugin source. A provider
+adapter renders a contract into that provider's manifest, registry entry, and
+installation workflow; those rendered packages are derived artifacts. For
+example, `.claude-plugin/plugin.json`, its `skills/` layout, and `/plugin`
+commands apply only to the Claude rendering. They do not prescribe an OpenAI,
+Gemini, or Copilot package format or invocation mechanism.
+
+Every provider rendering MUST preserve the canonical plugin name, version,
+bundled Skill, Tool, and Hook identities, dependencies, and lifecycle-family
+bindings. Provider-package conformance tests MUST compare each rendered
+package with its catalog contract and verify provider installation and a
+generated-app smoke path before release.
+
 ##### Shape rationale
 
-The fields are derived from the Claude Code plugin model
-([Claude Code Plugins][Claude Plugins]) and from the responsibilities a
-plugin assumes in the `djng` architecture:
+The fields are provider-neutral plugin-contract requirements, informed by the
+Claude Code plugin model ([Claude Code Plugins][Claude Plugins]) and by the
+responsibilities a plugin assumes in the `djng` architecture:
 
 - **Name**, **Versioning**, and **Distribution** anchor the plugin to its
   published artifact. A consumer needs to know which name to install, which
@@ -1186,9 +1229,9 @@ configuration that exposes the two contract names.
 
 | Hook name | Lifecycle event | Role inside the plugin |
 |---|---|---|
-| `pre-construction` | `PreToolUse` on `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold` | Block any construction tool until the OpenAPI schema is present and valid. |
-| `post-generation` | `PostToolUse` on the construction tools above | Write structured verification logs after each generation step. |
-| `session-stop` | `Stop` | Archive `build/command-execution.*` and write the session summary. |
+| `pre-construction` | `pre-tool` on `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold` | Block any construction tool until the OpenAPI schema is present and valid. |
+| `post-generation` | `post-tool` on the construction tools above | Write structured verification logs after each generation step. |
+| `session-stop` | `session-stop` | Archive `build/command-execution.*` and write the session summary. |
 
 **Distribution**: Source artifacts live in this repository
 (`django-angular3`). The plugin is shipped as an in-tree `.claude-plugin/`
@@ -1321,8 +1364,8 @@ configuration that exposes the four contract names.
 
 | Hook name | Lifecycle event | Role inside the plugin |
 |---|---|---|
-| `migration-triggered` | `PostToolUse` on Django migration commands | Re-export the OpenAPI schema whenever models change. |
-| `breaking-change` | `PreToolUse` on `oasdiff_diff` consumers | Block downstream construction tools when `oasdiff_diff` reports breaking changes. |
+| `migration-triggered` | `post-tool` on Django migration commands | Re-export the OpenAPI schema whenever models change. |
+| `breaking-change` | `pre-tool` on `oasdiff_diff` consumers | Block downstream construction tools when `oasdiff_diff` reports breaking changes. |
 
 The `pre-construction` hook is NOT bundled here even though it invokes
 `validate_openapi_schema`: that hook is scoped to construction-side tools
@@ -1388,20 +1431,51 @@ directory in this repository, sourcing its tools from
   bundled by `contract-lifecycle` (§3) — is the canonical example.
 - New plugin bundles added to `djng` MUST be documented here using the
   [plugin contract shape](#plugin-contract-shape) before they may be
-  published to a Claude Code plugin marketplace, listed in this catalog, or
-  recommended in `doc/ARCHITECTURE.md` or `doc/APP_BUILDER_REQUIREMENTS.md`.
+  rendered for any provider, listed in this catalog, or recommended in
+  `doc/ARCHITECTURE.md` or `doc/APP_BUILDER_REQUIREMENTS.md`.
 
 [Claude Plugins]: https://code.claude.com/docs/en/plugins
 
 ### Skills
 
-The formal skill format used here is defined by Anthropic — see `ARCHITECTURE.md` §20: [Claude Skills] (conceptual overview), [Claude Code Skills] (CLI-side reference: extended frontmatter, invocation control, dynamic context injection), and [Claude Agent SDK Skills] (SDK-side discovery and invocation). This section describes the project-specific application of that format; for the authoritative skill-format reference, consult the upstream documents.
+#### Canonical skill contract and provider renderings
 
-All skill specifications in this document follow the **Agent Skills** format — reusable capabilities invoked explicitly by `build_app` via the Claude Agent SDK `query(skills=[...])` option, or by users via `/<skill-name>` in the Claude Code CLI.
+The [Skills Catalog](#skills-catalog) is the single canonical `djng` source
+for a Skill's identity, purpose, modes, inputs, outputs, dependencies, and
+acceptance criteria. `skill_creation/skills/` contains derived working copies
+used during authoring and must remain aligned with that catalog; it is not a
+second canonical source.
 
-#### Directory Structure
+A provider adapter renders the canonical Skill contract into the provider's
+native prompt, tool registration, skill file, or package representation. Every
+rendering MUST preserve the canonical name, purpose, inputs, outputs,
+dependencies, and acceptance criteria. Provider-native frontmatter, manifest
+fields, tool allowlists, filesystem layouts, and invocation syntax are derived
+adapter concerns, not canonical Skill fields.
 
-Each skill lives in its own directory under `.claude/skills/`:
+Provider-package conformance tests MUST verify that preservation for each
+rendering. A slash invocation, where a provider supports one, uses the
+canonical Skill name but is never a normative cross-provider interface; a
+provider without slash commands invokes the same canonical Skill through its
+adapter's selected prompt or tool mechanism.
+
+#### Claude skill rendering
+
+The Claude rendering uses the Anthropic Agent Skills format — see
+`ARCHITECTURE.md` §20: [Claude Skills] (conceptual overview), [Claude Code
+Skills] (CLI-side reference: extended frontmatter, invocation control, dynamic
+context injection), and [Claude Agent SDK Skills] (SDK-side discovery and
+invocation). The Claude-specific details below do not define another canonical
+source and do not apply unchanged to other providers.
+
+The Claude rendering follows the **Agent Skills** format — reusable
+capabilities invoked explicitly by the Claude adapter via
+`query(skills=[...])`, or by users through Claude Code's `/<skill-name>` CLI
+syntax.
+
+#### Claude directory structure
+
+Each rendered Claude skill lives in its own directory under `.claude/skills/`:
 
 ```
 .claude/skills/<skill-name>/
@@ -1411,9 +1485,10 @@ Each skill lives in its own directory under `.claude/skills/`:
   examples/         # Optional example files demonstrating usage
 ```
 
-#### YAML Frontmatter
+#### Claude YAML frontmatter
 
-Every `SKILL.md` file begins with YAML frontmatter that defines skill metadata:
+Every rendered Claude `SKILL.md` file begins with YAML frontmatter that defines
+Claude-specific skill metadata:
 
 ```yaml
 ---
@@ -1443,13 +1518,13 @@ allowed-tools:
 - **`context`**: Always `fork` — each skill execution runs in an isolated context
 - **`allowed-tools`**: List of Claude Code tools the skill is permitted to use during execution
 
-#### Skill loading model
+#### Claude skill loading model
 
 At session start, the skill loader preloads only the YAML frontmatter (`name`, `description`, `when_to_use`) of every discovered SKILL.md into the model's context. When a skill is invoked — by the user typing `/<name>` in CLI mode, or by `build_app` selecting it via `query(skills=[...])` in SDK mode — the SKILL.md body loads. Supporting files (shared references, templates, scripts) live on the filesystem and are read by Claude on demand via the Read tool when SKILL.md links to them. Scripts are executed via Bash; their source is never loaded as context.
 
 **Token strategy.** Keep SKILL.md body under ~500 lines (per [Claude Skills Best Practices]). Move detailed reference material into separate files in the same skill directory and link to them. Files that Claude does not need to read incur no token cost.
 
-#### Progressive disclosure of supporting files
+#### Claude progressive disclosure of supporting files
 
 Per the formal skill format ([Claude Code Skills], [Claude Agent SDK Skills]), SKILL.md preloads only its YAML frontmatter (`name`, `description`, optionally `when_to_use`) into the session at startup. The body of SKILL.md loads when the skill is invoked. Supporting files (shared references, templates, scripts) live on the filesystem and are read on demand by Claude via the Read tool when SKILL.md links to them. Scripts in `scripts/` are executed via Bash; their source is never loaded as context.
 
@@ -1469,7 +1544,7 @@ Use the template at `templates/component.ts.tpl` — read and adapt for the outp
 
 For dynamic context injected at load time, the Claude Code CLI supports shell-command interpolation via the `` !`<command>` `` syntax. The Claude Agent SDK does not perform this preprocessing — under SDK invocation, Claude must use the Bash tool explicitly when shell output is needed inline.
 
-#### Invocation Model
+#### Claude invocation model
 
 Within the broader automation model, SKILLS are used by the agent within
 guided agent sessions, not invoked by users directly:
@@ -1494,7 +1569,7 @@ session when a selected command composes capabilities from several skills.
 guided agent session. In the Claude Agent SDK, this is implemented as a `query()`
 call. This document uses `query()` to refer to that concrete function.
 
-#### Canonical SKILL.md Template Structure
+#### Claude `SKILL.md` template structure
 
 Every `SKILL.md` file follows this structure:
 
@@ -1593,7 +1668,9 @@ List any skills that must be executed before this skill (e.g., workspace must ex
 Brief examples demonstrating typical usage patterns.
 ```
 
-This canonical structure ensures consistency across all 11 skills and provides clear guidance for both outer agent invocation and skill implementation.
+This Claude rendering structure provides consistent guidance for Claude Code
+and Claude Agent SDK invocation. It is derived from, and must preserve, the
+canonical Skill contract above.
 
 ## Skill Shared Context Files
 

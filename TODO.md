@@ -1,11 +1,9 @@
 # Open Items — djng/ngdj
 
+## 0. Classify configuration files and align documentation and code
 
----
-
-## Priority 0. Classify configuration files and align documentation and code
-
-**Status: Not started — high priority**
+**Status: In progress — inventory and execution plan drafted; taxonomy
+alignment and rollout remain incomplete**
 
 Define and apply the following configuration-file categories consistently in
 djng documentation and code. Each configuration file must identify its category,
@@ -17,6 +15,19 @@ owner, input mechanism, and relationship to command-line arguments.
 | **Command input configuration set** | Supplies command inputs, implicitly by default or explicitly by path; may replace or duplicate command-line arguments. | A command's default or explicitly selected input set |
 | **Specification configuration** | Defines or supplies an external contract or grammar consumed by djng. | OpenAPI 3.0 schema; OpenUI `openui.schema.json` |
 
+**Progress evidence:** `REQUIREMENTS.md` §4.2 inventories configuration files,
+ownership, and purposes; `doc/configuration_files_and_settings.md` records the
+remaining ordered execution work. Neither yet adopts this three-category
+taxonomy as its authoritative classification.
+
+**Remaining work:** Resolve the terminology conflict between this taxonomy and
+the `Project configuration` / `Tool configurations` / `OAS schema` / `OpenUI
+specification` labels currently used in `REQUIREMENTS.md` §4.2. Then establish
+the chosen definitions in that single authoritative reference, align
+`README.md`, `docs/`, `doc/`, command help, configuration loading, validation,
+and tests, and retire the temporary execution-plan document after its steps are
+complete.
+
 Review and align `README.md`, `docs/`, `doc/`, command help, configuration
 loading, validation, and tests to use these categories without conflating tool
 settings, command inputs, and specifications. Establish the authoritative
@@ -27,20 +38,24 @@ than restating these definitions.
 
 ## 1. Non-CRM UI Input Format: OpenUI Defined
 
-**Status: Resolved — pending implementation**
+**Status: Partially implemented — configured input and validation complete;
+build-time structural diffing pending**
 
-The generated app's non-CRM UI source is `spec/openui/app.openui.json`, an OpenUI
-concrete UI document. It conforms to `openui.schema.json` and uses the
-vocabulary in `openui.json` from
+The generated app's non-CRM UI source is the OpenUI concrete document selected
+by `artifacts.openuiSpecification` in `django-angular3-project.json`.
+`spec/openui/app.openui.json` is this repository's fixture. Each concrete
+document conforms to `openui.schema.json` and uses the vocabulary in
+`openui.json` from
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). Non-CRM change
-detection must still be implemented in `django_angular3/validation.py` by
-validating and structurally diffing the OpenUI document tree.
+detection must still be implemented in `build_app` by structurally diffing the
+OpenUI document tree.
 
 | | |
 |---|---|
-| **Remaining work** | Implement OpenUI document validation and structural diffing in `django_angular3/validation.py`. |
+| **Completed** | `django_angular3/config.py` resolves `artifacts.openuiSpecification`; `django_angular3/validation.py` validates concrete documents through `OpenUiJson`, including schema, catalog, and duplicate-ID checks. |
+| **Remaining work** | Implement previous-OpenUI input handling, an OpenUI ChangeSet lane, and structural document-tree diffing in `django_angular3/management/commands/build_app.py`. |
 | **Origin** | `APP_BUILDER_REQUIREMENTS.md` §Inputs, §Change Derivation; `ARCHITECTURE.md` §7.1 stage 4; `REQUIREMENTS.md` §4.2.2 |
-| **Input sources** | `spec/openui/app.openui.json`, `django_angular3/validation.py` |
+| **Input sources** | `artifacts.openuiSpecification` in the generated-app project configuration; `spec/openui/app.openui.json` fixture |
 
 ---
 
@@ -356,7 +371,7 @@ umbrella design spec for the full automation model rather than SKILLS alone.
 
 ---
 
-## Platform-Aware command execution
+## 13. Platform-Aware command execution
 
 - Add unit tests for platform-aware Angular executable resolution. Simulate
   Windows and non-Windows defaults, and verify the intended behavior when
@@ -365,7 +380,7 @@ umbrella design spec for the full automation model rather than SKILLS alone.
 
 ---
 
-## 13. Direct OpenUI validation management command
+## 14. Direct OpenUI validation management command
 
 **Status: Planned**
 
@@ -386,3 +401,132 @@ Add command tests for a valid document and for propagation of an upstream
 `openui-spec` diagnostic. This keeps `OpenUiJson` as the single validation
 authority while providing the explicit Django command surface required by
 Task 2.2 of `doc/openui-spec_integration_plan.md`.
+
+---
+
+## 15. openui-spec integration plan - remaining items
+
+### What openui-spec provides
+
+The `openui-spec` defines three layered artifacts:
+
+- **`openui.schema.json`** — grammar: validates the shape of any OpenUI JSON document
+- **`openui.json`** — catalog: machine-readable vocabulary of all scope objects (Application, Controls, Behaviors, Pages, Views, Containers, Widgets, …)
+- **concrete UI document** (`input.json`) — a schema-valid document using vocabulary from the catalog; this is the user-authored UI description
+- **`OpenUiJson` tooling API** — the published validation and editing boundary
+	that validates a concrete document against both the grammar and catalog and
+	rejects duplicate object IDs
+
+The concrete document format defines the non-CRM input consumed by the djng
+integration contract.
+
+---
+
+### Task 3: Validation and test updates
+
+**Status: Partial.** Steps 3.1, 3.2, and 3.4 are complete. Step 3.3 has
+standalone CLI coverage and Step 3.5 has fixture coverage; their `build_app`
+acceptance portions remain deferred. Step 3.6 remains outstanding.
+
+#### Step 3.3 — CLI and build-command integration coverage
+
+**Status: Partial.** `tests/test_cli.py` covers standalone `validate-openui`
+and `validate-project` success and invalid-OpenUI failure paths. Generated-app
+`build_app` coverage remains deferred while that command is WIP.
+
+**Target:** new `tests/test_cli.py`.
+
+Add CLI tests for `validate-openui <app.openui.json>` and `validate-project`.
+Verify valid fixtures return success and invalid OpenUI documents return failure
+with the validation path. Add generated-app command coverage showing that
+`build_app` rejects an invalid OpenUI source before change detection. This test file
+is new because no current test module exercises these CLI commands.
+
+
+#### Step 3.5 — Three-lane scenario fixtures and acceptance coverage
+
+**Status: Partial.** `spec/examples/` provides valid scenario configurations,
+shared source artifacts, and a manifest covering all eight change-lane
+combinations plus breaking, source-selection, and replacement cases. Direct
+ChangeSet, command-ordering, and dry-run non-modification assertions remain
+deferred until `build_app` is implemented.
+
+**Targets:** `tests/`, `tests/test_export_schema.py`, and
+`spec/examples/`.
+
+Materialize and test the full $2^3$ matrix of incremental `config`, OpenAPI,
+and OpenUI changes documented in `TEST_EXAMPLES.md`. Also retain coverage for
+first-run, breaking, OpenUI-source-selection, and replacement cases. Each test
+must assert all three ChangeSet lanes, selected commands, command ordering, and
+dry-run non-modification behavior.
+
+#### Step 3.6 — Verification gate
+
+After implementation, run Ruff format and lint checks plus the full unittest
+suite specified in `.github/copilot-instructions.md`. Also run the relevant
+`django-admin validate-openui`, `django-admin validate-project`, and
+`django-admin build_app --dry-run` commands in a generated-app-compatible Django
+configuration. Record the OpenUI format reference and commands in the
+implementation change.
+
+---
+
+### Task 4: Complete direct `build_app` execution
+
+**Status: Not started.** `build_app` is WIP; its current implementation is not
+evidence that any Task 4 requirement is complete.
+
+#### Step 4.1 — Define previous-input handling
+
+**Status: Planned.** Define how `build_app` receives the accepted prior project
+state and prior OpenUI document before implementing comparison. The current
+OpenUI input is selected by `artifacts.openuiSpecification`; do not introduce
+an undocumented `--previous-openui` flag or `.previous` convention. Record the
+chosen prior-state mechanism once in `doc/APP_BUILDER_REQUIREMENTS.md`, then
+use it consistently in the command, examples, and tests.
+
+#### Step 4.2 — Implement command execution
+
+**Targets:** `django_angular3/management/commands/build_app.py`,
+`django_angular3/angular.py`, and the required direct execution boundaries.
+
+Discover `django-angular3-project.json`; use `artifacts.openapiSchema`,
+`artifacts.openuiSpecification`, and `artifacts.angularWorkspace` as the
+current inputs and output location. Validate inputs, derive the `config`,
+schema, and OpenUI change lanes from the accepted prior state, translate each
+supported change directly to an executable command, and execute in dependency
+order. An unsupported change must fail explicitly rather than being omitted.
+
+`--dry-run` is diagnostic-only: it validates inputs, derives changes, reports
+ordered commands with their modes, inputs, and reasons, and must not modify the
+generated-app workspace. Normal execution must halt on the first wrapper, tool,
+hook, or validation failure and surface the failure through Django's normal
+error reporting.
+
+#### Step 4.3 — Define command translation and output validation
+
+**Targets:** `doc/APP_BUILDER_REQUIREMENTS.md`, `TODO.md`, and
+`django_angular3/management/commands/build_app.py`.
+
+Define one complete mapping for every supported config, OpenAPI, and OpenUI
+add, modify, delete, replacement, and first-run change. The mapping must name
+the executable boundary, its mode, inputs, ordering prerequisites, and terminal
+validation. Record missing wrappers as unsupported requirements until they
+exist; execution must never silently skip their corresponding change. Define
+post-execution generated-file checks, Angular build, and required integration
+checks. Command execution and terminal validation—not an emitted plan—are the
+build result.
+
+#### Step 4.4 — Add direct-build acceptance coverage
+
+**Targets:** `tests/test_export_schema.py`, new focused `build_app` tests, and
+the scenario fixtures in `doc/TEST_EXAMPLES.md`.
+
+Implement the direct-build cases documented by Task 3.5 using the scenario
+fixtures: every $2^3$ `config` × OpenAPI × OpenUI combination, plus first-run,
+replacement, breaking-change, source-selection, deletion, and command-failure
+cases. Assert all three derived lanes, selected executable boundaries, command
+ordering, executed wrappers, and validated outputs—not an emitted plan. Cover
+dry-run separately by asserting no generated-app files are modified.
+
+---

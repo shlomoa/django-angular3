@@ -43,6 +43,16 @@ changes; validation decides whether the build succeeded. A command failure or
 failed validation halts the build and surfaces the failure through Django's
 normal command error reporting.
 
+### Provider adapters and enforcement ownership
+
+`ARCHITECTURE.md` §2.12.1 is the authoritative provider-adapter capability
+matrix. Provider-native hooks, handlers, and wrappers may map provider events
+into the adapter interface, but they are not independent correctness gates.
+During direct `build_app` execution, `djng` applies the selected TOOL and HOOK
+contracts, dependency ordering, failure handling, and terminal validation;
+those command-execution boundaries remain authoritative regardless of the
+provider used by an agent session.
+
 ---
 
 ## Inputs

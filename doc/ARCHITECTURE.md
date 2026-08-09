@@ -70,6 +70,32 @@ cancellation concerns from the architecture's construction and acceptance
 model. Provider implementations and their runtime contracts are defined in
 `doc/GENERATE_AI_AUTOMATIONS.md`.
 
+#### 2.12.1 Provider-adapter capability matrix
+
+This matrix is the authoritative architecture reference for the capabilities a
+provider adapter must map into the provider-neutral `djng` automation contract.
+It records validated reference patterns from `shlomoa/ai`; it does not claim
+that any adapter is implemented in `djng`.
+
+| Capability | Claude Agent SDK | OpenAI Agents / Responses | Gemini SDK / Antigravity | Copilot SDK |
+|---|---|---|---|---|
+| Canonical skill loading | Filesystem skills | Explicit skill-bundle loading | Adapter-provided skill loading | Adapter-provided skill loading |
+| Tool calling | MCP tools | Function tools | Function tools | Session tools |
+| Pre-tool gate | Native hooks | Local function-tool guard / hook manager | Decorator or wrapper | `on_pre_tool_use` / permission handler |
+| Post-tool observation | Native hooks | Local hook manager | Decorator or wrapper | `on_post_tool_use` |
+| Stop / session teardown | Native stop hook | Adapter-managed session teardown | Adapter-managed session teardown | Adapter-managed session teardown |
+| Structured result | Adapter normalizes Agent SDK result | Adapter normalizes Responses / agent result | Adapter normalizes SDK result | Adapter normalizes session result |
+| Timeout / cancellation | Adapter maps SDK controls and outcomes | Adapter maps API / agent controls and outcomes | Adapter maps SDK controls and outcomes | Adapter maps session controls and outcomes |
+
+Provider-native hooks, handlers, and wrappers are adapter mechanisms only.
+They report and normalize provider-runtime events; they do not independently
+decide construction correctness. `djng` command-execution gates and terminal
+validation remain the authoritative enforcement boundaries for every provider.
+
+No provider adapter is implemented in `djng`. A future adapter must satisfy
+provider-independent adapter-contract tests and its credential- and
+runtime-gated provider integration suite before being treated as implemented.
+
 ### 2.13 agentic orchestration
 An orchestration model in which an agentic orchestrator derives construction
 work from contract and configuration changes, coordinates deterministic and
