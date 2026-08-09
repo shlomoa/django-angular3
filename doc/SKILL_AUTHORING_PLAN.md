@@ -249,8 +249,8 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. It compares inputs, translates changes to ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, driven by the Claude Agent SDK. | `ARCHITECTURE.md` §2.16 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. The subject of this document. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
+| **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
 | **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
 
 ## References

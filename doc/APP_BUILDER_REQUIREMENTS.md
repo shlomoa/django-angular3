@@ -326,9 +326,11 @@ they are not a substitute for execution.
 
 ### FR-8: Automation command execution
 
-- Each selected SKILL command must make a Claude Agent SDK call with the
-  specified SKILL(s) enabled, command inputs as the prompt, and
-  `artifacts.angularWorkspace` as the generated-app workspace.
+- Each selected SKILL command must run through the selected provider adapter
+  with the specified canonical SKILL(s), sanitized command inputs, and
+  `artifacts.angularWorkspace` as the generated-app workspace. The adapter
+  returns normalized session evidence; it does not determine command or run
+  acceptance.
 - Each selected tool command must execute the corresponding deterministic tool
   contract with structured inputs and outputs.
 - Each selected gate must enforce its blocking check or lifecycle side effect

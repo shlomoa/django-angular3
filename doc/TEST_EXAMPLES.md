@@ -525,8 +525,9 @@ The breaking-change gate is implemented by the `breaking-change` hook
 contract (see `GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog), fed by
 the `oasdiff_diff` tool contract (see `GENERATE_AI_AUTOMATIONS.md` §Tool
 Contracts Catalog). `oasdiff_diff` itself exits zero and returns its
-structured `breaking` array; the `breaking-change` `PreToolUse` hook
-consumes that output and halts the run (Claude Code: exit `2` to block; `build_app`: breaking-change exit code per FR-4):
+structured `breaking` array; the `breaking-change` `pre-tool` hook consumes
+that output and halts the run (`build_app` uses the breaking-change exit code
+defined by FR-4):
 
 ```
 Breaking schema changes detected:
