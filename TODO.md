@@ -227,9 +227,11 @@ this, the agent cannot evaluate completion and may terminate arbitrarily.
 
 **Status: Not started**
 
-Implement the iterative orchestration flow using the Claude Code Python SDK, so
-construction can invoke the agent with SKILLS enabled until acceptance conditions
-are satisfied.
+Implement the iterative orchestration flow through the provider-neutral adapter
+contract. The Claude adapter uses the Claude Agent SDK; OpenAI, Gemini, and
+Copilot adapters must preserve the same direct-command execution semantics.
+Construction invokes a selected provider session with canonical SKILLS enabled
+until acceptance conditions are satisfied.
 
 Failure handling must be specified: what `build_app` does when the agent ends
 without evidence of success — halt, retry the SDK call, surface a structured
@@ -245,6 +247,24 @@ error, or roll back partial changes. Currently unspecified; blocks
 satisfying its acceptance criteria. It makes one SDK call per selected SKILL
 command and continues regardless of whether that command produced evidence of
 success.
+
+### Provider-adapter verification backlog
+
+The authoritative adapter-contract cases and expected assertions are in
+`doc/phased_implementation_plan.md` Phase 5. Implement provider-independent
+unit tests with stubs before any provider SDK integration. Each real-provider
+suite is credential- and runtime-gated; absent credentials skip that suite and
+must not affect the provider-independent contract tests.
+
+| Adapter | Stub contract tests | Credential/runtime-gated integration suite |
+|---|---|---|
+| Claude Agent SDK | Success, unmet acceptance, timeout/context exhaustion, tool denial, post-tool failure, teardown | Verify Agent SDK session, native hooks, skill loading, result normalization, and teardown. |
+| OpenAI Agents / Responses | Same provider-neutral contract cases | Verify Responses/agent session plus local function-tool guard and hook-manager normalization. |
+| Gemini SDK / Antigravity | Same provider-neutral contract cases | Verify function-tool session plus decorator/wrapper lifecycle normalization. |
+| Copilot SDK | Same provider-neutral contract cases | Verify session tools, permission/pre-post handlers, and lifecycle normalization. |
+
+An adapter is not implemented until both its provider-independent contract
+tests and its own credential/runtime-gated integration suite pass.
 
 ---
 

@@ -295,6 +295,26 @@ command-execution semantics owned by `djng`.
   provider-independent unit tests and do not claim any adapter is implemented
   until it passes its own suite.
 
+**Adapter-contract test matrix**:
+
+| Case | Stubbed adapter outcome | Required `build_app` assertion |
+|---|---|---|
+| Successful session | Returns acceptance evidence satisfying the selected Skill's criteria. | Advance only after recording the normalized evidence. |
+| Unmet acceptance | Ends without sufficient acceptance evidence. | Halt; emit a structured `unmet_acceptance` error; do not select a dependent command. |
+| Timeout or context exhaustion | Returns the normalized timeout or context-exhaustion failure. | Halt; preserve diagnostics in the durable run record; do not retry or advance implicitly. |
+| Tool denial | Reports that the provider denied a requested Tool or permission. | Surface a structured `tool_denied` error and halt at the denied boundary. |
+| Post-tool failure | The Tool succeeds but the normalized `post-tool` Hook outcome fails. | Halt with the Hook-failure result; do not treat the successful Tool result as acceptance. |
+| Teardown | `session-stop` records a successful or warning-only cleanup outcome. | Record the outcome; a warning-only teardown failure does not change an already determined run result. |
+
+Stubs MUST implement only the provider-neutral adapter interface and return
+normalized results; they MUST NOT require credentials, a network connection, or
+a provider SDK. Each provider runtime suite runs the same matrix against its
+adapter with that provider's credentials and SDK available, and is skipped when
+its explicit runtime prerequisites are absent. Runtime suites verify the
+provider-specific skill loading, tool dispatch, lifecycle mapping, result
+normalization, cancellation/timeout mapping, and teardown path in addition to
+the shared assertions.
+
 ---
 
 ## Phase 6 — Terminal verification

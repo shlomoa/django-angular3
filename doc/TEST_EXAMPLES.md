@@ -37,6 +37,16 @@ django-admin build_app \
 configuration-file path. Its planner remains unimplemented, so these are
 target scenario examples rather than runnable current behavior.
 
+### Provider-adapter verification boundary
+
+These generated-app scenarios verify change derivation and construction
+behavior; they do not replace provider-adapter tests. The provider-neutral
+adapter-contract matrix and the separate credential/runtime-gated provider
+integration suites are defined in `phased_implementation_plan.md` Phase 5.
+Scenario tests use provider-independent stubs when an adapter boundary must be
+exercised; real provider credentials are required only by that provider's
+runtime integration suite.
+
 ---
 
 ## Example 1: Simple CRM — Start from Scratch
