@@ -33,7 +33,7 @@ There are two configuration files that skills must not conflate.
 `django-angular3.json` is the `djng` tool configuration. It tells the tool
 how to behave: package-manager, stylesheet, routing, application, build, and
 executable settings, plus global generator configuration. The generated app's
-`django-angular3-project.json` separately identifies its project name, OpenAPI
+`django-angular3-<project_name>.json` separately identifies its project name, OpenAPI
 schema, OpenUI specification, and Angular workspace. `build_app` must receive
 those locations through discovered project configuration rather than through a
 public configuration-file argument. The authoritative distinction is in
@@ -69,7 +69,7 @@ Run-time input is the concrete values an orchestrator provides when invoking
 the skill. For these eleven skills, run-time input comes from two sources:
 
 - **Discovered configuration and artifact paths** — supplied by the
-  orchestrator from `django-angular3-project.json` and derived static tool
+  orchestrator from `django-angular3-<project_name>.json` and derived static tool
   settings. Skills must not reinterpret either configuration file as the other
   or accept their paths as public command inputs.
 - **Command-level inputs** — supplied by `build_app` as the prompt for each

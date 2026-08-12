@@ -29,13 +29,17 @@ can be installed locally via `django-angular3 install-tutorial`. Future examples
 ```bash
 cd spec/examples/<example-name>
 django-admin build_app \
-  [--previous-schema previous-schema.yaml] \
+  [--current-config current-project-configuration.json] \
+  [--previous-config previous-project-configuration.json] \
   --dry-run
 ```
 
-`build_app` discovers `django-angular3-project.json`; it does not accept a
-configuration-file path. Its planner remains unimplemented, so these are
-target scenario examples rather than runnable current behavior.
+Without `--current-config`, `build_app` discovers
+`django-angular3-<project_name>.json` as defined in `REQUIREMENTS.md` §4.2.5.
+Without `--previous-config`, it derives the previous path by replacing the
+current filename's `.json` suffix with `.previous.json`; a missing file starts
+the build from scratch. Its planner remains unimplemented, so these are target
+scenario examples rather than runnable current behavior.
 
 ### Provider-adapter verification boundary
 
@@ -918,69 +922,22 @@ Once the `build_app` command is implemented, all examples can be run
 sequentially to verify each use case:
 
 ```bash
-# Example 1: start from scratch
+# Start from scratch, from an example project root
+django-admin build_app --dry-run
+
+# Run an incremental scenario with explicit project-configuration inputs
 django-admin build_app \
-  django_angular3/examples/01_simple_crm/django-angular3.json \
+  --current-config <current-project-configuration.json> \
+  --previous-config <previous-project-configuration.json> \
   --dry-run
 
-# Example 2: add resource (schema change only)
-django-admin build_app \
-  spec/examples/02-add-order/django-angular3.json \
-  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --previous-config django_angular3/examples/01_simple_crm/django-angular3.json \
-  --dry-run
-
-# Example 3: breaking change blocked
-django-admin build_app \
-  spec/examples/03-breaking-change/django-angular3.json \
-  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --dry-run
-# Expected: non-zero exit; no construction command executes
-
-# Example 3b: breaking change acknowledged
-django-admin build_app \
-  spec/examples/03-breaking-change/django-angular3.json \
-  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --acknowledge-breaking \
-  --dry-run
-
-# Example 4: project-configuration-only change
-django-admin build_app \
-  spec/examples/04-workspace-style/django-angular3.json \
-  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --previous-config django_angular3/examples/01_simple_crm/django-angular3.json \
-  --dry-run
-
-# Example 5: OpenUI-source configuration change
-django-admin build_app \
-  spec/examples/05-openui-source/django-angular3.json \
-  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --previous-config django_angular3/examples/01_simple_crm/django-angular3.json \
-  --dry-run
-
-# Example 6: OpenUI-only document change (illustrative until OpenUI diffing is implemented)
-django-admin build_app \
-  spec/examples/06-add-dashboard/django-angular3.json \
-  --previous-schema django_angular3/examples/01_simple_crm/schema.yaml \
-  --previous-openui django_angular3/examples/01_simple_crm/app.openui.json \
-  --dry-run
-
-# Example 7: combined schema + OpenUI (OpenUI side illustrative until diffing is implemented)
-django-admin build_app \
-  spec/examples/07-combined-change/django-angular3.json \
-  --previous-schema spec/examples/02-add-order/schema.yaml \
-  --previous-openui spec/examples/02-add-order/app.openui.json \
-  --dry-run
-
-# Example 8: replace resource
-django-admin build_app \
-  spec/examples/08-replace-resource/django-angular3.json \
-  --previous-schema spec/examples/02-add-order/schema.yaml \
-  --dry-run
-
-# Examples 9–12: use the corresponding prior inputs for the three-lane matrix
-# cases. The scenario fixtures are pending implementation.
+# Acknowledge a breaking schema change
+django-admin build_app --acknowledge-breaking --dry-run
 ```
+
+The current and previous project configurations select the corresponding
+OpenAPI and OpenUI inputs for each scenario. Examples 9–12 still require their
+pending scenario fixtures.
 
 ---
 

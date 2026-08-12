@@ -288,7 +288,7 @@ visually obvious: **contract lifecycle** (export → validate → diff) precedes
 ### Configuration discovery
 
 Tool contracts that operate on a generated app discover its
-`django-angular3-project.json`; they do not accept a project-configuration
+`django-angular3-<project_name>.json`; they do not accept a project-configuration
 path. The project configuration supplies the project identity and artifact
 locations, while static `django-angular3.json` supplies global `djng` tool
 settings. `DJANGO_ANGULAR3` and `AngularSettings` are derived from the static

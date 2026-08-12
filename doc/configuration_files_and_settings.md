@@ -24,19 +24,19 @@
      them into Angular or `ng-openapi-gen` settings.
 
 4. **Complete consumer project configuration**
-   - Finalize the canonical `django-angular3-project.json` schema and its
+  - Finalize the canonical `django-angular3-<project_name>.json` schema and its
      `ProjectConfig` derivation.
    - Define project-file discovery for Django management commands and the
      standalone CLI.
    - Release `django_angular3/templates/django_angular3/`
-     `django-angular3-project.json` as the consumer starting template.
+    `django-angular3-<project_name>.json` as the consumer starting template.
    - Keep `django_angular3/examples/01_simple_crm/`
-     `django-angular3-project.json` as the Simple CRM tutorial configuration;
+    `django-angular3-<project_name>.json` as the Simple CRM tutorial configuration;
      its artifact paths must resolve within that example.
    - Move command-test configuration to a test-owned fixture. Tests must not
      depend on the repository-root project configuration or use a packaged
      consumer template or tutorial example as a general-purpose fixture.
-     Remove the repository-root `django-angular3-project.json` once its test
+    Remove the repository-root `django-angular3-<project_name>.json` once its test
      dependency is replaced.
    - Remove legacy combined-project configuration parsing and compatibility
      aliases; reject legacy project fields in validation tests.

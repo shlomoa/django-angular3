@@ -1,6 +1,9 @@
-import argparse
+"""
+Django Angular3 Management Command: Build App
 
-# import datetime
+This module implements the build_app management command for building the Django Angular3 application.
+"""
+import argparse
 import json
 import subprocess
 from pathlib import Path
@@ -8,44 +11,190 @@ from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
-from ...config import ConfigError, load_project_config  # , get_previous_schema_path
+from ...config import ConfigError, load_project_config
 from ...tools import ensure_oasdiff
-from ...validation import validate_project_config
+
+class OpenAPIConfiguration:
+    '''
+    Docstring for OpenAPIConfiguration
+    
+    :var input: Description
+    :vartype input: paths
+    :var output: Description
+    :vartype output: loaded
+    '''
+    def __init__(self, openapi_path: str):
+        self.openapi_path = openapi_path
+        self.openapi_schema: dict[str, Any] | None = None
+
+    def load(self):
+        """
+        Load the OpenAPI schema from the specified path.
+        Raises ConfigError if loading fails.
+        """
+        try:
+            raise NotImplementedError("Loading OpenAPI schema is not implemented.")
+        except ConfigError as e:
+            raise CommandError(f"Failed to load OpenAPI schema: {e}") from e
+
+class OpenUIConfiguration:
+    '''
+    Docstring for OpenUIConfiguration
+    
+    :var input: Description
+    :vartype input: paths
+    :var output: Description
+    :vartype output: loaded
+    '''
+    def __init__(self, openui_path: str):
+        self.openui_path = openui_path
+        self.openui_spec: dict[str, Any] | None = None
+
+    def load(self):
+        """
+        Load the OpenUI specification from the specified path.
+        Raises ConfigError if loading fails.
+        """
+        try:
+            raise NotImplementedError("Loading OpenUI specification is not implemented.")
+        except ConfigError as e:
+            raise CommandError(f"Failed to load OpenUI specification: {e}") from e
+
+class ProjectConfiguration:
+    '''
+    Docstring for ProjectConfiguration
+    
+    :var input: Description
+    :vartype input: paths
+    :var output: Description
+    :vartype output: loaded
+    '''
+    def __init__(self, config_path: str):
+        self.config_path = config_path
+        self.project_name: str | None = None
+
+    def load(self):
+        """
+        Load the project configuration from the specified path.
+        Raises ConfigError if loading fails.
+        """
+        try:
+            raise NotImplementedError("Loading project configuration is not implemented.")
+        except ConfigError as e:
+            raise CommandError(f"Failed to load project configuration: {e}") from e
+
+class Configuration:
+    '''
+    Docstring for Configuration
 
 
-def _command_for_skill(skill: str, mode: str) -> str:
-    """Map canonical schematic keys and legacy SKILL identifiers to commands.
+    Configuration class responsible for:
+    * Loading project configuration from specified paths or default locations.
+    * Managing OpenAPI configuration using the OpenAPIConfiguration class
+    * Managing OpenUI configuration using the OpenUIConfiguration class
+    * Managing project configuration using the ProjectConfiguration class
 
-    Canonical keys are workspace-setup, material-app, and openapi-setup. Legacy
-    identifiers such as angular-workspace-foundation remain supported.
-    """
-    schematic_overrides = {
-        ("workspace-setup", "create"): "ng_workspace",
-        ("material-app", "create"): "ng_gen_app",
-        ("openapi-setup", "create"): "ng_openapi_gen",
-        ("openapi-setup", "modify"): "ng_openapi_gen",
-    }
-    legacy_skill_overrides = {
-        ("angular-workspace-foundation", "create"): "ng_workspace",
-        ("angular-workspace-foundation", "modify"): "ng_workspace_modify",
-        ("angular-workspace-foundation", "delete"): "ng_workspace_delete",
-        ("angular-app-composition", "create"): "ng_gen_app",
-        ("angular-app-composition", "modify"): "ng_gen_app",
-        ("angular-api-integration", "create"): "ng_openapi_gen",
-        ("angular-api-integration", "modify"): "ng_openapi_gen",
-    }
-    return schematic_overrides.get(
-        (skill, mode),
-        legacy_skill_overrides.get((skill, mode), skill.replace("-", "_")),
-    )
+    var input: paths to configuration files (OpenAPI, OpenUI, Project)
+    var output: loaded configuration objects for each type.
+    '''
+    def __init__(self, openapi_path: str | None = None, openui_path: str | None = None, project_config_path: str | None = None):
+        self._openapi_path = openapi_path
+        self._openui_path = openui_path
+        self._project_config_path = project_config_path
+        self._openapi_config: OpenAPIConfiguration | None = None
+        self._openui_config: OpenUIConfiguration | None = None
+        self._project_config: ProjectConfiguration | None = None
 
+    def load(self):
+        '''
+        Docstring for load
+        
+        :param self: Description
+        '''
+        # Load OpenAPI configuration
+        if self._openapi_path:
+            self._openapi_config = OpenAPIConfiguration(self._openapi_path)
+        else:
+            raise CommandError("OpenAPI configuration path is required.")
+
+        # Load OpenUI configuration
+        if self._openui_path:
+            self._openui_config = OpenUIConfiguration(self._openui_path)
+        else:
+            raise CommandError("OpenUI configuration path is required.")
+
+        # Load Project configuration
+        if self._project_config_path:
+            self._project_config = ProjectConfiguration(self._project_config_path)
+        else:
+            raise CommandError("Project configuration path is required.")
+
+class ChangeDetector:
+    '''
+    Docstring for ChangeDetector
+
+    ChangeDetector class responsible for:
+    * Comparing current and previous configurations to detect changes.
+    * Determining the type of change (add, remove, modify, no-change).
+    * Identifying affected resources based on the detected changes.
+    '''
+    def __init__(self, current_config: Configuration, previous_config: Configuration):
+        self.current_config = current_config
+        self.previous_config = previous_config
+
+    def detect_changes(self) -> dict[str, Any]:
+        """
+        Detect changes between the current and previous configurations.
+
+        :return: A dictionary summarizing the detected changes.
+        """
+        try:
+            raise NotImplementedError("Change detection is not implemented.")
+        except ConfigError as e:
+            raise CommandError(f"Failed to detect changes: {e}") from e
+
+class ChangeExecution:
+    '''
+    Docstring for ChangeExecution
+
+    ChangeExecution class responsible for:
+    * Executing changes based on the detected differences.
+    * Managing the order of execution and handling dependencies.
+    * Rolling back changes in case of failures.
+    '''
+    def __init__(self, change_set: dict[str, Any]):
+        self.change_set = change_set
+
+    def execute(self):
+        """
+        Execute the changes based on the detected differences.
+
+        Raises CommandError if execution fails.
+        """
+        try:
+            raise NotImplementedError("Change execution is not implemented.")
+        except ConfigError as e:
+            raise CommandError(f"Failed to execute changes: {e}") from e
 
 class Command(BaseCommand):
     help = "Build the application frontend as described by the configuration files."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            "--previous-schema", help="Path to previous OpenAPI schema."
+            "-pc", "--current-config",
+            help="Path to current configuration: \n" \
+                "The user is responsible for providing it.\n" \
+                "The default is calculated from Django as follows:\n" \
+                "- located at the root folder\n" \
+                "- project_name calculated from Django\n" \
+                "- file name is django-angular3-<project_name>.json"
+        )
+        parser.add_argument(
+            "-cc", "--previous-config",
+            help="Path to previous configuration: \n" \
+                "If not provided, path name will be the same as the current\n" \
+                "with .json replaced by .previous.json.\n" \
+                "if none existing, it will be treated as a start-from-scratch build."
         )
         parser.add_argument(
             "--dry-run",
@@ -226,22 +375,15 @@ class Command(BaseCommand):
         """build the missing pieces for a complete Angular implementation
         of the requested changes.
 
-        The command discovers and validates the project configuration, then
-        compares its OpenAPI schema with either ``--previous-schema`` or the
-        conventional previous-schema artifact. When no prior schema is available
-        (or ``--force start-from-scratch`` is used), it treats the current schema
-        as a new application and derives its resources by diffing an empty OpenAPI
-        document.
+        The build process is a multi-step operation that involves:
+        1. Load current and previous configurations.
+        2. Compare current with previous configurations and derive a change set.
+        3. Translate the change set into a directed graph of steps.
+        4. Execute the steps in order, respecting dependencies.
 
-        For incremental schema changes, this method obtains structural and
-        breaking-change reports from ``oasdiff``. Breaking changes stop planning
-        unless the caller explicitly supplies ``--acknowledge-breaking``. If a
-        The resulting change set is translated into ordered, inspectable
-        ``django-admin`` commands: workspace and app creation precede API client
-        generation, and resource removals precede regeneration and additions.
-        With the current command contract, ``--dry-run`` writes this plan using
-        :meth:`_print_debug_change_set`; without it, planning completes
-        without emitting a plan file.
+        Configuration management is delegated to a Configuration class - covering steps 1 and 2.
+        Change detection and derivation is delegated to ChangeDetector class - covering step 3.
+        Change execution is delegated to ChangeExecution class - covering step 4.
 
         Raises:
             CommandError: If the configuration is invalid, its schema source is
@@ -250,292 +392,10 @@ class Command(BaseCommand):
                 without ``--acknowledge-breaking``.
         """
         try:
-            current_config = load_project_config()
-        except ConfigError as exc:
-            raise CommandError(str(exc)) from exc
-        validation_errors: list[str] = validate_project_config(current_config)
-        if validation_errors:
-            raise CommandError(
-                "Project configuration is invalid:\n"
-                + "\n".join(f"  - {error}" for error in validation_errors)
-            )
-
-        _old_implementation = """
-        config_path = str(current_config.config_path)
-
-        try:
-            current_config = load_project_config(config_path)
+            current_config = Configuration()
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
 
-        validation_errors = validate_project_config(current_config)
-        if validation_errors:
-            raise CommandError(
-                "Project configuration is invalid:\n"
-                + "\n".join(f"  - {error}" for error in validation_errors)
-            )
-
-        current_schema_path: Path = current_config.openapi_source
-        if not current_schema_path:
-            raise CommandError("Config missing openapi.source")
-
-        # Resolve previous schema: if not provided via --previous-schema, auto-discover
-        # the conventional .previous artifact written by export_schema.
-        prev_schema_path: str | Any = options["previous_schema"]
-        if not prev_schema_path:
-            auto_previous = get_previous_schema_path(current_config.openapi_source)
-            if auto_previous.exists():
-                prev_schema_path = str(auto_previous)
-                self.stdout.write(f"Auto-detected previous schema: {prev_schema_path}")
-
-        # Ensure we have oasdiff installed via JIT
-        try:
-            ensure_oasdiff()
-        except RuntimeError as e:
-            raise CommandError(str(e)) from e
-
-        change_set: dict[str, Any] = {
-            "schema": {
-                "type": "start-from-scratch",
-                "affected_resources": [],
-                "breaking": False,
-                "oasdiff_report": None,
-            },
-            "config": {
-                "type": "no-change",
-                "affected_pages": [],
-                "affected_components": [],
-                "affected_forms": [],
-            },
-        }
-
-        # 1. Schema Change Detection
-        if (
-            str(options["force"]) == "start-from-scratch"
-            or not prev_schema_path
-            or not Path(prev_schema_path).exists()
-        ):
-            change_set["schema"]["type"] = "start-from-scratch"
-
-            # To extract resources for start-from-scratch, we diff against an empty spec
-            import tempfile
-
-            with tempfile.NamedTemporaryFile("w+", suffix=".json", delete=False) as f:
-                json.dump(
-                    {
-                        "openapi": "3.0.0",
-                        "info": {"title": "empty", "version": "1.0.0"},
-                        "paths": {},
-                    },
-                    f,
-                )
-                empty_schema_path = f.name
-
-            try:
-                diff_result: dict[str, Any] = self._diff_schemas(
-                    empty_schema_path, current_schema_path
-                )
-                schema_changes = self._evaluate_schema_changes(diff_result)
-                # Keep type as start-from-scratch, but inherit the affected resources
-                change_set["schema"]["affected_resources"] = schema_changes[
-                    "affected_resources"
-                ]
-                change_set["schema"]["oasdiff_report"] = diff_result
-            finally:
-                Path(empty_schema_path).unlink(missing_ok=True)
-
-        else:
-            self.stdout.write("Running oasdiff for schema changes...")
-
-            # Detect structural diffs
-            diff_result = self._diff_schemas(prev_schema_path, current_schema_path)
-            schema_changes = self._evaluate_schema_changes(diff_result)
-
-            # Detect breaking changes using `oasdiff breaking`
-            cmd_break: list[str] = [
-                ensure_oasdiff(),
-                "breaking",
-                prev_schema_path,
-                str(current_schema_path),
-                "--format",
-                "json",
-            ]
-            try:
-                break_result = subprocess.run(
-                    cmd_break, capture_output=True, text=True, check=False
-                )
-                break_json: list[dict[str, Any]] = (
-                    json.loads(break_result.stdout)
-                    if break_result.stdout.strip()
-                    else []
-                )
-                if break_json:
-                    schema_changes["breaking"] = True
-            except json.JSONDecodeError:
-                pass
-
-            if schema_changes["breaking"] and not options["acknowledge_breaking"]:
-                if callable(getattr(self.style, "ERROR", None)):
-                    self.stderr.write(
-                        self.style.ERROR(
-                            "Breaking schema changes detected. Review "
-                            "the oasdiff report before proceeding.\n"
-                            "Re-run with --acknowledge-breaking to continue."
-                        )
-                    )
-                else:
-                    self.stderr.write(
-                        "Breaking schema changes detected. Review "
-                        "the oasdiff report before proceeding.\n"
-                        "Re-run with --acknowledge-breaking to continue."
-                    )
-                raise SystemExit(2)
-
-            change_set["schema"] = schema_changes
-
-        # 2. Config Change Detection
-        prev_config_path: str | Any = options["previous_config"]
-        if prev_config_path and Path(prev_config_path).exists():
-            change_set["config"] = self._diff_config(prev_config_path, config_path)
-
-        # 3. Build ordered steps
-        schema_type = change_set["schema"]["type"]
-        resources = change_set["schema"]["affected_resources"]
-        steps: list[dict[str, object]] = []
-
-        if schema_type == "start-from-scratch":
-            steps.append(
-                self._build_step(
-                    len(steps) + 1,
-                    "workspace-setup",
-                    "create",
-                    "Start from scratch: create Angular workspace",
-                    config_path,
-                )
-            )
-            steps.append(
-                self._build_step(
-                    len(steps) + 1,
-                    "material-app",
-                    "create",
-                    "Start from scratch: generate Angular application",
-                    config_path,
-                )
-            )
-            steps.append(
-                self._build_step(
-                    len(steps) + 1,
-                    "openapi-setup",
-                    "create",
-                    "Start from scratch: generate API client from OpenAPI schema",
-                    config_path,
-                )
-            )
-            for resource in resources:
-                steps.append(
-                    self._build_step(
-                        len(steps) + 1,
-                        "ng-data-service",
-                        "create",
-                        f"Start from scratch: generate data service for '{resource}'",
-                        config_path,
-                        resource_name=resource,
-                    )
-                )
-
-        elif schema_type == "add-things":
-            steps.append(
-                self._build_step(
-                    len(steps) + 1,
-                    "openapi-setup",
-                    "modify",
-                    "Schema changed (add-things): regenerate API client",
-                    config_path,
-                )
-            )
-            for resource in resources:
-                steps.append(
-                    self._build_step(
-                        len(steps) + 1,
-                        "ng-data-service",
-                        "modify",
-                        (
-                            "Schema changed (add-things): update data "
-                            f"service for '{resource}'"
-                        ),
-                        config_path,
-                        resource_name=resource,
-                    )
-                )
-
-        elif schema_type == "replace-things":
-            removed = change_set["schema"].get("removed_resources", [])
-            added = change_set["schema"].get("added_resources", [])
-            # Delete removed resources first, then regenerate the API, then add new ones
-            for resource in removed:
-                steps.append(
-                    self._build_step(
-                        len(steps) + 1,
-                        "ng-data-service",
-                        "delete",
-                        f"Resource '{resource}' removed: delete data service",
-                        config_path,
-                        resource_name=resource,
-                    )
-                )
-            steps.append(
-                self._build_step(
-                    len(steps) + 1,
-                    "openapi-setup",
-                    "modify",
-                    "Schema changed (replace-things): regenerate API client",
-                    config_path,
-                )
-            )
-            for resource in added:
-                steps.append(
-                    self._build_step(
-                        len(steps) + 1,
-                        "ng-data-service",
-                        "modify",
-                        f"Resource '{resource}' added: create or update data service",
-                        config_path,
-                        resource_name=resource,
-                    )
-                )
-
-        elif schema_type == "remove-things":
-            steps.append(
-                self._build_step(
-                    len(steps) + 1,
-                    "openapi-setup",
-                    "modify",
-                    "Schema changed (remove-things): regenerate API client",
-                    config_path,
-                )
-            )
-            for resource in resources:
-                steps.append(
-                    self._build_step(
-                        len(steps) + 1,
-                        "ng-data-service",
-                        "delete",
-                        f"Resource '{resource}' removed: delete data service",
-                        config_path,
-                        resource_name=resource,
-                    )
-                )
-
-
-        if options["dry_run"]:
-            build_plan: dict[str, Any] = {
-                "generated_at": datetime.datetime.now(datetime.UTC).isoformat(),
-                "config": config_path,
-                "change_set": change_set,
-                "steps": steps,
-            }
-            self._print_debug_change_set(build_plan, options)
-        """
         raise NotImplementedError("build_app planning is not implemented.")
 
     def _print_debug_change_set(

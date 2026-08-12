@@ -15,10 +15,8 @@ and available commands.
 
 ## Project configuration discovery
 
-Commands that operate on the generated app discover its user-owned
-`django-angular3-project.json`; they do **not** accept a project-configuration
-path. The standalone CLI searches the current working directory. Django
-management commands search the Django project `BASE_DIR`.
+Commands that operate on the generated app use the project-configuration
+discovery rules in `doc/REQUIREMENTS.md` §4.2.5.
 
 The static `djng` tool configuration, `django-angular3.json`, supplies derived
 tool settings and is likewise not a command argument. Document validation
@@ -70,7 +68,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one for future `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app` | Validate the discovered project inputs and begin the app-build planning workflow. The planner is not implemented yet. Accepts `--previous-schema <path>`, `--dry-run`, `--force start-from-scratch`, and `--acknowledge-breaking`. |
+| `build_app` | Validate the project inputs and begin the app-build planning workflow. The planner is not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run`, `--force start-from-scratch`, and `--acknowledge-breaking`. See `doc/APP_BUILDER_REQUIREMENTS.md` §Inputs for default discovery and previous-configuration fallback behavior. |
 | `ng_new` | Create an empty Angular workspace. |
 | `ng_workspace` | Bootstrap the discovered workspace. |
 | `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |

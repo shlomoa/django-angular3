@@ -505,7 +505,7 @@ Their ownership is:
 
 | Main category | Subcategory | Item / file | Owner | Purpose and relationship |
 |---|---|---|---|---|
-| Project configuration | — | `django-angular3-project.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI specification, and Angular workspace. |
+| Project configuration | — | `django-angular3-<project_name>.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI specification, and Angular workspace. |
 | Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `AngularSettings` are derived from it. |
 | Tool configurations | `ng-openapi-gen` | `ngOpenApiGen` clause in `django-angular3.json` | `djng` | Global `ng-openapi-gen` settings, including `serviceSuffix` and `modelIndex`. |
 | Tool configurations | `ng-openapi-gen` | `ng-openapi-gen.json` in the project Angular workspace | `djng` | Derived per-run tool-configuration file. It combines global settings with command run-time `input` and `output` parameters. |
@@ -524,7 +524,7 @@ derivation, and validation.
 flowchart TB
   subgraph ProjectDefinitions["Project definitions"]
     direction LR
-    PROJECT["django-angular3-project.json"]
+    PROJECT["django-angular3-<project_name>.json"]
     OAS["OpenAPI contract"]
     UI["OpenUI specification"]
 
@@ -700,16 +700,15 @@ configuration-file paths.
 }
 ```
 
-#### 4.2.5. Planned `django-angular3-project.json` contents
+#### 4.2.5. Planned `django-angular3-<project_name>.json` contents
 
 Project configuration must be a separate, `djng` package user-owned
-configuration source named `django-angular3-project.json`. It supplies the
+configuration source named `django-angular3-<project_name>.json`. It supplies the
 project identity and command run-time artifact locations used by `djng`. The
 package must release its template at
-`django_angular3/templates/django_angular3/django-angular3-project.json`; the
+`django_angular3/templates/django_angular3/django-angular-project.json`; the
 generated-application scaffold must create the file at the application root
-alongside `manage.py`, preserve an existing file by default, and replace it
-only with an explicit `--force`.
+alongside `manage.py`, and rename it to `django-angular3-<project_name>.json`.
 
 The project configuration must have these required fields:
 
@@ -721,11 +720,25 @@ The project configuration must have these required fields:
   workspace.
 
 All artifact paths must be resolved relative to the project configuration file.
-For Django management commands, `djng` must discover the file at
-`Path(settings.BASE_DIR) / "django-angular3-project.json"`; for the standalone
-CLI, it must discover the file at
-`Path.cwd() / "django-angular3-project.json"`. Public command interfaces must
-not accept a project-configuration path.
+The `project_name` is the Django project name derived from
+`DJANGO_SETTINGS_MODULE`. `djng` must discover
+`django-angular3-<project_name>.json` at the project root path.
+
+For example, a generated application can declare its identity and artifact
+locations with:
+
+```json
+{
+  "project": {
+    "name": "django-angular3-scaffold"
+  },
+  "artifacts": {
+    "openapiSchema": "spec/openapi/source/example.openapi.json",
+    "openuiSpecification": "spec/openui/app.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}
+```
 
 The project configuration must remain outside the
 `django-angular3.json` → `DJANGO_ANGULAR3` → `AngularSettings` derivation

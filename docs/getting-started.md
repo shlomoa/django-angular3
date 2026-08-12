@@ -4,7 +4,7 @@ This walkthrough takes you from an empty machine to a running tutorial project
 in a few minutes. It uses the bundled `simple_crm` tutorial — a small Django +
 DRF project that already ships an OpenAPI schema, a UI definition, and a
 `django-angular3.json` tool configuration and a
-`django-angular3-project.json` project configuration — so you can see the full
+`django-angular3-<project_name>.json` project configuration — so you can see the full
 contract-first workflow without writing a backend from scratch.
 
 ## Prerequisites
@@ -48,7 +48,7 @@ This creates:
 - `schema.yaml` exported from the above DRF app.
 - `app.openui.json` containing the OpenUI requirements.
 - `django-angular3.json` static tool configuration file.
-- `django-angular3-project.json` generated-app project configuration file.
+- `django-angular3-<project_name>.json` generated-app project configuration file.
 The command prints the next steps on success.
 
 ## 3. Run the Django backend
@@ -73,8 +73,9 @@ referenced OpenAPI and OpenUI sources:
 python manage.py validate_project
 ```
 
-`validate_project` discovers `django-angular3-project.json` in the Django
-project directory. See [Command reference](commands.md) for discovery behavior.
+`validate_project` uses the project-configuration discovery rules in
+`doc/REQUIREMENTS.md` §4.2.5. See [Command reference](commands.md) for the
+command interface.
 
 ## 5. Scaffold the Angular workspace
 

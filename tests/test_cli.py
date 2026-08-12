@@ -8,8 +8,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django_angular3.cli import main
-from django_angular3.config import PROJECT_CONFIG_FILENAME
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
+
+TEST_CONFIG_FILENAME = "project.json"
 
 
 class ValidationCliTests(unittest.TestCase):
@@ -65,7 +66,7 @@ class ValidationCliTests(unittest.TestCase):
                 json.dumps({"version": "0.0.1", "id": "root", "type": "Application"}),
                 encoding="utf-8",
             )
-            config_path = root / PROJECT_CONFIG_FILENAME
+            config_path = root / TEST_CONFIG_FILENAME
             config_path.write_text(
                 json.dumps(
                     {
@@ -101,7 +102,7 @@ class ValidationCliTests(unittest.TestCase):
                 json.dumps({"version": "0.0.1", "id": "root", "type": "UnknownType"}),
                 encoding="utf-8",
             )
-            config_path = root / PROJECT_CONFIG_FILENAME
+            config_path = root / TEST_CONFIG_FILENAME
             config_path.write_text(
                 json.dumps(
                     {

@@ -42,7 +42,7 @@ than restating these definitions.
 build-time structural diffing pending**
 
 The generated app's non-CRM UI source is the OpenUI concrete document selected
-by `artifacts.openuiSpecification` in `django-angular3-project.json`.
+by `artifacts.openuiSpecification` in `django-angular3-<project_name>.json`.
 `spec/openui/app.openui.json` is this repository's fixture. Each concrete
 document conforms to `openui.schema.json` and uses the vocabulary in
 `openui.json` from
@@ -507,7 +507,7 @@ use it consistently in the command, examples, and tests.
 **Targets:** `django_angular3/management/commands/build_app.py`,
 `django_angular3/angular.py`, and the required direct execution boundaries.
 
-Discover `django-angular3-project.json`; use `artifacts.openapiSchema`,
+Discover `django-angular3-<project_name>.json`; use `artifacts.openapiSchema`,
 `artifacts.openuiSpecification`, and `artifacts.angularWorkspace` as the
 current inputs and output location. Validate inputs, derive the `config`,
 schema, and OpenUI change lanes from the accepted prior state, translate each

@@ -6,10 +6,10 @@ from unittest.mock import patch
 
 from django_angular3.cli import _run_install_tutorial
 from django_angular3.config import (
-    PROJECT_CONFIG_FILENAME,
     ConfigError,
     discover_project_config_path,
     load_project_config,
+    project_config_path,
 )
 from django_angular3.documents import load_document
 from django_angular3.validation import (
@@ -20,6 +20,22 @@ from django_angular3.validation import (
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
+TEST_PROJECT_CONFIG_FILENAME = "django-angular3-project.json"
+TUTORIAL_PROJECT_CONFIG_FILENAME = "django-angular3-simple_crm.json"
+
+
+def _example_project_config_path(example_directory: Path) -> Path:
+    config_paths = [
+        path
+        for path in example_directory.glob("django-angular3-*.json")
+        if path.name != "django-angular3.json"
+    ]
+    if len(config_paths) != 1:
+        raise AssertionError(
+            "Expected one project configuration in "
+            f"{example_directory}, found {config_paths}."
+        )
+    return config_paths[0]
 
 
 class ScaffoldTests(unittest.TestCase):
@@ -29,7 +45,7 @@ class ScaffoldTests(unittest.TestCase):
             with patch("django_angular3.config.Path.cwd", return_value=project_root):
                 self.assertEqual(
                     discover_project_config_path(),
-                    project_root / PROJECT_CONFIG_FILENAME,
+                    project_root / project_config_path(),
                 )
 
     def test_example_openapi_document_is_valid(self) -> None:
@@ -54,13 +70,13 @@ class ScaffoldTests(unittest.TestCase):
             / "django_angular3"
             / "examples"
             / "01_simple_crm"
-            / PROJECT_CONFIG_FILENAME
+            / TUTORIAL_PROJECT_CONFIG_FILENAME
         )
         self.assertEqual(validate_project_config(config), [])
 
     def test_project_config_resolves_paths(self) -> None:
         config = load_project_config(
-            ROOT / "tests" / "fixtures" / PROJECT_CONFIG_FILENAME
+            ROOT / "tests" / "fixtures" / TEST_PROJECT_CONFIG_FILENAME
         )
         self.assertTrue(config.openapi_schema.is_file())
         self.assertTrue(config.openui_specification.is_file())
@@ -70,7 +86,7 @@ class ScaffoldTests(unittest.TestCase):
     def test_project_config_loads_separate_project_configuration(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             root = Path(tmp)
-            config_path = root / PROJECT_CONFIG_FILENAME
+            config_path = root / TEST_PROJECT_CONFIG_FILENAME
             config_path.write_text(
                 json.dumps(
                     {
@@ -105,7 +121,7 @@ class ScaffoldTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            config_path = root / PROJECT_CONFIG_FILENAME
+            config_path = root / TEST_PROJECT_CONFIG_FILENAME
             config_path.write_text(
                 json.dumps(
                     {
@@ -144,7 +160,7 @@ class ScaffoldTests(unittest.TestCase):
                 json.dumps({"version": "0.0.1", "id": "root", "type": "UnknownType"}),
                 encoding="utf-8",
             )
-            config_path = root / PROJECT_CONFIG_FILENAME
+            config_path = root / TEST_PROJECT_CONFIG_FILENAME
             config_path.write_text(
                 json.dumps(
                     {
@@ -169,7 +185,7 @@ class ScaffoldTests(unittest.TestCase):
             / "django_angular3"
             / "templates"
             / "django_angular3"
-            / PROJECT_CONFIG_FILENAME
+            / TEST_PROJECT_CONFIG_FILENAME
         )
 
         config = load_project_config(template_path)
@@ -193,7 +209,7 @@ class ScaffoldTests(unittest.TestCase):
 
     def test_project_config_rejects_legacy_combined_fields(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
-            config_path = Path(tmp) / PROJECT_CONFIG_FILENAME
+            config_path = Path(tmp) / TEST_PROJECT_CONFIG_FILENAME
             config_path.write_text(
                 """{
     "project": { "name": "legacy" },
@@ -246,7 +262,7 @@ class ScaffoldTests(unittest.TestCase):
         )
         for entry in matrix:
             with self.subTest(scenario=entry["id"]):
-                config_path = examples_root / entry["id"] / PROJECT_CONFIG_FILENAME
+                config_path = _example_project_config_path(examples_root / entry["id"])
                 self.assertTrue(config_path.is_file())
                 self.assertEqual(
                     validate_project_config(load_project_config(config_path)), []
@@ -301,7 +317,7 @@ class ScaffoldTests(unittest.TestCase):
             dest_path = Path(dest)
             self.assertTrue((dest_path / "manage.py").is_file())
             self.assertTrue((dest_path / "django-angular3.json").is_file())
-            self.assertTrue((dest_path / PROJECT_CONFIG_FILENAME).is_file())
+            self.assertTrue((dest_path / TUTORIAL_PROJECT_CONFIG_FILENAME).is_file())
             self.assertTrue((dest_path / "app.openui.json").is_file())
             self.assertTrue((dest_path / "simple_crm" / "settings.py").is_file())
 

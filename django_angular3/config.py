@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -20,20 +21,29 @@ class ProjectConfig:
     angular_workspace: Path
 
 
-PROJECT_CONFIG_FILENAME = "django-angular3-project.json"
+def project_config_path() -> str:
+    """Return the project name calculated from Django environment"""
+    settings_module = os.environ.get("DJANGO_SETTINGS_MODULE")
+
+    if not settings_module:
+        raise RuntimeError("DJANGO_SETTINGS_MODULE is not defined")
+
+    project_name: str = "django-angular3-" + settings_module.rsplit(".", 1)[0] + ".json"
+    return project_name
 
 
 def discover_project_config_path() -> Path:
     """Return the canonical project configuration path for this runtime."""
+    from django.core.exceptions import ImproperlyConfigured
+
     try:
         from django.conf import settings as django_settings
-        from django.core.exceptions import ImproperlyConfigured
 
         if getattr(django_settings, "configured", False):
-            return Path(django_settings.BASE_DIR).resolve() / PROJECT_CONFIG_FILENAME
+            return Path(django_settings.BASE_DIR).resolve() / project_config_path()
     except (ImportError, ImproperlyConfigured, AttributeError):
         pass
-    return Path.cwd().resolve() / PROJECT_CONFIG_FILENAME
+    return Path.cwd().resolve() / project_config_path()
 
 
 def load_project_config(path: str | Path | None = None) -> ProjectConfig:

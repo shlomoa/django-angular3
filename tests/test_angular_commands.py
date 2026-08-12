@@ -18,8 +18,8 @@ from django_angular3.angular import (
 )
 from django_angular3.cli import build_parser, main
 from django_angular3.config import (
-    PROJECT_CONFIG_FILENAME,
     discover_project_config_path,
+    project_config_path,
 )
 from django_angular3.management.commands.ng_build import Command as NgBuildCommand
 from django_angular3.settings import (
@@ -54,7 +54,7 @@ class AngularCliCommandTests(unittest.TestCase):
             with override_settings(BASE_DIR=project_root):
                 self.assertEqual(
                     discover_project_config_path(),
-                    project_root / PROJECT_CONFIG_FILENAME,
+                    project_root / project_config_path(),
                 )
 
     def test_load_angular_settings_from_static_tool_configuration(self) -> None:

@@ -22,7 +22,7 @@ run-through using a ready-made sample, start with
 ```{mermaid}
 flowchart TD
   toolConfig[django-angular3.json<br/>static tool configuration] --> validate[Validate project inputs]
-  projectConfig[django-angular3-project.json<br/>project configuration] --> validate
+  projectConfig[django-angular3-<project_name>.json<br/>project configuration] --> validate
   drf[DRF backend] -->|export_schema| schema[OpenAPI schema]
   schema --> validate
   openui[OpenUI document] --> validate

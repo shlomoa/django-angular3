@@ -62,10 +62,10 @@ provider used by an agent session.
 | Input | Source | Format | Notes |
 |---|---|---|---|
 | `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. |
-| `django-angular3-project.json` | Project configuration | JSON | Discovered project identity and artifact locations. |
+| Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The discovered default is defined in `REQUIREMENTS.md` §4.2.5. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
-| Previous project configuration | Accepted prior project state | JSON | A persisted prior state for the `config` change lane; no public configuration-path flag exists. |
-| Previous OpenAPI schema | `--previous-schema <path>`, otherwise the current source's `.previous` sibling | YAML or JSON (OAS 3.x) | The explicit flag takes precedence. Absent on a first run; the schema change type is `start-from-scratch`. |
+| Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | A missing previous configuration starts a build from scratch. |
+| Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Absent on a first run; the schema change type is `start-from-scratch`. |
 | Current `app.openui.json` | `artifacts.openuiSpecification` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
 | Previous `app.openui.json` | Accepted prior state | JSON (`openui.schema.json`) | A persisted prior state for OpenUI change detection. Absent on a first run; the OpenUI change type is `start-from-scratch`. |
 
@@ -81,16 +81,17 @@ the configured input path and its build-stage handling. See
 
 | Input | Flag | Notes |
 |---|---|---|
+| Current configuration override | `--current-config <path>` | Override the discovered current project configuration. |
+| Previous configuration override | `--previous-config <path>` | Override the derived previous project configuration. |
 | Dry run | `--dry-run` | Diagnostic validation and debugging mode: validate inputs, identify changes, and show ordered change commands without executing them or modifying the generated-app workspace. |
 | Force mode | `--force start-from-scratch` | Override comparison results and execute the full initial-build command set. |
 | Breaking-change acknowledgement | `--acknowledge-breaking` | Permit execution after the breaking-change gate reports OpenAPI breaking changes. |
 
 ### Configuration model
 
-`django-angular3-project.json` supplies `project.name` and the `artifacts`
-locations used by the builder. Static tool settings remain in
-`django-angular3.json`. The authoritative field definitions and derivation
-rules are in `REQUIREMENTS.md` §4.2; this document does not duplicate them.
+The project configuration supplies the locations used by the builder. Static
+tool settings remain in `django-angular3.json`. The authoritative project
+configuration definition and discovery rules are in `REQUIREMENTS.md` §4.2.5.
 
 ---
 

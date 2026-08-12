@@ -137,7 +137,7 @@ Each djng SKILL issue must include local acceptance criteria per `SKILL_AUTHORIN
 **10. Run `build_app` cold-start for simple_crm** *(TODO item 10)*
 
 ```bash
-python manage.py build_app django-angular3.json
+python manage.py build_app
 ```
 
 Triggers all 11 SKILL sessions in dependency order against the simple_crm schema.
