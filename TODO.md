@@ -1,78 +1,17 @@
 # Open Items — djng/ngdj
 
-## 0. Classify configuration files and align documentation and code
-
-**Status: In progress — inventory and execution plan drafted; taxonomy
-alignment and rollout remain incomplete**
-
-Define and apply the following configuration-file categories consistently in
-djng documentation and code. Each configuration file must identify its category,
-owner, input mechanism, and relationship to command-line arguments.
-
-| Category | Purpose | Examples |
-|---|---|---|
-| **Tool-internal configuration** | Configures djng itself. | `django-angular3.json` |
-| **Command input configuration set** | Supplies command inputs, implicitly by default or explicitly by path; may replace or duplicate command-line arguments. | A command's default or explicitly selected input set |
-| **Specification configuration** | Defines or supplies an external contract or grammar consumed by djng. | OpenAPI 3.0 schema; OpenUI `openui.schema.json` |
-
-**Progress evidence:** `REQUIREMENTS.md` §4.2 inventories configuration files,
-ownership, and purposes; `doc/configuration_files_and_settings.md` records the
-remaining ordered execution work. Neither yet adopts this three-category
-taxonomy as its authoritative classification.
-
-**Remaining work:** Resolve the terminology conflict between this taxonomy and
-the `Project configuration` / `Tool configurations` / `OAS schema` / `OpenUI
-specification` labels currently used in `REQUIREMENTS.md` §4.2. Then establish
-the chosen definitions in that single authoritative reference, align
-`README.md`, `docs/`, `doc/`, command help, configuration loading, validation,
-and tests, and retire the temporary execution-plan document after its steps are
-complete.
-
-Review and align `README.md`, `docs/`, `doc/`, command help, configuration
-loading, validation, and tests to use these categories without conflating tool
-settings, command inputs, and specifications. Establish the authoritative
-configuration-file reference and make other documentation link to it rather
-than restating these definitions.
-
----
-
-## 1. Non-CRM UI Input Format: OpenUI Defined
-
-**Status: Partially implemented — configured input and validation complete;
-build-time structural diffing pending**
-
-The generated app's non-CRM UI source is the OpenUI concrete document selected
-by `artifacts.openuiSpecification` in `django-angular3-<project_name>.json`.
-`spec/openui/app.openui.json` is this repository's fixture. Each concrete
-document conforms to `openui.schema.json` and uses the vocabulary in
-`openui.json` from
-[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). Non-CRM change
-detection must still be implemented in `build_app` by structurally diffing the
-OpenUI document tree.
-
-| | |
-|---|---|
-| **Completed** | `django_angular3/config.py` resolves `artifacts.openuiSpecification`; `django_angular3/validation.py` validates concrete documents through `OpenUiJson`, including schema, catalog, and duplicate-ID checks. |
-| **Remaining work** | Implement previous-OpenUI input handling, an OpenUI ChangeSet domain, and structural document-tree diffing in `django_angular3/management/commands/build_app.py`. |
-| **Origin** | `APP_BUILDER_REQUIREMENTS.md` §Inputs, §Change Derivation; `ARCHITECTURE.md` §7.1 stage 4; `REQUIREMENTS.md` §4.2.2 |
-| **Input sources** | `artifacts.openuiSpecification` in the generated-app project configuration; `spec/openui/app.openui.json` fixture |
-
----
-
-## 2. Derive Angular-Django2 Capabilities and Wrappers
+## 1. Derive Angular-Django2 Capabilities and Wrappers
 
 **Status: In progress**
 
-### 2.0 Previous OpenUI input interface
+### 1.0 Previous OpenUI input interface
 
-**Status: Resolved — pending implementation**
+**Status: Decision pending**
 
-`build_app` resolves the previous OpenUI document by the same algorithm used
-for the previous OpenAPI schema: `--previous-openui <path>` takes precedence;
-otherwise it uses the `.previous` sibling of the current `openui.source`. The
-`--previous-config` argument is reserved for the project-configuration change
-domain. This interface must be implemented consistently by `build_app`, examples,
-and tests.
+Define and record the accepted prior-OpenUI input mechanism in
+`APP_BUILDER_REQUIREMENTS.md`. The chosen mechanism must keep
+`--previous-config` reserved for the project-configuration Change Model domain
+and be implemented consistently by `build_app`, examples, and tests.
 
 Derive the complete set of `angular-django2` capabilities and `djng` command
 wrappers needed to materialize the required Angular-side outputs.
@@ -90,10 +29,10 @@ wrappers needed to materialize the required Angular-side outputs.
 - Broader repository docs under `doc/` still need wording alignment where they
   describe workspace creation as `ng_new`-first rather than the composite
   `ng_workspace` flow.
-- Complete derivation aligned with all 11 SKILLS not yet done; see §2.1 for the
+- Complete derivation aligned with all 11 SKILLS not yet done; see §1.1 for the
   outstanding `angular-django2` (ngdj) capability alignment tasks.
 
-### 2.1 angular-django2 (ngdj) capability alignment
+### 1.1 angular-django2 (ngdj) capability alignment
 
 `angular-django2` (ngdj) was released with new and clarified schematic
 capabilities. Each ngdj change below is mapped to the corresponding djng
@@ -103,13 +42,8 @@ still require a djng wrapper, direct-build command, or SKILL/doc alignment.
 
 | ngdj change | djng alignment action | Status |
 |---|---|---|
-| Explicit Angular 22 `material-app` flags (`--ssr=false`, `--zoneless=true`, `--defaults`) | `ng_gen_app` emits the explicit flags via `build_ng_gen_app_invocations` in `django_angular3/angular.py`, driven by the `ssr`/`zoneless` defaults in `django_angular3/settings.py`. | Done |
-| Non-interactive app generation (`--defaults`) | Emitted by `ng_gen_app` (`angular.py`). | Done |
-| SSR disabled by default in generated app (`--ssr=false`) | Emitted by `ng_gen_app` from the `ssr` setting default (`settings.py`). | Done |
-| Zoneless app generation (`--zoneless=true`) | Emitted by `ng_gen_app` from the `zoneless` setting default (`settings.py`). | Done |
 | Positional names for `component`/`service`/`class` pass-through generators | Add djng wrappers (or direct-build commands) that pass the generator name as a positional argument, not `--name=...`. | Pending |
 | Project-relative `--path` for `component`/`service`/`class` | Wrappers must pass `--project=<app> --path=src/app/features/...` and expect output under `projects/<app>/src/app/features/...`. | Pending |
-| Component generation seeds embedding hooks (begin/end markers in TS/HTML) | Marker contract documented in the component-composition SKILL (`skill_creation/skills/07-angular-component-composition.md` §Component embedding, mirrored in `doc/GENERATE_AI_AUTOMATIONS.md`) and the user workflow (`docs/workflow.md` §6). | Done |
 | New `embed-component` command (local mode) | File-mode `embed-component` usage documented in `docs/workflow.md` §6, `README.md`, and SKILL 07; a djng `embed-component` wrapper / direct-build command is still to be added. | Doc done; wrapper pending |
 | Embed generated component into app root | Documented as embedding a feature component into `projects/<app>/src/app/app.ts` in `docs/workflow.md` §6 and SKILL 07; wrapper composition pending. | Doc done; wrapper pending |
 | Compose nested component hierarchy | Repeated child→parent, parent→app-root `embed-component` flow documented in `docs/workflow.md` §6 and SKILL 07; wrapper support pending. | Doc done; wrapper pending |
@@ -126,7 +60,7 @@ still require a djng wrapper, direct-build command, or SKILL/doc alignment.
 
 ---
 
-## 3. Revise and Finalize GENERATE_AI_AUTOMATIONS.md
+## 2. Revise and Finalize GENERATE_AI_AUTOMATIONS.md
 
 **Status: Substantially complete**
 
@@ -150,7 +84,7 @@ integration, covering SKILLS, TOOLS, HOOKS, and PLUGINS.
 
 ---
 
-## 4. OpenAPI Schema Extraction and Contract Validation
+## 3. OpenAPI Schema Extraction and Contract Validation
 
 **Status: Substantially implemented**
 
@@ -165,7 +99,7 @@ on the Django/DRF side.
 
 ---
 
-## 5. djng Generator Entry Points and Wrappers
+## 4. djng Generator Entry Points and Wrappers
 
 **Status: Substantially implemented**
 
@@ -176,11 +110,11 @@ construction.
 - All current workspace/app/contract wrappers implemented, including the
   explicit `ng_workspace` bootstrap wrapper aligned with the upstream
   `angular-django2:workspace-setup` schematic. Non-CRM construction wrappers
-  depend on item 1 (MR1).
+  depend on the OpenUI input work described by this TODO.
 
 ---
 
-## 6. app-builder Change Detection and Direct Execution
+## 5. app-builder Change Detection and Direct Execution
 
 **Status: Partially implemented**
 
@@ -198,12 +132,12 @@ previous schema/OpenUI inputs.
   change detection and Angular UI command dispatch are not implemented yet.
 - Current command selection produces CLI command strings. It must be replaced
   with direct wrapper and SDK execution, failure handling, and terminal validation.
-- Example 1 input files now exist at `django_angular3/examples/01_simple_crm/` (see item 9);
+- Example 1 input files now exist at `django_angular3/examples/01_simple_crm/` (see item 8);
   examples 2–12 still need their own input files before scenarios 2–12 can be verified.
 
 ---
 
-## 7. Create SKILLS
+## 6. Create SKILLS
 
 **Status: Not started**
 
@@ -225,7 +159,7 @@ this, the agent cannot evaluate completion and may terminate arbitrarily.
 
 ---
 
-## 8. Implement Orchestration Flow
+## 7. Implement Orchestration Flow
 
 **Status: Not started**
 
@@ -268,7 +202,7 @@ tests and its own credential/runtime-gated integration suite pass.
 
 ---
 
-## 9. Automated Verification
+## 8. Automated Verification
 
 **Status: Not started**
 
@@ -277,29 +211,11 @@ integration checks, and test-based verification.
 
 ### 9.1 Example Input Files
 
-The twelve scenarios in `doc/TEST_EXAMPLES.md` require input files for each example.
-Example 1 is now bundled in the package at `django_angular3/examples/01_simple_crm/`.
-Examples 2–12 still need their input files under `spec/examples/<example-name>/`.
-
-| Example | Location | Status |
-|---|---|---|
-| 1 Simple CRM | `django_angular3/examples/01_simple_crm/` | ✓ exists |
-| 2 Add Resource | `spec/examples/02-add-order/` | missing |
-| 3 Breaking Change | `spec/examples/03-breaking-change/` | missing |
-| 4 Workspace Configuration | `spec/examples/04-workspace-style/` | missing; config-diff implementation pending |
-| 5 OpenUI-Source Configuration | `spec/examples/05-openui-source/` | missing; config/OpenUI diff implementation pending |
-| 6 OpenUI Change | `spec/examples/06-add-dashboard/` | missing; OpenUI diffing pending |
-| 7 Combined | `spec/examples/07-combined-change/` | missing |
-| 8 Replace Resource | `spec/examples/08-replace-resource/` | missing |
-| 9 No Change | `spec/examples/09-no-change/` | missing |
-| 10 Configuration + OpenAPI | `spec/examples/10-config-openapi/` | missing; config-diff implementation pending |
-| 11 Configuration + OpenUI | `spec/examples/11-config-openui/` | missing; config/OpenUI diff implementation pending |
-| 12 Configuration + OpenAPI + OpenUI | `spec/examples/12-all-change-domains/` | missing; config/OpenUI diff implementation pending |
-
-Example 1 is runnable. Examples 2, 3, 7, 8, and 9 have no remaining
-change-derivation dependency beyond their fixtures. Examples 4, 5, 10, 11, and
-12 require complete configuration diffing; Examples 6, 7, 11, and 12 require
-OpenUI structural diffing.
+All twelve scenarios in `doc/TEST_EXAMPLES.md` now have input fixtures:
+Example 1 is bundled at `django_angular3/examples/01_simple_crm/`, and Examples
+2–12 are under `spec/examples/`. Fixture presence and source validation are
+covered by `tests/test_cli_scaffold.py`; direct-build acceptance coverage remains
+deferred until `build_app` is implemented.
 
 ### 9.2 E2E Verification Specification Missing
 
@@ -340,7 +256,7 @@ Where this must land:
 
 ---
 
-## 10. Build One Business Module End to End
+## 9. Build One Business Module End to End
 
 **Status: Not started**
 
@@ -349,7 +265,7 @@ SKILLS, and wrappers together.
 
 ---
 
-## 11. Audit Logging, Health Checks, and Staging Smoke Tests
+## 10. Audit Logging, Health Checks, and Staging Smoke Tests
 
 **Status: Not started**
 
@@ -358,13 +274,13 @@ tests.
 
 ---
 
-## 12. Architecture Alignment: Tools, Hooks, Skills, Plugins
+## 11. Architecture Alignment: Tools, Hooks, Skills, Plugins
 
 **Status: Planned — design alignment recorded in
 `doc/phased_implementation_plan.md`; implementation phases remain open.**
 
 Implement the architectural contracts recorded in
-`doc/GENERATE_AI_AUTOMATIONS.md`. This item feeds item 3 so that document
+`doc/GENERATE_AI_AUTOMATIONS.md`. This item feeds item 2 so that document
 remains the umbrella design specification for the full automation model rather
 than SKILLS alone.
 
@@ -391,7 +307,7 @@ than SKILLS alone.
 
 ---
 
-## 13. Platform-Aware command execution
+## 12. Platform-Aware command execution
 
 - Add unit tests for platform-aware Angular executable resolution. Simulate
   Windows and non-Windows defaults, and verify the intended behavior when
@@ -400,7 +316,7 @@ than SKILLS alone.
 
 ---
 
-## 14. Direct OpenUI validation management command
+## 13. Direct OpenUI validation management command
 
 **Status: Planned**
 
@@ -424,7 +340,7 @@ Task 2.2 of `doc/openui-spec_integration_plan.md`.
 
 ---
 
-## 15. openui-spec integration plan - remaining items
+## 14. openui-spec integration plan - remaining items
 
 ### What openui-spec provides
 
@@ -454,13 +370,8 @@ acceptance portions remain deferred. Step 3.6 remains outstanding.
 and `validate-project` success and invalid-OpenUI failure paths. Generated-app
 `build_app` coverage remains deferred while that command is WIP.
 
-**Target:** new `tests/test_cli.py`.
-
-Add CLI tests for `validate-openui <app.openui.json>` and `validate-project`.
-Verify valid fixtures return success and invalid OpenUI documents return failure
-with the validation path. Add generated-app command coverage showing that
-`build_app` rejects an invalid OpenUI source before change detection. This test file
-is new because no current test module exercises these CLI commands.
+Add generated-app command coverage showing that `build_app` rejects an invalid
+OpenUI source before change detection.
 
 
 #### Step 3.5 — Three-domain scenario fixtures and acceptance coverage
