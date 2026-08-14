@@ -35,7 +35,7 @@ django-admin build_app \
 ```
 
 Without `--current-config`, `build_app` discovers
-`django-angular3-<project_name>.json` as defined in `REQUIREMENTS.md` §4.2.5.
+`django-angular3-<project_name>.json` as defined in `REQUIREMENTS.md` §4.2.4.
 Without `--previous-config`, it derives the previous path by replacing the
 current filename's `.json` suffix with `.previous.json`; a missing file starts
 the build from scratch. Its planner remains unimplemented, so these are target

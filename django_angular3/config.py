@@ -1,3 +1,10 @@
+'''
+Docstring for django_angular3.config
+
+contains the project configuration loader and validator.
+The project configuration is expected to be a JSON file 
+containing the project metadata and artifact paths.
+'''
 from __future__ import annotations
 
 import os
@@ -13,7 +20,7 @@ class ConfigError(ValueError):
 
 
 @dataclass(frozen=True)
-class ProjectConfig:
+class ProjectConfig(dict[str,Any]):
     config_path: Path
     project_name: str
     openapi_schema: Path
@@ -54,20 +61,10 @@ def load_project_config(path: str | Path | None = None) -> ProjectConfig:
     """
     config_path = Path(path or discover_project_config_path()).resolve()
     try:
-        document: dict[str, Any] | None = load_document(config_path)
+        document: dict[str, Any] = load_document(config_path)
     except DocumentError as exc:
         raise ConfigError(str(exc)) from exc
 
-    if not isinstance(document, dict):
-        raise ConfigError("Project configuration must be a mapping.")
-
-    legacy_fields = {"openapi", "openui", "angular"} & document.keys()
-    if legacy_fields:
-        labels = ", ".join(sorted(legacy_fields))
-        raise ConfigError(
-            "Legacy project configuration field(s) are not supported: "
-            f"{labels}. Use the 'artifacts' mapping."
-        )
     return _load_project_configuration(document, config_path)
 
 

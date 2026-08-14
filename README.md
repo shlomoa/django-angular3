@@ -79,10 +79,10 @@ INSTALLED_APPS = [
 
 The static `django-angular3.json` configures djng's Angular tool settings,
 including executable resolution and its command allowlist. `DJANGO_ANGULAR3`
-and `AngularSettings` are derived from that file; they are not independent
+and `DjangoAngularSettings` are derived from that file; they are not independent
 configuration authorities. The generated app's identity and artifact locations
 are instead supplied by the project configuration defined in
-`doc/REQUIREMENTS.md` §4.2.5.
+`doc/REQUIREMENTS.md` §4.2.4.
 
 Once installed, Django and the standalone CLI expose the same Angular command
 resolution flow. Use `--dry-run` only for diagnostic validation and debugging;

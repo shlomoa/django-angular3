@@ -16,7 +16,7 @@ and available commands.
 ## Project configuration discovery
 
 Commands that operate on the generated app use the project-configuration
-discovery rules in `doc/REQUIREMENTS.md` §4.2.5.
+discovery rules in `doc/REQUIREMENTS.md` §4.2.4.
 
 The static `djng` tool configuration, `django-angular3.json`, supplies derived
 tool settings and is likewise not a command argument. Document validation

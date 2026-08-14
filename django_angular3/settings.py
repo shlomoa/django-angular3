@@ -30,7 +30,7 @@ DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
 }
 
 
-class AngularSettings(SimpleNamespace):
+class DjangoAngularSettings(SimpleNamespace):
     """Configuration values used to resolve and run Angular-related commands.
 
     Attributes:
@@ -55,7 +55,7 @@ def load_angular_settings(
     overrides: Mapping[str, object] | None = None,
     *,
     config_path: str | Path | None = None,
-) -> AngularSettings:
+) -> DjangoAngularSettings:
     data = DEFAULT_ANGULAR_SETTINGS.copy()
     data.update(_load_tool_configuration(config_path))
     if overrides:
@@ -63,7 +63,7 @@ def load_angular_settings(
     data["command_allowlist"] = _normalize_command_allowlist(
         data.get("command_allowlist")
     )
-    return AngularSettings(**data)
+    return DjangoAngularSettings(**data)
 
 
 def _load_tool_configuration(

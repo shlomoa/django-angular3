@@ -23,7 +23,7 @@ from django_angular3.config import (
 )
 from django_angular3.management.commands.ng_build import Command as NgBuildCommand
 from django_angular3.settings import (
-    AngularSettings,
+    DjangoAngularSettings,
     load_angular_settings,
     load_drf_spectacular_settings,
     load_ng_openapi_gen_settings,
@@ -76,7 +76,7 @@ class AngularCliCommandTests(unittest.TestCase):
             load_angular_settings(
                 {"ng_executable": "ng.cmd", "package_manager": "npm"}
             ),
-            AngularSettings(**overridden_settings),
+            DjangoAngularSettings(**overridden_settings),
         )
 
     def test_load_angular_settings_normalizes_command_allowlist(self) -> None:
@@ -299,7 +299,7 @@ class AngularCliCommandTests(unittest.TestCase):
         from django_angular3.config import load_project_config
 
         config = load_project_config(PROJECT_CONFIG_PATH)
-        overridden = AngularSettings(
+        overridden = DjangoAngularSettings(
             **(load_angular_settings().__dict__ | {"ssr": True, "zoneless": False})
         )
 
@@ -447,7 +447,7 @@ class AngularCliCommandTests(unittest.TestCase):
             cwd=ROOT,
         )
 
-        with patch("django_angular3.angular.subprocess.run") as run:
+        with patch("django_angular3.tools.execute_command") as execute_command:
             with self.assertRaisesRegex(
                 AngularCommandError,
                 (
@@ -457,7 +457,7 @@ class AngularCliCommandTests(unittest.TestCase):
             ):
                 execute_invocations([invocation], settings)
 
-        run.assert_not_called()
+            execute_command.assert_not_called()
 
     def test_execute_invocations_allows_whitelisted_commands(self) -> None:
         settings = load_angular_settings({"command_allowlist": ["ng_openapi_gen"]})
@@ -467,10 +467,10 @@ class AngularCliCommandTests(unittest.TestCase):
             cwd=ROOT,
         )
 
-        with patch("django_angular3.angular.subprocess.run") as run:
+        with patch("django_angular3.tools.execute_command") as execute_command:
             execute_invocations([invocation], settings)
 
-        run.assert_called_once_with(invocation.argv, cwd=invocation.cwd, check=True)
+        execute_command.assert_called_once_with(invocation.argv, cwd=invocation.cwd)
 
 
 class AngularManagementCommandTests(unittest.TestCase):

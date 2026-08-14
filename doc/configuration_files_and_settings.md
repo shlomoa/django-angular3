@@ -10,9 +10,9 @@
      including their defaults and platform-aware executable behavior.
    - Implement and validate:
 
-     `django-angular3.json` → `DJANGO_ANGULAR3` → `AngularSettings`
+    `django-angular3.json` → `DJANGO_ANGULAR3` → `DjangoAngularSettings`
 
-   - Use the derived `AngularSettings` only in `djng` commands that run
+  - Use the derived `DjangoAngularSettings` only in `djng` commands that run
      Angular and `angular-django2` commands.
    - Remove independent `DJANGO_ANGULAR3` authority and validate the static
      tool settings where Angular commands require them.

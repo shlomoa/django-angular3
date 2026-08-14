@@ -491,6 +491,7 @@ The platform uses these distinct configuration and input categories:
   - Its `ngOpenApiGen` clause configures the global `ng-openapi-gen` behavior.
   - Its `drfSpectacular.settings` clause configures the global
     `drf-spectacular` behavior.
+  - Its `oasdiff` clause configures `oasdiff` schema comparison behavior.
 - **Project configuration** identifies the generated application and provides
   command run-time locations for its OAS schema, OpenUI specification, and
   Angular workspace. It does not duplicate tool settings or OAS/OpenUI content.
@@ -506,11 +507,12 @@ Their ownership is:
 | Main category | Subcategory | Item / file | Owner | Purpose and relationship |
 |---|---|---|---|---|
 | Project configuration | — | `django-angular3-<project_name>.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI specification, and Angular workspace. |
-| Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `AngularSettings` are derived from it. |
+| Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from it. |
 | Tool configurations | `ng-openapi-gen` | `ngOpenApiGen` clause in `django-angular3.json` | `djng` | Global `ng-openapi-gen` settings, including `serviceSuffix` and `modelIndex`. |
 | Tool configurations | `ng-openapi-gen` | `ng-openapi-gen.json` in the project Angular workspace | `djng` | Derived per-run tool-configuration file. It combines global settings with command run-time `input` and `output` parameters. |
 | Tool configurations | `ng-openapi-gen` | `spec/openapi/ng-openapi-gen/ng-openapi-gen.json` | This repository | Validation-only fixture; it is not production configuration and is not released. |
 | Tool configurations | `drf-spectacular` | `drfSpectacular.settings` clause in `django-angular3.json` | `djng` | Global `drf-spectacular` settings from which `SPECTACULAR_SETTINGS` is derived for schema export. |
+| Tool configurations | `oasdiff` | `oasdiff` clause in `django-angular3.json` | `djng` | Global output settings from which `oasdiff.settings` is derived. The executable and current/previous schema paths are run-time invocation parameters. |
 | OAS schema | — | OpenAPI document | `djng` package user | Defines CRM-facing contract content consumed during a command run. |
 | OpenUI specification | — | OpenUI document | `djng` package user | Defines UI requirements consumed during a command run. |
 
@@ -535,8 +537,9 @@ flowchart TB
     direction LR
     DRFSETTINGS["drfSpectacular.settings"]
     NGOPENAPISETTINGS["ngOpenApiGen"]
+    OASDIFFSETTINGS["oasdiff"]
 
-    DRFSETTINGS ~~~ NGOPENAPISETTINGS
+    DRFSETTINGS ~~~ NGOPENAPISETTINGS ~~~ OASDIFFSETTINGS
   end
 
   subgraph DRF["drf-spectacular"]
@@ -622,6 +625,7 @@ flowchart TB
   PROJECT --> NGCONFIG
   OAS --> NGCONFIG
   NGOPENAPISETTINGS --> NGCONFIG
+  OASDIFFSETTINGS --> DERIVE
 
   %% Generation flow
   EXECUTE --> CLI
@@ -641,7 +645,7 @@ flowchart TB
   linkStyle 40 stroke:#c62828,stroke-width:2px
 ```
 
-#### 4.2.3. planned `django-angular3.json` contents
+#### 4.2.3. Planned `django-angular3.json` contents
 
 `django-angular3.json` is the canonical, user-editable static configuration
 for `djng`; it configures the tool, not project configuration. The package
@@ -652,14 +656,12 @@ released examples must use its schema.
 
 Its derivation chain is:
 
-`django-angular3.json` → `DJANGO_ANGULAR3` → `AngularSettings`
+`django-angular3.json` → `DJANGO_ANGULAR3` → `DjangoAngularSettings`
 
 `DJANGO_ANGULAR3` is derived from the file and is not independently editable;
-`AngularSettings` is extracted from it. `config_path` is only a reference to
+`DjangoAngularSettings` is extracted from it. `config_path` is only a reference to
 the static tool configuration, and public command interfaces must not accept
 configuration-file paths.
-
-#### 4.2.4. Planned `django-angular3.json` contents
 
 ```json
 {
@@ -673,6 +675,9 @@ configuration-file paths.
       "VERSION": "1.0.0",
       "SERVE_INCLUDE_SCHEMA": false
     }
+  },
+  "oasdiff": {
+    "format": "json"
   },
   "angular": {
     "workspace": {
@@ -700,7 +705,7 @@ configuration-file paths.
 }
 ```
 
-#### 4.2.5. Planned `django-angular3-<project_name>.json` contents
+#### 4.2.4. Planned `django-angular3-<project_name>.json` contents
 
 Project configuration must be a separate, `djng` package user-owned
 configuration source named `django-angular3-<project_name>.json`. It supplies the
@@ -741,12 +746,12 @@ locations with:
 ```
 
 The project configuration must remain outside the
-`django-angular3.json` → `DJANGO_ANGULAR3` → `AngularSettings` derivation
+`django-angular3.json` → `DJANGO_ANGULAR3` → `DjangoAngularSettings` derivation
 chain. It defines the generated application's identity and the locations of
 its OAS schema, OpenUI specification, and Angular workspace. It must not
 duplicate `djng` tool settings or OAS/OpenUI document content.
 
-#### 4.2.6. planned `ng-openapi-gen.json` contents
+#### 4.2.5. Planned `ng-openapi-gen.json` contents
 
 For `ng_openapi_gen`, `djng` must derive a per-run `ng-openapi-gen.json` in
 the configured project Angular workspace immediately before invocation. The
@@ -778,10 +783,38 @@ For example, a derived file for a project with an OAS schema at
 `spec/openapi/ng-openapi-gen/ng-openapi-gen.json` is a validation-only fixture,
 not a released or production configuration source.
 
-#### 4.2.7. planned `drfSpectacular.settings` contents
+#### 4.2.6. Planned `drfSpectacular.settings` contents
 `drfSpectacular.settings` is derived from django-angular3.json and used by `djng` for schema export. 
 The resulting OpenAPI document is an OAS schema, not `drf-spectacular` tool configuration.
 See example `drfSpectacular.settings` clause in `django-angular3.json` schema above.
+
+#### 4.2.7. Planned `oasdiff.settings` contents
+
+`oasdiff.settings` is derived from the `oasdiff` clause in
+`django-angular3.json` and used by `djng` when it invokes `oasdiff` for schema
+comparison. The static setting selects JSON output so `djng` can parse the
+diff result deterministically; it is not an OAS schema or independently
+editable project configuration.
+
+For example, the `oasdiff` clause above derives:
+
+```json
+{
+  "format": "json"
+}
+```
+
+For each comparison, `djng` obtains the platform-specific executable from
+`ensure_oasdiff()` and invokes:
+
+```text
+<oasdiff-executable> diff <previous-schema> <current-schema> --format json
+```
+
+`<previous-schema>` and `<current-schema>` are required run-time parameters,
+selected from the previous and current project configurations respectively.
+The `diff` subcommand and resolved executable are owned by `djng`, not exposed
+as user-editable project settings.
 
 #### 4.2.8. Configuration validation
 
@@ -984,8 +1017,7 @@ For this flow:
 ### 4.9. Search and Data Discovery
 
 - Users must be able to search records by primary identifying fields
-- Filters must support common business cases such as status, owner, date range,
-  and free text
+- Filters must support common business cases such as status, owner, date range and free text
 - Large result sets must be paginated
 - Default sorting must be deterministic
 
@@ -994,8 +1026,7 @@ For this flow:
 - The application must record important security and business events
 - Changes to sensitive data should capture who made the change and when
 - Audit history must be viewable by authorized users
-- Authentication events such as login, logout, failed login, and password reset
-  should be traceable
+- Authentication events such as login, logout, failed login, and password reset should be traceable
 
 ### 4.11. Notifications
 
@@ -1349,6 +1380,7 @@ Labels used in this document are defined in the link-definitions block at the en
 [Angular Material]: https://material.angular.dev/
 [OpenAPI 3.1 Specification]: https://spec.openapis.org/oas/v3.1.0.html
 [oasdiff]: https://www.oasdiff.com/
+[oasdiff-github]: https://github.com/oasdiff/oasdiff
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/

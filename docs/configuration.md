@@ -9,11 +9,11 @@ in `doc/REQUIREMENTS.md` §4.2.
 | Item | Owner | Purpose |
 |---|---|---|
 | `django-angular3.json` | `djng` | Static tool configuration: Angular execution settings, global `ng-openapi-gen` settings, and `drf-spectacular` settings. |
-| Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/REQUIREMENTS.md` §4.2.5. |
+| Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/REQUIREMENTS.md` §4.2.4. |
 | OpenAPI schema | generated-app user | CRM-facing contract input or the artifact exported from Django/DRF. |
 | OpenUI specification | generated-app user | Structured non-CRM UI input. |
 
-`DJANGO_ANGULAR3` and `AngularSettings` are derived from the static tool
+`DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from the static tool
 configuration; they are not independent configuration authorities. Likewise,
 the workspace's `ng-openapi-gen.json` is a per-run artifact derived by `djng`;
 do not maintain it as production configuration.
@@ -35,7 +35,7 @@ static configuration; they do not accept its path as an argument.
 The project configuration identifies a generated app and names the paths that
 a command uses for its OpenAPI schema, OpenUI specification, and Angular
 workspace. Its filename, discovery, ownership, and field requirements are
-defined in `doc/REQUIREMENTS.md` §4.2.5.
+defined in `doc/REQUIREMENTS.md` §4.2.4.
 
 Use `django-angular3 validate-project` or `python manage.py validate_project`
 to validate the discovered project configuration and referenced inputs.

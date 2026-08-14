@@ -6,7 +6,9 @@ import subprocess
 import tarfile
 import urllib.request
 import zipfile
+from collections.abc import Collection, Sequence
 from pathlib import Path
+from typing import Any, cast
 
 # Base directory for storing downloaded tools relative to this package
 PKG_DIR = Path(__file__).resolve().parent
@@ -16,8 +18,45 @@ BIN_DIR = PKG_DIR / ".bin"
 _SPEAKEASY_OPENAPI_MODULE = "github.com/speakeasy-api/openapi/cmd/openapi@latest"
 _SPEAKEASY_OPENAPI_BIN = "openapi"
 
+_OASDIFF_RELEASE_API = "https://api.github.com/repos/oasdiff/oasdiff/releases/latest"
+_OASDIFF_SUPPORTED_PLATFORMS = {
+    "linux": {"amd64", "arm64"},
+    "windows": {"amd64", "arm64"},
+}
 
-def get_system_info():
+
+class ToolExecutionError(RuntimeError):
+    """Raised when an allowlisted external tool cannot be executed."""
+
+
+def ensure_command_is_allowed(
+    command_name: str, command_allowlist: Collection[str]
+) -> None:
+    """Raise when a logical command is absent from its normalized allowlist."""
+    normalized_command_name = command_name.strip().lower()
+    if normalized_command_name in command_allowlist:
+        return
+
+    allowed_commands = ", ".join(command_allowlist) or "<none>"
+    raise ToolExecutionError(
+        f"Command '{command_name}' is not allowed. Allowed commands: "
+        f"{allowed_commands}."
+    )
+
+
+def execute_command(argv: Sequence[str], *, cwd: Path) -> None:
+    """Run one external command and normalize execution failures."""
+    try:
+        subprocess.run(argv, cwd=cwd, check=True)
+    except FileNotFoundError as exc:
+        raise ToolExecutionError(f"Command not found: {argv[0]}") from exc
+    except subprocess.CalledProcessError as exc:
+        raise ToolExecutionError(
+            f"Command '{' '.join(argv)}' failed with exit code {exc.returncode}."
+        ) from exc
+
+
+def get_system_info() -> tuple[str, str]:
     """Returns normalized OS and architecture strings."""
     os_name = platform.system().lower()
     if os_name == "darwin":
@@ -34,33 +73,37 @@ def get_system_info():
     return os_name, arch
 
 
-def get_latest_oasdiff_release():
+def get_latest_oasdiff_release() -> dict[str, Any]:
     """Fetches the latest release info from oasdiff GitHub repository."""
-    url = "https://api.github.com/repos/Tufin/oasdiff/releases/latest"
-    req = urllib.request.Request(url, headers={"User-Agent": "django-angular3"})
+    req = urllib.request.Request(
+        _OASDIFF_RELEASE_API,
+        headers={"User-Agent": "django-angular3"},
+    )
     try:
         with urllib.request.urlopen(req) as response:
-            data = json.loads(response.read().decode("utf-8"))
+            data = cast(dict[str, Any], json.loads(response.read().decode("utf-8")))
             return data
     except Exception as e:
         raise RuntimeError(f"Failed to fetch latest oasdiff version: {e}")
 
 
-def get_download_url(release_data, os_name, arch):
+def get_download_url(
+    release_data: dict[str, Any], os_name: str, arch: str
+) -> tuple[str, str]:
     """Finds the correct asset URL for the current OS and architecture."""
     # oasdiff release naming pattern: oasdiff_<version>_<os>_<arch>.tar.gz/zip
-    # e.g., oasdiff_1.21.3_linux_amd64.tar.gz
-    # e.g., oasdiff_1.21.3_windows_amd64.zip
-
-    # Map our normalized OS name to oasdiff's naming conventions
-    # sometimes they use darwin, sometimes macos.
-    search_os = "darwin" if os_name == "macos" else os_name
-
-    # In recent versions, windows is windows, linux is linux.
+    # e.g., oasdiff_1.28.0_linux_amd64.tar.gz
+    # e.g., oasdiff_1.28.0_windows_amd64.zip
+    supported_architectures = _OASDIFF_SUPPORTED_PLATFORMS.get(os_name)
+    if supported_architectures is None or arch not in supported_architectures:
+        raise RuntimeError(
+            "oasdiff is supported only on Linux or Windows with amd64 or arm64 "
+            f"architecture; received {os_name} {arch}."
+        )
 
     for asset in release_data.get("assets", []):
         name = asset["name"].lower()
-        if search_os in name and arch in name:
+        if os_name in name and arch in name:
             if name.endswith(".tar.gz") or name.endswith(".zip"):
                 return asset["browser_download_url"], asset["name"]
 
@@ -89,9 +132,13 @@ def ensure_oasdiff():
     Ensures oasdiff is installed and available.
     Returns the absolute path to the oasdiff executable.
     """
+    os_name, arch = get_system_info()
+    if arch not in _OASDIFF_SUPPORTED_PLATFORMS.get(os_name, set()):
+        get_download_url({"assets": []}, os_name, arch)
+
     BIN_DIR.mkdir(parents=True, exist_ok=True)
 
-    exe_name = "oasdiff.exe" if platform.system().lower() == "windows" else "oasdiff"
+    exe_name = "oasdiff.exe" if os_name == "windows" else "oasdiff"
     oasdiff_path = BIN_DIR / exe_name
 
     if oasdiff_path.exists():
@@ -103,7 +150,6 @@ def ensure_oasdiff():
     print(f"oasdiff not found. Downloading to {BIN_DIR}...")
 
     try:
-        os_name, arch = get_system_info()
         release_data = get_latest_oasdiff_release()
         url, asset_name = get_download_url(release_data, os_name, arch)
 

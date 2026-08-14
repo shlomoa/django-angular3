@@ -62,7 +62,7 @@ provider used by an agent session.
 | Input | Source | Format | Notes |
 |---|---|---|---|
 | `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. |
-| Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The discovered default is defined in `REQUIREMENTS.md` §4.2.5. |
+| Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The discovered default is defined in `REQUIREMENTS.md` §4.2.4. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | A missing previous configuration starts a build from scratch. |
 | Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Absent on a first run; the schema change type is `start-from-scratch`. |
@@ -91,7 +91,7 @@ the configured input path and its build-stage handling. See
 
 The project configuration supplies the locations used by the builder. Static
 tool settings remain in `django-angular3.json`. The authoritative project
-configuration definition and discovery rules are in `REQUIREMENTS.md` §4.2.5.
+configuration definition and discovery rules are in `REQUIREMENTS.md` §4.2.4.
 
 ---
 

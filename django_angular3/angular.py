@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from . import tools
 from .config import ProjectConfig, load_project_config
 from .settings import (
     AngularCommandError,
-    AngularSettings,
+    DjangoAngularSettings,
     load_angular_settings,
     load_ng_openapi_gen_settings,
 )
@@ -48,7 +48,7 @@ def resolve_angular_command(
 
 def resolve_angular_command_context(
     command_name: str, **options: Any
-) -> tuple[ProjectConfig, AngularSettings, list[AngularInvocation]]:
+) -> tuple[ProjectConfig, DjangoAngularSettings, list[AngularInvocation]]:
     """Resolve a command with its discovered project and derived tool settings."""
     settings = load_angular_settings()
     config = load_project_config()
@@ -63,7 +63,7 @@ def resolve_angular_command_context(
 def format_invocations(
     invocations: list[AngularInvocation],
     config: ProjectConfig | None = None,
-    settings: AngularSettings | None = None,
+    settings: DjangoAngularSettings | None = None,
 ) -> str:
     """Serialize dry-run configuration, derived paths, and subprocess calls."""
     serialized_invocations = [invocation.to_dict() for invocation in invocations]
@@ -86,27 +86,23 @@ def format_invocations(
 
 
 def execute_invocations(
-    invocations: list[AngularInvocation], settings: AngularSettings | None = None
+    invocations: list[AngularInvocation], settings: DjangoAngularSettings | None = None
 ) -> None:
-    """Run a previously resolved ordered list of subprocess calls."""
+    """Run resolved Angular invocations through the generic tool executor."""
     active_settings = settings or load_angular_settings()
     for invocation in invocations:
-        _ensure_command_is_allowed(invocation.command_name, active_settings)
         try:
-            subprocess.run(invocation.argv, cwd=invocation.cwd, check=True)
-        except FileNotFoundError as exc:
-            raise AngularCommandError(
-                f"Command not found: {invocation.argv[0]}"
-            ) from exc
-        except subprocess.CalledProcessError as exc:
-            raise AngularCommandError(
-                f"Command '{' '.join(invocation.argv)}' failed with exit code "
-                f"{exc.returncode}."
-            ) from exc
+            tools.ensure_command_is_allowed(
+                invocation.command_name,
+                active_settings.command_allowlist,
+            )
+            tools.execute_command(invocation.argv, cwd=invocation.cwd)
+        except tools.ToolExecutionError as exc:
+            raise AngularCommandError(str(exc)) from exc
 
 
 def build_ng_new_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     # Ensure the parent directory exists before calling subprocess.run
     config.angular_workspace.parent.mkdir(parents=True, exist_ok=True)
@@ -130,7 +126,7 @@ def build_ng_new_invocations(
 
 
 def build_ng_workspace_schematic_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     return [
         AngularInvocation(
@@ -147,7 +143,7 @@ def build_ng_workspace_schematic_invocations(
 
 
 def build_ng_config_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     return [
         AngularInvocation(
@@ -184,7 +180,7 @@ def build_ng_config_invocations(
 
 
 def build_ng_build_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     return [
         AngularInvocation(
@@ -202,7 +198,7 @@ def build_ng_build_invocations(
 
 def build_ng_gen_app_invocations(
     config: ProjectConfig,
-    settings: AngularSettings,
+    settings: DjangoAngularSettings,
     *,
     app_name: str | None = None,
     **_: Any,
@@ -229,7 +225,7 @@ def build_ng_gen_app_invocations(
 
 def build_ng_complex_component_invocations(
     config: ProjectConfig,
-    settings: AngularSettings,
+    settings: DjangoAngularSettings,
     *,
     name: str,
     target_path: str,
@@ -266,7 +262,7 @@ def build_ng_complex_component_invocations(
 
 
 def build_ng_openapi_gen_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     generated_config_path = _write_ng_openapi_gen_config(config, settings)
     return [
@@ -285,7 +281,7 @@ def build_ng_openapi_gen_invocations(
 
 
 def _write_ng_openapi_gen_config(
-    config: ProjectConfig, settings: AngularSettings
+    config: ProjectConfig, settings: DjangoAngularSettings
 ) -> Path:
     """Write the derived, per-run ng-openapi-gen configuration file."""
     generated_config_path = config.angular_workspace / "ng-openapi-gen.json"
@@ -308,7 +304,7 @@ def _write_ng_openapi_gen_config(
 
 def build_ng_add_invocations(
     config: ProjectConfig,
-    settings: AngularSettings,
+    settings: DjangoAngularSettings,
     *,
     package: str | None = None,
     **_: Any,
@@ -329,7 +325,7 @@ def build_ng_add_invocations(
 
 
 def build_ng_workspace_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     """Create and bootstrap an Angular workspace with angular-django2 defaults."""
     invocations = _relabel_invocations(
@@ -348,7 +344,7 @@ def build_ng_workspace_invocations(
 
 
 def build_ng_workspace_modify_invocations(
-    config: ProjectConfig, settings: AngularSettings, **_: Any
+    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     """Reapply workspace defaults, collection registration, and
     workspace scaffolding."""
@@ -370,7 +366,7 @@ def build_ng_workspace_modify_invocations(
 
 
 def build_ng_workspace_delete_invocations(
-    config: ProjectConfig, _settings: AngularSettings, **_: Any
+    config: ProjectConfig, _settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
     """Delete the entire workspace folder using Python's native
     cross-platform shutil."""
@@ -470,15 +466,3 @@ def _relabel_invocations(
         )
         for invocation in invocations
     ]
-
-
-def _ensure_command_is_allowed(command_name: str, settings: AngularSettings) -> None:
-    normalized_command_name = command_name.strip().lower()
-    if normalized_command_name in settings.command_allowlist:
-        return
-
-    allowed_commands = ", ".join(settings.command_allowlist) or "<none>"
-    raise AngularCommandError(
-        f"Command '{command_name}' is not allowed. Allowed commands: "
-        f"{allowed_commands}."
-    )

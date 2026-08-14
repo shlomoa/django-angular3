@@ -1,7 +1,8 @@
 """
 Django Angular3 Management Command: Build App
 
-This module implements the build_app management command for building the Django Angular3 application.
+This module implements the build_app management command for building the 
+Django Angular3 application.
 """
 import argparse
 import json
@@ -10,6 +11,8 @@ from pathlib import Path
 from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
+
+from django_angular3.config import ProjectConfig
 
 from ...config import ConfigError, load_project_config
 from ...tools import ensure_oasdiff
@@ -23,9 +26,8 @@ class OpenAPIConfiguration:
     :var output: Description
     :vartype output: loaded
     '''
-    def __init__(self, openapi_path: str):
-        self.openapi_path = openapi_path
-        self.openapi_schema: dict[str, Any] | None = None
+    def __init__(self, openapi_path: Path):
+        self._openapi_path = openapi_path
 
     def load(self):
         """
@@ -46,8 +48,8 @@ class OpenUIConfiguration:
     :var output: Description
     :vartype output: loaded
     '''
-    def __init__(self, openui_path: str):
-        self.openui_path = openui_path
+    def __init__(self, openui_path: Path):
+        self.openui_path: Path = openui_path
         self.openui_spec: dict[str, Any] | None = None
 
     def load(self):
@@ -60,29 +62,6 @@ class OpenUIConfiguration:
         except ConfigError as e:
             raise CommandError(f"Failed to load OpenUI specification: {e}") from e
 
-class ProjectConfiguration:
-    '''
-    Docstring for ProjectConfiguration
-    
-    :var input: Description
-    :vartype input: paths
-    :var output: Description
-    :vartype output: loaded
-    '''
-    def __init__(self, config_path: str):
-        self.config_path = config_path
-        self.project_name: str | None = None
-
-    def load(self):
-        """
-        Load the project configuration from the specified path.
-        Raises ConfigError if loading fails.
-        """
-        try:
-            raise NotImplementedError("Loading project configuration is not implemented.")
-        except ConfigError as e:
-            raise CommandError(f"Failed to load project configuration: {e}") from e
-
 class Configuration:
     '''
     Docstring for Configuration
@@ -94,40 +73,27 @@ class Configuration:
     * Managing OpenUI configuration using the OpenUIConfiguration class
     * Managing project configuration using the ProjectConfiguration class
 
-    var input: paths to configuration files (OpenAPI, OpenUI, Project)
+    var input: paths to project configuration file.
     var output: loaded configuration objects for each type.
     '''
-    def __init__(self, openapi_path: str | None = None, openui_path: str | None = None, project_config_path: str | None = None):
-        self._openapi_path = openapi_path
-        self._openui_path = openui_path
-        self._project_config_path = project_config_path
+    def __init__(self, project_config_path: str | None = None):
+        self._project_config_path: str | None = project_config_path
         self._openapi_config: OpenAPIConfiguration | None = None
         self._openui_config: OpenUIConfiguration | None = None
-        self._project_config: ProjectConfiguration | None = None
+        self._load()
 
-    def load(self):
+    def _load(self):
         '''
         Docstring for load
         
         :param self: Description
         '''
-        # Load OpenAPI configuration
-        if self._openapi_path:
-            self._openapi_config = OpenAPIConfiguration(self._openapi_path)
-        else:
-            raise CommandError("OpenAPI configuration path is required.")
-
-        # Load OpenUI configuration
-        if self._openui_path:
-            self._openui_config = OpenUIConfiguration(self._openui_path)
-        else:
-            raise CommandError("OpenUI configuration path is required.")
-
         # Load Project configuration
-        if self._project_config_path:
-            self._project_config = ProjectConfiguration(self._project_config_path)
-        else:
-            raise CommandError("Project configuration path is required.")
+        self._project_config: ProjectConfig = load_project_config(self._project_config_path)
+        # Load OpenAPI configuration
+        self._openapi_config = OpenAPIConfiguration(self._project_config.openapi_schema)
+        # Load OpenUI configuration
+        self._openui_config = OpenUIConfiguration(self._project_config.openui_specification)
 
 class ChangeDetector:
     '''
@@ -138,9 +104,41 @@ class ChangeDetector:
     * Determining the type of change (add, remove, modify, no-change).
     * Identifying affected resources based on the detected changes.
     '''
-    def __init__(self, current_config: Configuration, previous_config: Configuration):
-        self.current_config = current_config
-        self.previous_config = previous_config
+    def __init__(self, current_config: OpenAPIConfiguration, previous_config: OpenAPIConfiguration):
+        self._current_config: OpenAPIConfiguration = current_config
+        self._previous_config: OpenAPIConfiguration = previous_config
+
+    def _diff_openapi_schemas(self) -> dict[str, Any]:
+        oasdiff_exe = ensure_oasdiff()
+
+        cmd: list[Path | str] = [
+            oasdiff_exe,
+            "diff",
+            self._previous_config.openapi_schema,
+            self._current_config.openapi_schema,
+            "--format",
+            "json",
+        ]
+
+        try:
+            result: subprocess.CompletedProcess[str] = subprocess.run(
+                cmd, capture_output=True, text=True, check=True
+            )
+            if not result.stdout.strip():
+                return {}  # No changes
+            return json.loads(result.stdout)
+        except subprocess.CalledProcessError as e:
+            # oasdiff might return non-zero exit code if it finds changes
+            # or breaking changes, depending on flags. Usually 'diff'
+            # returns 0, but if there's an error parsing the spec, it
+            # might fail.
+            try:
+                if e.stdout.strip():
+                    return json.loads(e.stdout)
+            except json.JSONDecodeError:
+                pass
+            raise CommandError(f"oasdiff failed: {e.stderr}") from e
+
 
     def detect_changes(self) -> dict[str, Any]:
         """
@@ -163,7 +161,7 @@ class ChangeExecution:
     * Rolling back changes in case of failures.
     '''
     def __init__(self, change_set: dict[str, Any]):
-        self.change_set = change_set
+        self._change_set = change_set
 
     def execute(self):
         """
@@ -177,11 +175,18 @@ class ChangeExecution:
             raise CommandError(f"Failed to execute changes: {e}") from e
 
 class Command(BaseCommand):
+    '''
+    Command class responsible for:
+    * Parsing command-line arguments.
+    * Coordinating the build process.
+    * Handling change detection and execution.
+    '''
     help = "Build the application frontend as described by the configuration files."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            "-pc", "--current-config",
+            "--current-config",
+            type=str,
             help="Path to current configuration: \n" \
                 "The user is responsible for providing it.\n" \
                 "The default is calculated from Django as follows:\n" \
@@ -190,7 +195,8 @@ class Command(BaseCommand):
                 "- file name is django-angular3-<project_name>.json"
         )
         parser.add_argument(
-            "-cc", "--previous-config",
+            "--previous-config",
+            type=str,
             help="Path to previous configuration: \n" \
                 "If not provided, path name will be the same as the current\n" \
                 "with .json replaced by .previous.json.\n" \
@@ -216,63 +222,6 @@ class Command(BaseCommand):
             action="store_true",
             help="Proceed even if breaking schema changes are detected.",
         )
-
-    def _build_step(
-        self,
-        step_num: int,
-        skill: str,
-        mode: str,
-        reason: str,
-        resource_name: str | None = None,
-    ) -> dict[str, object]:
-        cmd_name = _command_for_skill(skill, mode)
-        base_cmd = f"django-admin {cmd_name}"
-        if resource_name:
-            base_cmd += f" --resource {resource_name}"
-        step: dict[str, Any] = {
-            "step": step_num,
-            "skill": skill,
-            "mode": mode,
-            "reason": reason,
-            "command": base_cmd,
-            "dry_run_command": base_cmd + " --dry-run",
-        }
-        if resource_name:
-            step["resource_name"] = resource_name
-        return step
-
-    def _diff_schemas(
-        self, previous_schema: str, current_schema: str
-    ) -> dict[str, Any]:
-        oasdiff_exe = ensure_oasdiff()
-
-        cmd: list[str] = [
-            oasdiff_exe,
-            "diff",
-            previous_schema,
-            current_schema,
-            "--format",
-            "json",
-        ]
-
-        try:
-            result: subprocess.CompletedProcess[str] = subprocess.run(
-                cmd, capture_output=True, text=True, check=True
-            )
-            if not result.stdout.strip():
-                return {}  # No changes
-            return json.loads(result.stdout)
-        except subprocess.CalledProcessError as e:
-            # oasdiff might return non-zero exit code if it finds changes
-            # or breaking changes, depending on flags. Usually 'diff'
-            # returns 0, but if there's an error parsing the spec, it
-            # might fail.
-            try:
-                if e.stdout.strip():
-                    return json.loads(e.stdout)
-            except json.JSONDecodeError:
-                pass
-            raise CommandError(f"oasdiff failed: {e.stderr}") from e
 
     def _extract_resources(
         self, path_list: list[str], path_dict: dict[str, Any]
@@ -333,13 +282,8 @@ class Command(BaseCommand):
         }
 
     def _diff_config(
-        self, previous_config_path: str, current_config_path: str
+        self, prev_cfg: ProjectConfig, curr_cfg: ProjectConfig
     ) -> dict[str, Any]:
-        try:
-            prev_cfg = load_project_config(previous_config_path)
-            curr_cfg = load_project_config(current_config_path)
-        except ConfigError as e:
-            raise CommandError(f"Config load failed: {e}") from e
 
         if prev_cfg.project_name != curr_cfg.project_name:
             return {"type": "replace-things"}  # project rename implies scratch
@@ -371,7 +315,18 @@ class Command(BaseCommand):
         except ConfigError as e:
             raise CommandError(f"Config load failed: {e}") from e
 
-    def handle(self, *args: list[str], **options: dict[str, Any]) -> None:
+    def _print_debug_change_set(
+        self, build_plan: dict[str, Any], options: dict[str, Any]
+    ) -> None:
+        plan_str: str = json.dumps(build_plan, indent=2)
+
+        out_dir = Path(options["output"])
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / "build-stages.json"
+        out_file.write_text(plan_str, encoding="utf-8")
+        self.stdout.write(f"Build stages were written to {out_file}")
+
+    def handle(self, *args: Any, **options: Any) -> None:
         """build the missing pieces for a complete Angular implementation
         of the requested changes.
 
@@ -391,20 +346,13 @@ class Command(BaseCommand):
             SystemExit: With status 2 when breaking schema changes are found
                 without ``--acknowledge-breaking``.
         """
-        try:
-            current_config = Configuration()
+        try:            
+            current_project_config = Configuration(options["current-config"])
+            previous_project_config = Configuration(options["previous-config"])
+            change_detector = ChangeDetector(current_project_config,
+                                             previous_project_config)
+            
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
 
         raise NotImplementedError("build_app planning is not implemented.")
-
-    def _print_debug_change_set(
-        self, build_plan: dict[str, Any], options: dict[str, Any]
-    ) -> None:
-        plan_str: str = json.dumps(build_plan, indent=2)
-
-        out_dir = Path(options["output"])
-        out_dir.mkdir(parents=True, exist_ok=True)
-        out_file = out_dir / "build-stages.json"
-        out_file.write_text(plan_str, encoding="utf-8")
-        self.stdout.write(f"Build stages were written to {out_file}")

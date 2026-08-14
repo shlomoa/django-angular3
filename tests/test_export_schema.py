@@ -14,7 +14,6 @@ import django
 from django.test import override_settings
 
 from django_angular3.config import get_previous_schema_path, load_project_config
-from django_angular3.management.commands.build_app import _command_for_skill
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
