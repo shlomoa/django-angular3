@@ -198,8 +198,8 @@ contract inputs, generation support, delivery support, and client access.
   schema artifact into `spec/openapi/source/`.
 - OpenAPI schema artifacts: durable, versioned schema files are external input
   artifacts consumed by downstream validation and generation flows.
-- Schema diff tool: `oasdiff` must participate in contract change detection and
-  breaking-change analysis between schema versions.
+- Schema diff tool: `oasdiff` must participate in contract change detection
+  between schema versions.
 - Angular code generation tool: `ng-openapi-gen` may be used when Angular-
   native client generation is required for contract-derived artifacts.
 - Email service: external email delivery may be used for account and workflow
@@ -409,9 +409,6 @@ recoverable.
 - **Build failure**: when generation or assembly fails, the flow must surface
   which stage failed — contract validation, code generation, non-CRM input
   validation, or final app assembly — rather than reporting a generic error.
-- **Breaking schema change detected**: when `oasdiff` detects a breaking
-  change, downstream construction must be blocked until the change is
-  explicitly acknowledged or resolved.
 - **Recoverable UI or server failure**: recoverable UI errors must not cause
   users to lose unsaved form state, and unexpected server errors must be
   logged while surfacing user-safe messages.
@@ -437,11 +434,9 @@ and assembled application outputs aligned.
 - **Authentication and audit synchronization**: login, logout, failed-login,
   password-reset, and sensitive administrative actions must produce auditable
   events that remain consistent with the effective user and record state.
-- **Contract change detected → generation blocked or continued**: when the
-  OpenAPI schema changes, `oasdiff` must classify the change before downstream
-  work continues; breaking changes must block generation until resolved or
-  explicitly acknowledged, while acceptable changes may continue through the
-  construction flow.
+- **Contract change detected → generation continued**: when the OpenAPI schema
+  changes, `oasdiff` must identify the change before downstream construction
+  uses the current contract.
 - **Generated artifacts → assembled app → verified app**: for valid inputs,
   construction must move from validated contract and non-CRM sources to
   generated CRM-facing artifacts, then to an assembled application, and then
@@ -469,15 +464,8 @@ These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
   downstream tooling and generated CRM-facing content; schema versioning is the
   contract versioning mechanism that drives frontend alignment
 - `oasdiff` must be used as the OpenAPI schema diff and change detection tool
-- `oasdiff` must run as part of the contract normalization stage to detect
-  breaking and non-breaking changes between schema versions
-- Breaking changes detected by `oasdiff` must block downstream construction
-  until explicitly acknowledged or resolved
-- The governed construction flow must provide an explicit path for
-  acknowledging or resolving breaking changes before downstream construction
-  is permitted to resume; blocking a build without a supported resolution path
-  is not acceptable behavior (see `--acknowledge-breaking` in
-  `APP_BUILDER_REQUIREMENTS.md` FR-4 for the governed implementation)
+- `oasdiff` must run as part of the contract normalization stage to identify
+  changes between schema versions
 - API schema generation and browsable documentation should be available in
   non-production environments
 
@@ -823,6 +811,74 @@ types, and invalid values before the affected command runs. The configuration
 model must have one authority for every setting; duplicated runtime-setting
 authority is not permitted.
 
+#### 4.2.9. Change Model
+
+This section is the canonical definition of the Change Model. It governs how
+`djng` compares accepted prior inputs with candidate inputs and selects
+construction and validation commands. `APP_BUILDER_REQUIREMENTS.md` defines
+the resulting command translation; it must not define a competing change
+model.
+
+A **Change** is an immutable, typed statement that a supported input's
+normalized semantic state differs between an accepted **baseline** and a
+**candidate**. It is neither a command nor a build plan.
+
+| Field | Requirement |
+|---|---|
+| `domain` | One of `static_config`, `project_config`, `invocation`, `openapi`, or `openui`. |
+| `subject` and `path` | A stable semantic identity and JSON Pointer-like path for the changed item. |
+| `operation` | One of `create`, `delete`, `update`, or `move`. |
+| `before` and `after` | Normalized values or content fingerprints. |
+| `affected` | Typed identities that support command selection. |
+| `evidence` | Source locations, structured diff fragments, and/or validation results supporting the change. |
+
+An atomic `Change` must not use `no_change`. An empty atomic-change list means
+there is no change in that domain; `no_change` is permitted only as a computed
+summary. The model has no compatibility, breaking-change, or regeneration-
+impact classification. Command translation is the sole authority that derives
+required regeneration and validation from each atomic change.
+
+The five domains compare normalized semantic state rather than raw file bytes:
+
+| Domain | Compared semantic state | Identity requirement |
+|---|---|---|
+| `static_config` | Schema-supported fields in `django-angular3.json` | Validated configuration paths. |
+| `project_config` | Project identity and artifact selectors in `django-angular3-<project_name>.json` | Project configuration paths; selector changes remain distinct from selected-content changes. |
+| `invocation` | Derived wrapper name, arguments, working directory, generated-file content, executable, and authorization | Wrapper identity and the derived invocation snapshot. |
+| `openapi` | Structured `oasdiff` contract detail | Stable OpenAPI subject identity, not a final URL segment heuristic. |
+| `openui` | Declared OpenUI nodes, attributes, parent relations, and child ordering | Declared node `id`, not serialized position or array index. |
+
+`move` is reserved for identity-preserving relocation. If identity cannot be
+established, comparison must emit `delete` plus `create` instead. Invalid or
+unknown input must fail validation; it must not be represented as an unknown
+change.
+
+A missing baseline initializes the relevant domain and emits `create` changes
+for the candidate state. For project artifact selectors, the selector change
+and the selected OpenAPI or OpenUI content change are separate facts.
+
+A `ChangeSet` carries domain-specific atomic changes and a computed summary:
+
+```json
+{
+  "version": 1,
+  "baseline": {
+    "projectConfig": "django-angular3-portal.previous.json"
+  },
+  "candidate": {
+    "projectConfig": "django-angular3-portal.json"
+  },
+  "domains": {
+    "static_config": { "changes": [] },
+    "project_config": { "changes": [] },
+    "invocation": { "changes": [] },
+    "openapi": { "changes": [] },
+    "openui": { "changes": [] }
+  },
+  "summary": { "hasChanges": true }
+}
+```
+
 ### 4.3. Construction Workflow
 
 See `ARCHITECTURE.md` §§ 4.1-4.3 and 7.1-7.4 for the governing ownership
@@ -1110,8 +1166,8 @@ Verification must occur throughout construction and integration, not only as a
 final check. The platform must support the following verification categories:
 
 - **Contract verification**: the OpenAPI contract and non-CRM inputs must be
-  validated and breaking changes detected before downstream construction
-  proceeds; invalid or incompatible inputs must block the corresponding stage.
+  validated before downstream construction proceeds; invalid or incompatible
+  inputs must block the corresponding stage.
 - **Construction-output verification**: generated and assembled outputs must be
   inspectable so they can be corrected, refined, or reused across iterations;
   emitted artifacts must not be treated as opaque or assumed correct without
@@ -1319,10 +1375,9 @@ following scenario classes:
 - **Schema evolution — add**: an incremental schema change that adds a
   resource; only the required automation commands run, and existing
   workspace, app, and components are preserved
-- **Schema evolution — breaking change blocked**: a breaking schema change is
-  detected by `oasdiff`; construction halts before downstream command
-  execution, and the explicit acknowledgement path must be available to
-  unblock and resume
+- **Schema evolution — removal**: an incremental schema change removes a
+  resource or contract element; affected downstream construction commands run
+  in dependency order.
 - **OpenUI-only change**: an `app.openui.json` change with no schema change; only
   OpenUI-derived automation commands run
 - **Combined schema and OpenUI change**: both the contract and the non-CRM

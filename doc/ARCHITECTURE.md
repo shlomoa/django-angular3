@@ -407,8 +407,8 @@ criteria.
 1. Backend contract stage: Django models, serializers, and DRF endpoints define
    the business contract and emit an OpenAPI artifact
 2. Contract normalization stage: the OpenAPI artifact is validated, diffed
-   against the previous version to detect breaking and non-breaking changes, 
-   versioned, and prepared for CRM-facing generation
+  against the previous version, versioned, and prepared for CRM-facing
+  generation
 3. Angular integration artifacts generation stage: the OpenAPI contract produces typed
    clients, resource adapters, and reusable Angular Material-oriented
    integration helpers
@@ -426,7 +426,7 @@ reused across iterations without hidden assumptions.
 
 A typical construction cycle is:
 
-1. Derive required work from contract changes, configuration, and structured inputs
+1. Derive typed changes from contract, configuration, and structured inputs, then select required work from those changes
 2. Execute each selected command through the required automation primitive(s): guided
   agent session, deterministic tool call, lifecycle hook, or an explicit
   combination of them
@@ -454,7 +454,7 @@ passes.
 
 Verification in this architecture occurs throughout construction and integration. The main categories are:
 
-- Contract verification: validate the OpenAPI contract and detect breaking changes before downstream construction proceeds.
+- Contract verification: validate the OpenAPI contract before downstream construction proceeds.
 - Construction-output verification: inspect generated and assembled outputs so they can be corrected, refined, or reused in later iterations.
 - Integration verification: verify alignment between backend behavior, generated integration artifacts, and frontend composition.
 - Test-based verification: use automated tests and smoke tests to verify expected behavior across backend, frontend, and composed application flows.
@@ -646,10 +646,8 @@ It should not own:
   for CRM-facing functionality.
 - The exported schema should be stored as a durable build artifact so downstream
   agent-chain stages can consume it deterministically.
-- Change detection must be run as part of the contract normalization stage to detect
-  breaking changes between the current and previous schema versions.
-- Breaking changes must block downstream generation until
-  explicitly acknowledged or resolved.
+- Change detection must be run as part of the contract normalization stage to
+  identify differences between the current and previous schema versions.
 - Contract changes should be reviewed as part of normal API change management.
 
 ### 11.2 Generation Toolchain
@@ -669,7 +667,8 @@ It should not own:
 - Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction via [drf-spectacular].
 - Run the schema diff and change detection tool:
   - Run it after exporting the OpenAPI schema from DRF.
-  - Run it before any generation step to surface breaking changes early
+  - Run it before generation so downstream construction uses the current
+    contract.
 - Run the Angular generation tool for contract-driven artifacts
 - Django backend code should remain authored in DRF; OpenAPI generation on the
   backend side is limited to supporting artifacts, custom templates, or

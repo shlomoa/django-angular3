@@ -53,7 +53,7 @@ OpenUI document tree.
 | | |
 |---|---|
 | **Completed** | `django_angular3/config.py` resolves `artifacts.openuiSpecification`; `django_angular3/validation.py` validates concrete documents through `OpenUiJson`, including schema, catalog, and duplicate-ID checks. |
-| **Remaining work** | Implement previous-OpenUI input handling, an OpenUI ChangeSet lane, and structural document-tree diffing in `django_angular3/management/commands/build_app.py`. |
+| **Remaining work** | Implement previous-OpenUI input handling, an OpenUI ChangeSet domain, and structural document-tree diffing in `django_angular3/management/commands/build_app.py`. |
 | **Origin** | `APP_BUILDER_REQUIREMENTS.md` §Inputs, §Change Derivation; `ARCHITECTURE.md` §7.1 stage 4; `REQUIREMENTS.md` §4.2.2 |
 | **Input sources** | `artifacts.openuiSpecification` in the generated-app project configuration; `spec/openui/app.openui.json` fixture |
 
@@ -71,7 +71,7 @@ OpenUI document tree.
 for the previous OpenAPI schema: `--previous-openui <path>` takes precedence;
 otherwise it uses the `.previous` sibling of the current `openui.source`. The
 `--previous-config` argument is reserved for the project-configuration change
-lane. This interface must be implemented consistently by `build_app`, examples,
+domain. This interface must be implemented consistently by `build_app`, examples,
 and tests.
 
 Derive the complete set of `angular-django2` capabilities and `djng` command
@@ -150,15 +150,16 @@ integration, covering SKILLS, TOOLS, HOOKS, and PLUGINS.
 
 ---
 
-## 4. OpenAPI Schema Extraction and Breaking-Change Gate
+## 4. OpenAPI Schema Extraction and Contract Validation
 
 **Status: Substantially implemented**
 
-Implement the OpenAPI schema extraction, contract normalization, and
-breaking-change gate on the Django/DRF side.
+Implement the OpenAPI schema extraction, contract normalization, and validation
+on the Django/DRF side.
 
-- oasdiff integration, breaking-change detection, and breaking-change gate
-  implemented in `build_app.py`.
+- oasdiff integration exists, but its coarse change categories in `build_app.py`
+  must be reconciled with the canonical Change Model before it is treated as
+  supported behavior.
 - Schema extraction via `drf-spectacular` is the consuming Django project's
   responsibility.
 
@@ -183,14 +184,16 @@ construction.
 
 **Status: Partially implemented**
 
-Implement app-builder change detection, change classification, direct execution
-of the selected construction commands, and terminal validation from current and
+Implement app-builder atomic change derivation, direct execution of the
+selected construction commands, and terminal validation from current and
 previous schema/OpenUI inputs.
 
-- Schema change detection and classification (start-from-scratch, add-things,
-  remove-things, replace-things, breaking) are implemented in `build_app.py`.
-- Start-from-scratch selection identifies `ng_workspace` as the upstream-aligned
-  workspace bootstrap contract used by the CLI wrappers.
+- `build_app.py` contains a superseded coarse schema-category implementation;
+  it must be reconciled with the canonical Change Model in `REQUIREMENTS.md`
+  §4.2.9 before it is treated as supported behavior.
+- A missing baseline must emit atomic `create` changes; the
+  `--force start-from-scratch` CLI option selects the initial workspace command
+  sequence, including the upstream-aligned `ng_workspace` bootstrap contract.
 - Config change detection covers only project rename. OpenUI document-tree
   change detection and Angular UI command dispatch are not implemented yet.
 - Current command selection produces CLI command strings. It must be replaced
@@ -291,7 +294,7 @@ Examples 2–12 still need their input files under `spec/examples/<example-name>
 | 9 No Change | `spec/examples/09-no-change/` | missing |
 | 10 Configuration + OpenAPI | `spec/examples/10-config-openapi/` | missing; config-diff implementation pending |
 | 11 Configuration + OpenUI | `spec/examples/11-config-openui/` | missing; config/OpenUI diff implementation pending |
-| 12 Configuration + OpenAPI + OpenUI | `spec/examples/12-all-change-lanes/` | missing; config/OpenUI diff implementation pending |
+| 12 Configuration + OpenAPI + OpenUI | `spec/examples/12-all-change-domains/` | missing; config/OpenUI diff implementation pending |
 
 Example 1 is runnable. Examples 2, 3, 7, 8, and 9 have no remaining
 change-derivation dependency beyond their fixtures. Examples 4, 5, 10, 11, and
@@ -460,21 +463,21 @@ with the validation path. Add generated-app command coverage showing that
 is new because no current test module exercises these CLI commands.
 
 
-#### Step 3.5 — Three-lane scenario fixtures and acceptance coverage
+#### Step 3.5 — Three-domain scenario fixtures and acceptance coverage
 
 **Status: Partial.** `spec/examples/` provides valid scenario configurations,
-shared source artifacts, and a manifest covering all eight change-lane
-combinations plus breaking, source-selection, and replacement cases. Direct
+shared source artifacts, and a manifest covering all eight scenario-axis
+combinations plus source-selection and mixed create/delete cases. Direct
 ChangeSet, command-ordering, and dry-run non-modification assertions remain
 deferred until `build_app` is implemented.
 
 **Targets:** `tests/`, `tests/test_export_schema.py`, and
 `spec/examples/`.
 
-Materialize and test the full $2^3$ matrix of incremental `config`, OpenAPI,
-and OpenUI changes documented in `TEST_EXAMPLES.md`. Also retain coverage for
-first-run, breaking, OpenUI-source-selection, and replacement cases. Each test
-must assert all three ChangeSet lanes, selected commands, command ordering, and
+Materialize and test the full $2^3$ matrix of incremental configuration,
+OpenAPI, and OpenUI scenario axes documented in `TEST_EXAMPLES.md`. Also retain
+coverage for first-run, OpenUI-source-selection, and mixed create/delete cases.
+Each test must assert the relevant canonical ChangeSet domains, selected commands, command ordering, and
 dry-run non-modification behavior.
 
 #### Step 3.6 — Verification gate
@@ -509,10 +512,10 @@ use it consistently in the command, examples, and tests.
 
 Discover `django-angular3-<project_name>.json`; use `artifacts.openapiSchema`,
 `artifacts.openuiSpecification`, and `artifacts.angularWorkspace` as the
-current inputs and output location. Validate inputs, derive the `config`,
-schema, and OpenUI change lanes from the accepted prior state, translate each
-supported change directly to an executable command, and execute in dependency
-order. An unsupported change must fail explicitly rather than being omitted.
+current inputs and output location. Validate inputs, derive the canonical
+ChangeSet domains from the accepted prior state, translate each supported atomic
+change directly to an executable command, and execute in dependency order. An
+unsupported change must fail explicitly rather than being omitted.
 
 `--dry-run` is diagnostic-only: it validates inputs, derives changes, reports
 ordered commands with their modes, inputs, and reasons, and must not modify the
@@ -525,14 +528,14 @@ error reporting.
 **Targets:** `doc/APP_BUILDER_REQUIREMENTS.md`, `TODO.md`, and
 `django_angular3/management/commands/build_app.py`.
 
-Define one complete mapping for every supported config, OpenAPI, and OpenUI
-add, modify, delete, replacement, and first-run change. The mapping must name
-the executable boundary, its mode, inputs, ordering prerequisites, and terminal
-validation. Record missing wrappers as unsupported requirements until they
-exist; execution must never silently skip their corresponding change. Define
-post-execution generated-file checks, Angular build, and required integration
-checks. Command execution and terminal validation—not an emitted plan—are the
-build result.
+Define one complete mapping for every supported static configuration, project
+configuration, invocation, OpenAPI, and OpenUI `create`, `delete`, `update`,
+and `move` change. The mapping must name the executable boundary, its mode,
+inputs, ordering prerequisites, and terminal validation. Record missing
+wrappers as unsupported requirements until they exist; execution must never
+silently skip their corresponding change. Define post-execution generated-file
+checks, Angular build, and required integration checks. Command execution and
+terminal validation—not an emitted plan—are the build result.
 
 #### Step 4.4 — Add direct-build acceptance coverage
 
@@ -540,10 +543,11 @@ build result.
 the scenario fixtures in `doc/TEST_EXAMPLES.md`.
 
 Implement the direct-build cases documented by Task 3.5 using the scenario
-fixtures: every $2^3$ `config` × OpenAPI × OpenUI combination, plus first-run,
-replacement, breaking-change, source-selection, deletion, and command-failure
-cases. Assert all three derived lanes, selected executable boundaries, command
-ordering, executed wrappers, and validated outputs—not an emitted plan. Cover
-dry-run separately by asserting no generated-app files are modified.
+fixtures: every $2^3$ configuration × OpenAPI × OpenUI scenario-axis
+combination, plus first-run, mixed create/delete, source-selection, deletion,
+and command-failure cases. Assert all relevant derived ChangeSet domains,
+selected executable boundaries, command ordering, executed wrappers, and
+validated outputs—not an emitted plan. Cover dry-run separately by asserting
+no generated-app files are modified.
 
 ---

@@ -111,7 +111,7 @@ for the authoritative rendering rules.
 The integration toolchain for the generated project, per `README.md`,
 `ARCHITECTURE.md`, and `REQUIREMENTS.md`, is `drf-spectacular` for
 OpenAPI schema export from the consuming Django project, `oasdiff` for schema
-diff and change detection (breaking changes block downstream generation until
+difference detection before downstream generation
 acknowledged), and `ng-openapi-gen` for Angular client generation. No
 alternative Angular client generator is in scope, and no alternative OpenAPI
 diff tool is in scope.

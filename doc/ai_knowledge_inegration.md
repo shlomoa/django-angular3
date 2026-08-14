@@ -122,15 +122,12 @@ not make network calls, and does not change the selected construction commands.
     planner scope.**
     - Update `django_angular3/management/commands/build_app.py` only at its
        command entry/error boundaries: create the execution context after
-       project-config validation, record input-validation and breaking-change
-       decisions, and finalize the run outcome on every normal or error exit.
+      project-config validation, record input-validation and schema-diff
+      results, and finalize the run outcome on every normal or error exit.
     - Keep the existing schema/config planning, OpenUI-diff gap, and
        `NotImplementedError` execution limitation explicit. This step must not
        silently turn generated command strings into direct execution or claim
        that the full build planner now works.
-    - Preserve the existing breaking-change behavior and exit semantics. Record
-       an unacknowledged breaking change as evidence before surfacing the existing
-       failure; do not move that gate into a provider hook.
     - Add narrow recorder integration points to `validation.py` only after its
        public validation functions have returned their normal diagnostics. Do not
        change OpenAPI/OpenUI validation authority, message wording, or return
@@ -165,9 +162,9 @@ not make network calls, and does not change the selected construction commands.
        warning-only `session-stop`; wrapper exception normalization; and no
        provider import or network use.
     - Extend the focused `build_app` tests (create a dedicated test module if
-       none exists) to assert that invalid project input and an unacknowledged
-       breaking change finalize an evidence record while preserving current
-       command errors/exit behavior.
+       none exists) to assert that invalid project input and schema-diff results
+       finalize an evidence record while preserving current command errors/exit
+       behavior.
     - Do not add provider-runtime tests, credential fixtures, or adapter stubs
        that simulate provider SDK APIs in this step. Those belong to the
        provider-adapter implementation and verification steps.
@@ -179,7 +176,7 @@ not make network calls, and does not change the selected construction commands.
        then `python -m unittest discover -s tests -p 'test*.py'`.
     - Run `django-admin build_app --dry-run` in a generated-app-compatible test
        configuration and inspect that its evidence is machine-readable, excludes
-       secrets, and records validation/breaking-gate outcomes without executing
+      secrets, and records validation and schema-diff outcomes without executing
        selected construction commands.
     - Mark this code-plan step complete only when the provider-neutral contracts
        and recorder are covered by credential-free tests, direct `build_app`
@@ -472,9 +469,8 @@ normative Hook implementation.
    - Express scope using canonical TOOL contract names and command predicates;
       do not match raw shell command strings or Claude event names in the
       shared registry.
-   - Encode the five catalogued contracts incrementally: `pre-construction`,
-      `migration-triggered`, `breaking-change`, `post-generation`, and
-      `session-stop`. A hook implementation must call its documented TOOL
+   - Encode the four catalogued contracts incrementally: `pre-construction`,
+      `migration-triggered`, `post-generation`, and `session-stop`. A hook implementation must call its documented TOOL
       boundary rather than duplicate a binary invocation.
    - Require every definition to declare its block/halt/warn consequence,
       evidence payload, and idempotency behavior before it can be registered.
@@ -489,9 +485,6 @@ normative Hook implementation.
       - Run `session-stop` exactly once from a `finally` path after the run
         outcome is decided; record failures as warnings without replacing an
         already determined success/failure result.
-   - Preserve the existing explicit breaking-change behavior while migrating it
-      behind the canonical `breaking-change` Hook boundary. Its acknowledgement
-      flag and distinct command exit behavior must remain unchanged.
    - Use `EvidenceRecorder` for every Hook start, outcome, skip, and failure.
       The durable record must identify the canonical Hook, lifecycle family,
       wrapped TOOL/command ID, normalized error, and resulting decision.

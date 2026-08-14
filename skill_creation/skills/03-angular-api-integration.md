@@ -38,9 +38,8 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
    - Check `oasdiff` is installed (`oasdiff --version`)
    - If config file path provided, verify it exists; otherwise check for default `ng-openapi-gen.json`
 2. **Schema diff with oasdiff** (if a previous schema version exists):
-   - Run: `oasdiff breaking <previous_schema> <openapi_source_path>`
-   - If breaking changes are reported, halt and surface the `oasdiff` output to the caller
-   - For non-breaking changes, log the summary and continue
+   - Run: `oasdiff diff <previous_schema> <openapi_source_path> --format json`
+   - Archive and surface the structured diff output to the caller
    - If no previous schema exists, skip this step and proceed
 3. **Bootstrap ng-openapi-gen** (if `ng-openapi-gen.json` does not exist):
 
@@ -94,8 +93,8 @@ Regenerate API client code after OpenAPI specification changes.
    - Confirm `ng-openapi-gen.json` config exists
    - Confirm output directory exists with previous generation
 2. **Schema diff with oasdiff**:
-   - Run: `oasdiff breaking <previous_schema> <openapi_source_path>`
-   - If breaking changes are reported, halt and surface the `oasdiff` output to the caller before regenerating
+   - Run: `oasdiff diff <previous_schema> <openapi_source_path> --format json`
+   - Archive and surface the structured diff output before regenerating
    - Run: `oasdiff summary <previous_schema> <openapi_source_path>` and include in the change report
 3. **Clean previous generation** (optional, based on ng-openapi-gen behavior):
    - ng-openapi-gen handles incremental updates, but note that removed endpoints/models may leave orphaned files

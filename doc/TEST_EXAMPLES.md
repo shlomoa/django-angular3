@@ -10,7 +10,8 @@ Each example consists of:
 - A named scenario with a description
 - Input files: discovered project configuration, OpenAPI schema, OpenUI
   specification, and static tool configuration
-- The expected `ChangeSet` output from the builder
+- Expected atomic changes from the builder; the canonical `ChangeSet` schema is
+  defined in `REQUIREMENTS.md` §4.2.9
 
 ### Shared conventions across all examples
 
@@ -362,15 +363,11 @@ repository example.
 
 The static `django-angular3.json` supplies the separate `djng` tool settings.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": { "type": "start-from-scratch" },
-  "schema": { "type": "start-from-scratch" },
-  "openui": { "type": "start-from-scratch" }
-}
-```
+The missing baseline initializes each applicable domain. The builder emits
+`create` changes for the candidate static configuration, project configuration,
+derived invocations, OpenAPI contract, and OpenUI document.
 
 ### Expected executed command sequence (ordered)
 
@@ -410,7 +407,8 @@ Contracts Catalog) precede the SKILL sessions:
 
 **Demonstrates**: Incremental schema change. Previous state is Example 1.
 Only new-resource skills run; existing workspace, app, and components are
-untouched. Uses `add-things` change path.
+untouched. The OpenAPI domain emits `create` changes for the new contract
+subjects.
 
 ### Scenario
 
@@ -461,19 +459,10 @@ components:
 
 Example 1's `schema.yaml`.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": { "type": "no-change" },
-  "schema": {
-    "type": "add-things",
-    "affected_resources": ["Order"],
-    "breaking": false
-  },
-  "openui": { "type": "no-change" }
-}
-```
+The OpenAPI domain emits `create` changes for the `Order` paths, operations,
+and component schema. No other domain emits an atomic change.
 
 ### Expected executed command sequence
 
@@ -481,8 +470,8 @@ Deterministic TOOL commands precede the schema-derived SKILL sessions:
 
 1. `openapi_schema_export` *(tool)* — re-export the schema; archive previous version
 2. `validate_openapi_schema` *(tool)* — validate the new schema
-3. `oasdiff_diff` *(tool)* — produce the structured diff feeding the
-   `ChangeSet` above (`change_type: add-things`, no breaking changes)
+3. `oasdiff_diff` *(tool)* — produce the structured diff evidence used to
+  derive the OpenAPI `create` changes
 4. `angular_api_client_generate` *(tool)* — regenerate the typed Angular API client to
    include the new `Order` endpoints
 5. `angular-api-integration` *(skill)* — integrate the regenerated API client (new `Order`
@@ -494,60 +483,30 @@ No workspace, app, or existing component steps — they are not affected.
 
 ---
 
-## Example 3: Schema Evolution — Breaking Change Blocked
+## Example 3: Schema Evolution — Removal
 
-**Demonstrates**: oasdiff breaking-change gate. The builder halts before
-executing construction commands. Verifies the `--acknowledge-breaking` bypass.
+**Demonstrates**: incremental removal of a schema property and the dependent
+construction commands it selects.
 
 ### Scenario
 
 The `Customer.email` field (previously required, string) is removed from the
-schema. oasdiff classifies this as a breaking change.
+schema.
 
 ### Input: `schema.yaml`
 
 Example 1's schema with `email` removed from `Customer.required` and
 `Customer.properties`.
 
-### Expected ChangeSet (before gate)
+### Expected atomic changes
 
-```json
-{
-  "config": { "type": "no-change" },
-  "schema": {
-    "type": "breaking",
-    "breaking": true,
-    "affected_resources": ["Customer"]
-  },
-  "openui": { "type": "no-change" }
-}
-```
+The OpenAPI domain emits `delete` changes for `Customer.email` and its
+requiredness membership. No other domain emits an atomic change.
 
-### Expected builder output
+### Expected executed command sequence
 
-The breaking-change gate is implemented by the `breaking-change` hook
-contract (see `GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog), fed by
-the `oasdiff_diff` tool contract (see `GENERATE_AI_AUTOMATIONS.md` §Tool
-Contracts Catalog). `oasdiff_diff` itself exits zero and returns its
-structured `breaking` array; the `breaking-change` `pre-tool` hook consumes
-that output and halts the run (`build_app` uses the breaking-change exit code
-defined by FR-4):
-
-```
-Breaking schema changes detected:
-  - Customer: required property 'email' removed (breaking)
-
-Review the oasdiff report at build/oasdiff-report.json before proceeding.
-Re-run with --acknowledge-breaking to continue.
-```
-
-Exit code: non-zero (e.g., 2). This exit code is distinct from the tool
-failure exit code required by `APP_BUILDER_REQUIREMENTS.md` FR-9.
-
-### With `--acknowledge-breaking`
-
-Builder proceeds. ChangeSet type becomes `remove-things` for the `email`
-field. Steps include:
+The `oasdiff_diff` tool produces the report used for the ChangeSet. The
+builder then executes the commands selected for the removed field:
 
 1. `angular-api-integration` — regenerate API client
 2. `angular-data-service-composition` — update `Customer` data service
@@ -570,35 +529,17 @@ modification rather than a project replacement.
 
 ### Input: current `django-angular3.json`
 
-```json
-{
-  "project": { "name": "simple_crm" },
-  "app": { "name": "shop" },
-  "openapi": { "source": "schema.yaml" },
-  "openui": { "source": "app.openui.json" },
-  "angular": {
-    "output": "build/examples/01_simple_crm",
-    "workspace": { "packageManager": "pnpm", "style": "css", "routing": true }
-  }
-}
-```
+The canonical static tool configuration from `REQUIREMENTS.md` §4.2.3, with
+`angular.workspace.style` set to `css`.
 
 ### Input: previous `django-angular3.json`
 
 Example 1's configuration, with `angular.workspace.style` set to `scss`.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": {
-    "type": "modify-things",
-    "affected_keys": ["angular.workspace.style"]
-  },
-  "schema": { "type": "no-change" },
-  "openui": { "type": "no-change" }
-}
-```
+The `static_config` domain emits an `update` change for
+`/angular/workspace/style`. No other domain emits an atomic change.
 
 ### Expected executed command sequence
 
@@ -614,8 +555,8 @@ Schema-derived and OpenUI-derived commands must not run.
 ## Example 5: OpenUI-Source Configuration Change
 
 **Demonstrates**: An `artifacts.openuiSpecification` configuration change. This is distinct
-from a structural change inside an OpenUI document: the `config` lane records
-the selected input path, while the `openui` lane compares the selected document
+from a structural change inside an OpenUI document: the `config` domain records
+the selected input path, while the `openui` domain compares the selected document
 with its own prior `.previous` artifact.
 
 ### Scenario
@@ -625,18 +566,11 @@ The project changes `artifacts.openuiSpecification` from `legacy.openui.json` to
 identical to `app.openui.json`, so selection changes but no OpenUI-derived
 artifact changes are required.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": {
-    "type": "modify-things",
-    "affected_keys": ["artifacts.openuiSpecification"]
-  },
-  "schema": { "type": "no-change" },
-  "openui": { "type": "no-change" }
-}
-```
+The `project_config` domain emits an `update` change for
+`/artifacts/openuiSpecification`. The selected OpenUI documents are identical,
+so the `openui` domain emits no atomic change.
 
 ### Expected executed command sequence
 
@@ -668,18 +602,11 @@ Example 1's OpenUI document plus `dashboardPage`, `customerSummary`, and
 
 Example 1's OpenUI document before those nodes were added.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": { "type": "no-change" },
-  "schema": { "type": "no-change" },
-  "openui": {
-    "type": "add-things",
-    "affected_nodes": ["dashboardPage", "customerSummary", "productSummary"]
-  }
-}
-```
+The `openui` domain emits `create` changes for `dashboardPage`,
+`customerSummary`, and `productSummary`. No other domain emits an atomic
+change.
 
 ### Expected executed command sequence
 
@@ -701,22 +628,11 @@ Starting from Example 2's state (Customer, Product, Order):
 - Schema: a new `Invoice` resource is added.
 - OpenUI: a new `invoiceListPage` node is added to `app.openui.json`.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": { "type": "no-change" },
-  "schema": {
-    "type": "add-things",
-    "affected_resources": ["Invoice"],
-    "breaking": false
-  },
-  "openui": {
-    "type": "add-things",
-    "affected_nodes": ["invoiceListPage"]
-  }
-}
-```
+The `openapi` domain emits `create` changes for the `Invoice` contract
+subjects, and the `openui` domain emits a `create` change for
+`invoiceListPage`.
 
 ### Expected executed command sequence (order matters)
 
@@ -729,22 +645,14 @@ Starting from Example 2's state (Customer, Product, Order):
 
 ## Example 8: Full Replacement — Remove Resource, Add Resource
 
-**Demonstrates**: `replace-things` change type. One resource is removed
-(`Product`) and one is added (`Supplier`). Remove steps precede add steps at
-the same dependency level.
+**Demonstrates**: Separate atomic deletion and creation. `Product` is removed
+and `Supplier` is added. Delete commands precede create commands at the same
+dependency level.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": { "type": "no-change" },
-  "schema": {
-    "type": "replace-things",
-    "affected_resources": ["Product", "Supplier"],
-    "breaking": false
-  }
-}
-```
+The `openapi` domain emits `delete` changes for the `Product` contract
+subjects and `create` changes for the `Supplier` contract subjects.
 
 ### Expected executed command sequence
 
@@ -765,15 +673,9 @@ the same dependency level.
 **Demonstrates**: The accepted-state no-op. Current project configuration,
 OpenAPI schema, and OpenUI document all match their respective prior inputs.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": { "type": "no-change" },
-  "schema": { "type": "no-change" },
-  "openui": { "type": "no-change" }
-}
-```
+No domain emits an atomic change.
 
 ### Expected executed command sequence
 
@@ -795,22 +697,11 @@ Starting from Example 1, the project changes `angular.workspace.style` from
 `scss` to `css` and adds the `Order` resource to the OpenAPI schema. The
 OpenUI document is unchanged.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": {
-    "type": "modify-things",
-    "affected_keys": ["angular.workspace.style"]
-  },
-  "schema": {
-    "type": "add-things",
-    "affected_resources": ["Order"],
-    "breaking": false
-  },
-  "openui": { "type": "no-change" }
-}
-```
+The `static_config` domain emits an `update` for
+`/angular/workspace/style`, and the `openapi` domain emits `create` changes
+for the `Order` contract subjects.
 
 ### Expected executed command sequence
 
@@ -837,21 +728,11 @@ Starting from Example 1, the project changes `angular.workspace.style` from
 `scss` to `css` and adds `dashboardPage`, `customerSummary`, and
 `productSummary` to `app.openui.json`. The OpenAPI schema is unchanged.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": {
-    "type": "modify-things",
-    "affected_keys": ["angular.workspace.style"]
-  },
-  "schema": { "type": "no-change" },
-  "openui": {
-    "type": "add-things",
-    "affected_nodes": ["dashboardPage", "customerSummary", "productSummary"]
-  }
-}
-```
+The `static_config` domain emits an `update` for
+`/angular/workspace/style`, and the `openui` domain emits `create` changes for
+`dashboardPage`, `customerSummary`, and `productSummary`.
 
 ### Expected executed command sequence
 
@@ -870,7 +751,7 @@ Schema-derived construction commands must not run.
 
 ## Example 12: Combined Project-Configuration, OpenAPI, and OpenUI Change
 
-**Demonstrates**: All three independent change lanes active in one run.
+**Demonstrates**: All three scenario axes active in one run.
 
 ### Scenario
 
@@ -878,25 +759,12 @@ Starting from Example 2, the project changes `angular.workspace.style` from
 `scss` to `css`, adds the `Invoice` resource to the OpenAPI schema, and adds an
 `invoiceListPage` node to `app.openui.json`.
 
-### Expected ChangeSet
+### Expected atomic changes
 
-```json
-{
-  "config": {
-    "type": "modify-things",
-    "affected_keys": ["angular.workspace.style"]
-  },
-  "schema": {
-    "type": "add-things",
-    "affected_resources": ["Invoice"],
-    "breaking": false
-  },
-  "openui": {
-    "type": "add-things",
-    "affected_nodes": ["invoiceListPage"]
-  }
-}
-```
+The `static_config` domain emits an `update` for
+`/angular/workspace/style`; the `openapi` domain emits `create` changes for
+the `Invoice` contract subjects; and the `openui` domain emits a `create`
+change for `invoiceListPage`.
 
 ### Expected executed command sequence (order matters)
 
@@ -931,8 +799,6 @@ django-admin build_app \
   --previous-config <previous-project-configuration.json> \
   --dry-run
 
-# Acknowledge a breaking schema change
-django-admin build_app --acknowledge-breaking --dry-run
 ```
 
 The current and previous project configurations select the corresponding
@@ -941,12 +807,13 @@ pending scenario fixtures.
 
 ---
 
-## Three-Lane Change Matrix
+## Three-Axis Scenario Matrix
 
 The following matrix covers every Boolean combination of incremental changes
-in the `config`, `schema`, and `openui` lanes. A check mark means the lane has
-a change; a blank means `no-change`. Examples 1, 3, 5, and 8 provide
-additional coverage for first-run, breaking, source-selection, and replacement
+in the project/static-configuration, OpenAPI, and OpenUI scenario axes. These
+axes are not the five canonical Change Model domains. A check mark means that
+scenario input changes; a blank means it is unchanged. Examples 1, 3, 5, and 8 provide
+additional coverage for first-run, removal, source-selection, and replacement
 semantics respectively.
 
 | Config change | OpenAPI change | OpenUI change | Required example |
@@ -965,6 +832,6 @@ semantics respectively.
 | Concern | Example |
 |---|---|
 | Start from scratch | 1 Simple CRM |
-| Breaking OpenAPI change | 3 Breaking Change |
+| OpenAPI removal | 3 Schema Removal |
 | `openui.source` selection without structural OpenUI change | 5 OpenUI-Source Configuration |
 | OpenAPI replacement | 8 Full Replacement |

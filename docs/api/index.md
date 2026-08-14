@@ -4,6 +4,7 @@
 :maxdepth: 1
 
 angular
+tools
 config
 validation
 cli

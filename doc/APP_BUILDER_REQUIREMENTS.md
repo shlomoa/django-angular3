@@ -16,10 +16,11 @@ django-admin build_app [options]
 python manage.py build_app [options]
 ```
 
-> **Implementation status:** the current command validates discovered project
-> inputs, then raises `NotImplementedError` because planning and execution are
-> not implemented. This document specifies the target behavior; it must not be
-> read as a claim that those target behaviors are already available.
+> **Implementation status:** the current command exposes its documented
+> argument interface, then raises `NotImplementedError` because planning and
+> execution are not implemented. This document specifies the target behavior;
+> it must not be read as a claim that those target behaviors are already
+> available.
 
 ### Build algorithm
 
@@ -65,12 +66,12 @@ provider used by an agent session.
 | Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The discovered default is defined in `REQUIREMENTS.md` §4.2.4. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | A missing previous configuration starts a build from scratch. |
-| Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Absent on a first run; the schema change type is `start-from-scratch`. |
+| Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. |
 | Current `app.openui.json` | `artifacts.openuiSpecification` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
-| Previous `app.openui.json` | Accepted prior state | JSON (`openui.schema.json`) | A persisted prior state for OpenUI change detection. Absent on a first run; the OpenUI change type is `start-from-scratch`. |
+| Previous `app.openui.json` | Accepted prior state | JSON (`openui.schema.json`) | A persisted prior state for OpenUI change detection. Absent on a first run; the OpenUI domain emits `create` changes for the candidate document. |
 
 `artifacts.openuiSpecification` selects the current OpenUI document; it does
-not name the document format or the ChangeSet lane. `app.openui.json` is the generated-app filename
+not name the document format or the ChangeSet domain. `app.openui.json` is the generated-app filename
 convention. Its grammar is defined by
 `openui.schema.json` and its vocabulary by `openui.json` in
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec); djng owns only
@@ -85,7 +86,6 @@ the configured input path and its build-stage handling. See
 | Previous configuration override | `--previous-config <path>` | Override the derived previous project configuration. |
 | Dry run | `--dry-run` | Diagnostic validation and debugging mode: validate inputs, identify changes, and show ordered change commands without executing them or modifying the generated-app workspace. |
 | Force mode | `--force start-from-scratch` | Override comparison results and execute the full initial-build command set. |
-| Breaking-change acknowledgement | `--acknowledge-breaking` | Permit execution after the breaking-change gate reports OpenAPI breaking changes. |
 
 ### Configuration model
 
@@ -97,82 +97,28 @@ configuration definition and discovery rules are in `REQUIREMENTS.md` §4.2.4.
 
 ## Change Derivation
 
-### OpenAPI change detection
+The canonical Change Model, including `Change`, the five domains, identity
+rules, baseline/candidate semantics, and the complete `ChangeSet` schema, is
+defined in `REQUIREMENTS.md` §4.2.9. This section defines how `build_app`
+applies that model.
 
-Schema comparison uses `oasdiff`:
+For every run, the builder must compare the accepted baseline and candidate
+normalized semantic state, emit atomic `create`, `delete`, `update`, or `move`
+changes, and then translate those changes to commands. A missing baseline emits
+`create` changes for the candidate state. An empty atomic-change list means
+there are no changes in that domain. Coarse category strings and an ad-hoc
+per-domain `type` field are not part of the builder contract.
 
-```bash
-oasdiff diff <previous-schema> <current-schema> --format json
-```
+| Domain | Builder derivation requirement |
+|---|---|
+| `static_config` | Compare only validated static-configuration fields. Treat command-allowlist entries as set members and derive resulting invocation changes. |
+| `project_config` | Compare project identity and all artifact selectors. Record selector changes separately from changes in selected OpenAPI or OpenUI content. |
+| `invocation` | Compare the derived wrapper invocation snapshot: wrapper, arguments, working directory, derived files, executable, and authorization. |
+| `openapi` | Parse structured `oasdiff` output into atomic contract changes. Preserve complete contract identity and source diff evidence before deriving resource hints. |
+| `openui` | Compare declared OpenUI node identities, attributes, parent relations, and ordered children. Missing, duplicate, or invalid node identities fail validation. |
 
-oasdiff output is parsed to classify the change and affected resources.
-
-| Type | Signal | Meaning |
-|---|---|---|
-| `start-from-scratch` | No previous schema | First build; generate schema-derived artifacts. |
-| `no-change` | Empty diff | Skip schema-derived commands. |
-| `add-things` | Additions only | New endpoints, resources, or properties. |
-| `remove-things` | Removals only | Deleted endpoints, resources, or properties. |
-| `replace-things` | Additions and removals | Modified resources; execute removals before additions. |
-| `breaking` | Breaking changes reported | Stop unless `--acknowledge-breaking` is present. |
-
-When breaking changes are found, the builder must stop and output:
-
-```
-Breaking schema changes detected. Review the oasdiff report before proceeding.
-Re-run with --acknowledge-breaking to continue.
-```
-
-### OpenUI change detection
-
-OpenUI comparison is a structural diff of current and previous `app.openui.json`
-document trees. It compares each node's `id`, `type`, `attrs`, and ordered
-`children`, and records affected node IDs and their add, modify, or delete
-operation. If no previous OpenUI document is available, OpenUI-specific change
-detection is skipped; the first-run command set still creates the configured UI
-artifacts required by the generated app.
-
-### Project-configuration change detection
-
-The `config` lane compares every supported project-configuration field with the
-accepted prior project state. A changed artifact location remains an input
-selector for its own lane; it is nevertheless reported in
-`config.affected_keys` because source selection is build-relevant.
-
-| Configuration key change | `config` type | Required effect |
-|---|---|---|
-| `project.name` | `replace-things` | Replace the project-level workspace and application foundation for the new identity. |
-| `artifacts.angularWorkspace` | `replace-things` | Materialize the generated application at the new workspace root. |
-| `artifacts.openapiSchema` | `modify-things` | Use the selected contract for schema comparison and API-client generation. |
-| `artifacts.openuiSpecification` | `modify-things` | Use the selected OpenUI document for OpenUI comparison and UI construction. |
-
-Any supported configuration-key addition, removal, or value replacement must
-be represented in `affected_keys`. Unsupported configuration keys or changes
-without a defined command translation must fail explicitly.
-
-### ChangeSet
-
-The builder uses a typed `ChangeSet` internally to carry comparison results
-into command translation. It is not a build plan and does not replace command
-execution.
-
-```json
-{
-  "config": {
-    "type": "modify-things | replace-things | no-change | start-from-scratch",
-    "affected_keys": ["angular.workspace.style"]
-  },
-  "schema": {
-    "type": "add-things | remove-things | replace-things | start-from-scratch | no-change | breaking",
-    "affected_resources": ["Customer", "Order"],
-    "breaking": false
-  },
-  "openui": {
-    "type": "add-things | remove-things | replace-things | no-change | start-from-scratch",
-    "affected_nodes": ["dashboardPage", "customerEditForm"]
-  }
-}
-```
+Unsupported input, unknown configuration keys, and unsupported `oasdiff` output
+shapes must fail explicitly. They must never be interpreted as no change.
 
 ---
 
@@ -195,7 +141,6 @@ by the automation naming layers in `ARCHITECTURE.md` §2.23.
 | Schema validation | TOOL | `validate_openapi_schema` | — | Validate the schema before construction. |
 | Pre-construction validation | HOOK | — | `pre-construction` | Block Angular generation until required inputs are valid. |
 | Schema diff | TOOL | `oasdiff_diff` | — | Derive schema changes. |
-| Breaking-change gate | HOOK | — | `breaking-change` | Block execution until acknowledged or resolved. |
 | Angular workspace scaffold | TOOL | `angular_workspace_scaffold` | — | Create the workspace for a first build. |
 | Angular app scaffold | TOOL | `angular_app_scaffold` | — | Create the primary Angular application. |
 | Typed Angular client generation | TOOL | `angular_api_client_generate` | — | Generate the typed API client. |
@@ -204,23 +149,22 @@ by the automation naming layers in `ARCHITECTURE.md` §2.23.
 
 ### Change-to-command mapping
 
-| Source change | Selected command category | Mode |
+| Source atomic change | Selected command category | Mode |
 |---|---|---|
-| Configuration start-from-scratch | Workspace and application foundation commands | create |
-| Configuration replacement (`project.name` or `artifacts.angularWorkspace`) | Project-level workspace and application foundation commands | replace |
-| Configuration modification | The command category for each affected configuration key | modify |
-| Schema start-from-scratch | Workspace, app, API-integration, data-service, and required OpenUI commands | create |
-| Schema addition | API-integration and data-service commands for affected resources, followed by dependent UI commands | create |
-| Schema removal | Dependent UI, data-service, and API-integration commands for affected resources | delete |
-| Schema replacement | Removal commands followed by creation commands for affected resources | delete, then create |
-| OpenUI page addition, modification, or removal | `angular-page-composition` | create, modify, or delete |
-| OpenUI standalone component addition, modification, or removal | `angular-component-composition` | create, modify, or delete |
-| OpenUI complex component addition, modification, or removal | `angular-complex-component-composition` | create, modify, or delete |
-| OpenUI reactive form addition, modification, or removal | `angular-reactive-form-composition` | create, modify, or delete |
-| OpenUI site-navigation change | `angular-site-composition` | modify |
+| Initial-domain `create` | Workspace, application, API-integration, data-service, and required OpenUI commands | create |
+| `project_config` `update` or `move` | Project-level workspace and application foundation commands | matching operation |
+| `static_config` `update` | The command category for the supported configuration subject | update |
+| `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
+| `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
+| `openapi` `update` | Targeted dependent client, service, and UI commands | update |
+| `openui` page `create`, `update`, `delete`, or `move` | `angular-page-composition` | matching operation |
+| `openui` standalone component `create`, `update`, `delete`, or `move` | `angular-component-composition` | matching operation |
+| `openui` complex component `create`, `update`, `delete`, or `move` | `angular-complex-component-composition` | matching operation |
+| `openui` reactive form `create`, `update`, `delete`, or `move` | `angular-reactive-form-composition` | matching operation |
+| `openui` navigation `update` or `move` | `angular-site-composition` | matching operation |
 
 The implementation must define the precise wrapper invocation for every row
-before claiming support for that change type. Unsupported changes must fail
+before claiming support for that atomic change. Unsupported changes must fail
 explicitly; `build_app` must not silently omit them.
 
 ### Execution order
@@ -273,14 +217,12 @@ they are not a substitute for execution.
 
 - The builder must validate current project sources before comparison.
 - The builder must compare all supported project-configuration keys and carry
-  their changes in the `config` lane.
+  their changes in the `config` domain.
 - The builder must detect schema changes using `oasdiff`.
 - The builder must detect non-CRM changes by structurally diffing OpenUI
   document trees.
-- The builder must halt on breaking schema changes unless
-  `--acknowledge-breaking` is set.
-- If no previous schema is available, the schema change type is
-  `start-from-scratch`.
+- If no previous schema is available, the OpenAPI domain must emit `create`
+  changes for the candidate contract.
 
 ### FR-2: Command translation and execution
 
@@ -300,32 +242,24 @@ they are not a substitute for execution.
 - The preview must be human-readable and include command order, mode, inputs,
   and reason.
 
-### FR-4: Breaking-change gate
-
-- When oasdiff detects breaking changes, the builder must stop, print the report
-  summary, and exit non-zero.
-- Breaking changes may be bypassed only with `--acknowledge-breaking`.
-- The `breaking-change` hook contract in
-  `doc/GENERATE_AI_AUTOMATIONS.md` is the single point of enforcement.
-
-### FR-5: Start-from-scratch mode
+### FR-4: Initial-state force mode
 
 - `--force start-from-scratch` overrides comparison results and executes the
-  full initial-build command set, including deterministic prerequisites and
+  full initial-state command set, including deterministic prerequisites and
   required SKILL commands in dependency order.
 
-### FR-6: OpenUI-only changes
+### FR-5: OpenUI-only changes
 
 - When the schema is unchanged but the OpenUI document changed, execute only
   the OpenUI-derived commands and required terminal validation.
 - Schema-derived commands must not rerun unless triggered by a schema change.
 
-### FR-7: Combined changes
+### FR-6: Combined changes
 
 - When both sources change, schema-derived commands are ordered before
   OpenUI-derived commands at the same dependency level.
 
-### FR-8: Automation command execution
+### FR-7: Automation command execution
 
 - Each selected SKILL command must run through the selected provider adapter
   with the specified canonical SKILL(s), sanitized command inputs, and
@@ -337,7 +271,7 @@ they are not a substitute for execution.
 - Each selected gate must enforce its blocking check or lifecycle side effect
   before downstream commands continue.
 
-### FR-9: Command and hook failure handling
+### FR-8: Command and hook failure handling
 
 - A failed tool command must halt execution and prevent dependent commands from
   starting.
@@ -347,7 +281,7 @@ they are not a substitute for execution.
   hook may only append warnings and must not change the run's exit code.
 - The builder must not silently retry a failed command or hook.
 
-### FR-10: Terminal validation
+### FR-9: Terminal validation
 
 - Every successful execution sequence must finish with one or more validation
   commands.
@@ -383,5 +317,5 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **SKILLS** | Bounded AI skills that guide selected agent sessions. | `ARCHITECTURE.md` §2.14 |
 | **TOOLS** | Deterministic callable capabilities for bounded operations. | `GENERATE_AI_AUTOMATIONS.md` |
 | **HOOKS / gates** | Deterministic lifecycle-triggered or blocking automations. | `GENERATE_AI_AUTOMATIONS.md` |
-| **ChangeSet** | Typed project-configuration, OpenAPI, and OpenUI comparison results used to select change commands. | §Change Derivation |
+| **ChangeSet** | Domain-specific atomic changes and a computed summary used to select change commands. Its canonical schema is in `REQUIREMENTS.md` §4.2.9. | `REQUIREMENTS.md` §4.2.9 |
 | **`app.openui.json`** | The generated app's OpenUI concrete UI document. | `ARCHITECTURE.md` §8.5 |

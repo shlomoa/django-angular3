@@ -56,7 +56,7 @@ manifests, or skill files to ensure each layer uses the correct name.
 | `angular.site` | — | — | `angular-site-composition` | — |
 | `contract.schema-export` | `export_schema` | `openapi_schema_export` | — | `migration-triggered` |
 | `contract.schema-validate` | — | `validate_openapi_schema` | — | `pre-construction` (wraps) |
-| `contract.schema-diff` | — | `oasdiff_diff` | — | `breaking-change` |
+| `contract.schema-diff` | — | `oasdiff_diff` | — | — |
 
 ---
 
@@ -216,7 +216,6 @@ reference cases for new work.
 | `oasdiff_diff` (schema diff) | Yes | None | No | **TOOL** |
 | `angular_api_client_generate` (typed Angular client generation) | Yes | None | No | **TOOL** wrapper |
 | `pre-construction` contract validation gate | Yes | None | Yes (must run before construction) | **HOOK** wrapping the `validate_openapi_schema` TOOL |
-| `breaking-change` gate on schema diff | Yes | None | Yes | **HOOK** wrapping the `oasdiff_diff` TOOL |
 | Generating an Angular feature page from an OpenAPI resource | No | High | No | **SKILL** |
 | Authoring a non-CRM reactive form from a structured UI definition | No | High | No | **SKILL** |
 | `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** containing related SKILLS, TOOLS, and HOOKS |
@@ -416,21 +415,22 @@ and return a structured diff result that `build_app` consumes to derive the
 | Key | Type | Description |
 |---|---|---|
 | `schema_changed` | boolean | `true` if any difference is detected. |
-| `breaking` | array of `{ resource, path, code, message }` | Breaking changes detected by `oasdiff`. Empty when no breaking changes. |
-| `non_breaking` | array of `{ resource, path, code, message }` | Non-breaking changes detected. |
-| `affected_resources` | array of string | Distinct resource names touched across both `breaking` and `non_breaking`. |
-| `change_type` | `"no-change"` \| `"add-things"` \| `"remove-things"` \| `"replace-things"` \| `"breaking"` | Pre-classified change type matching the values defined in `APP_BUILDER_REQUIREMENTS.md` §Change Classification Summary. |
+| `changes` | array of structured diff entries | Differences reported by `oasdiff`. |
+| `affected_resources` | array of string | Distinct resource names touched by the diff. |
 | `report_path` | string (path) | Where the raw `oasdiff` artifact was archived. |
+
+`oasdiff_diff` does not classify changes into builder categories. `build_app`
+maps its structured entries into atomic OpenAPI changes according to the
+canonical Change Model in `REQUIREMENTS.md` §4.2.9.
 
 **Error behavior**: Non-zero exit / raised `ToolError` with `category` in
 `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
-A successful `oasdiff` invocation that reports breaking changes is **not** an
-error — it returns the populated `breaking` array with exit zero. The
-breaking-change gate (HOOK or `build_app`) interprets the structured output.
+A successful `oasdiff` invocation returns structured differences with exit
+zero; a non-zero exit indicates tool failure, not a special change category.
 
-**Allowed invocation context**: `build_app` (as the TOOL command feeding
-the `ChangeSet`); HOOK (wrapped by the `pre-tool` breaking-change gate); agent (read-only diagnostic use inside
-a guided agent session that needs to re-inspect a diff).
+**Allowed invocation context**: `build_app` (as the TOOL command feeding the
+`ChangeSet`); agent (read-only diagnostic use inside a guided agent session
+that needs to re-inspect a diff).
 
 **Implementation reference**: `django_angular3/tools.py:ensure_oasdiff()` for
 binary acquisition; planned `django_angular3.diff` wrapper that calls
@@ -718,7 +718,6 @@ current OpenAPI artifact, using the same schema pair consumed by `oasdiff_diff`.
 | `changelog_path` | string (path) | Absolute path of the written changelog. |
 | `format` | `"markdown"` \| `"html"` | Serialization format used. |
 | `schema_changed` | boolean | Whether the schema pair contains any change. |
-| `breaking_change_count` | integer | Number of breaking changes represented in the report. |
 | `command` | string | Exact `oasdiff` command line invoked. |
 
 **Error behavior**: Non-zero exit / raised `ToolError` with `category` in
@@ -752,7 +751,7 @@ resolution and archive output under the configured build directory.
 
 Use HOOKS for deterministic lifecycle enforcement points that must run whether
 or not the agent would choose to do so. In the `djng` architecture, this
-includes breaking-change gates, migration-triggered schema export,
+includes migration-triggered schema export,
 pre-construction contract validation, post-generation verification logging, and
 session-stop cleanup and audit behavior.
 
@@ -858,8 +857,7 @@ command.
   `{ hook: "pre-construction", category, message, schema_path, ... }` to
   stderr **and** to `build/hook-log.jsonl`, and block the wrapped tool.
 - In `build_app`, hook failure MUST halt the run with this hook’s dedicated
-  hook-failure exit code (distinct from the `breaking-change` exit code and
-  from FR-9 tool-failure exit codes).
+  hook-failure exit code (distinct from FR-8 tool-failure exit codes).
 - The hook MUST NOT attempt to auto-repair (e.g. it does not invoke
   `openapi_schema_export` itself); auto-extraction is the responsibility of the
   `migration-triggered` hook.
@@ -894,8 +892,8 @@ sees a contract that matches the current data model.
    the project's `django-angular3.json` config path.
 3. Append a `{ hook: "migration-triggered", migrations: [...], destination,
    previous_path, schema_changed }` record to `build/hook-log.jsonl`.
-4. Exit 0 regardless of `schema_changed`; downstream `breaking-change` and
-   `pre-construction` hooks will act on the rotated schema.
+4. Exit 0 regardless of `schema_changed`; the `pre-construction` hook will
+  validate the rotated schema before generation.
 
 **Failure behavior**:
 
@@ -914,56 +912,9 @@ sees a contract that matches the current data model.
 It wraps `openapi_schema_export` via its tool contract and is registered by
 the applicable provider adapter.
 
-##### 3. `breaking-change` — gate on schema diff
-
-**Name**: `breaking-change`
-
-**Purpose**: Block any downstream Angular generation as soon as `oasdiff_diff`
-reports breaking changes, unless the run was started with
-`--acknowledge-breaking`. It implements the FR-4 builder behavior in
-`doc/APP_BUILDER_REQUIREMENTS.md`.
-
-**Trigger event**: `pre-tool` scoped to `angular_api_client_generate`,
-`angular_workspace_scaffold`, `angular_app_scaffold`, and any future generation
-tool. Also runs as the gate that consumes the structured output of the
-`oasdiff_diff` TOOL command during command execution.
-
-**Deterministic action**:
-
-1. Read the most recent `oasdiff_diff` tool output (a structured
-   `{ breaking: [], non_breaking: [], schema_changed: bool }` object) from
-   the run's durable artifact location (`build/oasdiff-report.json`).
-2. If `breaking` is empty, exit 0 (allow the wrapped tool).
-3. If `breaking` is non-empty and the run carries an
-   `acknowledge_breaking: true` flag (set via `--acknowledge-breaking`),
-   write an audit entry
-   `{ hook: "breaking-change", decision: "acknowledged", breaking: [...] }`
-   to `build/hook-log.jsonl` and exit 0.
-4. Otherwise, write a structured error
-   `{ hook: "breaking-change", category: "breaking_changes_unacknowledged",
-   breaking: [...] }` to stderr and to `build/hook-log.jsonl`, and exit `2` to
-  block the wrapped tool. In `build_app`, exit non-zero with the dedicated
-  breaking-change exit code defined in `APP_BUILDER_REQUIREMENTS.md` FR-4.
-
-**Failure behavior**:
-
-- A non-zero exit blocks the wrapped tool and halts the `build_app` run.
-- The hook MUST surface the exact `breaking` array so the operator can
-  decide whether to re-run with `--acknowledge-breaking` or revise the
-  backend contract.
-- The hook MUST NOT consume `oasdiff` raw CLI output directly; it consumes
-  only the structured contract output of `oasdiff_diff`.
-
-**Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
-`angular_app_scaffold`, future generation tools.
-
-**Implementation reference**: planned handler `hooks/breaking-change.sh`.
-It consumes `oasdiff_diff` tool output and is registered by the applicable
-provider adapter.
-
 #### Post-generation enforcement
 
-##### 4. `post-generation` — verification logging
+##### 3. `post-generation` — verification logging
 
 **Name**: `post-generation`
 
@@ -1331,13 +1282,13 @@ configuration from the `ngdj` CLI entry point.
 
 **Name**: `contract-lifecycle`
 
-**Purpose**: Package the export → validate → diff → gate lifecycle for the
+**Purpose**: Package the export → validate → diff lifecycle for the
 OpenAPI contract as a self-contained provider-neutral capability bundle so
 teams working only on the backend contract layer can install a rendered package
 without pulling in the full Angular construction stack.
 
 **Bundled SKILLS**: none. The contract lifecycle is fully deterministic; AI
-judgment is not required between export, validate, diff, and gate.
+judgment is not required between export, validate, and diff.
 
 **Bundled TOOLS** (from the [Tool Contracts Catalog](#tool-contracts-catalog)):
 
@@ -1345,7 +1296,7 @@ judgment is not required between export, validate, diff, and gate.
 |---|---|
 | `openapi_schema_export` | Trigger OpenAPI schema extraction from DRF. |
 | `validate_openapi_schema` | Validate that the exported schema is well-formed OAS 3.1. |
-| `oasdiff_diff` | Run `oasdiff` and return structured diff output (`breaking`, `non_breaking`, `schema_changed`). |
+| `oasdiff_diff` | Run `oasdiff` and return structured diff output (`changes`, `schema_changed`). |
 | `oasdiff_changelog` | Generate the durable human-readable schema-change report. |
 
 The Claude rendering exposes these tools through one `mcp-servers/` MCP-server
@@ -1357,7 +1308,6 @@ their provider-native form.
 | Hook name | Lifecycle event | Role inside the plugin |
 |---|---|---|
 | `migration-triggered` | `post-tool` on Django migration commands | Re-export the OpenAPI schema whenever models change. |
-| `breaking-change` | `pre-tool` on `oasdiff_diff` consumers | Block downstream construction tools when `oasdiff_diff` reports breaking changes. |
 
 The `pre-construction` hook is NOT bundled here even though it invokes
 `validate_openapi_schema`: that hook is scoped to construction-side tools
@@ -1404,7 +1354,7 @@ its tools from
 `django_angular3/management/commands/export_schema.py` and the
 `oasdiff_diff` / `validate_openapi_schema` contracts in the
 [Tool Contracts Catalog](#tool-contracts-catalog), and its hooks from the
-`migration-triggered` and `breaking-change` entries in the
+`migration-triggered` entry in the
 [Hook Contracts Catalog](#hook-contracts-catalog).
 
 #### Contract compliance
@@ -3367,7 +3317,8 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
 - `openapi.source` (from `django-angular3.json`, required): Path to the current OpenAPI specification file (JSON or YAML)
 - `angular.output` (from `django-angular3.json`, required): Angular workspace root (used to locate `ng-openapi-gen.json`)
 
-Output path is configured in `ng-openapi-gen.json` at the workspace root; breaking-change detection is already performed by `build_app` before invoking this skill.
+Output path is configured in `ng-openapi-gen.json` at the workspace root; the
+`oasdiff_report` is available in the ChangeSet passed as command input.
 
 **Process**:
 1. **Preflight validation**:
@@ -3411,7 +3362,7 @@ Regenerate API client code after OpenAPI specification changes.
 - `openapi.source` (from `django-angular3.json`, required): Path to the updated OpenAPI specification file
 - `angular.output` (from `django-angular3.json`, required): Angular workspace root
 
-Breaking-change detection is already performed by `build_app` before invoking this skill. The `oasdiff_report` is available in the ChangeSet passed as command input.
+The `oasdiff_report` is available in the ChangeSet passed as command input.
 
 **Process**:
 1. **Verify existing generation**:

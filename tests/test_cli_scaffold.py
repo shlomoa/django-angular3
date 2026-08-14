@@ -230,13 +230,13 @@ class ScaffoldTests(unittest.TestCase):
             ):
                 load_project_config(config_path)
 
-    def test_scenario_matrix_covers_all_change_lanes_with_valid_inputs(self) -> None:
+    def test_scenario_matrix_covers_all_change_domains_with_valid_inputs(self) -> None:
         examples_root = ROOT / "spec" / "examples"
         matrix = json.loads(
             (examples_root / "scenario-matrix.json").read_text(encoding="utf-8")
         )
 
-        expected_lane_combinations = {
+        expected_domain_combinations = {
             (False, False, False),
             (False, False, True),
             (False, True, False),
@@ -246,19 +246,19 @@ class ScaffoldTests(unittest.TestCase):
             (True, True, False),
             (True, True, True),
         }
-        lane_combinations = {
+        domain_combinations = {
             (
-                entry["lanes"]["config"],
-                entry["lanes"]["openapi"],
-                entry["lanes"]["openui"],
+                entry["domains"]["config"],
+                entry["domains"]["openapi"],
+                entry["domains"]["openui"],
             )
             for entry in matrix
         }
 
-        self.assertEqual(lane_combinations, expected_lane_combinations)
+        self.assertEqual(domain_combinations, expected_domain_combinations)
         self.assertEqual(
             {entry["exception"] for entry in matrix if "exception" in entry},
-            {"breaking", "replacement", "source-selection"},
+            {"replacement", "source-selection"},
         )
         for entry in matrix:
             with self.subTest(scenario=entry["id"]):

@@ -5,26 +5,16 @@ This module implements the build_app management command for building the
 Django Angular3 application.
 """
 import argparse
-import json
-import subprocess
 from pathlib import Path
 from typing import Any
-
 from django.core.management.base import BaseCommand, CommandError
-
 from django_angular3.config import ProjectConfig
-
 from ...config import ConfigError, load_project_config
-from ...tools import ensure_oasdiff
+
 
 class OpenAPIConfiguration:
     '''
-    Docstring for OpenAPIConfiguration
-    
-    :var input: Description
-    :vartype input: paths
-    :var output: Description
-    :vartype output: loaded
+    @TODO: generate docstring for OpenAPIConfiguration
     '''
     def __init__(self, openapi_path: Path):
         self._openapi_path = openapi_path
@@ -41,12 +31,7 @@ class OpenAPIConfiguration:
 
 class OpenUIConfiguration:
     '''
-    Docstring for OpenUIConfiguration
-    
-    :var input: Description
-    :vartype input: paths
-    :var output: Description
-    :vartype output: loaded
+    @TODO: generate docstring for OpenUIConfiguration
     '''
     def __init__(self, openui_path: Path):
         self.openui_path: Path = openui_path
@@ -64,8 +49,7 @@ class OpenUIConfiguration:
 
 class Configuration:
     '''
-    Docstring for Configuration
-
+    Docstring for Configurations
 
     Configuration class responsible for:
     * Loading project configuration from specified paths or default locations.
@@ -109,35 +93,11 @@ class ChangeDetector:
         self._previous_config: OpenAPIConfiguration = previous_config
 
     def _diff_openapi_schemas(self) -> dict[str, Any]:
-        oasdiff_exe = ensure_oasdiff()
-
-        cmd: list[Path | str] = [
-            oasdiff_exe,
-            "diff",
-            self._previous_config.openapi_schema,
-            self._current_config.openapi_schema,
-            "--format",
-            "json",
-        ]
-
+        # oasdiff_exe = ensure_oasdiff()
         try:
-            result: subprocess.CompletedProcess[str] = subprocess.run(
-                cmd, capture_output=True, text=True, check=True
-            )
-            if not result.stdout.strip():
-                return {}  # No changes
-            return json.loads(result.stdout)
-        except subprocess.CalledProcessError as e:
-            # oasdiff might return non-zero exit code if it finds changes
-            # or breaking changes, depending on flags. Usually 'diff'
-            # returns 0, but if there's an error parsing the spec, it
-            # might fail.
-            try:
-                if e.stdout.strip():
-                    return json.loads(e.stdout)
-            except json.JSONDecodeError:
-                pass
-            raise CommandError(f"oasdiff failed: {e.stderr}") from e
+            raise NotImplementedError("OpenAPI schema diffing is not implemented yet.")
+        except ConfigError as e:
+            raise CommandError(f"Config load failed: {e}") from e
 
 
     def detect_changes(self) -> dict[str, Any]:
@@ -217,114 +177,6 @@ class Command(BaseCommand):
             choices=["start-from-scratch"],
             help="Override change detection; treat as start-from-scratch.",
         )
-        parser.add_argument(
-            "--acknowledge-breaking",
-            action="store_true",
-            help="Proceed even if breaking schema changes are detected.",
-        )
-
-    def _extract_resources(
-        self, path_list: list[str], path_dict: dict[str, Any]
-    ) -> set[str]:
-        """Extract base resource names from OpenAPI paths like
-        '/api/v1/customers/' -> 'customers'."""
-        resources: set[str] = set()
-
-        # Handle lists (added/deleted)
-        for p in path_list:
-            parts: list[str] = [
-                part for part in p.split("/") if part and not part.startswith("{")
-            ]
-            if parts:
-                resources.add(parts[-1])  # Rough heuristic for resource name
-
-        # Handle dicts (modified)
-        for p in path_dict.keys():
-            parts: list[str] = [
-                part for part in p.split("/") if part and not part.startswith("{")
-            ]
-            if parts:
-                resources.add(parts[-1])
-
-        return resources
-
-    def _evaluate_schema_changes(self, diff_result: dict[str, Any]) -> dict[str, Any]:
-        paths_diff = diff_result.get("paths", {})
-        added_paths = paths_diff.get("added", [])
-        deleted_paths = paths_diff.get("deleted", [])
-        modified_paths = paths_diff.get("modified", {})
-
-        added = len(added_paths) > 0
-        deleted = len(deleted_paths) > 0
-        modified = len(modified_paths) > 0
-
-        added_resources = self._extract_resources(added_paths, {})
-        removed_resources = self._extract_resources(deleted_paths, {})
-        modified_resources = self._extract_resources([], modified_paths)
-        affected_resources = added_resources | removed_resources | modified_resources
-
-        if added and not deleted and not modified:
-            change_type = "add-things"
-        elif deleted and not added and not modified:
-            change_type = "remove-things"
-        elif added or deleted or modified:
-            change_type = "replace-things"
-        else:
-            change_type = "no-change"
-
-        return {
-            "type": change_type,
-            "affected_resources": sorted(affected_resources),
-            "added_resources": sorted(added_resources),
-            "removed_resources": sorted(removed_resources),
-            "breaking": False,
-            "oasdiff_report": diff_result,
-        }
-
-    def _diff_config(
-        self, prev_cfg: ProjectConfig, curr_cfg: ProjectConfig
-    ) -> dict[str, Any]:
-
-        if prev_cfg.project_name != curr_cfg.project_name:
-            return {"type": "replace-things"}  # project rename implies scratch
-
-        return {
-            "type": "no-change",
-            "affected_pages": [],
-            "affected_components": [],
-            "affected_forms": [],
-        }
-
-    def _diff_openui_spec(
-        self, previous_openui_spec_path: str, current_openui_spec_path: str
-    ):
-        """
-        Compare two OpenUI spec JSON files and return a summary of changes.
-        Use openui-spec compare_openui_json.py command to calculate differences.
-
-        :param previous_openui_spec_path: Previous OpenUI spec json file path
-        :type previous_openui_spec_path: str
-        :param current_openui_spec_path: Current OpenUI spec json file path
-        :type current_openui_spec_path: str
-
-        :raises CommandError: If loading the OpenUI spec fails
-        :return: A summary of changes and commands to execute
-        """
-        try:
-            raise NotImplementedError("OpenUI spec diffing is not implemented yet.")
-        except ConfigError as e:
-            raise CommandError(f"Config load failed: {e}") from e
-
-    def _print_debug_change_set(
-        self, build_plan: dict[str, Any], options: dict[str, Any]
-    ) -> None:
-        plan_str: str = json.dumps(build_plan, indent=2)
-
-        out_dir = Path(options["output"])
-        out_dir.mkdir(parents=True, exist_ok=True)
-        out_file = out_dir / "build-stages.json"
-        out_file.write_text(plan_str, encoding="utf-8")
-        self.stdout.write(f"Build stages were written to {out_file}")
 
     def handle(self, *args: Any, **options: Any) -> None:
         """build the missing pieces for a complete Angular implementation
@@ -343,16 +195,8 @@ class Command(BaseCommand):
         Raises:
             CommandError: If the configuration is invalid, its schema source is
                 absent, or ``oasdiff`` cannot be prepared or used.
-            SystemExit: With status 2 when breaking schema changes are found
-                without ``--acknowledge-breaking``.
         """
-        try:            
-            current_project_config = Configuration(options["current-config"])
-            previous_project_config = Configuration(options["previous-config"])
-            change_detector = ChangeDetector(current_project_config,
-                                             previous_project_config)
-            
+        try:
+            raise NotImplementedError("build_app planning is not implemented.")
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
-
-        raise NotImplementedError("build_app planning is not implemented.")

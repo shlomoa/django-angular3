@@ -19,7 +19,7 @@ the full automation model (Skills + Tools + Hooks + Plugins), not Skills alone.
 - Phases are ordered by dependency. A phase must not start while an upstream
   phase it is blocked on is unsatisfied — the same dependency-gating principle
   direct command execution enforces at runtime (`APP_BUILDER_REQUIREMENTS.md`
-  FR-2, FR-8).
+  FR-2, FR-7).
 - Authoritative sources are the contracts in `doc/GENERATE_AI_AUTOMATIONS.md`
   and the functional requirements in `doc/APP_BUILDER_REQUIREMENTS.md`. Where
   this plan and those documents disagree, the contracts and FRs win; update this
@@ -55,9 +55,9 @@ for this plan:
   Most of these contracts carry an *Implementation reference* of "planned" — the
   contract is defined but the backing artifact does not yet exist.
 - **App-builder functional requirements** for traversal, failure handling, and
-  terminal verification (`doc/APP_BUILDER_REQUIREMENTS.md` FR-1…FR-10), including
-  FR-9 (tool failure handling), FR-9a (hook failure handling), and FR-10
-  (terminal verification contract).
+  terminal verification (`doc/APP_BUILDER_REQUIREMENTS.md` FR-1…FR-9), including
+  FR-8 (command and hook failure handling) and FR-9 (terminal verification
+  contract).
 - **Skill working copies** under `skill_creation/skills/` (split copies of the
   `GENERATE_AI_AUTOMATIONS.md` Skills Catalog); the eleven Skills are not yet
   authored as runnable `SKILL.md` units (`TODO.md` item 7).
@@ -80,7 +80,7 @@ stable contracts.
 - Promote Tools / Hooks / Plugins recommendations into normative contracts in
   `doc/GENERATE_AI_AUTOMATIONS.md` (done — see its Contracts Catalogs).
 - Add app-builder FRs for failure handling and terminal verification
-  (`doc/APP_BUILDER_REQUIREMENTS.md` FR-9, FR-9a, FR-10) (done).
+  (`doc/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9) (done).
 - Record this phased implementation plan (this document).
 - Record the local-to-global acceptance decision (Phase 7).
 
@@ -105,7 +105,7 @@ operations and receives structured results, replacing raw CLI parsing.
 - `openapi_schema_export` — wrap `export_schema` to return schema path and a
   `schema_changed` flag.
 - `oasdiff_diff` — wrap the `ensure_oasdiff()` binary to return
-  `{ breaking: [], non_breaking: [], schema_changed: bool }`.
+  `{ changes: [], schema_changed: bool }`.
 - `validate_openapi_schema` — wrap an OAS 3.1 validator to return
   `{ valid: bool, errors: [] }`.
 - `angular_api_client_generate` — wrap `ng_openapi_gen` to return
@@ -127,10 +127,10 @@ structured outputs, and a structured error object whose `category` is one of
 - Each tool's return value validates against its contract's declared output
   shape.
 - Each tool surfaces failures through the structured error object — never as an
-  unstructured exception or stdout-only message — so FR-9 handling can act on
+  unstructured exception or stdout-only message — so FR-8 handling can act on
   `category`.
 - Tool names exactly match the contract names selected during command
-  translation (FR-8).
+  translation (FR-7).
 
 **Test / verification coverage**:
 - Unit tests per tool: success path, each error `category`, and diagnostic
@@ -153,19 +153,15 @@ and mandatory side effects always run, independent of agent choices.
   least as fresh as the latest migration before any Angular generation tool.
 - `migration-triggered` — `Post*`: re-export the schema when a new migration
   appears; append a status record to `build/hook-log.jsonl`.
-- `breaking-change` — gate consuming `oasdiff_diff` output; block downstream
-  construction until breaking changes are acknowledged. This is the **single**
-  point of enforcement (FR-4); `build_app` MUST NOT re-implement the gate.
 - `post-generation` — `Post*`: run a structural check after each generation tool
   and append a pass/fail entry to `build/verification.log`.
 - `session-stop` — `Stop`: archive durable artifacts and write a session
-  summary; MUST NOT change the session exit code (FR-9a).
+  summary; MUST NOT change the session exit code (FR-8).
 
 **Acceptance criteria**:
 - `Pre*` hook non-zero exit blocks the wrapped tool and every dependent command
-  (FR-9a).
-- `breaking-change` returns the dedicated breaking-change exit code (FR-4); other
-  hook failures return a distinct hook-failure exit code (FR-9a).
+  (FR-8).
+- Hook failures return a distinct hook-failure exit code (FR-8).
 - `session-stop` only appends warnings and never alters the exit code.
 - Each hook writes its structured error fields to stderr / `build/hook-log.jsonl`.
 
@@ -173,8 +169,7 @@ and mandatory side effects always run, independent of agent choices.
 - Per-hook tests: trigger event fires the hook, blocking hook halts command execution,
   non-blocking `Post*` failure halts and records, `Stop` hook cannot change exit
   code.
-- Exit-code distinctness tests (breaking-change vs other hook failure vs tool
-  failure).
+- Exit-code distinctness tests for hook and tool failures.
 
 ---
 
@@ -187,10 +182,10 @@ each command through the right primitive.
 
 **Work items**:
 - Translate selected TOOL, HOOK, and SKILL contracts into ordered commands whose
-  contract names match the documented surfaces (FR-8).
+  contract names match the documented surfaces (FR-7).
 - Execute in dependency order; TOOL commands call the Phase 1 tools and HOOK
   boundaries apply the Phase 2 hooks.
-- Implement FR-9 / FR-9a failure handling: halt at the failed command, refuse
+- Implement FR-8 failure handling: halt at the failed command, refuse
   to start dependents, emit a structured error, and exit with the
   contract-specific code.
 - Keep `--dry-run` validating inputs, identifying changes, and reporting the
@@ -198,7 +193,7 @@ each command through the right primitive.
 
 **Acceptance criteria**:
 - A command never starts while a dependency it is blocked on is unsatisfied
-  (FR-2, FR-8).
+  (FR-2, FR-7).
 - A failed tool or `Pre*`/`Post*` hook stops execution and produces the correct,
   distinct exit code.
 - `--dry-run` output is deterministic and human-readable for the same inputs.
@@ -279,7 +274,7 @@ command-execution semantics owned by `djng`.
   command-execution, Tool, Hook, or terminal-validation semantics.
 - `build_app` detects a session that ended without satisfying its acceptance
   criteria and halts instead of advancing.
-- Session failures are surfaced as structured errors consistent with FR-9.
+- Session failures are surfaced as structured errors consistent with FR-8.
 - Provider-native hook or wrapper behavior cannot bypass `djng` direct
   command-execution gates.
 
@@ -324,19 +319,19 @@ on recorded construction results, not a separate filesystem rescan.
 
 **Work items**:
 - Implement the terminal validation commands that direct execution always ends
-  in (FR-10), consuming structured tool outputs (for example the
+  in (FR-9), consuming structured tool outputs (for example the
   `generated_files` array from `angular_api_client_generate`).
 - Cover the four verification categories in `doc/ARCHITECTURE.md` §7.3: contract,
   construction-output, integration, and test-based verification.
 
 **Acceptance criteria**:
 - A run is reported successful only when every terminal validation command
-  reports success (FR-10).
-- A failed terminal verification follows FR-9 failure handling.
+  reports success (FR-9).
+- A failed terminal verification follows FR-8 failure handling.
 
 **Test / verification coverage**:
 - Terminal-verification tests: success only on all-pass; failure path mirrors
-  FR-9; verification consumes recorded tool outputs rather than rescanning.
+  FR-8; verification consumes recorded tool outputs rather than rescanning.
 
 ---
 
@@ -365,7 +360,7 @@ issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
 > 3. **Runtime smoke tests** — the composed application starts and the main
 >    flows run.
 >
-> This gate is owned by the terminal validation commands (Phase 6 / FR-10),
+> This gate is owned by the terminal validation commands (Phase 6 / FR-9),
 > not by any Skill. A run is "a correct working application"
 > (`doc/ARCHITECTURE.md` §2.17) only when this global gate passes. This decision
 > belongs in `doc/ARCHITECTURE.md` §7.2/§7.3 and the global acceptance criteria
@@ -398,7 +393,7 @@ Hooks.
 - `djng-angular-construction` — all eleven Skills + schema/generation tools +
   validation/enforcement hooks.
 - `ngdj-scaffold` — workspace/app/feature scaffold tools.
-- `contract-lifecycle` — export → validate → diff → version → gate tools and
+- `contract-lifecycle` — export → validate → diff → version tools and
   hooks.
 - Define each provider's packaging and installation artifact as a derived
   distribution representation. A Claude plugin, including `.claude-plugin`, is
@@ -458,7 +453,7 @@ enforcement, test ownership moves with it:
 
 - `doc/GENERATE_AI_AUTOMATIONS.md` — authoritative Tool / Hook / Plugin / Skill
   contracts.
-- `doc/APP_BUILDER_REQUIREMENTS.md` — FR-1…FR-10 (traversal, failure handling,
+- `doc/APP_BUILDER_REQUIREMENTS.md` — FR-1…FR-9 (traversal, failure handling,
   terminal verification).
 - `doc/ARCHITECTURE.md` — §2 automation primitive definitions, §7 construction
   and verification flow.

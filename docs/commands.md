@@ -68,7 +68,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one for future `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app` | Validate the project inputs and begin the app-build planning workflow. The planner is not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run`, `--force start-from-scratch`, and `--acknowledge-breaking`. See `doc/APP_BUILDER_REQUIREMENTS.md` §Inputs for default discovery and previous-configuration fallback behavior. |
+| `build_app` | Exposes the app-build command interface, but planning and execution are not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run` and `--force start-from-scratch`. See `doc/APP_BUILDER_REQUIREMENTS.md` §Inputs for target discovery and previous-configuration behavior. |
 | `ng_new` | Create an empty Angular workspace. |
 | `ng_workspace` | Bootstrap the discovered workspace. |
 | `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |
