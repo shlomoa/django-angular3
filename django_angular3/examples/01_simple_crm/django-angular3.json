@@ -10,6 +10,9 @@
       "SERVE_INCLUDE_SCHEMA": false
     }
   },
+  "oasdiff": {
+    "format": "json"
+  },
   "angular": {
     "workspace": {
       "packageManager": "pnpm",

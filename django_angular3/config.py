@@ -1,13 +1,9 @@
-'''
-Docstring for django_angular3.config
+"""Load and validate the project configuration and artifact selectors."""
 
-contains the project configuration loader and validator.
-The project configuration is expected to be a JSON file 
-containing the project metadata and artifact paths.
-'''
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -20,7 +16,9 @@ class ConfigError(ValueError):
 
 
 @dataclass(frozen=True)
-class ProjectConfig(dict[str,Any]):
+class ProjectConfig:
+    """Validated project identity and resolved artifact selectors."""
+
     config_path: Path
     project_name: str
     openapi_schema: Path
@@ -71,8 +69,15 @@ def load_project_config(path: str | Path | None = None) -> ProjectConfig:
 def _load_project_configuration(
     document: dict[str, Any], config_path: Path
 ) -> ProjectConfig:
+    _reject_unknown_keys(document, {"project", "artifacts"}, "Project configuration")
     project: dict[str, Any] = _require_mapping(document, "project")
     artifacts: dict[str, Any] = _require_mapping(document, "artifacts")
+    _reject_unknown_keys(project, {"name"}, "project")
+    _reject_unknown_keys(
+        artifacts,
+        {"openapiSchema", "openuiSpecification", "angularWorkspace"},
+        "artifacts",
+    )
     root = config_path.parent
 
     return ProjectConfig(
@@ -97,6 +102,15 @@ def _require_mapping(document: dict[str, Any], key: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ConfigError(f"Configuration section '{key}' must be a mapping.")
     return value
+
+
+def _reject_unknown_keys(
+    document: Mapping[str, object], supported: set[str], section: str
+) -> None:
+    unknown = set(document) - supported
+    if unknown:
+        labels = ", ".join(sorted(unknown))
+        raise ConfigError(f"{section} contains unsupported key(s): {labels}.")
 
 
 def _require_string(document: dict[str, Any], key: str, *, section: str) -> str:

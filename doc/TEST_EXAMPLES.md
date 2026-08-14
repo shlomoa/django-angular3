@@ -367,7 +367,7 @@ The static `django-angular3.json` supplies the separate `djng` tool settings.
 
 The missing baseline initializes each applicable domain. The builder emits
 `create` changes for the candidate static configuration, project configuration,
-derived invocations, OpenAPI contract, and OpenUI document.
+OpenAPI contract, and OpenUI document.
 
 ### Expected executed command sequence (ordered)
 

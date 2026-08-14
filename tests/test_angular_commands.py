@@ -99,6 +99,7 @@ class AngularCliCommandTests(unittest.TestCase):
                         "drfSpectacular": {
                             "settings": {"TITLE": "Portal API", "VERSION": "2.0"}
                         },
+                        "oasdiff": {"format": "json"},
                     }
                 ),
                 encoding="utf-8",

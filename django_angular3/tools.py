@@ -112,7 +112,7 @@ def get_download_url(
     )
 
 
-def extract_archive(archive_path, extract_to):
+def extract_archive(archive_path: Path, extract_to: Path) -> None:
     """Extracts a .zip or .tar.gz archive."""
     if archive_path.name.endswith(".zip"):
         with zipfile.ZipFile(archive_path, "r") as zip_ref:
@@ -260,5 +260,5 @@ def ensure_speakeasy_openapi() -> str:
 
 if __name__ == "__main__":
     # Test the downloader
-    path = ensure_oasdiff()
+    path: str = ensure_oasdiff()
     print(f"oasdiff is located at: {path}")

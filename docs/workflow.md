@@ -64,6 +64,29 @@ when authoring non-CRM pages, forms, and workflows. The repository fixture at
 [`spec/openui/app.openui.json`](https://github.com/shlomoa/django-angular3/blob/main/spec/openui/app.openui.json)
 shows the accepted concrete-document structure.
 
+#### Compare OpenUI versions
+
+OpenUI change semantics are owned by the upstream
+[OpenUI JSON comparison tool](https://openui-spec.readthedocs.io/en/latest/tooling/comparison/),
+not by `djng`. Until `build_app` integrates this planned comparison step, run
+the tool from an `openui-spec` checkout with its repository-local interpreter,
+passing the accepted reference document first and the candidate document
+second:
+
+```powershell
+.\.venv\Scripts\python bin\compare_openui_json.py reference.json new.json
+```
+
+```bash
+./.venv/bin/python bin/compare_openui_json.py reference.json new.json
+```
+
+Use `--output changelog.json` (or `-o changelog.json`) to write the
+deterministic changelog to a file. The tool matches identified lists by their
+unique `id`, so reordering those items does not produce a change. Its `remove`,
+`add`, and `change` entries map to `djng` `delete`, `create`, and `update`
+Changes respectively; `djng` must not reimplement OpenUI comparison semantics.
+
 ### 3. Validate
 
 Validate the project configuration and its referenced sources before building.

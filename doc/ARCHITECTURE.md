@@ -819,6 +819,7 @@ Key actors and terms. Full definitions are in §2.
 [django-angular3-github]: https://github.com/shlomoa/django-angular3
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
 [openui-examples]: https://openui-spec.readthedocs.io/en/latest/examples/
+[OpenUI comparison]: https://openui-spec.readthedocs.io/en/latest/tooling/comparison/
 [openui-spec]: https://github.com/shlomoa/openui-spec
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/

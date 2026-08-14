@@ -119,16 +119,36 @@ def _load_tool_configuration(
 def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     """Return structural errors for the canonical django-angular3 tool config."""
     errors: list[str] = []
+    _reject_unknown_keys(
+        document,
+        {"ngOpenApiGen", "drfSpectacular", "oasdiff", "angular", "tool"},
+        "django-angular3",
+        errors,
+    )
     errors.extend(validate_ng_openapi_gen_configuration(document))
     drf_spectacular = _required_mapping(document, "drfSpectacular", errors)
+    oasdiff = _required_mapping(document, "oasdiff", errors)
     angular = _required_mapping(document, "angular", errors)
     tool = _required_mapping(document, "tool", errors)
 
     _required_mapping(drf_spectacular, "settings", errors, prefix="drfSpectacular")
+    _reject_unknown_keys(drf_spectacular, {"settings"}, "drfSpectacular", errors)
+    _reject_unknown_keys(oasdiff, {"format"}, "oasdiff", errors)
+    _require_exact_string(oasdiff, "format", "json", "oasdiff", errors)
 
     workspace = _required_mapping(angular, "workspace", errors, prefix="angular")
     application = _required_mapping(angular, "application", errors, prefix="angular")
     build = _required_mapping(angular, "build", errors, prefix="angular")
+    _reject_unknown_keys(
+        angular, {"workspace", "application", "build"}, "angular", errors
+    )
+    _reject_unknown_keys(
+        workspace, {"packageManager", "style", "routing"}, "angular.workspace", errors
+    )
+    _reject_unknown_keys(
+        application, {"ssr", "zoneless"}, "angular.application", errors
+    )
+    _reject_unknown_keys(build, {"configuration"}, "angular.build", errors)
     _require_string(workspace, "packageManager", "angular.workspace", errors)
     _require_string(workspace, "style", "angular.workspace", errors)
     _require_bool(workspace, "routing", "angular.workspace", errors)
@@ -137,6 +157,15 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     _require_string(build, "configuration", "angular.build", errors)
 
     executables = _optional_mapping(tool, "executables")
+    _reject_unknown_keys(
+        tool,
+        {"executables", "commandAllowlist", "ngAddPackage"},
+        "tool",
+        errors,
+    )
+    _reject_unknown_keys(
+        executables, {"node", "pnpm", "ng"}, "tool.executables", errors
+    )
     for key in ("node", "pnpm", "ng"):
         if key in executables:
             _require_string(executables, key, "tool.executables", errors)
@@ -179,6 +208,30 @@ def _require_bool(
         errors.append(f"{section}.{key} must be a boolean.")
 
 
+def _require_exact_string(
+    document: Mapping[str, object],
+    key: str,
+    expected: str,
+    section: str,
+    errors: list[str],
+) -> None:
+    if document.get(key) != expected:
+        errors.append(f"{section}.{key} must be {expected!r}.")
+
+
+def _reject_unknown_keys(
+    document: Mapping[str, object],
+    supported: set[str],
+    section: str,
+    errors: list[str],
+) -> None:
+    unknown = set(document) - supported
+    if unknown:
+        errors.append(
+            f"{section} contains unsupported key(s): {', '.join(sorted(unknown))}."
+        )
+
+
 def _optional_mapping(document: Mapping[str, object], key: str) -> Mapping[str, object]:
     value = document.get(key, {})
     if not isinstance(value, Mapping):
@@ -218,6 +271,9 @@ def validate_ng_openapi_gen_configuration(
     """Return structural errors for the global ng-openapi-gen configuration."""
     errors: list[str] = []
     generator = _required_mapping(document, "ngOpenApiGen", errors)
+    _reject_unknown_keys(
+        generator, {"serviceSuffix", "modelIndex"}, "ngOpenApiGen", errors
+    )
     _require_string(generator, "serviceSuffix", "ngOpenApiGen", errors)
     _require_bool(generator, "modelIndex", "ngOpenApiGen", errors)
 

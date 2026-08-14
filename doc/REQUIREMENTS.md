@@ -825,7 +825,7 @@ normalized semantic state differs between an accepted **baseline** and a
 
 | Field | Requirement |
 |---|---|
-| `domain` | One of `static_config`, `project_config`, `invocation`, `openapi`, or `openui`. |
+| `domain` | One of `static_config`, `project_config`, `openapi`, or `openui`. |
 | `subject` and `path` | A stable semantic identity and JSON Pointer-like path for the changed item. |
 | `operation` | One of `create`, `delete`, `update`, or `move`. |
 | `before` and `after` | Normalized values or content fingerprints. |
@@ -838,15 +838,20 @@ summary. The model has no compatibility, breaking-change, or regeneration-
 impact classification. Command translation is the sole authority that derives
 required regeneration and validation from each atomic change.
 
-The five domains compare normalized semantic state rather than raw file bytes:
+The four domains compare normalized semantic state rather than raw file bytes:
 
 | Domain | Compared semantic state | Identity requirement |
 |---|---|---|
 | `static_config` | Schema-supported fields in `django-angular3.json` | Validated configuration paths. |
 | `project_config` | Project identity and artifact selectors in `django-angular3-<project_name>.json` | Project configuration paths; selector changes remain distinct from selected-content changes. |
-| `invocation` | Derived wrapper name, arguments, working directory, generated-file content, executable, and authorization | Wrapper identity and the derived invocation snapshot. |
 | `openapi` | Structured `oasdiff` contract detail | Stable OpenAPI subject identity, not a final URL segment heuristic. |
-| `openui` | Declared OpenUI nodes, attributes, parent relations, and child ordering | Declared node `id`, not serialized position or array index. |
+| `openui` | Structural diff emitted by [OpenUI comparison] | Declared node `id`; identified-list reordering is not a change. |
+
+`djng` must invoke the upstream [OpenUI comparison] utility with the accepted
+reference document first and the candidate document second. It translates the
+utility's `remove`, `add`, and `change` entries into `delete`, `create`, and
+`update` Changes respectively. `djng` must not implement a competing OpenUI
+comparison algorithm.
 
 `move` is reserved for identity-preserving relocation. If identity cannot be
 established, comparison must emit `delete` plus `create` instead. Invalid or
@@ -871,7 +876,6 @@ A `ChangeSet` carries domain-specific atomic changes and a computed summary:
   "domains": {
     "static_config": { "changes": [] },
     "project_config": { "changes": [] },
-    "invocation": { "changes": [] },
     "openapi": { "changes": [] },
     "openui": { "changes": [] }
   },
@@ -1434,6 +1438,7 @@ Labels used in this document are defined in the link-definitions block at the en
 [Angular]: https://angular.dev/
 [Angular Material]: https://material.angular.dev/
 [OpenAPI 3.1 Specification]: https://spec.openapis.org/oas/v3.1.0.html
+[OpenUI comparison]: https://openui-spec.readthedocs.io/en/latest/tooling/comparison/
 [oasdiff]: https://www.oasdiff.com/
 [oasdiff-github]: https://github.com/oasdiff/oasdiff
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen

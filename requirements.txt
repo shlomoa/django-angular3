@@ -2,4 +2,4 @@ Django>=5.1
 djangorestframework
 django-filter
 drf-spectacular
-openui-spec==0.0.1
+openui-spec==0.0.2

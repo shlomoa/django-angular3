@@ -33,7 +33,10 @@ def _normalize_json(value: object) -> _JsonValue:
             raise TypeError("JSON object keys must be strings.")
         string_mapping = cast(Mapping[str, object], mapping)
         return MappingProxyType(
-            {key: _normalize_json(string_mapping[key]) for key in sorted(string_mapping)}
+            {
+                key: _normalize_json(string_mapping[key])
+                for key in sorted(string_mapping)
+            }
         )
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         sequence = cast(Sequence[object], value)
@@ -60,7 +63,6 @@ class ChangeDomain(StrEnum):
 
     STATIC_CONFIG = "static_config"
     PROJECT_CONFIG = "project_config"
-    INVOCATION = "invocation"
     OPENAPI = "openapi"
     OPENUI = "openui"
 
@@ -163,7 +165,7 @@ class ChangeDomainResult:
 
 @dataclass(frozen=True)
 class ChangeSet:
-    """The canonical five-domain set of atomic changes and computed summary."""
+    """The canonical four-domain set of atomic changes and computed summary."""
 
     baseline: Mapping[str, object]
     candidate: Mapping[str, object]

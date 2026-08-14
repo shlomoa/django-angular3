@@ -97,7 +97,7 @@ configuration definition and discovery rules are in `REQUIREMENTS.md` §4.2.4.
 
 ## Change Derivation
 
-The canonical Change Model, including `Change`, the five domains, identity
+The canonical Change Model, including `Change`, the four domains, identity
 rules, baseline/candidate semantics, and the complete `ChangeSet` schema, is
 defined in `REQUIREMENTS.md` §4.2.9. This section defines how `build_app`
 applies that model.
@@ -111,9 +111,8 @@ per-domain `type` field are not part of the builder contract.
 
 | Domain | Builder derivation requirement |
 |---|---|
-| `static_config` | Compare only validated static-configuration fields. Treat command-allowlist entries as set members and derive resulting invocation changes. |
+| `static_config` | Compare only validated static-configuration fields. Treat command-allowlist entries as set members. |
 | `project_config` | Compare project identity and all artifact selectors. Record selector changes separately from changes in selected OpenAPI or OpenUI content. |
-| `invocation` | Compare the derived wrapper invocation snapshot: wrapper, arguments, working directory, derived files, executable, and authorization. |
 | `openapi` | Parse structured `oasdiff` output into atomic contract changes. Preserve complete contract identity and source diff evidence before deriving resource hints. |
 | `openui` | Compare declared OpenUI node identities, attributes, parent relations, and ordered children. Missing, duplicate, or invalid node identities fail validation. |
 

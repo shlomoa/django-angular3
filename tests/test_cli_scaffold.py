@@ -107,6 +107,29 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(config.openapi_schema, root / "spec" / "api.json")
         self.assertEqual(config.openui_specification, root / "spec" / "app.openui.json")
         self.assertEqual(config.angular_workspace, root / "frontend")
+        self.assertFalse(isinstance(config, dict))
+
+    def test_project_config_rejects_unknown_keys(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            config_path = Path(tmp) / TEST_PROJECT_CONFIG_FILENAME
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "project": {"name": "portal", "unsupported": True},
+                        "artifacts": {
+                            "openapiSchema": "api.json",
+                            "openuiSpecification": "app.openui.json",
+                            "angularWorkspace": "frontend",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ConfigError, "project contains unsupported key\\(s\\): unsupported"
+            ):
+                load_project_config(config_path)
 
     def test_project_validation_reports_missing_openui_source(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
@@ -226,7 +249,10 @@ class ScaffoldTests(unittest.TestCase):
 
             with self.assertRaisesRegex(
                 ConfigError,
-                "Legacy project configuration field\\(s\\) are not supported",
+                (
+                    "Project configuration contains unsupported key\\(s\\): "
+                    "angular, openapi, openui"
+                ),
             ):
                 load_project_config(config_path)
 
@@ -294,7 +320,7 @@ class ScaffoldTests(unittest.TestCase):
             "djangorestframework",
             "django-filter",
             "drf-spectacular",
-            "openui-spec==0.0.1",
+            "openui-spec==0.0.2",
         }
         self.assertEqual(set(requirements_lines), expected_runtime_dependencies)
 
