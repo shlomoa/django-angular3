@@ -17,6 +17,7 @@ from django_angular3.validation import (
     validate_openui_document,
     validate_project_config,
 )
+from tests.openapi_fixtures import valid_openapi_document
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -136,12 +137,7 @@ class ScaffoldTests(unittest.TestCase):
             root = Path(tmp)
             openapi_path = root / "api.json"
             openapi_path.write_text(
-                json.dumps(
-                    {
-                        "openapi": "3.0.3",
-                        "paths": {"/items/": {"get": {}}},
-                    }
-                ),
+                json.dumps(valid_openapi_document()),
                 encoding="utf-8",
             )
             config_path = root / TEST_PROJECT_CONFIG_FILENAME
@@ -171,12 +167,7 @@ class ScaffoldTests(unittest.TestCase):
             root = Path(tmp)
             openapi_path = root / "api.json"
             openapi_path.write_text(
-                json.dumps(
-                    {
-                        "openapi": "3.0.3",
-                        "paths": {"/items/": {"get": {}}},
-                    }
-                ),
+                json.dumps(valid_openapi_document()),
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(

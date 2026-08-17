@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django_angular3.cli import main
+from tests.openapi_fixtures import valid_openapi_document
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 TEST_CONFIG_FILENAME = "project.json"
@@ -59,7 +60,7 @@ class ValidationCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             root = Path(tmp)
             (root / "api.json").write_text(
-                json.dumps({"openapi": "3.0.3", "paths": {"/items/": {"get": {}}}}),
+                json.dumps(valid_openapi_document()),
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
@@ -95,7 +96,7 @@ class ValidationCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             root = Path(tmp)
             (root / "api.json").write_text(
-                json.dumps({"openapi": "3.0.3", "paths": {"/items/": {"get": {}}}}),
+                json.dumps(valid_openapi_document()),
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
