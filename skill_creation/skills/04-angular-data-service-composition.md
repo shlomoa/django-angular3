@@ -116,7 +116,7 @@ Remove a handwritten Angular data service and its associated unit spec.
 
 ### Context Files
 
-{{context:../../shared/openapi-integration.md}}
+See [openapi-integration.md](../shared/openapi-integration.md) — read this on demand before composing data services.
 
 ### Supporting Files
 

@@ -156,9 +156,11 @@ Remove the Angular application that owns the generated site from the workspace.
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
-{{context:../../shared/angular-material-patterns.md}}
-{{context:../../shared/openapi-integration.md}}
+See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before composing the site.
+
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — read this on demand before applying Material patterns.
+
+See [openapi-integration.md](../shared/openapi-integration.md) — read this on demand before integrating API-driven pages and forms.
 
 ### Supporting Files
 
