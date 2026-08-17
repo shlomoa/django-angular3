@@ -1,14 +1,17 @@
 """
 Django Angular3 Management Command: Build App
 
-This module implements the build_app management command for building the 
+This module implements the build_app management command for building the
 Django Angular3 application.
 """
 import argparse
 from pathlib import Path
 from typing import Any
+
 from django.core.management.base import BaseCommand, CommandError
+
 from django_angular3.config import ProjectConfig
+
 from ...config import ConfigError, load_project_config
 
 
@@ -43,7 +46,9 @@ class OpenUIConfiguration:
         Raises ConfigError if loading fails.
         """
         try:
-            raise NotImplementedError("Loading OpenUI specification is not implemented.")
+            raise NotImplementedError(
+                "Loading OpenUI specification is not implemented."
+            )
         except ConfigError as e:
             raise CommandError(f"Failed to load OpenUI specification: {e}") from e
 
@@ -69,15 +74,19 @@ class Configuration:
     def _load(self):
         '''
         Docstring for load
-        
+
         :param self: Description
         '''
         # Load Project configuration
-        self._project_config: ProjectConfig = load_project_config(self._project_config_path)
+        self._project_config: ProjectConfig = load_project_config(
+            self._project_config_path
+        )
         # Load OpenAPI configuration
         self._openapi_config = OpenAPIConfiguration(self._project_config.openapi_schema)
         # Load OpenUI configuration
-        self._openui_config = OpenUIConfiguration(self._project_config.openui_specification)
+        self._openui_config = OpenUIConfiguration(
+            self._project_config.openui_specification
+        )
 
 class ChangeDetector:
     '''
@@ -88,7 +97,11 @@ class ChangeDetector:
     * Determining the type of change (add, remove, modify, no-change).
     * Identifying affected resources based on the detected changes.
     '''
-    def __init__(self, current_config: OpenAPIConfiguration, previous_config: OpenAPIConfiguration):
+    def __init__(
+        self,
+        current_config: OpenAPIConfiguration,
+        previous_config: OpenAPIConfiguration,
+    ):
         self._current_config: OpenAPIConfiguration = current_config
         self._previous_config: OpenAPIConfiguration = previous_config
 
@@ -188,9 +201,10 @@ class Command(BaseCommand):
         3. Translate the change set into a directed graph of steps.
         4. Execute the steps in order, respecting dependencies.
 
-        Configuration management is delegated to a Configuration class - covering steps 1 and 2.
-        Change detection and derivation is delegated to ChangeDetector class - covering step 3.
-        Change execution is delegated to ChangeExecution class - covering step 4.
+        Configuration management is delegated to a Configuration class - covering
+        steps 1 and 2. Change detection and derivation is delegated to
+        ChangeDetector class - covering step 3. Change execution is delegated to
+        ChangeExecution class - covering step 4.
 
         Raises:
             CommandError: If the configuration is invalid, its schema source is
