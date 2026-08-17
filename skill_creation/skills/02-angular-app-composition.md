@@ -122,8 +122,8 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
      ```
 
 6. **Generate application shell using template**
-   - Use `{{template:app-shell.ts}}` to create root `AppComponent`
-   - Use `{{template:app-shell.html}}` for component template
+   - Use [app-shell.ts.tpl](templates/app-shell.ts.tpl) — read and adapt it to create root `AppComponent`
+   - Use [app-shell.html.tpl](templates/app-shell.html.tpl) — read and adapt it for the component template
    - Replace `{{APP_NAME}}` placeholder with actual app name
    - Create responsive navigation shell with Material sidenav
 
@@ -271,9 +271,9 @@ Remove an Angular Material application completely from the workspace, including 
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before applying Angular conventions.
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — read this on demand before applying Material patterns.
 
 ### Templates
 

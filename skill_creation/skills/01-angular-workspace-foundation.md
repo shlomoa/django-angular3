@@ -277,7 +277,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
 This skill references the following shared context files:
 
-- **`{{context:../../shared/angular-conventions.md}}`** — Loaded at instructions level, provides conventions for standalone components, signals, SCSS theming, naming, imports, and testing patterns
+- [angular-conventions.md](../shared/angular-conventions.md) — read on demand for conventions for standalone components, signals, SCSS theming, naming, imports, and testing patterns.
 
 #### Template Files
 

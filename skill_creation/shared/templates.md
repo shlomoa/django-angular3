@@ -1,11 +1,11 @@
 # Templates
 
-Template files are reusable Angular code scaffolds stored in `.claude/skills/<skill-name>/templates/` that skills reference during code generation. Each template provides a complete, working example following the conventions defined in the Shared Context Files section.
+Template files are reusable Angular code scaffolds stored in `.claude/skills/<skill-name>/templates/` that skills read and adapt during code generation. Each template provides a complete, working example following the conventions defined in the Shared Context Files section.
 
-Skills inject these templates using the standard template reference syntax:
+Skills link to these templates and read them on demand:
 
 ```markdown
-{{template:template-name.ts}}
+Use [template-name.ts](templates/template-name.ts) — read and adapt it for the output file.
 ```
 
 ## Template 1: Standalone Component (`.ts` + `.html` + `.scss`)
