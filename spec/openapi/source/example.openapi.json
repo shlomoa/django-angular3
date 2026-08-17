@@ -24,6 +24,16 @@
       }
     },
     "/api/users/{id}/": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          }
+        }
+      ],
       "get": {
         "operationId": "retrieveUser",
         "responses": {
