@@ -9,6 +9,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SKILL_CREATION = REPOSITORY_ROOT / "skill_creation"
 SKILL_FILES = sorted((SKILL_CREATION / "skills").glob("*.md"))
+EXPECTED_SKILL_COUNT = 11
 OBSOLETE_DIRECTIVE = re.compile(r"\{\{(?:context|template):")
 FRONTMATTER = re.compile(r"```yaml\n---\n(.*?)\n---\n```", re.DOTALL)
 WHEN_TO_USE = re.compile(r"^when_to_use:", re.MULTILINE)
@@ -23,7 +24,7 @@ class SkillCreationReferenceTests(unittest.TestCase):
                 self.assertNotRegex(path.read_text(), OBSOLETE_DIRECTIVE)
 
     def test_all_skill_working_copies_retain_when_to_use_frontmatter(self) -> None:
-        self.assertEqual(len(SKILL_FILES), 11)
+        self.assertEqual(len(SKILL_FILES), EXPECTED_SKILL_COUNT)
         for path in SKILL_FILES:
             with self.subTest(path=path.relative_to(REPOSITORY_ROOT)):
                 match = FRONTMATTER.search(path.read_text())
@@ -40,4 +41,5 @@ class SkillCreationReferenceTests(unittest.TestCase):
                 ):
                     self.assertTrue((path.parent / reference).is_file())
             if references:
-                self.assertRegex(content, ON_DEMAND_READ)
+                with self.subTest(path=path.relative_to(REPOSITORY_ROOT)):
+                    self.assertRegex(content, ON_DEMAND_READ)
