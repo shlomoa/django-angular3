@@ -63,7 +63,7 @@ Generate a standalone Angular Material small field-level component from scratch 
      mkdir -p <targetDirectory>
      ```
 
-3. **Generate component TypeScript file** using `{{template:component.ts.tpl}}`:
+3. **Generate component TypeScript file** using [component.ts.tpl](templates/component.ts.tpl) — read and adapt it:
    - Create `<componentName>.component.ts` with:
      - `@Component` decorator with `standalone: true`
      - Typed input signals using `input<T>()` with appropriate types
@@ -82,7 +82,7 @@ Generate a standalone Angular Material small field-level component from scratch 
      - **icon-tooltip**: Add `MatIconModule`, `MatTooltipModule`; input for `icon`, `tooltip`
      - **generic**: Add `MatCardModule`, `MatButtonModule`; basic input/output signals
 
-4. **Generate component HTML template** using `{{template:component.html.tpl}}`:
+4. **Generate component HTML template** using [component.html.tpl](templates/component.html.tpl) — read and adapt it:
    - Create `<componentName>.component.html` with:
      - Material component markup based on `componentType`
      - Use `@if` for conditional rendering (not `*ngIf`)
@@ -96,7 +96,7 @@ Generate a standalone Angular Material small field-level component from scratch 
      - Add `tabindex` for keyboard navigation
      - Add `aria-hidden="true"` for decorative elements
 
-5. **Generate component SCSS file** using `{{template:component.scss.tpl}}`:
+5. **Generate component SCSS file** using [component.scss.tpl](templates/component.scss.tpl) — read and adapt it:
    - Create `<componentName>.component.scss` with:
      - `:host` selector for component-level styles
      - Material theme token usage via `mat.get-theme-color()` and `mat.get-theme-typography()`
@@ -364,9 +364,9 @@ Remove an Angular Material small field-level component completely, including all
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before composing the component.
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — read this on demand before applying Material patterns.
 
 ### Templates
 

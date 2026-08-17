@@ -75,7 +75,7 @@ The creation process varies based on component `type`:
    ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
    ```
 
-2. **Replace component TypeScript file** using `{{template:component-display.ts.tpl}}`:
+2. **Replace component TypeScript file** using [component-display.ts.tpl](templates/component-display.ts.tpl) — read and adapt it:
    ```typescript
    import { Component, input, output } from '@angular/core';
    import { CommonModule } from '@angular/common';
@@ -108,7 +108,7 @@ The creation process varies based on component `type`:
    }
    ```
 
-3. **Replace component template** using `{{template:component-display.html.tpl}}`:
+3. **Replace component template** using [component-display.html.tpl](templates/component-display.html.tpl) — read and adapt it:
    ```html
    <mat-card>
      <mat-card-header>
@@ -134,7 +134,7 @@ The creation process varies based on component `type`:
    </mat-card>
    ```
 
-4. **Replace component styles** using `{{template:component-display.scss.tpl}}`:
+4. **Replace component styles** using [component-display.scss.tpl](templates/component-display.scss.tpl) — read and adapt it:
    ```scss
    @use '@angular/material' as mat;
 
@@ -181,7 +181,7 @@ The creation process varies based on component `type`:
    ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
    ```
 
-2. **Replace component TypeScript file** using `{{template:component-container.ts.tpl}}`:
+2. **Replace component TypeScript file** using [component-container.ts.tpl](templates/component-container.ts.tpl) — read and adapt it:
    ```typescript
    import { Component, inject } from '@angular/core';
    import { CommonModule } from '@angular/common';
@@ -217,7 +217,7 @@ The creation process varies based on component `type`:
    }
    ```
 
-3. **Replace component template** using `{{template:component-container.html.tpl}}`:
+3. **Replace component template** using [component-container.html.tpl](templates/component-container.html.tpl) — read and adapt it:
    ```html
    <mat-card>
      <mat-card-header>
@@ -245,7 +245,7 @@ The creation process varies based on component `type`:
    </mat-card>
    ```
 
-4. **Replace component styles** using `{{template:component-container.scss.tpl}}`:
+4. **Replace component styles** using [component-container.scss.tpl](templates/component-container.scss.tpl) — read and adapt it:
    ```scss
    @use '@angular/material' as mat;
 
@@ -282,7 +282,7 @@ The creation process varies based on component `type`:
    ng generate component <targetPath>/<componentName> --standalone --skip-tests=false --style=scss --project=<appName>
    ```
 
-2. **Replace component TypeScript file** using `{{template:component-dialog.ts.tpl}}`:
+2. **Replace component TypeScript file** using [component-dialog.ts.tpl](templates/component-dialog.ts.tpl) — read and adapt it:
    ```typescript
    import { Component, inject } from '@angular/core';
    import { CommonModule } from '@angular/common';
@@ -324,7 +324,7 @@ The creation process varies based on component `type`:
    }
    ```
 
-3. **Replace component template** using `{{template:component-dialog.html.tpl}}`:
+3. **Replace component template** using [component-dialog.html.tpl](templates/component-dialog.html.tpl) — read and adapt it:
    ```html
    <h2 mat-dialog-title>{{ data.title }}</h2>
 
@@ -340,7 +340,7 @@ The creation process varies based on component `type`:
    </mat-dialog-actions>
    ```
 
-4. **Replace component styles** using `{{template:component-dialog.scss.tpl}}`:
+4. **Replace component styles** using [component-dialog.scss.tpl](templates/component-dialog.scss.tpl) — read and adapt it:
    ```scss
    @use '@angular/material' as mat;
 
@@ -566,9 +566,9 @@ compiles.
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before composing the component.
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — read this on demand before applying Material patterns.
 
 ### Templates
 

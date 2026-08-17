@@ -145,7 +145,7 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 
 ### Context Files
 
-{{context:../../shared/openapi-integration.md}}
+See [openapi-integration.md](../shared/openapi-integration.md) — read this on demand before generating the API client.
 
 ### Supporting Files
 

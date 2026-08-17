@@ -21,9 +21,9 @@ Each skill lives in its own directory under `.claude/skills/`:
 ```
 .claude/skills/<skill-name>/
   SKILL.md          # Main skill specification with YAML frontmatter
-  context/          # Optional context files loaded at instruction level
-  templates/        # Optional template files for code generation
-  examples/         # Optional example files demonstrating usage
+  references/       # Optional reference files read on demand
+  templates/        # Optional template files read and adapted on demand
+  examples/         # Optional example files read on demand
 ```
 
 ## YAML Frontmatter
@@ -65,40 +65,40 @@ Skills are loaded incrementally to manage token costs:
 
 ### 2. Instructions Level (medium cost)
 - Loads the full `SKILL.md` content including all markdown sections
-- Loads any files referenced in the `context/` directory
 - Used when the outer agent has selected the skill and needs execution instructions
 - Moderate token consumption (~500-2000 tokens depending on skill complexity)
 
 ### 3. Resources Level (highest cost)
-- Loads all referenced templates, examples, and supporting files
-- Only loaded when skill execution requires access to these resources
-- High token consumption (~2000-10000+ tokens for complex skills with many templates)
+- Supporting files are read with the Read tool only when the instructions link
+  to them and the skill needs them
+- High token consumption (~2000-10000+ tokens for complex skills)
 
-**Token Cost Strategy**: The outer agent loads metadata for all skills, instructions for candidate skills, and resources only for the executing skill, minimizing overall token usage.
+**Token Cost Strategy**: The outer agent loads metadata for all skills and
+instructions for candidate skills. Supporting files are read on demand only by
+the executing skill, minimizing overall token usage.
 
-## Dynamic Context Injection
+## Supporting File References
 
-Skills can reference external context that gets injected at load time:
+Skills reference supporting files with standard Markdown links. Read linked
+files on demand; do not inject their contents when the skill instructions load.
 
-### Context File References
+### Shared Reference Files
 
-Within `SKILL.md`, reference context files using:
+Within `SKILL.md`, point to shared reference files with a one-level-up relative
+link:
 
 ```markdown
-{{context:filename.md}}
+See [filename.md](../shared/filename.md) — read this on demand before following these conventions.
 ```
-
-When the skill loads at the instructions level, these references are replaced with the actual file contents from `.claude/skills/<skill-name>/context/filename.md`.
 
 ### Template References
 
-Within skill instructions, reference templates using:
+Within skill instructions, link to templates and read and adapt them when
+generating the output:
 
 ```markdown
-{{template:template-name.ts}}
+Use [template-name.ts](templates/template-name.ts) — read and adapt it for the output file.
 ```
-
-Templates are loaded at the resources level when the skill needs them for code generation.
 
 ## Auto-Invocation Model
 
@@ -183,9 +183,9 @@ Remove the artifact completely.
 **Output**:
 - Confirmation of deletion
 
-## Context Files
+## Supporting Files
 
-{{context:additional-guidance.md}}
+See [additional-guidance.md](references/additional-guidance.md) — read this on demand before applying its guidance.
 
 ## Templates
 

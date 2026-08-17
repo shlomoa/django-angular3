@@ -84,7 +84,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
      - `Date` fields → `Validators.required`
      - Optional fields → omit `Validators.required`
 
-4. **Generate TypeScript file** using `{{template:reactive-form.ts.tpl}}`:
+4. **Generate TypeScript file** using [reactive-form.ts.tpl](templates/reactive-form.ts.tpl) — read and adapt it:
    - Create `<formName>.component.ts` with:
      - `@Component` decorator with `standalone: true`
      - Typed form interface:
@@ -162,7 +162,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
      - `{{RESOURCE_NAME_PASCAL}}` → e.g., `User` (if resource provided)
      - `{{SERVICE_NAME_PASCAL}}` → e.g., `UsersService` (if resource provided)
 
-5. **Generate HTML template** using `{{template:reactive-form.html.tpl}}`:
+5. **Generate HTML template** using [reactive-form.html.tpl](templates/reactive-form.html.tpl) — read and adapt it:
    - Create `<formName>.component.html` with:
      - Wrap form in `<mat-card>` with header and actions
      - `<mat-card-header>` with title (e.g., "Create User" or "Edit User")
@@ -195,7 +195,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
        </button>
        ```
 
-6. **Generate SCSS file** using `{{template:component.scss.tpl}}`:
+6. **Generate SCSS file** using [component.scss.tpl](templates/component.scss.tpl) — read and adapt it:
    - Create `<formName>.component.scss` with:
      - `:host` selector with `display: block;`
      - Material theme token usage
@@ -418,9 +418,11 @@ Remove a reactive form component and clean up references (route configurations, 
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
-{{context:../../shared/angular-material-patterns.md}}
-{{context:../../shared/openapi-integration.md}}
+See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before composing the form.
+
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — read this on demand before applying Material patterns.
+
+See [openapi-integration.md](../shared/openapi-integration.md) — read this on demand before deriving form types from the API.
 
 ### Supporting Files
 
