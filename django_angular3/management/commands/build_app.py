@@ -4,6 +4,7 @@ Django Angular3 Management Command: Build App
 This module implements the build_app management command for building the
 Django Angular3 application.
 """
+
 import argparse
 from pathlib import Path
 from typing import Any
@@ -16,9 +17,10 @@ from ...config import ConfigError, load_project_config
 
 
 class OpenAPIConfiguration:
-    '''
+    """
     @TODO: generate docstring for OpenAPIConfiguration
-    '''
+    """
+
     def __init__(self, openapi_path: Path):
         self._openapi_path = openapi_path
 
@@ -32,10 +34,12 @@ class OpenAPIConfiguration:
         except ConfigError as e:
             raise CommandError(f"Failed to load OpenAPI schema: {e}") from e
 
+
 class OpenUIConfiguration:
-    '''
+    """
     @TODO: generate docstring for OpenUIConfiguration
-    '''
+    """
+
     def __init__(self, openui_path: Path):
         self.openui_path: Path = openui_path
         self.openui_spec: dict[str, Any] | None = None
@@ -52,8 +56,9 @@ class OpenUIConfiguration:
         except ConfigError as e:
             raise CommandError(f"Failed to load OpenUI specification: {e}") from e
 
+
 class Configuration:
-    '''
+    """
     Docstring for Configurations
 
     Configuration class responsible for:
@@ -64,7 +69,8 @@ class Configuration:
 
     var input: paths to project configuration file.
     var output: loaded configuration objects for each type.
-    '''
+    """
+
     def __init__(self, project_config_path: str | None = None):
         self._project_config_path: str | None = project_config_path
         self._openapi_config: OpenAPIConfiguration | None = None
@@ -72,11 +78,11 @@ class Configuration:
         self._load()
 
     def _load(self):
-        '''
+        """
         Docstring for load
 
         :param self: Description
-        '''
+        """
         # Load Project configuration
         self._project_config: ProjectConfig = load_project_config(
             self._project_config_path
@@ -88,15 +94,17 @@ class Configuration:
             self._project_config.openui_specification
         )
 
+
 class ChangeDetector:
-    '''
+    """
     Docstring for ChangeDetector
 
     ChangeDetector class responsible for:
     * Comparing current and previous configurations to detect changes.
     * Determining the type of change (add, remove, modify, no-change).
     * Identifying affected resources based on the detected changes.
-    '''
+    """
+
     def __init__(
         self,
         current_config: OpenAPIConfiguration,
@@ -112,7 +120,6 @@ class ChangeDetector:
         except ConfigError as e:
             raise CommandError(f"Config load failed: {e}") from e
 
-
     def detect_changes(self) -> dict[str, Any]:
         """
         Detect changes between the current and previous configurations.
@@ -124,15 +131,17 @@ class ChangeDetector:
         except ConfigError as e:
             raise CommandError(f"Failed to detect changes: {e}") from e
 
+
 class ChangeExecution:
-    '''
+    """
     Docstring for ChangeExecution
 
     ChangeExecution class responsible for:
     * Executing changes based on the detected differences.
     * Managing the order of execution and handling dependencies.
     * Rolling back changes in case of failures.
-    '''
+    """
+
     def __init__(self, change_set: dict[str, Any]):
         self._change_set = change_set
 
@@ -147,33 +156,35 @@ class ChangeExecution:
         except ConfigError as e:
             raise CommandError(f"Failed to execute changes: {e}") from e
 
+
 class Command(BaseCommand):
-    '''
+    """
     Command class responsible for:
     * Parsing command-line arguments.
     * Coordinating the build process.
     * Handling change detection and execution.
-    '''
+    """
+
     help = "Build the application frontend as described by the configuration files."
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--current-config",
             type=str,
-            help="Path to current configuration: \n" \
-                "The user is responsible for providing it.\n" \
-                "The default is calculated from Django as follows:\n" \
-                "- located at the root folder\n" \
-                "- project_name calculated from Django\n" \
-                "- file name is django-angular3-<project_name>.json"
+            help="Path to current configuration: \n"
+            "The user is responsible for providing it.\n"
+            "The default is calculated from Django as follows:\n"
+            "- located at the root folder\n"
+            "- project_name calculated from Django\n"
+            "- file name is django-angular3-<project_name>.json",
         )
         parser.add_argument(
             "--previous-config",
             type=str,
-            help="Path to previous configuration: \n" \
-                "If not provided, path name will be the same as the current\n" \
-                "with .json replaced by .previous.json.\n" \
-                "if none existing, it will be treated as a start-from-scratch build."
+            help="Path to previous configuration: \n"
+            "If not provided, path name will be the same as the current\n"
+            "with .json replaced by .previous.json.\n"
+            "if none existing, it will be treated as a start-from-scratch build.",
         )
         parser.add_argument(
             "--dry-run",

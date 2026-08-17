@@ -331,5 +331,6 @@ class ExportSchemaCommandTests(unittest.TestCase):
             with self.assertRaisesRegex(CommandError, "OpenUI source does not exist"):
                 call_command("build_app", str(config_path), dry_run=True)
 
+
 if __name__ == "__main__":
     unittest.main()
