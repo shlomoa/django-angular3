@@ -311,7 +311,6 @@ existing schema to its `.previous` counterpart before writing.
 |---|---|---|---|---|
 | `format` | no | `"json"` \| `"yaml"` | `"json"` | Serialization format for the exported schema. |
 | `dry_run` | no | boolean | `false` | When `true`, compute and report the destination and would-be-archived previous path, but do not modify disk. |
-| `app_routes_path` | string (path) \| null | Application route file updated when `register_route` is `true`; otherwise `null`. |
 **Outputs**:
 
 | Key | Type | Description |
