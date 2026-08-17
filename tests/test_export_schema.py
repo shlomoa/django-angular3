@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,7 +14,11 @@ from unittest.mock import MagicMock, patch
 import django
 from django.test import override_settings
 
-from django_angular3.config import get_previous_schema_path, load_project_config
+from django_angular3.config import (
+    get_previous_schema_path,
+    load_project_config,
+    project_config_path,
+)
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -64,10 +69,31 @@ class GetPreviousSchemaPathTests(unittest.TestCase):
 class ExportSchemaCommandTests(unittest.TestCase):
     """Tests for the export_schema management command."""
 
-    CONFIG_PATH = str(ROOT / "tests" / "fixtures" / "django-angular3-project.json")
+    FIXTURE_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.json"
 
     def setUp(self) -> None:
-        self.base_dir = override_settings(BASE_DIR=Path(self.CONFIG_PATH).parent)
+        self.temporary_directory = tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR)
+        self.addCleanup(self.temporary_directory.cleanup)
+        self.project_root = Path(self.temporary_directory.name)
+
+        fixture_config = load_project_config(self.FIXTURE_CONFIG_PATH)
+        self.schema_path = self.project_root / fixture_config.openapi_schema.name
+        self.openui_path = self.project_root / fixture_config.openui_specification.name
+        shutil.copy2(fixture_config.openapi_schema, self.schema_path)
+        shutil.copy2(fixture_config.openui_specification, self.openui_path)
+
+        config_document = json.loads(
+            self.FIXTURE_CONFIG_PATH.read_text(encoding="utf-8")
+        )
+        config_document["artifacts"] = {
+            "openapiSchema": self.schema_path.name,
+            "openuiSpecification": self.openui_path.name,
+            "angularWorkspace": "angular",
+        }
+        self.config_path = self.project_root / project_config_path()
+        self.config_path.write_text(json.dumps(config_document), encoding="utf-8")
+
+        self.base_dir = override_settings(BASE_DIR=self.project_root)
         self.base_dir.enable()
         self.addCleanup(self.base_dir.disable)
 
@@ -127,7 +153,7 @@ class ExportSchemaCommandTests(unittest.TestCase):
         """dry-run must never write schema or previous-schema files."""
         from django.core.management import call_command
 
-        config = load_project_config(self.CONFIG_PATH)
+        config = load_project_config(self.config_path)
         destination = config.openapi_schema
         previous_path = get_previous_schema_path(destination)
 
@@ -149,7 +175,7 @@ class ExportSchemaCommandTests(unittest.TestCase):
     def test_writes_schema_to_configured_destination(self) -> None:
         from django.core.management import call_command
 
-        config = load_project_config(self.CONFIG_PATH)
+        config = load_project_config(self.config_path)
         destination = config.openapi_schema
         previous_path = get_previous_schema_path(destination)
 
@@ -211,7 +237,7 @@ class ExportSchemaCommandTests(unittest.TestCase):
         """When a current schema exists, it should be renamed to .previous."""
         from django.core.management import call_command
 
-        config = load_project_config(self.CONFIG_PATH)
+        config = load_project_config(self.config_path)
         destination = config.openapi_schema
         previous_path = get_previous_schema_path(destination)
 
@@ -254,7 +280,7 @@ class ExportSchemaCommandTests(unittest.TestCase):
         written by export_schema."""
         from django.core.management import call_command
 
-        config = load_project_config(self.CONFIG_PATH)
+        config = load_project_config(self.config_path)
         previous_path = get_previous_schema_path(config.openapi_schema)
 
         # Write a minimal previous schema next to the current one.
@@ -283,7 +309,7 @@ class ExportSchemaCommandTests(unittest.TestCase):
                 mock_run.return_value = MagicMock(stdout="{}", stderr="", returncode=0)
                 call_command(
                     "build_app",
-                    self.CONFIG_PATH,
+                    self.config_path,
                     dry_run=True,
                     stdout=stdout,
                 )
