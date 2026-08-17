@@ -65,7 +65,7 @@ Generate a standalone Angular Material form field component implementing `Contro
      mkdir -p <targetDirectory>
      ```
 
-3. **Generate component TypeScript file** using `{{template:form-field.ts.tpl}}`:
+3. **Generate component TypeScript file** using [form-field.ts.tpl](templates/form-field.ts.tpl) — read and adapt it:
    - Create `<componentName>.component.ts` with:
      - `@Component` decorator with `standalone: true`
      - Implement `ControlValueAccessor` interface with:
@@ -101,7 +101,7 @@ Generate a standalone Angular Material form field component implementing `Contro
      - `{{FIELD_NAME_PASCAL}}` → e.g., `EmailInput`
      - `{{VALUE_TYPE}}` → e.g., `string`, `number`, `Date`
 
-4. **Generate component HTML template** using `{{template:form-field.html.tpl}}`:
+4. **Generate component HTML template** using [form-field.html.tpl](templates/form-field.html.tpl) — read and adapt it:
    - Create `<componentName>.component.html` with:
      - Wrap input in `<mat-form-field>` with `appearance="outline"`
      - Add `<mat-label>` bound to `label()` signal
@@ -122,7 +122,7 @@ Generate a standalone Angular Material form field component implementing `Contro
      - Use modern control flow (`@if`, `@for`) instead of `*ngIf`, `*ngFor`
      - Add ARIA attributes: `[attr.aria-required]="required()"`, `[attr.aria-invalid]="formControl?.invalid && formControl?.touched"`
 
-5. **Generate component SCSS file** using `{{template:component.scss.tpl}}`:
+5. **Generate component SCSS file** using [component.scss.tpl](templates/component.scss.tpl) — read and adapt it:
    - Create `<componentName>.component.scss` with:
      - `:host` selector with `display: block; width: 100%;`
      - Material theme token usage for colors
@@ -447,9 +447,9 @@ Remove a form field component completely from the codebase, including all relate
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before composing the form field.
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — read this on demand before applying Material patterns.
 
 ### Templates
 

@@ -181,9 +181,9 @@ Remove a complex component and its advanced integrations completely.
 
 ### Context Files
 
-{{context:../../shared/angular-conventions.md}}
+See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before composing the component.
 
-{{context:../../shared/angular-material-patterns.md}}
+See [angular-material-patterns.md](../shared/angular-material-patterns.md) — read this on demand before applying Material patterns.
 
 ### Templates
 
