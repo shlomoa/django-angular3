@@ -33,17 +33,20 @@ To install from a local clone:
 pip install -e /path/to/django-angular3/
 ```
 
-### OpenAPI validation
+### OpenAPI and OpenUI validation
 
 `django-angular3` uses [openapi-spec-validator] for full OAS compliance
-validation of OpenAPI documents.  It is a pure-Python dependency installed
-automatically with the package — no external toolchain (such as Go) is
+validation of OpenAPI documents and [openui-spec] to validate structured OpenUI
+documents against its schema and catalog. Both are pure-Python dependencies
+installed automatically with the package — no external validation toolchain is
 required.
 
 OpenAPI documents are validated against the full OpenAPI specification using
-`openapi-spec-validator`.
+`openapi-spec-validator`; OpenUI documents are validated through
+`openui-spec`.
 
 [openapi-spec-validator]: https://openapi-spec-validator.readthedocs.io/
+[openui-spec]: https://github.com/shlomoa/openui-spec
 
 ## Django app integration
 
