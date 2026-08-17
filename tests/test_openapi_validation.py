@@ -24,21 +24,20 @@ class ValidateOpenapiFileTests(unittest.TestCase):
         errors = validate_openapi_file("/nonexistent/path.json")
         self.assertTrue(len(errors) > 0)
 
-    def test_structural_errors_reported_before_spec_validation(self) -> None:
-        """Structural issues are caught before running full spec validation."""
-        # Document missing 'openapi'/'swagger' key.
+    def test_missing_version_key_is_rejected(self) -> None:
+        """A document without an 'openapi'/'swagger' version key is rejected."""
         bad = {"paths": {"/items": {"get": {}}}}
         tmp_path = self._write_temp(bad)
         try:
             errors = validate_openapi_file(tmp_path)
-            self.assertTrue(any("openapi" in e or "swagger" in e for e in errors))
+            self.assertTrue(len(errors) > 0)
         finally:
             Path(tmp_path).unlink(missing_ok=True)
 
     def test_spec_validation_reports_oas_violation(self) -> None:
         """A structurally-plausible but OAS-invalid document is rejected."""
-        # Path parameter '{id}' is referenced but never declared, which passes
-        # the lightweight structural check but violates the OpenAPI spec.
+        # Path parameter '{id}' is referenced but never declared, which the
+        # OpenAPI specification rejects.
         bad = {
             "openapi": "3.0.3",
             "info": {"title": "Bad API", "version": "0.1.0"},

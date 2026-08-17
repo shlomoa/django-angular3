@@ -776,8 +776,8 @@ switch environments.
 - [oasdiff] is the OpenAPI schema diff and change detection tool (source: [oasdiff-github]).
 - [openapi-spec-validator] is used for full OAS compliance validation of OpenAPI documents in `djng`.
   It is a pure-Python dependency invoked in-process from `django_angular3/validation.py`.
-  Documents are first checked with a lightweight structural pre-check and then validated against the
-  full OpenAPI specification.  No external toolchain (such as Go) is required.
+  Documents are validated against the full OpenAPI specification.  No external
+  toolchain (such as Go) is required.
 - [ng-openapi-gen] is the Angular client OpenAPI code-generation tool (source: [ng-openapi-gen-github]).
 - [datamodel-code-generator] is the contract-first backend generator (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]). For the use case where no Django model exists yet, it generates the Django data model from an existing OpenAPI Schema using djng-owned custom Django templates. This is the inverse origination path to the model-first [drf-spectacular] export; see §2.22.
 - Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.

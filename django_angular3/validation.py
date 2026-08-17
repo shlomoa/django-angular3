@@ -85,21 +85,15 @@ def validate_openui_document(document: Any) -> list[str]:
 
 
 def validate_openapi_file(path: str | Path) -> list[str]:
-    """Validate an OpenAPI file using ``openapi-spec-validator``.
+    """Validate an OpenAPI file against the full specification.
 
-    The document is first loaded and checked with the lightweight in-process
-    structural check (:func:`validate_openapi_document`).  If that passes, the
-    document is validated against the full OpenAPI specification using
-    ``openapi-spec-validator`` for complete OAS compliance checking.
+    The document is loaded and validated against the OpenAPI specification
+    using ``openapi-spec-validator`` for complete OAS compliance checking.
     """
     try:
         document = load_document(path)
     except DocumentError as exc:
         return [str(exc)]
-
-    structural_errors = validate_openapi_document(document)
-    if structural_errors:
-        return structural_errors
 
     try:
         validate_openapi_spec(document)

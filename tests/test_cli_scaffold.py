@@ -1,5 +1,6 @@
 import json
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -296,35 +297,23 @@ class ScaffoldTests(unittest.TestCase):
         self.assertNotIn("spec/openapi", manifest_text)
         self.assertNotIn('"spec/**/*"', package_data_text)
 
-    def test_requirements_file_exists_with_runtime_dependencies(self) -> None:
-        requirements_path = ROOT / "requirements.txt"
-        self.assertTrue(requirements_path.is_file())
+    def test_pyproject_declares_runtime_dependencies(self) -> None:
+        pyproject_path = ROOT / "pyproject.toml"
+        self.assertTrue(pyproject_path.is_file())
 
-        requirements_lines = [
-            line.strip()
-            for line in requirements_path.read_text(encoding="utf-8").splitlines()
-            if line.strip() and not line.lstrip().startswith("#")
-        ]
+        pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        dependencies = set(pyproject["project"]["dependencies"])
 
         expected_runtime_dependencies = {
             "Django>=5.1",
             "djangorestframework",
             "django-filter",
             "drf-spectacular",
+            "claude-agent-sdk",
             "openui-spec==0.0.2",
+            "openapi-spec-validator>=0.7",
         }
-        self.assertEqual(set(requirements_lines), expected_runtime_dependencies)
-
-    def test_manifest_includes_requirements_file(self) -> None:
-        manifest_path = ROOT / "MANIFEST.in"
-        self.assertTrue(manifest_path.is_file())
-
-        manifest_lines = {
-            line.strip()
-            for line in manifest_path.read_text(encoding="utf-8").splitlines()
-            if line.strip() and not line.lstrip().startswith("#")
-        }
-        self.assertIn("include requirements.txt", manifest_lines)
+        self.assertEqual(dependencies, expected_runtime_dependencies)
 
     def test_install_tutorial_copies_expected_files(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:

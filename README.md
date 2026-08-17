@@ -40,8 +40,7 @@ validation of OpenAPI documents.  It is a pure-Python dependency installed
 automatically with the package — no external toolchain (such as Go) is
 required.
 
-OpenAPI documents are first checked with a lightweight in-process structural
-check and then validated against the full OpenAPI specification using
+OpenAPI documents are validated against the full OpenAPI specification using
 `openapi-spec-validator`.
 
 [openapi-spec-validator]: https://openapi-spec-validator.readthedocs.io/

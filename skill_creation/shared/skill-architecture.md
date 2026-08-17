@@ -212,4 +212,3 @@ Brief examples demonstrating typical usage patterns.
 This Claude rendering structure provides consistent guidance for Claude adapter
 invocation and rendering. It must preserve the canonical Skill contract rather
 than become a second source of truth.
-
