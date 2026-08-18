@@ -52,6 +52,12 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
    - Adding `ng-openapi-gen` to `devDependencies` in `package.json`
    - Creating `ng-openapi-gen.json` at the workspace root
    - Adding a `generate:api` npm script to `package.json`
+   - Generating Django integration helpers under `--helpersPath` (default
+     `src/app/api-integration`): `django-transport.ts` (auth/CSRF/transport,
+     exposing `provideDjangoApiTransport`), `resource-adapter.ts`
+     (CRM-oriented `ResourceAdapter`/`ResourceQuery`/`PaginatedResult`), and an
+     `index.ts` barrel. Pass `--skipHelpers=true` to omit them and
+     `--skipTests=true` to omit their `*.spec.ts` files.
    - Scheduling a package install task
 
 4. **Run generation** via the djng wrapper (`django-admin ng_openapi_gen`), which calls:

@@ -53,6 +53,8 @@ Invoked as `django-angular3 <command> [args]`.
 | `ng_gen_app` | Generate an Angular application inside the configured workspace via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from the derived tool configuration. |
 | `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
 | `ng_openapi_gen` | Run a locally installed `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
+| `ng_openapi_setup` | Bootstrap `ng-openapi-gen` and Django integration helpers via the `angular-django2:openapi-setup` schematic. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
+| `ng_data_service` | Generate a typed data-service wrapper for a resource via the `angular-django2:data-service` schematic. Requires `--resource`; accepts `--project`. |
 | `ng_build` | Build the discovered Angular application. |
 | `install-tutorial [dest]` | Copy the bundled `simple_crm` tutorial project to `dest` (default: `simple_crm`). Prints migration and run steps on success. |
 
@@ -78,6 +80,8 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | `ng_gen_app` | Generate an Angular application via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from derived tool settings. |
 | `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
 | `ng_openapi_gen` | Run `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
+| `ng_openapi_setup` | Bootstrap `ng-openapi-gen` and Django integration helpers via the `angular-django2:openapi-setup` schematic. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
+| `ng_data_service` | Generate a typed data-service wrapper for a resource via the `angular-django2:data-service` schematic. Requires `--resource`; accepts `--project`. |
 | `ng_build` | Build the discovered Angular application. |
 
 All management `ng_*` commands accept `--dry-run` for diagnostic validation and

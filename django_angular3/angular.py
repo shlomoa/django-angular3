@@ -280,6 +280,67 @@ def build_ng_openapi_gen_invocations(
     ]
 
 
+def build_ng_openapi_setup_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    output_path: str = "src/app/api",
+    helpers_path: str | None = None,
+    skip_helpers: bool = False,
+    skip_tests: bool = False,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Bootstrap ng-openapi-gen and Django integration helpers via the ngdj
+    ``openapi-setup`` schematic."""
+    argv = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:openapi-setup",
+        f"--openapi_spec_file={config.openapi_schema}",
+        f"--outputPath={output_path}",
+    ]
+    if helpers_path:
+        argv.append(f"--helpersPath={helpers_path}")
+    if skip_helpers:
+        argv.append("--skipHelpers=true")
+    if skip_tests:
+        argv.append("--skipTests=true")
+
+    return [
+        AngularInvocation(
+            command_name="ng_openapi_setup",
+            argv=tuple(argv),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
+def build_ng_data_service_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    resource: str,
+    project: str | None = None,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Generate a typed data-service wrapper for a resource via the ngdj
+    ``data-service`` schematic."""
+    target_project = project or config.project_name
+    return [
+        AngularInvocation(
+            command_name="ng_data_service",
+            argv=(
+                settings.ng_executable,
+                "generate",
+                "angular-django2:data-service",
+                resource,
+                f"--project={target_project}",
+            ),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
 def _write_ng_openapi_gen_config(
     config: ProjectConfig, settings: DjangoAngularSettings
 ) -> Path:
@@ -394,6 +455,8 @@ _COMMAND_BUILDERS: dict[str, AngularInvocationBuilder] = {
     "ng_gen_app": build_ng_gen_app_invocations,
     "ng_complex_component": build_ng_complex_component_invocations,
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
+    "ng_openapi_setup": build_ng_openapi_setup_invocations,
+    "ng_data_service": build_ng_data_service_invocations,
     "ng_add": build_ng_add_invocations,
     "ng_workspace_modify": build_ng_workspace_modify_invocations,
     "ng_workspace_delete": build_ng_workspace_delete_invocations,

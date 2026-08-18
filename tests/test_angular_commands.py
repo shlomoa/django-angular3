@@ -411,6 +411,62 @@ class AngularCliCommandTests(unittest.TestCase):
         )
         generated_config.unlink()
 
+    def test_ng_openapi_setup_dry_run_resolves_openapi_setup_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli("ng_openapi_setup", "--dry-run")
+
+        ng = load_angular_settings().ng_executable
+        schema_path = ROOT / "spec" / "openapi" / "source" / "example.openapi.json"
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:openapi-setup",
+                f"--openapi_spec_file={schema_path}",
+                "--outputPath=src/app/api",
+            ],
+        )
+
+    def test_ng_openapi_setup_dry_run_appends_helper_and_skip_flags(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_openapi_setup",
+            "--helpers-path",
+            "src/app/api-integration",
+            "--skip-helpers",
+            "--skip-tests",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        argv = json.loads(stdout)["invocations"][0]["argv"]
+        self.assertIn("--helpersPath=src/app/api-integration", argv)
+        self.assertIn("--skipHelpers=true", argv)
+        self.assertIn("--skipTests=true", argv)
+
+    def test_ng_data_service_dry_run_resolves_data_service_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_data_service", "--resource", "orders", "--dry-run"
+        )
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:data-service",
+                "orders",
+                "--project=django-angular3-test",
+            ],
+        )
+
     def test_ng_add_dry_run_defaults_to_angular_django2(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_add", "--dry-run")
 

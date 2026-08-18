@@ -115,6 +115,53 @@ class NgdjRequirementsContractTests(unittest.TestCase):
         self.assertIn("DataService", source)
         self.assertIn("generateServiceContent(options, names)", source)
 
+    def test_data_service_schematic_exposes_search_wrapper(self) -> None:
+        ds_templates_path = (
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "data-service"
+            / "templates.ts"
+        )
+        self.assertTrue(ds_templates_path.is_file())
+
+        source = ds_templates_path.read_text(encoding="utf-8")
+        self.assertIn("search", source)
+
+    def test_project_structure_declares_core_shared_features(self) -> None:
+        directory_structure_path = (
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "utility"
+            / "directory-structure.ts"
+        )
+        self.assertTrue(directory_structure_path.is_file())
+
+        source = directory_structure_path.read_text(encoding="utf-8")
+        self.assertIn("'core'", source)
+        self.assertIn("shared", source)
+        self.assertIn("'features'", source)
+        self.assertIn("project-structure", self._collection().get("schematics", {}))
+
+    def test_openapi_setup_schematic_emits_django_integration_helpers(self) -> None:
+        openapi_setup_templates_path = (
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "openapi-setup"
+            / "templates.ts"
+        )
+        self.assertTrue(openapi_setup_templates_path.is_file())
+
+        source = openapi_setup_templates_path.read_text(encoding="utf-8")
+        self.assertIn("django-transport.ts", source)
+        self.assertIn("resource-adapter.ts", source)
+        self.assertIn("provideDjangoApiTransport", source)
+
 
 class DjngNgdjIntegrationContractTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -146,6 +193,29 @@ class DjngNgdjIntegrationContractTests(unittest.TestCase):
         self.assertEqual(argv[0], load_angular_settings().ng_executable)
         self.assertEqual(argv[1], "generate")
         self.assertEqual(argv[2], "angular-django2:material-app")
+
+    def test_ng_openapi_setup_uses_openapi_setup_schematic(self) -> None:
+        invocations = resolve_angular_command("ng_openapi_setup")
+        self.assertEqual(len(invocations), 1)
+
+        argv = invocations[0].argv
+        from django_angular3.settings import load_angular_settings
+
+        self.assertEqual(argv[0], load_angular_settings().ng_executable)
+        self.assertEqual(argv[1], "generate")
+        self.assertEqual(argv[2], "angular-django2:openapi-setup")
+
+    def test_ng_data_service_uses_data_service_schematic(self) -> None:
+        invocations = resolve_angular_command("ng_data_service", resource="orders")
+        self.assertEqual(len(invocations), 1)
+
+        argv = invocations[0].argv
+        from django_angular3.settings import load_angular_settings
+
+        self.assertEqual(argv[0], load_angular_settings().ng_executable)
+        self.assertEqual(argv[1], "generate")
+        self.assertEqual(argv[2], "angular-django2:data-service")
+        self.assertEqual(argv[3], "orders")
 
 
 if __name__ == "__main__":

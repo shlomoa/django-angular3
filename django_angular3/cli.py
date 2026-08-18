@@ -145,6 +145,66 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    ng_openapi_setup = subparsers.add_parser(
+        "ng_openapi_setup",
+        help=(
+            "Bootstrap ng-openapi-gen and Django integration helpers via the "
+            "angular-django2:openapi-setup schematic."
+        ),
+    )
+    ng_openapi_setup.add_argument(
+        "--output-path",
+        default="src/app/api",
+        help="Output path for generated API clients (default: src/app/api).",
+    )
+    ng_openapi_setup.add_argument(
+        "--helpers-path",
+        default=None,
+        help="Output path for generated Django integration helpers.",
+    )
+    ng_openapi_setup.add_argument(
+        "--skip-helpers",
+        action="store_true",
+        help="Skip generating Django auth/CSRF/transport and resource-adapter helpers.",
+    )
+    ng_openapi_setup.add_argument(
+        "--skip-tests",
+        action="store_true",
+        help="Skip generating tests for the integration helpers.",
+    )
+    ng_openapi_setup.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
+        ),
+    )
+
+    ng_data_service = subparsers.add_parser(
+        "ng_data_service",
+        help=(
+            "Generate a typed data-service wrapper for a resource via the "
+            "angular-django2:data-service schematic."
+        ),
+    )
+    ng_data_service.add_argument(
+        "--resource", required=True, help="Resource name for the generated service."
+    )
+    ng_data_service.add_argument(
+        "--project",
+        default=None,
+        help="Angular project (defaults to project.name from config).",
+    )
+    ng_data_service.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
+        ),
+    )
+
     ng_add = subparsers.add_parser("ng_add", help="Run ng add for an Angular package.")
     ng_add.add_argument(
         "--package",
@@ -210,13 +270,27 @@ def main(argv: Sequence[str] | None = None) -> int:
         "ng_gen_app",
         "ng_complex_component",
         "ng_openapi_gen",
+        "ng_openapi_setup",
+        "ng_data_service",
         "ng_add",
     }:
-        plan_options: dict[str, str | None] = {}
+        plan_options: dict[str, str | bool | None] = {}
         if args.command == "ng_gen_app":
             plan_options["app_name"] = args.app_name
         if args.command == "ng_add":
             plan_options["package"] = args.package
+        if args.command == "ng_openapi_setup":
+            plan_options = {
+                "output_path": args.output_path,
+                "helpers_path": args.helpers_path,
+                "skip_helpers": args.skip_helpers,
+                "skip_tests": args.skip_tests,
+            }
+        if args.command == "ng_data_service":
+            plan_options = {
+                "resource": args.resource,
+                "project": args.project,
+            }
         if args.command == "ng_complex_component":
             plan_options = {
                 "name": args.name,
