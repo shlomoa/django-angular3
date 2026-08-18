@@ -20,8 +20,11 @@ ng generate angular-django2:<schematic> --help
 
 ## djng integration legend
 
-Each command table below adds three djng-side indicators (source of truth:
-`TODO.md` §1.1):
+Each command table below adds three djng-side indicators, derived from the
+durable sources of truth: the wrapper registry (`_COMMAND_BUILDERS` in
+`django_angular3/angular.py`) and management commands, the test suite
+(`tests/test_ngdj_requirements.py`, `tests/test_angular_commands.py`), and the
+linked docs. `TODO.md` §1.1 only tracks remaining work.
 
 - **djng wrapper** — the djng command that resolves this schematic, or `—` when
   no wrapper exists yet.
