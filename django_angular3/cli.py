@@ -205,6 +205,44 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    ng_material_setup = subparsers.add_parser(
+        "ng_material_setup",
+        help=(
+            "Configure Angular Material in an existing project via the "
+            "angular-django2:material-setup schematic."
+        ),
+    )
+    ng_material_setup.add_argument(
+        "--project",
+        default=None,
+        help="Angular project (defaults to project.name from config).",
+    )
+    ng_material_setup.add_argument(
+        "--theme",
+        default=None,
+        help="Angular Material prebuilt theme name.",
+    )
+    ng_material_setup.add_argument(
+        "--typography",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Include Material typography styles.",
+    )
+    ng_material_setup.add_argument(
+        "--animations",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Enable Angular animations.",
+    )
+    ng_material_setup.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Print discovered configuration, derived paths, and resolved "
+            "Angular subprocess calls instead of invoking Angular tooling."
+        ),
+    )
+
     ng_add = subparsers.add_parser("ng_add", help="Run ng add for an Angular package.")
     ng_add.add_argument(
         "--package",
@@ -272,6 +310,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "ng_openapi_gen",
         "ng_openapi_setup",
         "ng_data_service",
+        "ng_material_setup",
         "ng_add",
     }:
         plan_options: dict[str, str | bool | None] = {}
@@ -290,6 +329,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             plan_options = {
                 "resource": args.resource,
                 "project": args.project,
+            }
+        if args.command == "ng_material_setup":
+            plan_options = {
+                "project": args.project,
+                "theme": args.theme,
+                "typography": args.typography,
+                "animations": args.animations,
             }
         if args.command == "ng_complex_component":
             plan_options = {

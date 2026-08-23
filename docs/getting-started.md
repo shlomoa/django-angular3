@@ -91,12 +91,14 @@ When you are ready to execute, drop `--dry-run`:
 
 ```bash
 python manage.py ng_workspace
+python manage.py ng_gen_app
 python manage.py ng_openapi_gen
 python manage.py ng_build
 ```
 
 `ng_workspace` runs the full bootstrap flow (`ng new`, workspace defaults,
-`ng add angular-django2`, and schematic generation), `ng_openapi_gen` generates
+`ng add angular-django2`, and schematic generation), `ng_gen_app` generates the
+Angular Material application inside the workspace, `ng_openapi_gen` generates
 Angular API client artifacts from the OpenAPI schema, and `ng_build` builds the
 configured Angular application.
 

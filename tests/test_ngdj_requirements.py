@@ -217,6 +217,17 @@ class DjngNgdjIntegrationContractTests(unittest.TestCase):
         self.assertEqual(argv[2], "angular-django2:data-service")
         self.assertEqual(argv[3], "orders")
 
+    def test_ng_material_setup_uses_material_setup_schematic(self) -> None:
+        invocations = resolve_angular_command("ng_material_setup")
+        self.assertEqual(len(invocations), 1)
+
+        argv = invocations[0].argv
+        from django_angular3.settings import load_angular_settings
+
+        self.assertEqual(argv[0], load_angular_settings().ng_executable)
+        self.assertEqual(argv[1], "generate")
+        self.assertEqual(argv[2], "angular-django2:material-setup")
+
 
 if __name__ == "__main__":
     unittest.main()

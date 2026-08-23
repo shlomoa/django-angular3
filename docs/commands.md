@@ -51,6 +51,7 @@ Invoked as `django-angular3 <command> [args]`.
 | `ng_config` | Apply workspace defaults (package manager, style, routing). |
 | `ng_add` | Run `ng add` for an Angular package. Accepts `--package <name>`. |
 | `ng_gen_app` | Generate an Angular application inside the configured workspace via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from the derived tool configuration. |
+| `ng_material_setup` | Configure Angular Material in an existing project via the `angular-django2:material-setup` schematic. Accepts `--project`, `--theme`, `--typography`/`--no-typography`, and `--animations`/`--no-animations`; unset options fall back to schematic defaults. |
 | `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
 | `ng_openapi_gen` | Run a locally installed `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
 | `ng_openapi_setup` | Bootstrap `ng-openapi-gen` and Django integration helpers via the `angular-django2:openapi-setup` schematic. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
@@ -78,6 +79,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | `ng_config` | Apply derived workspace defaults. |
 | `ng_add` | Run `ng add` for an Angular package. Accepts `--package <name>`; defaults to the derived `ngAddPackage` setting. |
 | `ng_gen_app` | Generate an Angular application via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from derived tool settings. |
+| `ng_material_setup` | Configure Angular Material in an existing project via the `angular-django2:material-setup` schematic. Accepts `--project`, `--theme`, `--typography`/`--no-typography`, and `--animations`/`--no-animations`; unset options fall back to schematic defaults. |
 | `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
 | `ng_openapi_gen` | Run `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
 | `ng_openapi_setup` | Bootstrap `ng-openapi-gen` and Django integration helpers via the `angular-django2:openapi-setup` schematic. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
@@ -104,6 +106,7 @@ Angular subprocess call list without invoking Angular tooling.
 | `ng_config` | ✓ | ✓ |
 | `ng_add` | ✓ | ✓ |
 | `ng_gen_app` | ✓ | ✓ |
+| `ng_material_setup` | ✓ | ✓ |
 | `ng_complex_component` | ✓ | ✓ |
 | `ng_openapi_gen` | ✓ | ✓ |
 | `ng_build` | ✓ | ✓ |

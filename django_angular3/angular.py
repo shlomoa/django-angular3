@@ -341,6 +341,43 @@ def build_ng_data_service_invocations(
     ]
 
 
+def build_ng_material_setup_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    project: str | None = None,
+    theme: str | None = None,
+    typography: bool | None = None,
+    animations: bool | None = None,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Configure Angular Material in an existing project via the ngdj
+    ``material-setup`` schematic. Unset options fall back to schematic
+    defaults (``theme=indigo-pink``, ``typography=true``, ``animations=true``).
+    """
+    target_project = project or config.project_name
+    argv = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:material-setup",
+        f"--project={target_project}",
+    ]
+    if theme is not None:
+        argv.append(f"--theme={theme}")
+    if typography is not None:
+        argv.append(f"--typography={_stringify_bool(typography)}")
+    if animations is not None:
+        argv.append(f"--animations={_stringify_bool(animations)}")
+
+    return [
+        AngularInvocation(
+            command_name="ng_material_setup",
+            argv=tuple(argv),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
 def _write_ng_openapi_gen_config(
     config: ProjectConfig, settings: DjangoAngularSettings
 ) -> Path:
@@ -457,6 +494,7 @@ _COMMAND_BUILDERS: dict[str, AngularInvocationBuilder] = {
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
     "ng_openapi_setup": build_ng_openapi_setup_invocations,
     "ng_data_service": build_ng_data_service_invocations,
+    "ng_material_setup": build_ng_material_setup_invocations,
     "ng_add": build_ng_add_invocations,
     "ng_workspace_modify": build_ng_workspace_modify_invocations,
     "ng_workspace_delete": build_ng_workspace_delete_invocations,

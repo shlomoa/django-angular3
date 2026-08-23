@@ -467,6 +467,52 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
 
+    def test_ng_material_setup_dry_run_defaults_to_project_name(self) -> None:
+        exit_code, stdout, stderr = self.run_cli("ng_material_setup", "--dry-run")
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:material-setup",
+                "--project=django-angular3-test",
+            ],
+        )
+
+    def test_ng_material_setup_dry_run_appends_material_options(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_material_setup",
+            "--project",
+            "portal",
+            "--theme",
+            "purple-green",
+            "--typography",
+            "--no-animations",
+            "--dry-run",
+        )
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        plan = json.loads(stdout)
+        self.assertEqual(
+            plan["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:material-setup",
+                "--project=portal",
+                "--theme=purple-green",
+                "--typography=true",
+                "--animations=false",
+            ],
+        )
+
     def test_ng_add_dry_run_defaults_to_angular_django2(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_add", "--dry-run")
 
