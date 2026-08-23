@@ -592,6 +592,27 @@ class AngularManagementCommandTests(unittest.TestCase):
 
         self.assertNotIn("project config", parser.format_help().lower())
 
+    def test_validate_project_management_command_accepts_bundled_tutorial(
+        self,
+    ) -> None:
+        from django.core.management import call_command
+
+        tutorial_config = (
+            ROOT
+            / "django_angular3"
+            / "examples"
+            / "01_simple_crm"
+            / "django-angular3-simple_crm.json"
+        )
+        stdout = io.StringIO()
+        with patch(
+            "django_angular3.config.discover_project_config_path",
+            return_value=tutorial_config,
+        ):
+            call_command("validate_project", stdout=stdout)
+
+        self.assertIn("Project configuration is valid.", stdout.getvalue())
+
     def test_management_commands_support_dry_run(self) -> None:
         cases = (
             ("ng_new", {}),
