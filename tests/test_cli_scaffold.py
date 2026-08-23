@@ -76,6 +76,29 @@ class ScaffoldTests(unittest.TestCase):
         )
         self.assertEqual(validate_project_config(config), [])
 
+    def test_shipped_static_configs_pin_ngdj_package(self) -> None:
+        for static_config_path in (
+            ROOT / "django-angular3.json",
+            ROOT
+            / "django_angular3"
+            / "templates"
+            / "django_angular3"
+            / "django-angular3.json",
+            ROOT
+            / "django_angular3"
+            / "examples"
+            / "01_simple_crm"
+            / "django-angular3.json",
+        ):
+            with self.subTest(static_config=static_config_path):
+                static_config = json.loads(
+                    static_config_path.read_text(encoding="utf-8")
+                )
+                self.assertEqual(
+                    static_config["tool"]["ngAddPackage"],
+                    "angular-django2@0.4.1",
+                )
+
     def test_project_config_resolves_paths(self) -> None:
         config = load_project_config(
             ROOT / "tests" / "fixtures" / TEST_PROJECT_CONFIG_FILENAME

@@ -45,6 +45,6 @@
       "ng_workspace_delete",
       "ng_complex_component"
     ],
-    "ngAddPackage": "angular-django2"
+    "ngAddPackage": "angular-django2@0.4.1"
   }
 }

@@ -65,7 +65,7 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertFalse(settings.ssr)
         self.assertTrue(settings.zoneless)
         self.assertEqual(settings.build_configuration, "production")
-        self.assertEqual(settings.ng_add_package, "angular-django2")
+        self.assertEqual(settings.ng_add_package, "angular-django2@0.4.1")
 
     def test_load_angular_settings_applies_explicit_overrides(self) -> None:
         overridden_settings = load_angular_settings().__dict__ | {
@@ -522,7 +522,7 @@ class AngularCliCommandTests(unittest.TestCase):
         plan = json.loads(stdout)
         self.assertEqual(
             plan["invocations"][0]["argv"],
-            [ng, "add", "angular-django2", "--skip-confirmation"],
+            [ng, "add", "angular-django2@0.4.1", "--skip-confirmation"],
         )
 
     def test_ng_add_dry_run_accepts_custom_package(self) -> None:
