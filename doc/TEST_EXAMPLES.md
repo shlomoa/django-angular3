@@ -42,6 +42,12 @@ current filename's `.json` suffix with `.previous.json`; a missing file starts
 the build from scratch. Its planner remains unimplemented, so these are target
 scenario examples rather than runnable current behavior.
 
+Each current or previous project configuration resolves its own
+`artifacts.openapiSchema` and `artifacts.openuiSpecification` paths. The
+current configuration therefore selects the candidate documents and the
+previous configuration selects their baselines; examples do not use a separate
+previous-OpenUI argument or `.previous` OpenUI filename convention.
+
 ### Provider-adapter verification boundary
 
 These generated-app scenarios verify change derivation and construction
@@ -554,17 +560,18 @@ Schema-derived and OpenUI-derived commands must not run.
 
 ## Example 5: OpenUI-Source Configuration Change
 
-**Demonstrates**: An `artifacts.openuiSpecification` configuration change. This is distinct
-from a structural change inside an OpenUI document: the `config` domain records
-the selected input path, while the `openui` domain compares the selected document
-with its own prior `.previous` artifact.
+**Demonstrates**: An `artifacts.openuiSpecification` configuration change. This
+is distinct from a structural change inside an OpenUI document: the
+`project_config` domain records the selected input path, while the `openui`
+domain compares the documents selected by the current and previous project
+configurations.
 
 ### Scenario
 
-The project changes `artifacts.openuiSpecification` from `legacy.openui.json` to
-`app.openui.json`. The current `app.openui.previous.json` is structurally
-identical to `app.openui.json`, so selection changes but no OpenUI-derived
-artifact changes are required.
+The project changes `artifacts.openuiSpecification` from `base.openui.json` to
+`app.openui.json`. The previous configuration's `base.openui.json` is
+structurally identical to the current configuration's `app.openui.json`, so
+selection changes but no OpenUI-derived artifact changes are required.
 
 ### Expected atomic changes
 

@@ -6,12 +6,15 @@
 
 ### 1.0 Previous OpenUI input interface
 
-**Status: Decision pending**
+**Status: Resolved — implementation pending**
 
-Define and record the accepted prior-OpenUI input mechanism in
-`APP_BUILDER_REQUIREMENTS.md`. The chosen mechanism must keep
-`--previous-config` reserved for the project-configuration Change Model domain
-and be implemented consistently by `build_app`, examples, and tests.
+`build_app` accepts the current and previous project configurations through
+`--current-config` and `--previous-config`. Each configuration independently
+resolves its `artifacts.openapiSchema` and `artifacts.openuiSpecification`
+selectors, so the previous configuration supplies the baseline OpenAPI and
+OpenUI documents. No separate `--previous-openui` input or `.previous` OpenUI
+filename convention is part of the interface. Command execution, examples, and
+tests must implement this configuration-pair contract consistently.
 
 Derive the complete set of `angular-django2` capabilities and `djng` command
 wrappers needed to materialize the required Angular-side outputs.
@@ -411,12 +414,13 @@ evidence that any Task 4 requirement is complete.
 
 #### Step 4.1 — Define previous-input handling
 
-**Status: Planned.** Define how `build_app` receives the accepted prior project
-state and prior OpenUI document before implementing comparison. The current
-OpenUI input is selected by `artifacts.openuiSpecification`; do not introduce
-an undocumented `--previous-openui` flag or `.previous` convention. Record the
-chosen prior-state mechanism once in `doc/APP_BUILDER_REQUIREMENTS.md`, then
-use it consistently in the command, examples, and tests.
+**Status: Resolved — implementation pending.** `build_app` receives the current
+and previous project configurations through `--current-config` and
+`--previous-config`. Each configuration independently resolves its selected
+OpenAPI and OpenUI artifacts; the previous configuration therefore supplies
+the baseline documents. No separate `--previous-openui` flag or `.previous`
+OpenUI filename convention is part of the interface. Implement this contract
+consistently in comparison, examples, and tests.
 
 #### Step 4.2 — Implement command execution
 

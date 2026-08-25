@@ -717,6 +717,13 @@ The `project_name` is the Django project name derived from
 `DJANGO_SETTINGS_MODULE`. `djng` must discover
 `django-angular3-<project_name>.json` at the project root path.
 
+For incremental `build_app` runs, the current and previous project
+configurations must each resolve their own artifact selectors. The current
+configuration selects the candidate OpenAPI and OpenUI documents; the previous
+configuration selects the baseline OpenAPI and OpenUI documents. A separate
+previous-OpenUI argument or filename convention is not part of the project
+configuration contract.
+
 For example, a generated application can declare its identity and artifact
 locations with:
 

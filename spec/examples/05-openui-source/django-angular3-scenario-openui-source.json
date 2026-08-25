@@ -2,7 +2,7 @@
   "project": { "name": "scenario-openui-source" },
   "artifacts": {
     "openapiSchema": "../shared/baseline.openapi.json",
-    "openuiSpecification": "../shared/legacy.openui.json",
+    "openuiSpecification": "../shared/base.openui.json",
     "angularWorkspace": "build/angular"
   }
 }

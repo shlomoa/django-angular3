@@ -65,13 +65,18 @@ provider used by an agent session.
 | `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. |
 | Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The discovered default is defined in `REQUIREMENTS.md` §4.2.4. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
-| Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | A missing previous configuration starts a build from scratch. |
-| Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. |
+| Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | Resolves its own artifact selectors independently of the current configuration. A missing previous configuration starts a build from scratch. |
+| Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Baseline contract selected by the previous configuration. Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. |
 | Current `app.openui.json` | `artifacts.openuiSpecification` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
-| Previous `app.openui.json` | Accepted prior state | JSON (`openui.schema.json`) | A persisted prior state for OpenUI change detection. Absent on a first run; the OpenUI domain emits `create` changes for the candidate document. |
+| Previous `app.openui.json` | `artifacts.openuiSpecification` from the previous project configuration | JSON (`openui.schema.json`) | Baseline OpenUI document selected by the previous configuration. Absent on a first run; the OpenUI domain emits `create` changes for the candidate document. |
 
-`artifacts.openuiSpecification` selects the current OpenUI document; it does
-not name the document format or the ChangeSet domain. `app.openui.json` is the generated-app filename
+Each project configuration resolves its own artifact selectors relative to its
+location. The current configuration selects the candidate OpenAPI and OpenUI
+documents; the previous configuration selects their baselines. The
+`--previous-config` argument remains a project-configuration input and no
+separate `--previous-openui` argument or `.previous` OpenUI filename convention
+is defined. `artifacts.openuiSpecification` does not name the document format
+or the ChangeSet domain. `app.openui.json` is the generated-app filename
 convention. Its grammar is defined by
 `openui.schema.json` and its vocabulary by `openui.json` in
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec); djng owns only
