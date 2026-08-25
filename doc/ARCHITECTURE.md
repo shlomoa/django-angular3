@@ -4,7 +4,7 @@
 
 This document describes the architecture of `django-angular3` (package: [django-angular3]; source: [django-angular3-github]) as a contract-driven, agentically orchestrated, AI-automation-based system for generating and integrating Angular application building blocks against a [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] backend. The backend contract is expressed as a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification], which serves as the integration boundary and the source of truth for CRM-facing functionality.
 
-This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Construction may be non-deterministic, but acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validations and tests.
+This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Optional `djng` AI-guided construction or repair may be non-deterministic, but `ngdj` schematic execution is deterministic and AI-independent. Acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validations and tests.
 
 `django-angular3` extends Django/DRF with contract-driven Angular integration. It governs the construction process, uses agentic orchestration to coordinate iterative bounded construction through SKILLS, TOOLS, HOOKS, and PLUGINS, and integrates generated building blocks into a working application while preserving architectural boundaries between backend, frontend, generated artifacts, and non-CRM content.
 
@@ -43,7 +43,7 @@ construction configuration required for generated applications. See §19
 Glossary.
 
 ### 2.6 ngdj
-`ngdj` stands for Angular Django, `angular-django2` companion package: the Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`.
+`ngdj` stands for Angular Django, `angular-django2` companion package: the deterministic, AI-independent Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`. The same validated inputs produce repeatable schematic transformations without requiring an agent, provider adapter, or SKILL.
 
 ### 2.7 [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.
@@ -289,6 +289,7 @@ implemented in [angular-django2-github] and deployed to [angular-django2] npm pa
   - ngdj-o-1: Provide a set of commands for managing and assembling the Angular application, including workspace, project layout, application layout.
   - ngdj-o-2: Provide Angular schematics and code generation templates for generating Angular building blocks from OpenAPI contracts.
   - ngdj-o-3: Provide a set of Angular schematics and code generation templates for generating Angular building blocks from non-CRM content definitions.
+  - ngdj-o-4: Execute those schematics deterministically from validated structured inputs without depending on agent, provider, or SKILL infrastructure. Optional `djng` orchestration may invoke the same schematics through TOOL contracts but does not change their behavior or ownership.
 
 
 ### 3.5 Toolchain components

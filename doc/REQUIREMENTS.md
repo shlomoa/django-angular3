@@ -540,12 +540,12 @@ flowchart TB
     BACKEND -->|implements| REST
   end
 
-  subgraph Agent["Agent + AI automations build flow"]
+  subgraph Construction["Governed construction flow"]
     direction TB
     DERIVE["Derive changes from<br/>OAS and OpenUI"]
     SELECT["Select ordered<br/>construction work"]
 
-    SKILLS["SKILLS"]
+    SKILLS["Optional SKILLS"]
     TOOLS["TOOLS"]
     HOOKS["HOOKS"]
 
@@ -915,15 +915,17 @@ boundaries, architectural control-loop, verification, and build-flow model.
   from contract-derived and non-CRM inputs
 - Non-CRM content construction must be a discrete governed construction stage,
   as defined by `ARCHITECTURE.md` §7.1 stage 4
-- Governed construction must be carried out by the agent through the governed
-  AI automation model, using SKILLS for AI-guided construction work, TOOLS for
-  deterministic bounded operations, and HOOKS for lifecycle gates or mandatory
-  side effects
+- Governed construction must execute deterministic bounded operations,
+  including `ngdj` schematics, through TOOL/wrapper contracts without
+  requiring an agent or provider session. Optional AI-guided work may run
+  through the agent using SKILLS only when the selected task is genuinely
+  underspecified or non-deterministic. HOOKS provide lifecycle gates or
+  mandatory side effects independently of either execution path.
 - Governed construction must translate change-detection results into an
-  ordered command sequence that can select AI-guided SKILL sessions,
-  deterministic TOOL commands, validation commands, and enforced gate
-  boundaries. Each selected command must produce or validate output directly
-  in relation to the generated-app workspace.
+  ordered command sequence that selects deterministic TOOL commands directly
+  and may also select AI-guided SKILL sessions, validation commands, and
+  enforced gate boundaries. Each selected command must produce or validate
+  output directly in relation to the generated-app workspace.
 - Primitive selection must follow an explicit policy: deterministic work must
   prefer TOOL contracts, AI-guided generation or repair work may use SKILLS,
   and mandatory lifecycle enforcement must not rely on optional agent behavior
@@ -964,8 +966,8 @@ sequenceDiagram
   participant Drf as drf-spectacular
   participant OAS as OAS validation and diff
   participant UI as OpenUI validation
-  participant Agent as Agent and AI automations
-  participant Automation as SKILLS, TOOLS, and HOOKS
+  participant Automation as Deterministic TOOLS and HOOKS
+  participant Agent as Optional Agent and SKILLS
   participant NgOpenApiGen as ng-openapi-gen
   participant Ngdj as ngdj
   participant Rest as REST API
@@ -984,9 +986,13 @@ sequenceDiagram
   OAS-->>Djng: Accepted contract or blocking result
   Djng->>UI: Validate OpenUI specification
   UI-->>Djng: Accepted input or blocking result
-  Djng->>Agent: Derive changes from OAS and OpenUI
+  Djng->>Djng: Derive changes and select ordered commands
   loop Until terminal verification accepts the generated application
-    Agent->>Automation: Select and execute ordered SKILLS, TOOLS, and HOOKS
+    Djng->>Automation: Execute selected deterministic TOOLS and HOOKS
+    opt Selected work is underspecified or requires interpretive refinement
+      Djng->>Agent: Execute selected SKILL through provider adapter
+      Agent-->>Djng: Normalized refinement result and evidence
+    end
     Automation->>Ngdj: Run ngdj CLI with generated ng-openapi-gen.json
     Ngdj->>NgOpenApiGen: Generate typed Angular client artifacts
     NgOpenApiGen-->>Ngdj: Generated client artifacts
@@ -995,10 +1001,9 @@ sequenceDiagram
     Angular->>Rest: Consume REST API through generated client
     Backend->>App: Provide Django/DRF part
     Angular->>App: Provide Angular part
-    Agent->>Verify: Verify contracts, artifacts, integration, and tests
-    Verify-->>Agent: Acceptance result or repair findings
+    Djng->>Verify: Verify contracts, artifacts, integration, and tests
+    Verify-->>Djng: Acceptance result or repair findings
   end
-  Agent-->>Djng: Accepted application or stage-specific failure
   Djng-->>User: Report result
 ```
 

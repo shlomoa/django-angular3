@@ -21,7 +21,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | This document, `ARCHITECTURE.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides deterministic, AI-independent Angular-side schematics and templates invoked through bounded wrappers; an agent may call those wrappers but is not required. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
 | **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14 |
@@ -46,14 +46,14 @@ manifests, or skill files to ensure each layer uses the correct name.
 | `angular.workspace` | `ng_workspace` | `angular_workspace_scaffold` | `angular-workspace-foundation` | `pre-construction`, `post-generation` |
 | `angular.app` | `ng_gen_app` | `angular_app_scaffold` | `angular-app-composition` | `pre-construction`, `post-generation` |
 | `angular.api-client` | `ng_openapi_gen` | `angular_api_client_generate` | `angular-api-integration` | `pre-construction`, `post-generation` |
-| `angular.data-service` | — | — | `angular-data-service-composition` | — |
-| `angular.field-component` | — | — | `angular-field-component-composition` | — |
-| `angular.form-field` | — | — | `angular-form-field-composition` | — |
-| `angular.component` | — | — | `angular-component-composition` | — |
-| `angular.complex-component` | — | — | `angular-complex-component-composition` | — |
-| `angular.reactive-form` | — | — | `angular-reactive-form-composition` | — |
-| `angular.page` | — | — | `angular-page-composition` | — |
-| `angular.site` | — | — | `angular-site-composition` | — |
+| `angular.data-service` | — | — | `angular-data-service-composition` (optional refinement) | — |
+| `angular.field-component` | — | — | `angular-field-component-composition` (optional refinement) | — |
+| `angular.form-field` | — | — | `angular-form-field-composition` (optional refinement) | — |
+| `angular.component` | — | — | `angular-component-composition` (optional refinement) | — |
+| `angular.complex-component` | — | — | `angular-complex-component-composition` (optional refinement) | — |
+| `angular.reactive-form` | — | — | `angular-reactive-form-composition` (optional refinement) | — |
+| `angular.page` | — | — | `angular-page-composition` (optional refinement) | — |
+| `angular.site` | — | — | `angular-site-composition` (optional refinement) | — |
 | `contract.schema-export` | `export_schema` | `openapi_schema_export` | — | `migration-triggered` |
 | `contract.schema-validate` | — | `validate_openapi_schema` | — | `pre-construction` (wraps) |
 | `contract.schema-diff` | — | `oasdiff_diff` | — | — |
@@ -139,7 +139,7 @@ together determine the primitive (or composition of primitives).
 |---|---|---|
 | **Determinism** | Does the operation always produce the same structured result for the same inputs, with no AI judgment in its body? | Deterministic → **TOOL** or **HOOK**. Non-deterministic → **SKILL**. |
 | **AI involvement** | Does carrying out the work require interpreting intent, iterating on artifacts, or authoring/modifying code? | High AI involvement → **SKILL**. None → **TOOL** or **HOOK**. |
-| **Invocation binding** | Is the operation invoked on demand by the agent, or must it run automatically at a lifecycle event regardless of agent choice? | Agent-chosen → **SKILL** or **TOOL**. Lifecycle-bound and mandatory → **HOOK**. |
+| **Invocation binding** | Is the operation invoked on demand by `build_app` or an agent, or must it run automatically at a lifecycle event regardless of caller choice? | On-demand → **SKILL** or **TOOL**, according to the other axes. Lifecycle-bound and mandatory → **HOOK**. |
 | **Distribution** | Is the unit a single capability, or a coherent bundle of SKILLS / TOOLS / HOOKS intended for reuse across projects or teams? | Single capability → primitive itself. Bundle → **PLUGIN**. |
 
 A capability is a **SKILL** only if it scores non-deterministic on the first
@@ -153,7 +153,7 @@ it is a packaging unit that contains them.
 | If the work… | Use |
 |---|---|
 | Requires AI judgment, iteration, or multi-step code authoring | **SKILL** |
-| Is a single deterministic command, API call, validation, or file operation the agent calls on demand | **TOOL** |
+| Is a single deterministic command, API call, validation, or file operation called on demand by `build_app` or an agent | **TOOL** |
 | Must always run at a lifecycle event regardless of agent choice | **HOOK** |
 | Is deterministic and must be guaranteed at a lifecycle event | **HOOK** wrapping a **TOOL** |
 | Is a reusable bundle of SKILLS, TOOLS, and/or HOOKS intended for distribution | **PLUGIN** |
@@ -216,8 +216,9 @@ reference cases for new work.
 | `oasdiff_diff` (schema diff) | Yes | None | No | **TOOL** |
 | `angular_api_client_generate` (typed Angular client generation) | Yes | None | No | **TOOL** wrapper |
 | `pre-construction` contract validation gate | Yes | None | Yes (must run before construction) | **HOOK** wrapping the `validate_openapi_schema` TOOL |
-| Generating an Angular feature page from an OpenAPI resource | No | High | No | **SKILL** |
-| Authoring a non-CRM reactive form from a structured UI definition | No | High | No | **SKILL** |
+| Generating an Angular page from a validated OpenUI definition | Yes | None | No | **TOOL** — contract around `angular-django2:page` not yet defined |
+| Generating a non-CRM reactive form from a validated OpenUI definition | Yes | None | No | **TOOL** — contract around `angular-django2:reactive-form` not yet defined |
+| Interpreting underspecified intent or refining generated page/form behavior | No | High | No | **SKILL** (optional) |
 | `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** containing related SKILLS, TOOLS, and HOOKS |
 
 When classifying a new capability, prefer matching it to one of the rows
@@ -1140,14 +1141,14 @@ package for installation.
 | `angular-workspace-foundation` | Generate the Angular workspace shell. |
 | `angular-app-composition` | Generate the Angular application inside the workspace. |
 | `angular-api-integration` | Generate the OpenAPI-derived API integration layer. |
-| `angular-data-service-composition` | Generate typed data services for resource collections. |
-| `angular-field-component-composition` | Generate reusable form field components. |
-| `angular-form-field-composition` | Generate `ControlValueAccessor`-backed form-field boilerplate. |
-| `angular-component-composition` | Generate standalone Angular Material components. |
-| `angular-complex-component-composition` | Generate composite components built from simpler ones. |
-| `angular-reactive-form-composition` | Generate typed reactive `FormGroup<>` flows. |
-| `angular-page-composition` | Generate routed page components (lists, details). |
-| `angular-site-composition` | Generate the top-level site shell and route tree. |
+| `angular-data-service-composition` | Optionally interpret or refine data-service behavior beyond the structured schematic input. |
+| `angular-field-component-composition` | Optionally interpret or refine field-component behavior beyond the structured schematic input. |
+| `angular-form-field-composition` | Optionally interpret or refine form-field behavior beyond the structured schematic input. |
+| `angular-component-composition` | Optionally interpret or refine standalone component behavior beyond the structured schematic input. |
+| `angular-complex-component-composition` | Optionally interpret or refine complex-component behavior beyond the structured schematic input. |
+| `angular-reactive-form-composition` | Optionally interpret or refine reactive-form behavior beyond the validated OpenUI definition. |
+| `angular-page-composition` | Optionally interpret or refine routed-page behavior beyond the validated OpenUI definition. |
+| `angular-site-composition` | Optionally interpret or refine site composition beyond the validated OpenUI definition. |
 
 **Bundled TOOLS** (from the [Tool Contracts Catalog](#tool-contracts-catalog)):
 
@@ -1212,10 +1213,9 @@ document (§Skills Catalog), its tools from
 
 **Name**: `ngdj-scaffold`
 
-**Purpose**: Package the `ngdj` (Angular-side) scaffold capability — the
-Angular workspace, application, feature, and component schematics — as a
-provider-neutral capability bundle so the agent uses structured tool calls
-rather than raw shell invocations.
+**Purpose**: Package deterministic `ngdj` Angular workspace, application,
+feature, and component schematics behind provider-neutral structured tool
+calls usable directly by `build_app` or, optionally, by an agent.
 
 **Bundled SKILLS**: none. `ngdj`'s scaffold operations are deterministic and
 belong in TOOLS, not SKILLS; the AI-guided generation work that surrounds
@@ -1259,8 +1259,10 @@ not backward-compatible is a breaking change for this plugin.
   dependency of the generated app, invoked via `pnpm exec` (Angular tooling
   MUST NOT download packages at runtime).
 - Node.js and `pnpm` available on the host running the construction agent.
-- `djng-angular-construction` plugin (§1) for the lifecycle hooks that gate
-  the bundled tools; `ngdj-scaffold` is not safe to use without those gates.
+- `djng` applies the documented lifecycle gates when these tools run through
+  `build_app`. A rendered `djng-angular-construction` plugin may provide the
+  equivalent gates inside an optional provider session, but it is not a
+  dependency of `ngdj`, its schematics, or direct deterministic execution.
 
 **Installation**: Each provider rendering defines its own opt-in installation
 workflow. For the planned Claude rendering, use `/plugin install ngdj-scaffold`
@@ -2416,6 +2418,14 @@ export class {{RESOURCE_NAME_PASCAL}}Service {
 > public interfaces. Use `REQUIREMENTS.md` §4.2 for configuration ownership and
 > `docs/commands.md` for implemented command invocation. The separate
 > `skill_creation/` working copies are the active skill-authoring material.
+
+> **Deterministic-generation boundary:** A cataloged SKILL does not own or
+> replace generation already defined by an `ngdj` schematic schema. The
+> deterministic TOOL/wrapper contract around each applicable schematic must be
+> defined before `build_app` claims support for it. A matching SKILL is
+> optional and may be selected only for genuinely underspecified,
+> interpretive, or post-generation refinement work; it must not duplicate the
+> schematic's generation logic.
 
 This section breaks down the skills subset of the automation model into the
 different skills.

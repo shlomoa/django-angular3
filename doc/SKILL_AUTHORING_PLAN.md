@@ -2,10 +2,12 @@
 
 ## Scope
 
-This document captures the working plan for authoring the eleven Angular
-skills described in `GENERATE_AI_AUTOMATIONS.md`. It records the decisions made during
-the planning conversation, the framework that will be applied uniformly to
-every skill, and the items that remain open or evolving.
+This document captures the working plan for authoring the eleven optional
+AI-guided Angular skills described in `GENERATE_AI_AUTOMATIONS.md`. It records
+the decisions made during the planning conversation, the framework that will
+be applied uniformly to every skill, and the items that remain open or
+evolving. These skills do not own deterministic generation already defined by
+an `ngdj` schematic schema.
 
 This is a skills-only sub-plan. The broader AI automation model — including
 the roles of TOOLS, HOOKS, and PLUGINS alongside SKILLS — is defined in
@@ -66,7 +68,7 @@ the run-time input the skill must accept. Author-time input is a description,
 not an instance.
 
 Run-time input is the concrete values an orchestrator provides when invoking
-the skill. For these eleven skills, run-time input comes from two sources:
+the skill. For these eleven optional skills, run-time input comes from two sources:
 
 - **Discovered configuration and artifact paths** — supplied by the
   orchestrator from `django-angular3-<project_name>.json` and derived static tool
@@ -116,7 +118,8 @@ acknowledged), and `ng-openapi-gen` for Angular client generation. No
 alternative Angular client generator is in scope, and no alternative OpenAPI
 diff tool is in scope.
 
-Skills do not call Angular CLI, `ng-openapi-gen`, or `oasdiff` directly.
+Skills do not call Angular CLI, `ng-openapi-gen`, or `oasdiff` directly, and
+they do not duplicate generation implemented by an `ngdj` schematic.
 
 This document does not redefine when those responsibilities should move to
 TOOLS, HOOKS, or PLUGINS in the broader automation model; it only defines how
@@ -126,12 +129,11 @@ the authored SKILLS must behave within the current governed construction flow.
 any skill is invoked. Skills receive the resulting `ChangeSet` as command
 input. A skill must never re-run `oasdiff` itself.
 
-For Angular operations, skills invoke this repository's Python wrappers
-(`ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_openapi_gen`, `ng_build`,
-`ng_workspace_delete`), which honor the operating principle that Angular
-tooling must not download packages at runtime and that workspace dependencies
-are used locally via `pnpm exec`. Each skill bundles the wrappers it needs in
-its `scripts/` directory.
+For Angular operations, deterministic `ngdj` schematics must be exposed through
+shared TOOL/wrapper contracts before `build_app` claims support for them. The
+exact contracts and invocations are not defined in this skills-only plan. A
+selected skill must not bundle a copy of a wrapper or recreate schematic logic
+in `scripts/`.
 
 The default settings surface for this repository (per `README.md`) is `pnpm`
 as the package manager, `scss` as the stylesheet format, routing enabled,
@@ -195,11 +197,14 @@ generation — inherently duplicates contract definitions across layers (server
 models, OpenAPI schema, generated TypeScript models, form validators). That
 duplication is approved and is not eliminated.
 
-## The eleven skills
+## The eleven optional skills
 
 The skills are authored in the dependency order suggested by
 `GENERATE_AI_AUTOMATIONS.md` so that earlier skills' outputs are available as ground
-truth when test cases for later skills are exercised.
+truth when test cases for later skills are exercised. A skill is selected only
+for genuinely underspecified, interpretive, or post-generation refinement
+work. Validated structured inputs take the deterministic TOOL path and do not
+require a provider session.
 
 This ordering is the authoring and verification order for the skills subset.
 It is not, by itself, the complete statement of the mixed automation order for
@@ -247,7 +252,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. This document addresses only the SKILLS subset. | `ARCHITECTURE.md` §19, `GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates invoked by the agent during construction. | `ARCHITECTURE.md` §2.6 |
+| **`ngdj`** | The `angular-django2` companion Angular package. Provides deterministic, AI-independent Angular-side schematics and templates invoked through TOOL/wrapper contracts; agent involvement is optional. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. It compares inputs, translates changes to ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
 | **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |

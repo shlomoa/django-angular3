@@ -143,6 +143,7 @@ by the automation naming layers in `ARCHITECTURE.md` §2.23.
 | Angular workspace scaffold | TOOL | `angular_workspace_scaffold` | — | Create the workspace for a first build. |
 | Angular app scaffold | TOOL | `angular_app_scaffold` | — | Create the primary Angular application. |
 | Typed Angular client generation | TOOL | `angular_api_client_generate` | — | Generate the typed API client. |
+| Optional interpretive refinement | SKILL | — | — | Handle only selected work that structured inputs and deterministic schematics do not fully specify. |
 | Post-generation verification | HOOK | — | `post-generation` | Record and enforce per-command structural checks. |
 | Session-end audit | HOOK | — | `session-stop` | Archive run information and write a session summary. |
 
@@ -156,11 +157,11 @@ by the automation naming layers in `ARCHITECTURE.md` §2.23.
 | `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
 | `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
 | `openapi` `update` | Targeted dependent client, service, and UI commands | update |
-| `openui` page `create`, `update`, `delete`, or `move` | `angular-page-composition` | matching operation |
-| `openui` standalone component `create`, `update`, `delete`, or `move` | `angular-component-composition` | matching operation |
-| `openui` complex component `create`, `update`, `delete`, or `move` | `angular-complex-component-composition` | matching operation |
-| `openui` reactive form `create`, `update`, `delete`, or `move` | `angular-reactive-form-composition` | matching operation |
-| `openui` navigation `update` or `move` | `angular-site-composition` | matching operation |
+| `openui` page `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:page`; contract not yet defined | Not yet defined |
+| `openui` standalone component `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:component`; contract not yet defined | Not yet defined |
+| `openui` complex component `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:complex-component`; contract not yet defined | Not yet defined |
+| `openui` reactive form `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:reactive-form`; contract not yet defined | Not yet defined |
+| `openui` navigation `update` or `move` | Deterministic TOOL/wrapper contract around `angular-django2:site`; contract not yet defined | Not yet defined |
 
 The implementation must define the precise wrapper invocation for every row
 before claiming support for that atomic change. Unsupported changes must fail
@@ -171,18 +172,20 @@ explicitly; `build_app` must not silently omit them.
 Commands must satisfy this dependency order:
 
 ```
-1  angular-workspace-foundation   (foundation)
-2  angular-app-composition         (depends on 1)
-3  angular-api-integration         (depends on 2)
-4  angular-data-service-composition (depends on 3)
-5  angular-field-component-composition (depends on 2)
-6  angular-form-field-composition   (depends on 2)
-7  angular-component-composition    (depends on 2)
-8  angular-complex-component-composition (depends on 2)
-9  angular-reactive-form-composition (depends on 2, 6; optionally 4)
-10 angular-page-composition         (depends on 2; composes 4, 7, 8, 9)
-11 angular-site-composition         (composes 2–10)
+1  angular_workspace_scaffold       (TOOL; foundation)
+2  angular_app_scaffold             (TOOL; depends on 1)
+3  angular_api_client_generate      (TOOL; depends on 2)
 ```
+
+The TOOL/wrapper contracts and dependency order for the remaining deterministic
+`ngdj` schematic operations are not yet defined. They must be specified before
+those operations are added to this execution order or claimed as supported by
+`build_app`.
+
+An optional matching `angular-*-composition` SKILL command may follow its
+deterministic TOOL command only when the selected work is genuinely
+underspecified or requires interpretive refinement. It is not part of the
+required path for validated structured inputs.
 
 Commands that delete removed resources precede commands that create replacement
 or new resources at the same dependency level. Schema-derived commands precede
@@ -227,7 +230,8 @@ they are not a substitute for execution.
 
 - The command sequence must be deterministic for the same inputs.
 - Translation must apply dependency ordering for deterministic tool commands,
-  AI-guided SKILL commands, enforced gates, and terminal validation.
+  any optional AI-guided SKILL commands, enforced gates, and terminal
+  validation.
 - Each selected command must include a reason for its inclusion.
 - Commands not triggered by either change set must not execute.
 - `build_app` must execute selected commands in order; it must not emit a build
@@ -244,8 +248,8 @@ they are not a substitute for execution.
 ### FR-4: Initial-state force mode
 
 - `--force start-from-scratch` overrides comparison results and executes the
-  full initial-state command set, including deterministic prerequisites and
-  required SKILL commands in dependency order.
+  full deterministic initial-state command set plus any separately selected
+  optional SKILL commands in dependency order.
 
 ### FR-5: OpenUI-only changes
 
@@ -266,7 +270,8 @@ they are not a substitute for execution.
   returns normalized session evidence; it does not determine command or run
   acceptance.
 - Each selected tool command must execute the corresponding deterministic tool
-  contract with structured inputs and outputs.
+  contract with structured inputs and outputs. Direct deterministic execution
+  must not open or require a provider session.
 - Each selected gate must enforce its blocking check or lifecycle side effect
   before downstream commands continue.
 
