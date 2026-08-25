@@ -159,8 +159,8 @@ and its derived authoring working copy, create required scripts, references,
 and assets, and author the test prompts and assertions agreed in Plan. Render
 and test provider-native artifacts only through the applicable provider adapter.
 
-App builder command integration. Once the skill is created, add the selected
-SKILL command that uses it in the app builder program.
+build_app command integration: Once the skill is created, add the selected
+SKILL command that uses it into build_app.
 
 Verification. Run the tests (with-skill versus baseline), grade them, render
 the result for review, and incorporate feedback. Once Verification is

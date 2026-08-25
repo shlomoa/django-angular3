@@ -119,11 +119,11 @@ construction.
 
 ---
 
-## 5. app-builder Change Detection and Direct Execution
+## 5. build_app Change Detection and Direct Execution
 
 **Status: Partially implemented**
 
-Implement app-builder atomic change derivation, direct execution of the
+Implement build_app atomic change derivation, direct execution of the
 selected construction commands, and terminal validation from current and
 previous schema/OpenUI inputs.
 
@@ -147,7 +147,7 @@ previous schema/OpenUI inputs.
 **Status: Not started**
 
 Author each of the eleven SKILLS using the per-skill cadence defined in
-`doc/SKILL_AUTHORING_PLAN.md`: plan, implementation including tests, app-builder
+`doc/SKILL_AUTHORING_PLAN.md`: plan, implementation including tests, build_app
 command integration, and verification.
 
 Per-SKILL acceptance criteria must be defined during the Plan phase of each
@@ -187,7 +187,7 @@ first implementation does not retry automatically or promise rollback.
 without satisfying its acceptance criteria. It has no adapter orchestration or
 normalized session evidence boundary.
 
-### Provider-adapter verification backlog
+### 7.1 Provider-adapter verification backlog
 
 The authoritative adapter-contract cases and expected assertions are in
 `doc/phased_implementation_plan.md` Phase 5. Implement provider-independent
@@ -214,7 +214,7 @@ tests and its own credential/runtime-gated integration suite pass.
 Add automated verification across contract checks, construction-output checks,
 integration checks, and test-based verification.
 
-### 9.1 Example Input Files
+### 8.1 Example Input Files
 
 All twelve scenarios in `doc/TEST_EXAMPLES.md` now have input fixtures:
 Example 1 is bundled at `django_angular3/examples/01_simple_crm/`, and Examples
@@ -222,7 +222,7 @@ Example 1 is bundled at `django_angular3/examples/01_simple_crm/`, and Examples
 covered by `tests/test_cli_scaffold.py`; direct-build acceptance coverage remains
 deferred until `build_app` is implemented.
 
-### 9.2 E2E Verification Specification Missing
+### 8.2 E2E Verification Specification Missing
 
 | Aspect | Current state | What is missing | Why it matters |
 |---|---|---|---|
@@ -231,7 +231,7 @@ deferred until `build_app` is implemented.
 | Full-stack E2E test spec | REQUIREMENTS.md §4.16 defines four verification categories. | None has a concrete acceptance test specification. §6.4 Mandatory Acceptance Scenarios header exists but content is not populated. | No pass/fail criterion beyond "Angular compiled." |
 | ngdj test surface | ngdj schematics are not tested by the djng test suite. | No specification for how SKILL-generated ngdj outputs are tested against a real Angular workspace. | Correctness of the generated Angular application depends on ngdj schematic outputs, which are currently unverified. |
 
-### 9.3 Global Acceptance Criteria Not Specified
+### 8.3 Global Acceptance Criteria Not Specified
 
 Local acceptance by each SKILL does not imply global correctness. A
 representative failure chain:
@@ -265,7 +265,7 @@ Where this must land:
 
 **Status: Not started**
 
-Build one business module end to end using the generator app, app builder,
+Build one business module end to end using the generator app,
 SKILLS, and wrappers together.
 
 ---
@@ -340,14 +340,13 @@ The command must be a thin wrapper around `validate_openui_file(path)`:
 
 Add command tests for a valid document and for propagation of an upstream
 `openui-spec` diagnostic. This keeps `OpenUiJson` as the single validation
-authority while providing the explicit Django command surface required by
-Task 2.2 of `doc/openui-spec_integration_plan.md`.
+authority while providing the explicit Django command surface.
 
 ---
 
 ## 14. openui-spec integration plan - remaining items
 
-### What openui-spec provides
+### 14.0 What openui-spec provides
 
 The `openui-spec` defines three layered artifacts:
 
@@ -363,13 +362,13 @@ integration contract.
 
 ---
 
-### Task 3: Validation and test updates
+### 14.1 Validation and test updates
 
-**Status: Partial.** Steps 3.1, 3.2, and 3.4 are complete. Step 3.3 has
-standalone CLI coverage and Step 3.5 has fixture coverage; their `build_app`
-acceptance portions remain deferred. Step 3.6 remains outstanding.
+**Status: Partial.** Standalone CLI and fixture coverage exist; their
+`build_app` acceptance portions remain deferred. The verification gate remains
+outstanding.
 
-#### Step 3.3 — CLI and build-command integration coverage
+#### Step 14.1.1 — CLI and build-command integration coverage
 
 **Status: Partial.** `tests/test_cli.py` covers standalone `validate-openui`
 and `validate-project` success and invalid-OpenUI failure paths. Generated-app
@@ -379,7 +378,7 @@ Add generated-app command coverage showing that `build_app` rejects an invalid
 OpenUI source before change detection.
 
 
-#### Step 3.5 — Three-domain scenario fixtures and acceptance coverage
+#### Step 14.1.2 — Three-domain scenario fixtures and acceptance coverage
 
 **Status: Partial.** `spec/examples/` provides valid scenario configurations,
 shared source artifacts, and a manifest covering all eight scenario-axis
@@ -396,7 +395,7 @@ coverage for first-run, OpenUI-source-selection, and mixed create/delete cases.
 Each test must assert the relevant canonical ChangeSet domains, selected commands, command ordering, and
 dry-run non-modification behavior.
 
-#### Step 3.6 — Verification gate
+#### Step 14.1.3 — Verification gate
 
 After implementation, run Ruff format and lint checks plus the full unittest
 suite specified in `.github/copilot-instructions.md`. Also run the relevant
@@ -407,12 +406,12 @@ implementation change.
 
 ---
 
-### Task 4: Complete direct `build_app` execution
+### 14.2 Complete direct `build_app` execution
 
 **Status: Not started.** `build_app` is WIP; its current implementation is not
-evidence that any Task 4 requirement is complete.
+evidence that any §14.2 requirement is complete.
 
-#### Step 4.1 — Define previous-input handling
+#### Step 14.2.1 — Define previous-input handling
 
 **Status: Resolved — implementation pending.** `build_app` receives the current
 and previous project configurations through `--current-config` and
@@ -422,7 +421,7 @@ the baseline documents. No separate `--previous-openui` flag or `.previous`
 OpenUI filename convention is part of the interface. Implement this contract
 consistently in comparison, examples, and tests.
 
-#### Step 4.2 — Implement command execution
+#### Step 14.2.2 — Implement command execution
 
 **Targets:** `django_angular3/management/commands/build_app.py`,
 `django_angular3/angular.py`, and the required direct execution boundaries.
@@ -440,7 +439,7 @@ generated-app workspace. Normal execution must halt on the first wrapper, tool,
 hook, or validation failure and surface the failure through Django's normal
 error reporting.
 
-#### Step 4.3 — Define command translation and output validation
+#### Step 14.2.3 — Define command translation and output validation
 
 **Targets:** `doc/APP_BUILDER_REQUIREMENTS.md`, `TODO.md`, and
 `django_angular3/management/commands/build_app.py`.
@@ -454,12 +453,12 @@ silently skip their corresponding change. Define post-execution generated-file
 checks, Angular build, and required integration checks. Command execution and
 terminal validation—not an emitted plan—are the build result.
 
-#### Step 4.4 — Add direct-build acceptance coverage
+#### Step 14.2.4 — Add direct-build acceptance coverage
 
 **Targets:** `tests/test_export_schema.py`, new focused `build_app` tests, and
 the scenario fixtures in `doc/TEST_EXAMPLES.md`.
 
-Implement the direct-build cases documented by Task 3.5 using the scenario
+Implement the direct-build cases documented by Step 14.1.2 using the scenario
 fixtures: every $2^3$ configuration × OpenAPI × OpenUI scenario-axis
 combination, plus first-run, mixed create/delete, source-selection, deletion,
 and command-failure cases. Assert all relevant derived ChangeSet domains,

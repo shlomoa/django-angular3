@@ -45,7 +45,7 @@ process for AI automations; those subjects are covered separately in
 [GENERATE_AI_AUTOMATIONS.md]. `SKILL_AUTHORING_PLAN.md` remains the
 skills-specific authoring sub-plan within that broader automation model.
 
-This document also does not define the detailed app-builder command contract,
+This document also does not define the detailed build_app command contract,
 change-set structure, command translation, or scenario-by-scenario test
 examples. Those are covered separately in
 [APP_BUILDER_REQUIREMENTS.md] and [TEST_EXAMPLES.md].
@@ -1162,7 +1162,7 @@ content-boundary and generated-artifact model.
 
 - When the generated app's Django server runs with `DEBUG=True`, any failure
   during app generation (Python exceptions raised by djng management commands
-  or app-builder invocations) must surface through Django's standard error
+  or build_app invocations) must surface through Django's standard error
   reporting mechanism — the same traceback page the developer would see for any
   unhandled Python exception. Generation failures must not be swallowed silently
   or reported only to stdout.

@@ -110,7 +110,7 @@ requirements for the generated app, use `django-admin <command>`.
 
 #### Generated-app development feedback
 
-- With `DEBUG=True`, failures raised by djng management commands or app-builder
+- With `DEBUG=True`, failures raised by djng management commands or build_app
 	runs in the generated app must surface through Django's normal error
 	reporting, not be swallowed or reduced to stdout-only output.
 - The generated app must expose a development-only `/ng/build` page gated by

@@ -54,7 +54,7 @@ for this plan:
   (`doc/GENERATE_AI_AUTOMATIONS.md` §Tool / §Hook / §Plugin Contracts Catalog).
   Most of these contracts carry an *Implementation reference* of "planned" — the
   contract is defined but the backing artifact does not yet exist.
-- **App-builder functional requirements** for traversal, failure handling, and
+- **build_app functional requirements** for traversal, failure handling, and
   terminal verification (`doc/APP_BUILDER_REQUIREMENTS.md` FR-1…FR-9), including
   FR-8 (command and hook failure handling) and FR-9 (terminal verification
   contract).
@@ -79,7 +79,7 @@ stable contracts.
 **Work items**:
 - Promote Tools / Hooks / Plugins recommendations into normative contracts in
   `doc/GENERATE_AI_AUTOMATIONS.md` (done — see its Contracts Catalogs).
-- Add app-builder FRs for failure handling and terminal verification
+- Add build_app FRs for failure handling and terminal verification
   (`doc/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9) (done).
 - Record this phased implementation plan (this document).
 - Record the local-to-global acceptance decision (Phase 7).
@@ -215,7 +215,7 @@ skill content with per-skill acceptance criteria and provider-specific rendering
 
 **Work items**:
 - Author each canonical Skill per `doc/SKILL_AUTHORING_PLAN.md` (plan,
-  implementation + tests, app-builder command integration, verification).
+  implementation + tests, build_app command integration, verification).
 - Keep `skill_creation/skills/` working copies aligned with the authoritative
   `GENERATE_AI_AUTOMATIONS.md` Skills Catalog.
 - Define provider-specific skill renderings and packaging as derived artifacts;

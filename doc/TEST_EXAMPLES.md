@@ -2,7 +2,7 @@
 
 ## Overview
 
-Each example defines a concrete scenario that the app builder command can
+Each example defines a concrete scenario that build_app command can
 execute end-to-end. Together they cover the full range of use cases described
 in `APP_BUILDER_REQUIREMENTS.md`.
 
