@@ -1,0 +1,50 @@
+{
+  "ngOpenApiGen": {
+    "serviceSuffix": "Api",
+    "modelIndex": true
+  },
+  "drfSpectacular": {
+    "settings": {
+      "TITLE": "Example API",
+      "VERSION": "1.0.0",
+      "SERVE_INCLUDE_SCHEMA": false
+    }
+  },
+  "oasdiff": {
+    "format": "json"
+  },
+  "angular": {
+    "workspace": {
+      "packageManager": "pnpm",
+      "style": "css",
+      "routing": true
+    },
+    "application": {
+      "ssr": false,
+      "zoneless": true
+    },
+    "build": {
+      "configuration": "production"
+    }
+  },
+  "tool": {
+    "executables": {
+      "node": "node",
+      "pnpm": "pnpm",
+      "ng": "ng"
+    },
+    "commandAllowlist": [
+      "ng_new",
+      "ng_add",
+      "ng_config",
+      "ng_gen_app",
+      "ng_openapi_gen",
+      "ng_build",
+      "ng_workspace",
+      "ng_workspace_modify",
+      "ng_workspace_delete",
+      "ng_complex_component"
+    ],
+    "ngAddPackage": "angular-django2@0.4.1"
+  }
+}

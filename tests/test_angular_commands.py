@@ -34,6 +34,9 @@ from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
 PROJECT_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.json"
+EXAMPLE_OPENAPI = (
+    ROOT / "tests" / "fixtures" / "artifacts" / "openapi" / "example.openapi.json"
+)
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
 django.setup()
@@ -403,7 +406,7 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertTrue(document["modelIndex"])
         self.assertEqual(
             document["input"],
-            str(ROOT / "spec" / "openapi" / "source" / "example.openapi.json"),
+            str(EXAMPLE_OPENAPI),
         )
         self.assertEqual(
             document["output"],
@@ -415,7 +418,7 @@ class AngularCliCommandTests(unittest.TestCase):
         exit_code, stdout, stderr = self.run_cli("ng_openapi_setup", "--dry-run")
 
         ng = load_angular_settings().ng_executable
-        schema_path = ROOT / "spec" / "openapi" / "source" / "example.openapi.json"
+        schema_path = EXAMPLE_OPENAPI
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)

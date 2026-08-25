@@ -40,8 +40,7 @@ the authoritative description of djng's role in the toolchain.
 - `django_angular3/angular.py`: Angular command resolution and execution helpers.
 - `django_angular3/settings.py`: Django setting defaults and compatibility.
 - `tests/`: unittest test suite.
-- `spec/openapi/`: source OpenAPI examples and generator configs.
-- `spec/openui/`: structured UI definition examples.
+- `tests/fixtures/artifacts/`: reusable OpenAPI, OpenUI, and generator-config fixtures.
 - `doc/REQUIREMENTS.md` and `doc/ARCHITECTURE.md`: target platform context.
 
 ### Django Project vs Django App

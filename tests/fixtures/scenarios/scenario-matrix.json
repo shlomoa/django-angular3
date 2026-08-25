@@ -1,0 +1,13 @@
+[
+  {"id": "02-add-order", "domains": {"config": false, "openapi": true, "openui": false}},
+  {"id": "03-schema-removal", "domains": {"config": false, "openapi": true, "openui": false}},
+  {"id": "04-workspace-style", "domains": {"config": true, "openapi": false, "openui": false}, "staticConfig": {"baseline": "shared/static-config/workspace-style-scss.json", "candidate": "shared/static-config/workspace-style-css.json"}},
+  {"id": "05-openui-source", "domains": {"config": true, "openapi": false, "openui": false}, "exception": "source-selection"},
+  {"id": "06-add-dashboard", "domains": {"config": false, "openapi": false, "openui": true}},
+  {"id": "07-combined-change", "domains": {"config": false, "openapi": true, "openui": true}},
+  {"id": "08-replace-resource", "domains": {"config": false, "openapi": true, "openui": false}, "exception": "replacement"},
+  {"id": "09-no-change", "domains": {"config": false, "openapi": false, "openui": false}},
+  {"id": "10-config-openapi", "domains": {"config": true, "openapi": true, "openui": false}, "staticConfig": {"baseline": "shared/static-config/workspace-style-scss.json", "candidate": "shared/static-config/workspace-style-css.json"}},
+  {"id": "11-config-openui", "domains": {"config": true, "openapi": false, "openui": true}, "staticConfig": {"baseline": "shared/static-config/workspace-style-scss.json", "candidate": "shared/static-config/workspace-style-css.json"}},
+  {"id": "12-all-change-domains", "domains": {"config": true, "openapi": true, "openui": true}, "staticConfig": {"baseline": "shared/static-config/workspace-style-scss.json", "candidate": "shared/static-config/workspace-style-css.json"}}
+]

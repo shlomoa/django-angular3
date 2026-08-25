@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "id": "root",
+  "type": "Application",
+  "children": [
+    {
+      "id": "dashboardPage",
+      "type": "DashboardPage",
+      "children": [
+        {
+          "id": "summaryGrid",
+          "type": "Grid",
+          "children": [
+            {
+              "id": "customerSummary",
+              "type": "section"
+            },
+            {
+              "id": "productSummary",
+              "type": "section"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

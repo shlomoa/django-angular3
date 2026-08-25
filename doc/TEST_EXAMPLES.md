@@ -23,12 +23,14 @@ Each example consists of:
 - The expected executed command sequence
 - The aspect of the solution it demonstrates
 
-Example 1 is bundled in the package under `django_angular3/examples/01_simple_crm/` and
-can be installed locally via `django-angular3 install-tutorial`. Future examples follow the
-`spec/examples/<example-name>/` convention and can be run via:
+Example 1 is bundled in the package under
+`django_angular3/examples/01_simple_crm/` and can be installed locally via
+`django-angular3 install-tutorial`. Examples 2–12 are development-only test
+fixtures under `tests/fixtures/scenarios/<example-name>/`. Once the planner is
+implemented, a scenario can be exercised from its fixture directory via:
 
 ```bash
-cd spec/examples/<example-name>
+cd tests/fixtures/scenarios/<example-name>
 django-admin build_app \
   [--current-config current-project-configuration.json] \
   [--previous-config previous-project-configuration.json] \
@@ -47,6 +49,13 @@ Each current or previous project configuration resolves its own
 current configuration therefore selects the candidate documents and the
 previous configuration selects their baselines; examples do not use a separate
 previous-OpenUI argument or `.previous` OpenUI filename convention.
+
+Examples 4, 10, 11, and 12 use the shared static-configuration snapshots
+selected by `tests/fixtures/scenarios/scenario-matrix.json`. The SCSS snapshot
+is the accepted baseline and the CSS snapshot is the candidate. These
+development fixtures exercise `compare_static_config()` directly; they do not
+define a public static-configuration path argument or the pending `build_app`
+accepted-state persistence mechanism.
 
 ### Provider-adapter verification boundary
 
@@ -351,8 +360,9 @@ The non-CRM input is the OpenUI concrete UI document selected by
 It conforms to `openui.schema.json` and uses the vocabulary in `openui.json`
 from [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). Use the
 [per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
-as the vocabulary reference; the local `spec/openui/app.openui.json` fixture is a
-repository example.
+as the vocabulary reference; the local
+`tests/fixtures/artifacts/openui/example.openui.json` fixture is a repository
+example.
 
 ### Input: configuration
 
@@ -808,9 +818,11 @@ django-admin build_app \
 
 ```
 
-The current and previous project configurations select the corresponding
-OpenAPI and OpenUI inputs for each scenario. Examples 9–12 still require their
-pending scenario fixtures.
+The current project configurations for Examples 2–12 and the current/previous
+fixture pairs needed by Examples 3 and 5 are present under
+`tests/fixtures/scenarios/`. The matrix validation test checks their selected
+inputs, including the shared static-configuration snapshots used by Examples 4
+and 10–12.
 
 ---
 

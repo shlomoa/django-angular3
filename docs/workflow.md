@@ -61,7 +61,7 @@ generated app convention names this document `app.openui.json`. Its grammar and 
 [shlomoa/openui-spec](https://github.com/shlomoa/openui-spec), not by djng;
 consult the [OpenUI per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 when authoring non-CRM pages, forms, and workflows. The repository fixture at
-[`spec/openui/app.openui.json`](https://github.com/shlomoa/django-angular3/blob/main/spec/openui/app.openui.json)
+[`tests/fixtures/artifacts/openui/example.openui.json`](https://github.com/shlomoa/django-angular3/blob/main/tests/fixtures/artifacts/openui/example.openui.json)
 shows the accepted concrete-document structure.
 
 #### Compare OpenUI versions

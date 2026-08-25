@@ -1,0 +1,8 @@
+{
+  "project": { "name": "scenario-schema-removal" },
+  "artifacts": {
+    "openapiSchema": "../shared/schema-removal.openapi.json",
+    "openuiSpecification": "../shared/base.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

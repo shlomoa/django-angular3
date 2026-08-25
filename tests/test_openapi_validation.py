@@ -11,7 +11,9 @@ from django_angular3.validation import validate_openapi_file
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
-EXAMPLE_OPENAPI = ROOT / "spec" / "openapi" / "source" / "example.openapi.json"
+EXAMPLE_OPENAPI = (
+    ROOT / "tests" / "fixtures" / "artifacts" / "openapi" / "example.openapi.json"
+)
 
 
 class ValidateOpenapiFileTests(unittest.TestCase):

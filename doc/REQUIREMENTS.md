@@ -498,7 +498,7 @@ Their ownership is:
 | Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from it. |
 | Tool configurations | `ng-openapi-gen` | `ngOpenApiGen` clause in `django-angular3.json` | `djng` | Global `ng-openapi-gen` settings, including `serviceSuffix` and `modelIndex`. |
 | Tool configurations | `ng-openapi-gen` | `ng-openapi-gen.json` in the project Angular workspace | `djng` | Derived per-run tool-configuration file. It combines global settings with command run-time `input` and `output` parameters. |
-| Tool configurations | `ng-openapi-gen` | `spec/openapi/ng-openapi-gen/ng-openapi-gen.json` | This repository | Validation-only fixture; it is not production configuration and is not released. |
+| Tool configurations | `ng-openapi-gen` | `tests/fixtures/artifacts/ng-openapi-gen/ng-openapi-gen.json` | This repository | Validation-only fixture; it is not production configuration and is not released. |
 | Tool configurations | `drf-spectacular` | `drfSpectacular.settings` clause in `django-angular3.json` | `djng` | Global `drf-spectacular` settings from which `SPECTACULAR_SETTINGS` is derived for schema export. |
 | Tool configurations | `oasdiff` | `oasdiff` clause in `django-angular3.json` | `djng` | Global output settings from which `oasdiff.settings` is derived. The executable and current/previous schema paths are run-time invocation parameters. |
 | OAS schema | — | OpenAPI document | `djng` package user | Defines CRM-facing contract content consumed during a command run. |
@@ -775,8 +775,8 @@ For example, a derived file for a project with an OAS schema at
 }
 ```
 
-`spec/openapi/ng-openapi-gen/ng-openapi-gen.json` is a validation-only fixture,
-not a released or production configuration source.
+`tests/fixtures/artifacts/ng-openapi-gen/ng-openapi-gen.json` is a
+validation-only fixture, not a released or production configuration source.
 
 #### 4.2.6. Planned `drfSpectacular.settings` contents
 `drfSpectacular.settings` is derived from django-angular3.json and used by `djng` for schema export. 
@@ -1427,10 +1427,10 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 ### B. Examples
 
 - [TEST_EXAMPLES.md] — scenario definitions and expected outputs.
-- [spec/examples/01_simple_crm/] — runnable example workspace with schema,
+- [django_angular3/examples/01_simple_crm/] — runnable example workspace with schema,
   UI, and build artifacts.
-- [spec/openapi/source/example.openapi.json] — example OpenAPI source input.
-- [spec/openui/app.openui.json] — example non-CRM UI input.
+- [tests/fixtures/artifacts/openapi/example.openapi.json] — example OpenAPI source input.
+- [tests/fixtures/artifacts/openui/example.openui.json] — example non-CRM UI input.
 
 ### C. References
 
@@ -1442,9 +1442,9 @@ Labels used in this document are defined in the link-definitions block at the en
 [GENERATE_AI_AUTOMATIONS.md]: GENERATE_AI_AUTOMATIONS.md
 [SKILL_AUTHORING_PLAN.md]: SKILL_AUTHORING_PLAN.md
 [TEST_EXAMPLES.md]: TEST_EXAMPLES.md
-[spec/examples/01_simple_crm/]: ../spec/examples/01_simple_crm/
-[spec/openapi/source/example.openapi.json]: ../spec/openapi/source/example.openapi.json
-[spec/openui/app.openui.json]: ../spec/openui/app.openui.json
+[django_angular3/examples/01_simple_crm/]: ../django_angular3/examples/01_simple_crm/
+[tests/fixtures/artifacts/openapi/example.openapi.json]: ../tests/fixtures/artifacts/openapi/example.openapi.json
+[tests/fixtures/artifacts/openui/example.openui.json]: ../tests/fixtures/artifacts/openui/example.openui.json
 [Django]: https://www.djangoproject.com/
 [DRF - Django REST Framework]: https://www.django-rest-framework.org/
 [Angular]: https://angular.dev/

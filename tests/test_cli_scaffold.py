@@ -2,7 +2,9 @@ import json
 import tempfile
 import tomllib
 import unittest
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import cast
 from unittest.mock import patch
 
 from django_angular3.cli import _run_install_tutorial
@@ -12,6 +14,7 @@ from django_angular3.config import (
     load_project_config,
     project_config_path,
 )
+from django_angular3.config_changes import compare_static_config
 from django_angular3.documents import load_document
 from django_angular3.validation import (
     validate_openapi_document,
@@ -22,6 +25,7 @@ from tests.openapi_fixtures import valid_openapi_document
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
+ARTIFACT_FIXTURES = ROOT / "tests" / "fixtures" / "artifacts"
 TEST_PROJECT_CONFIG_FILENAME = "django-angular3-project.json"
 TUTORIAL_PROJECT_CONFIG_FILENAME = "django-angular3-simple_crm.json"
 
@@ -31,6 +35,7 @@ def _example_project_config_path(example_directory: Path) -> Path:
         path
         for path in example_directory.glob("django-angular3-*.json")
         if path.name != "django-angular3.json"
+        and not path.name.endswith(".previous.json")
     ]
     if len(config_paths) != 1:
         raise AssertionError(
@@ -51,13 +56,11 @@ class ScaffoldTests(unittest.TestCase):
                 )
 
     def test_example_openapi_document_is_valid(self) -> None:
-        document = load_document(
-            ROOT / "spec" / "openapi" / "source" / "example.openapi.json"
-        )
+        document = load_document(ARTIFACT_FIXTURES / "openapi" / "example.openapi.json")
         self.assertEqual(validate_openapi_document(document), [])
 
     def test_example_openui_document_is_valid(self) -> None:
-        document = load_document(ROOT / "spec" / "openui" / "app.openui.json")
+        document = load_document(ARTIFACT_FIXTURES / "openui" / "example.openui.json")
         self.assertEqual(validate_openui_document(document), [])
 
     def test_tutorial_openui_document_is_valid(self) -> None:
@@ -217,7 +220,7 @@ class ScaffoldTests(unittest.TestCase):
 
         self.assertEqual(errors, ["unsupported object type: UnknownType"])
 
-    def test_consumer_project_template_uses_canonical_schema(self) -> None:
+    def test_consumer_project_template_uses_generated_app_input_paths(self) -> None:
         template_path = (
             ROOT
             / "django_angular3"
@@ -272,9 +275,9 @@ class ScaffoldTests(unittest.TestCase):
                 load_project_config(config_path)
 
     def test_scenario_matrix_covers_all_change_domains_with_valid_inputs(self) -> None:
-        examples_root = ROOT / "spec" / "examples"
+        scenarios_root = ROOT / "tests" / "fixtures" / "scenarios"
         matrix = json.loads(
-            (examples_root / "scenario-matrix.json").read_text(encoding="utf-8")
+            (scenarios_root / "scenario-matrix.json").read_text(encoding="utf-8")
         )
 
         expected_domain_combinations = {
@@ -303,22 +306,142 @@ class ScaffoldTests(unittest.TestCase):
         )
         for entry in matrix:
             with self.subTest(scenario=entry["id"]):
-                config_path = _example_project_config_path(examples_root / entry["id"])
+                config_path = _example_project_config_path(scenarios_root / entry["id"])
                 self.assertTrue(config_path.is_file())
                 self.assertEqual(
                     validate_project_config(load_project_config(config_path)), []
                 )
 
-    def test_validation_only_generator_fixture_is_not_packaged(self) -> None:
-        fixture_path = (
-            ROOT / "spec" / "openapi" / "ng-openapi-gen" / "ng-openapi-gen.json"
+    def test_schema_removal_scenario_removes_customer_email(self) -> None:
+        scenario_root = ROOT / "tests" / "fixtures" / "scenarios" / "03-schema-removal"
+        candidate = load_project_config(
+            scenario_root / "django-angular3-scenario-schema-removal.json"
         )
+        baseline = load_project_config(
+            scenario_root / "django-angular3-scenario-schema-removal.previous.json"
+        )
+
+        self.assertEqual(validate_project_config(candidate), [])
+        self.assertEqual(validate_project_config(baseline), [])
+        candidate_customer = load_document(candidate.openapi_schema)["components"][
+            "schemas"
+        ]["Customer"]
+        baseline_customer = load_document(baseline.openapi_schema)["components"][
+            "schemas"
+        ]["Customer"]
+        self.assertIn("email", baseline_customer["properties"])
+        self.assertIn("email", baseline_customer["required"])
+        self.assertNotIn("email", candidate_customer["properties"])
+        self.assertNotIn("email", candidate_customer["required"])
+
+    def test_openui_source_scenario_selects_identical_documents(self) -> None:
+        scenario_root = ROOT / "tests" / "fixtures" / "scenarios" / "05-openui-source"
+        candidate = load_project_config(
+            scenario_root / "django-angular3-scenario-openui-source.json"
+        )
+        baseline = load_project_config(
+            scenario_root / "django-angular3-scenario-openui-source.previous.json"
+        )
+
+        self.assertNotEqual(
+            candidate.openui_specification,
+            baseline.openui_specification,
+        )
+        self.assertEqual(
+            load_document(candidate.openui_specification),
+            load_document(baseline.openui_specification),
+        )
+
+    def test_dashboard_scenario_contains_all_documented_nodes(self) -> None:
+        document = load_document(
+            ROOT
+            / "tests"
+            / "fixtures"
+            / "scenarios"
+            / "shared"
+            / "dashboard.openui.json"
+        )
+
+        def node_ids(node: object) -> set[str]:
+            if not isinstance(node, Mapping):
+                return set()
+            mapping = cast(Mapping[str, object], node)
+            identifier = mapping.get("id")
+            identifiers: set[str] = (
+                {identifier} if isinstance(identifier, str) else set()
+            )
+            children = mapping.get("children", ())
+            if not isinstance(children, Sequence) or isinstance(children, str):
+                return identifiers
+            for child in cast(Sequence[object], children):
+                identifiers.update(node_ids(child))
+            return identifiers
+
+        self.assertEqual(validate_openui_document(document), [])
+        self.assertTrue(
+            {"dashboardPage", "customerSummary", "productSummary"} <= node_ids(document)
+        )
+
+    def test_static_config_scenarios_change_only_workspace_style(self) -> None:
+        scenarios_root = ROOT / "tests" / "fixtures" / "scenarios"
+        matrix = json.loads(
+            (scenarios_root / "scenario-matrix.json").read_text(encoding="utf-8")
+        )
+        static_scenarios = {
+            entry["id"]: entry["staticConfig"]
+            for entry in matrix
+            if "staticConfig" in entry
+        }
+
+        self.assertEqual(
+            set(static_scenarios),
+            {
+                "04-workspace-style",
+                "10-config-openapi",
+                "11-config-openui",
+                "12-all-change-domains",
+            },
+        )
+        for scenario, paths in static_scenarios.items():
+            with self.subTest(scenario=scenario):
+                baseline = load_document(scenarios_root / paths["baseline"])
+                candidate = load_document(scenarios_root / paths["candidate"])
+                changes = compare_static_config(
+                    baseline,
+                    candidate,
+                    source=str(scenarios_root / paths["candidate"]),
+                )
+
+                self.assertEqual(len(changes), 1)
+                self.assertEqual(changes[0].path, "/angular/workspace/style")
+                self.assertEqual((changes[0].before, changes[0].after), ("scss", "css"))
+
+    def test_validation_only_generator_fixture_is_not_packaged(self) -> None:
+        fixture_path = ARTIFACT_FIXTURES / "ng-openapi-gen" / "ng-openapi-gen.json"
         self.assertTrue(fixture_path.is_file())
+        document = json.loads(fixture_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            document,
+            {
+                "$schema": (
+                    "https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/"
+                    "master/ng-openapi-gen-schema.json"
+                ),
+                "input": "../openapi/example.openapi.json",
+                "output": "../../../../tmparea/angular/generated/ng-openapi-gen",
+                "serviceSuffix": "Api",
+                "modelIndex": True,
+            },
+        )
+        self.assertEqual(
+            (fixture_path.parent / document["input"]).resolve(),
+            ARTIFACT_FIXTURES / "openapi" / "example.openapi.json",
+        )
 
         manifest_text = (ROOT / "MANIFEST.in").read_text(encoding="utf-8")
         package_data_text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-        self.assertNotIn("spec/openapi", manifest_text)
-        self.assertNotIn('"spec/**/*"', package_data_text)
+        self.assertNotIn("tests/fixtures", manifest_text)
+        self.assertNotIn('"tests/**/*"', package_data_text)
 
     def test_pyproject_declares_runtime_dependencies(self) -> None:
         pyproject_path = ROOT / "pyproject.toml"

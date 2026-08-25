@@ -218,9 +218,9 @@ integration checks, and test-based verification.
 
 All twelve scenarios in `doc/TEST_EXAMPLES.md` now have input fixtures:
 Example 1 is bundled at `django_angular3/examples/01_simple_crm/`, and Examples
-2–12 are under `spec/examples/`. Fixture presence and source validation are
-covered by `tests/test_cli_scaffold.py`; direct-build acceptance coverage remains
-deferred until `build_app` is implemented.
+2–12 are under `tests/fixtures/scenarios/`. Fixture presence and source
+validation are covered by `tests/test_cli_scaffold.py`; direct-build acceptance
+coverage remains deferred until `build_app` is implemented.
 
 ### 8.2 E2E Verification Specification Missing
 
@@ -380,14 +380,14 @@ OpenUI source before change detection.
 
 #### Step 14.1.2 — Three-domain scenario fixtures and acceptance coverage
 
-**Status: Partial.** `spec/examples/` provides valid scenario configurations,
-shared source artifacts, and a manifest covering all eight scenario-axis
-combinations plus source-selection and mixed create/delete cases. Direct
-ChangeSet, command-ordering, and dry-run non-modification assertions remain
-deferred until `build_app` is implemented.
+**Status: Partial.** `tests/fixtures/scenarios/` provides valid scenario
+configurations, shared source artifacts, and a manifest covering all eight
+scenario-axis combinations plus source-selection and mixed create/delete
+cases. Direct ChangeSet, command-ordering, and dry-run non-modification
+assertions remain deferred until `build_app` is implemented.
 
 **Targets:** `tests/`, `tests/test_export_schema.py`, and
-`spec/examples/`.
+`tests/fixtures/scenarios/`.
 
 Materialize and test the full $2^3$ matrix of incremental configuration,
 OpenAPI, and OpenUI scenario axes documented in `TEST_EXAMPLES.md`. Also retain

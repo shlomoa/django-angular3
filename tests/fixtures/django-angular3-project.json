@@ -3,8 +3,8 @@
     "name": "django-angular3-test"
   },
   "artifacts": {
-    "openapiSchema": "../../spec/openapi/source/example.openapi.json",
-    "openuiSpecification": "../../spec/openui/app.openui.json",
+    "openapiSchema": "artifacts/openapi/example.openapi.json",
+    "openuiSpecification": "artifacts/openui/example.openui.json",
     "angularWorkspace": "../../tmparea/angular"
   }
 }

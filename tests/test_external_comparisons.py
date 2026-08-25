@@ -84,7 +84,14 @@ class OpenUiComparisonTranslationTests(unittest.TestCase):
         self,
     ) -> None:
         reference = json.loads(
-            (ROOT / "spec" / "openui" / "app.openui.json").read_text(encoding="utf-8")
+            (
+                ROOT
+                / "tests"
+                / "fixtures"
+                / "artifacts"
+                / "openui"
+                / "example.openui.json"
+            ).read_text(encoding="utf-8")
         )
         candidate = json.loads(json.dumps(reference))
         candidate["children"].reverse()
