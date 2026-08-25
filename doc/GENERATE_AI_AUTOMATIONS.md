@@ -130,6 +130,37 @@ SKILLS, TOOLS, HOOKS, and PLUGINS remain stable as the system grows.
 
 This section is the authoritative primitive-selection policy.
 
+#### Contract identity and relationship cardinality
+
+This subsection is the single source of truth for relationships between
+automation contracts, their consumers, their implementations, and
+provider-specific representations.
+
+Each named SKILL, TOOL, HOOK, or PLUGIN has exactly one canonical normative
+contract in its matching catalog. A second contract for the same primitive
+identity would be a competing source of truth. This uniqueness applies to the
+primitive's definition, not to its use or packaging:
+
+| Relationship | Cardinality and meaning |
+|---|---|
+| Primitive identity → canonical contract | Exactly one. The matching catalog owns the primitive's normative definition. |
+| Commands ↔ primitive contracts | Many-to-many. A command may compose several contracts, and a contract may be selected by several commands or invocation contexts. |
+| HOOK contracts ↔ TOOL contracts | Many-to-many within each Hook's `Allowed wrapped tools`. A Hook may wrap several Tools, and a Tool may participate in several lifecycle boundaries. |
+| PLUGIN contracts ↔ primitive contracts | Many-to-many bundling or exposure, subject to the Plugin catalog's ownership and duplicate-Hook rules. A Plugin does not invoke a Tool merely by bundling it. |
+| Canonical SKILL or PLUGIN contract → provider rendering | One-to-many. Provider-native files and packages are derived representations that preserve the canonical contract. |
+| TOOL or HOOK contract → provider binding | One-to-many. Provider adapters may register or bind the same provider-neutral contract through different native APIs without redefining its semantics. |
+
+Use **implementation** for the concrete deterministic behavior backing a TOOL
+or HOOK. Use **binding** or **registration** for exposing TOOL and HOOK
+contracts through a provider adapter. Use **derived rendering** for
+provider-specific SKILL and PLUGIN artifacts. A provider binding or rendering
+is neither another canonical contract nor an independent implementation of the
+provider-neutral semantics.
+
+Catalog entries may therefore be reused and composed freely through the
+relationships above. Reuse MUST reference the canonical identity; consumers
+MUST NOT copy, redefine, or fork its contract inline.
+
 #### Decision axes
 
 Classify the candidate capability along the following four axes. The answers
@@ -960,7 +991,7 @@ registered by the applicable provider adapter.
 
 #### Session lifecycle
 
-##### 5. `session-stop` — archiving and audit cleanup
+##### 4. `session-stop` — archiving and audit cleanup
 
 **Name**: `session-stop`
 

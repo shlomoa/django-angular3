@@ -288,7 +288,7 @@ terminal-validation authority out of `build_app`.
       separate prerequisites. Adapter orchestration must expose unsupported
       selected work explicitly instead of silently omitting it.
 
-#### 2.5. **Add provider implementations behind optional dependencies.**
+#### 2.5. **Add provider-adapter implementations behind optional dependencies.**
    - Keep the base `django-angular3` install provider-neutral. Move
       `claude-agent-sdk` from the required dependency list to a named optional
       extra only when its existing consumers have been migrated to the Claude

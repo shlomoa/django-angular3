@@ -67,8 +67,10 @@ Generated Angular outputs derived from the OpenAPI contract and related tooling,
 A portability boundary that connects an agent executor to a compatible AI
 runtime. It isolates provider-specific session, tool-dispatch, lifecycle, and
 cancellation concerns from the architecture's construction and acceptance
-model. Provider implementations and their runtime contracts are defined in
-`doc/GENERATE_AI_AUTOMATIONS.md`.
+model. Provider bindings, derived renderings, and their relationship to the
+canonical automation contracts are defined in
+`doc/GENERATE_AI_AUTOMATIONS.md` §Contract identity and relationship
+cardinality.
 
 #### 2.12.1 Provider-adapter capability matrix
 
@@ -227,6 +229,9 @@ the AI-guided session API.
 
 The complete mapping of all four layers for every construction concern is
 maintained in `doc/GENERATE_AI_AUTOMATIONS.md` §Automation Naming Crosswalk.
+Contract uniqueness, composition, bundling, and provider-binding cardinalities
+are defined once in that document's §Contract identity and relationship
+cardinality.
 
 ---
 

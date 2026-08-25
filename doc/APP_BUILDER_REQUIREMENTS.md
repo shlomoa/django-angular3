@@ -137,7 +137,10 @@ previous inputs; commands not selected by either change set are omitted.
 
 The selected commands invoke the following documented automation contracts.
 Tool and hook names remain distinct from CLI wrapper command names, as defined
-by the automation naming layers in `ARCHITECTURE.md` §2.23.
+by the automation naming layers in `ARCHITECTURE.md` §2.23. Contract identity
+and command-composition cardinalities are defined in
+`GENERATE_AI_AUTOMATIONS.md` §Contract identity and relationship cardinality;
+this document selects and composes those contracts but does not redefine them.
 
 | Construction concern | Primitive | Tool contract | Hook contract | Direct-build role |
 |---|---|---|---|---|

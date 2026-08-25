@@ -50,10 +50,13 @@ for this plan:
   `ng_workspace_modify`
   (`django_angular3/management/commands/`).
 - **oasdiff acquisition**: `django_angular3/tools.py:ensure_oasdiff()`.
-- **Normative contracts** for every Tool, Hook, and Plugin
+- **Normative contract catalogs** for Tools, Hooks, and Plugins
   (`doc/GENERATE_AI_AUTOMATIONS.md` §Tool / §Hook / §Plugin Contracts Catalog).
-  Most of these contracts carry an *Implementation reference* of "planned" — the
-  contract is defined but the backing artifact does not yet exist.
+  The catalogs define the primitives scheduled in Phases 1, 2, and 8; most
+  carry an *Implementation reference* of "planned" because the backing artifact
+  does not yet exist. The additional OpenUI wrapper contracts identified in
+  `APP_BUILDER_REQUIREMENTS.md` remain undefined and must be added before the
+  corresponding operations can be claimed as supported.
 - **build_app functional requirements** for traversal, failure handling, and
   terminal verification (`doc/APP_BUILDER_REQUIREMENTS.md` FR-1…FR-9), including
   FR-8 (command and hook failure handling) and FR-9 (terminal verification
@@ -83,9 +86,15 @@ stable contracts.
   (`doc/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9) (done).
 - Record this phased implementation plan (this document).
 - Record the local-to-global acceptance decision (Phase 7).
+- Define every additional Tool contract that `APP_BUILDER_REQUIREMENTS.md`
+  identifies as planned before claiming Phase 0 contract coverage (open).
 
 **Acceptance criteria**:
-- Every planned Tool, Hook, and Plugin maps to exactly one normative contract.
+- Every planned Tool, Hook, and Plugin has exactly one canonical normative
+  contract, as defined by `doc/GENERATE_AI_AUTOMATIONS.md`
+  §Contract identity and relationship cardinality. Multiple commands, Hooks,
+  Plugins, and provider bindings may reference or compose that contract; they
+  must not redefine it.
 - This plan exists and references the contracts and FRs by name.
 
 **Test / verification coverage**: documentation review only — no code behaviour
