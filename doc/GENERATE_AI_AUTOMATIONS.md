@@ -30,7 +30,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §Plugins |
 | **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
 | **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
-| **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `ai_knowledge_inegration.md` |
+| **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `ai_knowledge_integration.md` |
 
 ---
 
