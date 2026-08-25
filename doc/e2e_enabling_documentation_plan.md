@@ -1,4 +1,3 @@
-
 # End-to-End Enabling Plan: simple_crm fully functional app
 
 Structured by phase. Steps marked ✓ are functional today. Each step lists

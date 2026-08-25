@@ -238,7 +238,7 @@ def build_ng_complex_component_invocations(
     """Build the ngdj advanced complex-component schematic invocation."""
     _validate_complex_component_options(name, target_path, features, mode, confirm)
     feature_names = _normalize_complex_component_features(features)
-    argv = [
+    argv: list[str] = [
         settings.ng_executable,
         "generate",
         "angular-django2:complex-component",
@@ -255,6 +255,203 @@ def build_ng_complex_component_invocations(
     return [
         AngularInvocation(
             command_name="ng_complex_component",
+            argv=tuple(argv),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
+def build_ng_page_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    name: str,
+    target_path: str,
+    project: str | None = None,
+    route_path: str | None = None,
+    access: str = "public",
+    auth_guard: str = "authGuard",
+    navigation_label: str | None = None,
+    navigation_icon: str | None = None,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Build the ngdj page schematic invocation."""
+    _validate_kebab_case_name(name, "Page")
+    _validate_relative_path(target_path, "Page target path")
+    if access not in {"public", "protected"}:
+        raise AngularCommandError("Page access must be public or protected.")
+    if route_path and not _PAGE_ROUTE_PATH.fullmatch(route_path):
+        raise AngularCommandError("Page route path must contain URL-safe segments.")
+    _validate_identifier(auth_guard, "Page auth guard")
+    if navigation_label is not None and not navigation_label:
+        raise AngularCommandError("Page navigation label must not be empty.")
+    if navigation_icon and not _MATERIAL_ICON.fullmatch(navigation_icon):
+        raise AngularCommandError(
+            "Page navigation icon must contain lowercase letters, digits, "
+            "or underscores."
+        )
+
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:page",
+        name,
+        f"--path={target_path}",
+        f"--access={access}",
+    ]
+    if project:
+        argv.append(f"--project={project}")
+    if route_path:
+        argv.append(f"--routePath={route_path}")
+    if access == "protected":
+        argv.append(f"--authGuard={auth_guard}")
+    if navigation_label:
+        argv.append(f"--navigationLabel={navigation_label}")
+    if navigation_icon:
+        argv.append(f"--navigationIcon={navigation_icon}")
+
+    return [
+        AngularInvocation(
+            command_name="ng_page",
+            argv=tuple(argv),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
+def build_ng_component_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    name: str,
+    target_path: str | None = None,
+    project: str | None = None,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Build the ngdj component schematic invocation."""
+    if not name.strip():
+        raise AngularCommandError("Component name must not be empty.")
+    if target_path is not None:
+        _validate_relative_path(target_path, "Component target path")
+
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:component",
+        name,
+    ]
+    if target_path:
+        argv.append(f"--path={target_path}")
+    if project:
+        argv.append(f"--project={project}")
+
+    return [
+        AngularInvocation(
+            command_name="ng_component",
+            argv=tuple(argv),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
+def build_ng_reactive_form_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    name: str,
+    definition: str,
+    target_path: str | None = None,
+    project: str | None = None,
+    primitives_path: str | None = None,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Build the ngdj reactive-form schematic invocation."""
+    _validate_kebab_case_name(name, "Reactive form")
+    _validate_relative_path(definition, "Reactive form definition")
+    if target_path is not None:
+        _validate_relative_path(target_path, "Reactive form target path")
+    if primitives_path is not None:
+        _validate_relative_path(primitives_path, "Reactive form primitives path")
+
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:reactive-form",
+        name,
+        f"--definition={definition}",
+    ]
+    if target_path:
+        argv.append(f"--path={target_path}")
+    if project:
+        argv.append(f"--project={project}")
+    if primitives_path:
+        argv.append(f"--primitivesPath={primitives_path}")
+
+    return [
+        AngularInvocation(
+            command_name="ng_reactive_form",
+            argv=tuple(argv),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
+def build_ng_site_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    source: str | None = None,
+    defaults: bool = False,
+    project: str | None = None,
+    operation: str = "create",
+    confirm_delete: bool = False,
+    auth_guard: str = "authGuard",
+    csrf_cookie_name: str = "csrftoken",
+    csrf_header_name: str = "X-CSRFToken",
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Build the ngdj site schematic invocation."""
+    if operation not in {"create", "modify", "delete"}:
+        raise AngularCommandError("Site operation must be create, modify, or delete.")
+    if operation == "delete" and (source or defaults):
+        raise AngularCommandError(
+            "Site deletion uses the ownership manifest; omit --source and --defaults."
+        )
+    if operation != "delete" and bool(source) == defaults:
+        raise AngularCommandError(
+            "Site requires exactly one of --source or --defaults."
+        )
+    if source:
+        _validate_relative_path(source, "Site source")
+    if operation == "delete" and not confirm_delete:
+        raise AngularCommandError("Site deletion requires --confirm-delete.")
+    _validate_identifier(auth_guard, "Site auth guard")
+    if not csrf_cookie_name:
+        raise AngularCommandError("Site CSRF cookie name must not be empty.")
+    if not csrf_header_name:
+        raise AngularCommandError("Site CSRF header name must not be empty.")
+
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:site",
+        f"--operation={operation}",
+        f"--authGuard={auth_guard}",
+        f"--csrfCookieName={csrf_cookie_name}",
+        f"--csrfHeaderName={csrf_header_name}",
+    ]
+    if source:
+        argv.append(f"--source={source}")
+    elif defaults:
+        argv.append("--defaults=true")
+    if project:
+        argv.append(f"--project={project}")
+    if operation == "delete":
+        argv.append("--confirmDelete=true")
+
+    return [
+        AngularInvocation(
+            command_name="ng_site",
             argv=tuple(argv),
             cwd=config.angular_workspace,
         )
@@ -292,7 +489,7 @@ def build_ng_openapi_setup_invocations(
 ) -> list[AngularInvocation]:
     """Bootstrap ng-openapi-gen and Django integration helpers via the ngdj
     ``openapi-setup`` schematic."""
-    argv = [
+    argv: list[str] = [
         settings.ng_executable,
         "generate",
         "angular-django2:openapi-setup",
@@ -356,7 +553,7 @@ def build_ng_material_setup_invocations(
     defaults (``theme=indigo-pink``, ``typography=true``, ``animations=true``).
     """
     target_project = project or config.project_name
-    argv = [
+    argv: list[str] = [
         settings.ng_executable,
         "generate",
         "angular-django2:material-setup",
@@ -490,7 +687,11 @@ _COMMAND_BUILDERS: dict[str, AngularInvocationBuilder] = {
     "ng_config": build_ng_config_invocations,
     "ng_build": build_ng_build_invocations,
     "ng_gen_app": build_ng_gen_app_invocations,
+    "ng_page": build_ng_page_invocations,
+    "ng_component": build_ng_component_invocations,
     "ng_complex_component": build_ng_complex_component_invocations,
+    "ng_reactive_form": build_ng_reactive_form_invocations,
+    "ng_site": build_ng_site_invocations,
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
     "ng_openapi_setup": build_ng_openapi_setup_invocations,
     "ng_data_service": build_ng_data_service_invocations,
@@ -509,6 +710,27 @@ _COMPLEX_COMPONENT_FEATURES = frozenset(
     {"mixins", "nested", "projection", "cdk-overlay"}
 )
 _COMPLEX_COMPONENT_NAME = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
+_PAGE_ROUTE_PATH = re.compile(r"^[a-z0-9]+(?:[-/][a-z0-9]+)*$")
+_TYPESCRIPT_IDENTIFIER = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$]*$")
+_MATERIAL_ICON = re.compile(r"^[a-z0-9_]+$")
+
+
+def _validate_kebab_case_name(name: str, label: str) -> None:
+    if not _COMPLEX_COMPONENT_NAME.fullmatch(name):
+        raise AngularCommandError(f"{label} name must be kebab-case.")
+
+
+def _validate_relative_path(value: str, label: str) -> None:
+    path = Path(value)
+    if path.is_absolute() or ".." in path.parts or not value.strip():
+        raise AngularCommandError(
+            f"{label} must be a non-empty relative path within the Angular workspace."
+        )
+
+
+def _validate_identifier(value: str, label: str) -> None:
+    if not _TYPESCRIPT_IDENTIFIER.fullmatch(value):
+        raise AngularCommandError(f"{label} must be a valid TypeScript identifier.")
 
 
 def _normalize_complex_component_features(

@@ -86,6 +86,10 @@ it resolves commands without executing Angular tooling:
 ./manage.py ng_config --dry-run
 ./manage.py ng_add --dry-run
 ./manage.py ng_gen_app --dry-run
+./manage.py ng_page --name orders --target-path src/app/features/orders --dry-run
+./manage.py ng_component --name order-card --dry-run
+./manage.py ng_reactive_form --name contact --definition forms/contact.json --dry-run
+./manage.py ng_site --defaults --dry-run
 ./manage.py ng_openapi_gen --dry-run
 ./manage.py ng_build --dry-run
 ```
@@ -96,6 +100,7 @@ it resolves commands without executing Angular tooling:
 - `ng_add` installs and registers the configured Angular schematic package
 - `ng_gen_app` generates an Angular application inside the configured workspace via the `angular-django2:material-app` schematic, forwarding `--ssr`, `--zoneless`, and `--defaults` to align with the Angular CLI `ng new` defaults
 - `ng_material_setup` configures Angular Material in an existing project via the `angular-django2:material-setup` schematic, forwarding optional `--theme`, `--typography`, and `--animations`
+- `ng_page`, `ng_component`, `ng_reactive_form`, and `ng_site` wrap the matching `angular-django2` schematics without changing their deterministic behavior
 - `ng_openapi_gen` runs a locally installed `ng-openapi-gen` for the configured OpenAPI source
 
 `ng_openapi_gen` resolves to `pnpm exec`, so it only uses dependencies that

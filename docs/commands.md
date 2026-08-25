@@ -52,7 +52,11 @@ Invoked as `django-angular3 <command> [args]`.
 | `ng_add` | Run `ng add` for an Angular package. Accepts `--package <name>`. |
 | `ng_gen_app` | Generate an Angular application inside the configured workspace via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from the derived tool configuration. |
 | `ng_material_setup` | Configure Angular Material in an existing project via the `angular-django2:material-setup` schematic. Accepts `--project`, `--theme`, `--typography`/`--no-typography`, and `--animations`/`--no-animations`; unset options fall back to schematic defaults. |
+| `ng_page` | Generate a routed page via `angular-django2:page`. Requires `--name` and `--target-path`; accepts `--project`, `--route-path`, `--access`, `--auth-guard`, `--navigation-label`, and `--navigation-icon`. |
+| `ng_component` | Generate a standalone OnPush component via `angular-django2:component`. Requires `--name`; accepts `--target-path` and `--project`. |
 | `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
+| `ng_reactive_form` | Generate a typed reactive form via `angular-django2:reactive-form`. Requires `--name` and `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
+| `ng_site` | Assemble or maintain a site via `angular-django2:site`. Create/modify requires exactly one of `--source` or `--defaults`; delete uses the ownership manifest and requires `--confirm-delete`. Accepts `--project`, `--operation`, `--auth-guard`, and CSRF-name options. |
 | `ng_openapi_gen` | Run a locally installed `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
 | `ng_openapi_setup` | Bootstrap `ng-openapi-gen` and Django integration helpers via the `angular-django2:openapi-setup` schematic. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
 | `ng_data_service` | Generate a typed data-service wrapper for a resource via the `angular-django2:data-service` schematic. Requires `--resource`; accepts `--project`. |
@@ -80,7 +84,11 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | `ng_add` | Run `ng add` for an Angular package. Accepts `--package <name>`; defaults to the derived `ngAddPackage` setting. |
 | `ng_gen_app` | Generate an Angular application via the `angular-django2:material-app` schematic. Accepts `--app-name <name>`; SSR and zoneless behavior come from derived tool settings. |
 | `ng_material_setup` | Configure Angular Material in an existing project via the `angular-django2:material-setup` schematic. Accepts `--project`, `--theme`, `--typography`/`--no-typography`, and `--animations`/`--no-animations`; unset options fall back to schematic defaults. |
+| `ng_page` | Generate a routed page via `angular-django2:page`. Requires `--name` and `--target-path`; accepts `--project`, `--route-path`, `--access`, `--auth-guard`, `--navigation-label`, and `--navigation-icon`. |
+| `ng_component` | Generate a standalone OnPush component via `angular-django2:component`. Requires `--name`; accepts `--target-path` and `--project`. |
 | `ng_complex_component` | Generate, update, or delete an advanced Angular Material component via `angular-django2:complex-component`. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and `--confirm` (required for delete). |
+| `ng_reactive_form` | Generate a typed reactive form via `angular-django2:reactive-form`. Requires `--name` and `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
+| `ng_site` | Assemble or maintain a site via `angular-django2:site`. Create/modify requires exactly one of `--source` or `--defaults`; delete uses the ownership manifest and requires `--confirm-delete`. Accepts `--project`, `--operation`, `--auth-guard`, and CSRF-name options. |
 | `ng_openapi_gen` | Run `ng-openapi-gen` via `pnpm exec` for the discovered OAS artifact. |
 | `ng_openapi_setup` | Bootstrap `ng-openapi-gen` and Django integration helpers via the `angular-django2:openapi-setup` schematic. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
 | `ng_data_service` | Generate a typed data-service wrapper for a resource via the `angular-django2:data-service` schematic. Requires `--resource`; accepts `--project`. |
@@ -107,7 +115,11 @@ Angular subprocess call list without invoking Angular tooling.
 | `ng_add` | ✓ | ✓ |
 | `ng_gen_app` | ✓ | ✓ |
 | `ng_material_setup` | ✓ | ✓ |
+| `ng_page` | ✓ | ✓ |
+| `ng_component` | ✓ | ✓ |
 | `ng_complex_component` | ✓ | ✓ |
+| `ng_reactive_form` | ✓ | ✓ |
+| `ng_site` | ✓ | ✓ |
 | `ng_openapi_gen` | ✓ | ✓ |
 | `ng_build` | ✓ | ✓ |
 | `install-tutorial` | ✓ | — |

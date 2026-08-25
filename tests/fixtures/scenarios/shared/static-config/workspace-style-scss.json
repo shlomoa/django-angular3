@@ -43,7 +43,11 @@
       "ng_workspace",
       "ng_workspace_modify",
       "ng_workspace_delete",
-      "ng_complex_component"
+      "ng_complex_component",
+      "ng_page",
+      "ng_component",
+      "ng_reactive_form",
+      "ng_site"
     ],
     "ngAddPackage": "angular-django2@0.4.1"
   }

@@ -35,6 +35,11 @@ class NgdjRequirementsContractTests(unittest.TestCase):
             "material-app",
             "openapi-setup",
             "data-service",
+            "page",
+            "component",
+            "complex-component",
+            "reactive-form",
+            "site",
         ):
             with self.subTest(schematic=name):
                 self.assertIn(name, schematics)
@@ -227,6 +232,27 @@ class DjngNgdjIntegrationContractTests(unittest.TestCase):
         self.assertEqual(argv[0], load_angular_settings().ng_executable)
         self.assertEqual(argv[1], "generate")
         self.assertEqual(argv[2], "angular-django2:material-setup")
+
+    def test_new_ui_wrappers_use_matching_ngdj_schematics(self) -> None:
+        cases: dict[str, tuple[dict[str, object], str]] = {
+            "ng_page": (
+                {"name": "orders", "target_path": "src/app/features/orders"},
+                "page",
+            ),
+            "ng_component": ({"name": "order-card"}, "component"),
+            "ng_reactive_form": (
+                {"name": "contact", "definition": "forms/contact.json"},
+                "reactive-form",
+            ),
+            "ng_site": ({"defaults": True}, "site"),
+        }
+
+        for wrapper, (options, schematic) in cases.items():
+            with self.subTest(wrapper=wrapper):
+                invocation = resolve_angular_command(wrapper, **options)[0]
+                self.assertEqual(invocation.command_name, wrapper)
+                self.assertEqual(invocation.argv[1], "generate")
+                self.assertEqual(invocation.argv[2], f"angular-django2:{schematic}")
 
 
 if __name__ == "__main__":

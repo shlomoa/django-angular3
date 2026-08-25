@@ -165,15 +165,17 @@ this document selects and composes those contracts but does not redefine them.
 | `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
 | `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
 | `openapi` `update` | Targeted dependent client, service, and UI commands | update |
-| `openui` page `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:page`; contract not yet defined | Not yet defined |
-| `openui` standalone component `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:component`; contract not yet defined | Not yet defined |
-| `openui` complex component `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:complex-component`; contract not yet defined | Not yet defined |
-| `openui` reactive form `create`, `update`, `delete`, or `move` | Deterministic TOOL/wrapper contract around `angular-django2:reactive-form`; contract not yet defined | Not yet defined |
-| `openui` navigation `update` or `move` | Deterministic TOOL/wrapper contract around `angular-django2:site`; contract not yet defined | Not yet defined |
+| `openui` page `create`, `update`, `delete`, or `move` | `ng_page` wraps `angular-django2:page` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
+| `openui` standalone component `create`, `update`, `delete`, or `move` | `ng_component` wraps `angular-django2:component` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
+| `openui` complex component `create`, `update`, `delete`, or `move` | `ng_complex_component` wraps `angular-django2:complex-component`; deterministic TOOL contract and complete atomic-operation mapping are not yet defined | Not yet defined for `build_app` |
+| `openui` reactive form `create`, `update`, `delete`, or `move` | `ng_reactive_form` wraps `angular-django2:reactive-form` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
+| `openui` navigation `update` or `move` | `ng_site` wraps `angular-django2:site` for its bounded create, modify, and delete operations; deterministic TOOL contract and navigation-move composition are not yet defined | Not yet defined for `build_app` |
 
-The implementation must define the precise wrapper invocation for every row
-before claiming support for that atomic change. Unsupported changes must fail
-explicitly; `build_app` must not silently omit them.
+The direct wrappers define precise invocations for the ngdj operations they
+support, but `build_app` must still define the deterministic TOOL contract and
+atomic-operation mapping for every row before claiming change-driven support.
+Unsupported changes must fail explicitly; `build_app` must not silently omit
+them.
 
 ### Execution order
 
@@ -185,10 +187,11 @@ Commands must satisfy this dependency order:
 3  angular_api_client_generate      (TOOL; depends on 2)
 ```
 
-The TOOL/wrapper contracts and dependency order for the remaining deterministic
-`ngdj` schematic operations are not yet defined. They must be specified before
-those operations are added to this execution order or claimed as supported by
-`build_app`.
+The TOOL contracts and dependency order for the remaining deterministic `ngdj`
+schematic operations are not yet defined. Existing direct wrappers do not by
+themselves establish `build_app` support. The contracts and ordering must be
+specified before those operations are added to this execution order or claimed
+as supported by `build_app`.
 
 An optional matching `angular-*-composition` SKILL command may follow its
 deterministic TOOL command only when the selected work is genuinely

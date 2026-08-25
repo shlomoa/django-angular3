@@ -378,6 +378,219 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("Complex component name must be kebab-case.", stderr)
 
+    def test_ng_page_dry_run_resolves_ngdj_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_page",
+            "--name",
+            "orders",
+            "--target-path",
+            "src/app/features/orders",
+            "--project",
+            "portal",
+            "--route-path",
+            "sales/orders",
+            "--access",
+            "protected",
+            "--auth-guard",
+            "portalGuard",
+            "--navigation-label",
+            "Orders",
+            "--navigation-icon",
+            "shopping_cart",
+            "--dry-run",
+        )
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            json.loads(stdout)["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:page",
+                "orders",
+                "--path=src/app/features/orders",
+                "--access=protected",
+                "--project=portal",
+                "--routePath=sales/orders",
+                "--authGuard=portalGuard",
+                "--navigationLabel=Orders",
+                "--navigationIcon=shopping_cart",
+            ],
+        )
+
+    def test_ng_page_rejects_non_kebab_case_name(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_page",
+            "--name",
+            "OrdersPage",
+            "--target-path",
+            "src/app/features/orders",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Page name must be kebab-case.", stderr)
+
+    def test_ng_component_dry_run_resolves_ngdj_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_component",
+            "--name",
+            "order-card",
+            "--target-path",
+            "src/app/shared",
+            "--project",
+            "portal",
+            "--dry-run",
+        )
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            json.loads(stdout)["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:component",
+                "order-card",
+                "--path=src/app/shared",
+                "--project=portal",
+            ],
+        )
+
+    def test_ng_component_rejects_path_outside_workspace(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_component",
+            "--name",
+            "order-card",
+            "--target-path",
+            "../outside",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Component target path must be a non-empty relative path", stderr)
+
+    def test_ng_reactive_form_dry_run_resolves_ngdj_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_reactive_form",
+            "--name",
+            "contact",
+            "--definition",
+            "forms/contact.json",
+            "--target-path",
+            "src/app/features/contact",
+            "--project",
+            "portal",
+            "--primitives-path",
+            "src/app/shared/form-helpers",
+            "--dry-run",
+        )
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            json.loads(stdout)["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:reactive-form",
+                "contact",
+                "--definition=forms/contact.json",
+                "--path=src/app/features/contact",
+                "--project=portal",
+                "--primitivesPath=src/app/shared/form-helpers",
+            ],
+        )
+
+    def test_ng_reactive_form_rejects_definition_outside_workspace(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_reactive_form",
+            "--name",
+            "contact",
+            "--definition",
+            "../contact.json",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn(
+            "Reactive form definition must be a non-empty relative path", stderr
+        )
+
+    def test_ng_site_dry_run_resolves_ngdj_schematic(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_site",
+            "--source",
+            "spec/openui/app.openui.json",
+            "--project",
+            "portal",
+            "--operation",
+            "modify",
+            "--auth-guard",
+            "portalGuard",
+            "--csrf-cookie-name",
+            "portalcsrftoken",
+            "--csrf-header-name",
+            "X-Portal-CSRFToken",
+            "--dry-run",
+        )
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            json.loads(stdout)["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:site",
+                "--operation=modify",
+                "--authGuard=portalGuard",
+                "--csrfCookieName=portalcsrftoken",
+                "--csrfHeaderName=X-Portal-CSRFToken",
+                "--source=spec/openui/app.openui.json",
+                "--project=portal",
+            ],
+        )
+
+    def test_ng_site_create_requires_source_or_defaults(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli("ng_site", "--dry-run")
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Site requires exactly one of --source or --defaults.", stderr)
+
+    def test_ng_site_delete_requires_confirmation(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_site",
+            "--operation",
+            "delete",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Site deletion requires --confirm-delete.", stderr)
+
+    def test_ng_site_delete_uses_manifest_without_source(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_site",
+            "--operation",
+            "delete",
+            "--confirm-delete",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        argv = json.loads(stdout)["invocations"][0]["argv"]
+        self.assertIn("--operation=delete", argv)
+        self.assertIn("--confirmDelete=true", argv)
+        self.assertFalse(any(value.startswith("--source=") for value in argv))
+        self.assertNotIn("--defaults=true", argv)
+
     def test_ng_openapi_gen_dry_run_uses_derived_configuration_file(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_openapi_gen", "--dry-run")
 
@@ -631,6 +844,16 @@ class AngularManagementCommandTests(unittest.TestCase):
                     "features": "nested",
                 },
             ),
+            (
+                "ng_page",
+                {"name": "orders", "target_path": "src/app/features/orders"},
+            ),
+            ("ng_component", {"name": "order-card"}),
+            (
+                "ng_reactive_form",
+                {"name": "contact", "definition": "forms/contact.json"},
+            ),
+            ("ng_site", {"defaults": True}),
             ("ng_openapi_gen", {}),
             ("ng_add", {}),
         )

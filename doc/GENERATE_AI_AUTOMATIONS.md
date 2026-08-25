@@ -49,11 +49,11 @@ manifests, or skill files to ensure each layer uses the correct name.
 | `angular.data-service` | — | — | `angular-data-service-composition` (optional refinement) | — |
 | `angular.field-component` | — | — | `angular-field-component-composition` (optional refinement) | — |
 | `angular.form-field` | — | — | `angular-form-field-composition` (optional refinement) | — |
-| `angular.component` | — | — | `angular-component-composition` (optional refinement) | — |
-| `angular.complex-component` | — | — | `angular-complex-component-composition` (optional refinement) | — |
-| `angular.reactive-form` | — | — | `angular-reactive-form-composition` (optional refinement) | — |
-| `angular.page` | — | — | `angular-page-composition` (optional refinement) | — |
-| `angular.site` | — | — | `angular-site-composition` (optional refinement) | — |
+| `angular.component` | `ng_component` | — | `angular-component-composition` (optional refinement) | — |
+| `angular.complex-component` | `ng_complex_component` | — | `angular-complex-component-composition` (optional refinement) | — |
+| `angular.reactive-form` | `ng_reactive_form` | — | `angular-reactive-form-composition` (optional refinement) | — |
+| `angular.page` | `ng_page` | — | `angular-page-composition` (optional refinement) | — |
+| `angular.site` | `ng_site` | — | `angular-site-composition` (optional refinement) | — |
 | `contract.schema-export` | `export_schema` | `openapi_schema_export` | — | `migration-triggered` |
 | `contract.schema-validate` | — | `validate_openapi_schema` | — | `pre-construction` (wraps) |
 | `contract.schema-diff` | — | `oasdiff_diff` | — | — |
@@ -682,8 +682,11 @@ but does not create the expected component source and template.
 **Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: planned djng wrapper over
+**Implementation reference**: the existing `ng_component` CLI wrapper in
+`django_angular3/angular.py` and
+`django_angular3/management/commands/ng_component.py` resolves
 `ng generate angular-django2:component <name> --path=<path> --project=<project>`.
+The structured Tool behavior and outputs in this contract remain planned.
 
 ##### 9. `ngdj_run_schematic` — controlled ngdj schematic runner
 

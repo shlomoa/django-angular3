@@ -45,7 +45,8 @@ The following already exist in the current workspace and are the starting point
 for this plan:
 
 - **CLI wrappers** (Django management commands): `export_schema`, `build_app`,
-  `ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_complex_component`,
+  `ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_page`, `ng_component`,
+  `ng_complex_component`, `ng_reactive_form`, `ng_site`,
   `ng_openapi_gen`, `ng_build`, `ng_workspace`, `ng_workspace_delete`,
   `ng_workspace_modify`
   (`django_angular3/management/commands/`).
