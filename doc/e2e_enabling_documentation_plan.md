@@ -4,6 +4,12 @@ Structured by phase. Steps marked ✓ are functional today. Each step lists
 GitHub issues that must be resolved before that step can execute; titles are
 given exactly as they should be filed.
 
+This plan does not define `ngdj`, its command surface, or current implementation
+status. Resolve every `ngdj` fact through `ARCHITECTURE.md` §2.6 and its
+upstream sources. The issue rows below are planning dependencies captured at
+the time of writing; revalidate them upstream before using them for current
+work.
+
 - **djng** issues → `shlomoa/django-angular3`
 - **ngdj** issues → `shlomoa/angular-django2`
 

@@ -10,6 +10,10 @@ platform and the governed construction model that the integration targets.
 The terms `djng` and `ngdj` use the definitions in [ARCHITECTURE.md]
 §§ 2.5-2.6.
 
+This document defines `djng` integration requirements; it does not define
+`ngdj` commands, options, or behavior. All such facts use the upstream-source
+policy in `ARCHITECTURE.md` §2.6.
+
 The terms `AI automations`, `SKILLS`, `TOOLS`, `HOOKS`, `PLUGINS`, and
 `AI-automation-based construction` use the definitions in
 `ARCHITECTURE.md` §§ 2.14-2.15 and §19 (see [Claude Skills]).
@@ -917,9 +921,10 @@ boundaries, architectural control-loop, verification, and build-flow model.
   Angular construction, including backend contract lifecycle governance,
   change-requirement derivation, orchestration-facing work definitions,
   generator-app execution, and governed command wrappers around `ngdj` actions
-- `ngdj` must provide the Angular-side commands, schematics, templates, and
-  assembly actions consumed by governed construction, including generation
-  from contract-derived and non-CRM inputs
+- Governed construction may consume only the Angular-side commands,
+  schematics, templates, and assembly behavior defined by the authoritative
+  `ngdj` sources in `ARCHITECTURE.md` §2.6. A missing capability is an upstream
+  dependency, not a locally defined `ngdj` requirement.
 - Non-CRM content construction must be a discrete governed construction stage,
   as defined by `ARCHITECTURE.md` §7.1 stage 4
 - Governed construction must execute deterministic bounded operations,
@@ -1415,7 +1420,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `ARCHITECTURE.md` §19, `GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | `ARCHITECTURE.md` §2.6 |
+| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. It compares inputs, translates changes to ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
 | **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |

@@ -16,7 +16,8 @@ description of the two-package split and each package's responsibilities.
 Use these terms consistently in all code, docs, and skills:
 
 - **djng**: the `django-angular3` meta-tool — this repository. See `doc/ARCHITECTURE.md` §2.5.
-- **ngdj**: the `angular-django2` companion Angular npm package. See `doc/ARCHITECTURE.md` §2.6.
+- **ngdj**: use the canonical identity and upstream-source policy in
+	`doc/ARCHITECTURE.md` §2.6; do not redefine its commands or options in djng.
 - **generated app** or **app**: the full-stack application produced by using
 	djng and ngdj together. This is not this repository.
 - **Automation naming layers**: four distinct naming layers in the djng/ngdj
@@ -51,8 +52,10 @@ See `doc/ARCHITECTURE.md` §2.21 for the authoritative definition.
 
 - Prefer existing patterns and best-known methods in this repository.
 - Do not assume that existing implementations in djng or ngdj are complete or
-	correct. Verify before reusing. Requirements for ngdj are derived from djng
-	development; the ngdj codebase is expected to evolve alongside skills work.
+	correct. Verify djng behavior locally and resolve ngdj facts through
+	`doc/ARCHITECTURE.md` §2.6 and its upstream sources. Define required ngdj
+	changes in the upstream project rather than creating a competing djng
+	definition.
 - Keep Django and DRF responsible for backend data, authentication,
 	authorization, and administrative capabilities.
 - Keep Angular responsible for the user-facing route tree and SPA experience.

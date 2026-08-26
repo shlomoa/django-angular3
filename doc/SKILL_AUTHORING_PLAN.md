@@ -7,7 +7,8 @@ AI-guided Angular skills described in `GENERATE_AI_AUTOMATIONS.md`. It records
 the decisions made during the planning conversation, the framework that will
 be applied uniformly to every skill, and the items that remain open or
 evolving. These skills do not own deterministic generation already defined by
-an `ngdj` schematic schema.
+an `ngdj` schematic schema. All `ngdj` command, option, schema, and behavior
+facts follow the upstream-source policy in `ARCHITECTURE.md` §2.6.
 
 This is a skills-only sub-plan. The broader AI automation model — including
 the roles of TOOLS, HOOKS, and PLUGINS alongside SKILLS — is defined in
@@ -252,7 +253,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. This document addresses only the SKILLS subset. | `ARCHITECTURE.md` §19, `GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. Provides deterministic, AI-independent Angular-side schematics and templates invoked through TOOL/wrapper contracts; agent involvement is optional. | `ARCHITECTURE.md` §2.6 |
+| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. It compares inputs, translates changes to ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
 | **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |

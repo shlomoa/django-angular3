@@ -13,7 +13,7 @@ assignees: []
 ## Current djng status
 
 - [ ] No wrapper yet
-- [ ] Documented only (`doc/ngdj_commands.md`) — Pending
+- [ ] Documented only — Pending
 - [ ] Invocation builder present (`_COMMAND_BUILDERS` in `angular.py`)
 - [ ] Management command wrapper present
 - [ ] Contract test present (`tests/test_ngdj_requirements.py`)
@@ -26,15 +26,19 @@ assignees: []
 - [ ] Add dry-run management command wrapper
 - [ ] Add contract / drift test
 - [ ] Wire into `command_translation.py` selection
-- [ ] Update `doc/ngdj_commands.md`
+- [ ] Update maintained command documentation
 
 ## ngdj reference
 
-- ngdj version: `angular-django2@0.4.1`
-- Schematic options (from `collection.json` / `schema.json`):
+Use `doc/ARCHITECTURE.md` §2.6 and its upstream sources. Do not define or copy
+an ngdj command inventory in this issue.
+
+- Target ngdj version: `angular-django2@<version>`
+- Upstream command or schema URL:
+- Integration-specific options used by the djng wrapper:
 
 ```text
-<paste relevant options>
+<list only the options translated or constrained by this wrapper>
 ```
 
 ## Notes / dependencies

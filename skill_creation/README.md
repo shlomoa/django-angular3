@@ -22,6 +22,12 @@ For the umbrella automation model and primitive-selection policy, use
 only when the task is specifically about authoring, reviewing, or verifying a
 skill.
 
+All ngdj-dependent Skill work in this folder follows the identity, ownership,
+and upstream-source policy in `doc/ARCHITECTURE.md` §2.6. Command examples in
+the split files describe djng integration use; they do not define ngdj command
+names, options, schemas, or behavior and must be revalidated against the
+applicable upstream source when changed.
+
 Create a sibling folder such as `tools_creation/` only if tool work reaches
 the same level of dedicated authoring cadence: named tool specifications,
 shared authoring guidance, review workflow, and split working files that are

@@ -43,7 +43,33 @@ construction configuration required for generated applications. See §19
 Glossary.
 
 ### 2.6 ngdj
-`ngdj` stands for Angular Django, `angular-django2` companion package: the deterministic, AI-independent Angular-side construction substrate in this architecture. It provides schematics, templates, and workspace/application assembly helpers used to materialize Angular-side outputs derived by `djng`. The same validated inputs produce repeatable schematic transformations without requiring an agent, provider adapter, or SKILL.
+
+`ngdj` is the short name for the `angular-django2` companion Angular npm
+package consumed by `djng`.
+
+This section is the single `djng` source of truth for the identity and
+ownership of `ngdj`. The authoritative upstream sources are:
+
+- [npm package][angular-django2] — published package identity, version, and
+  distribution;
+- [GitHub repository][angular-django2-github] — source code, schematic schemas,
+  implementation, and tests; and
+- [Read the Docs][angular-django2-docs] — published usage and command
+  documentation, including the [CLI reference][angular-django2-cli].
+
+`ngdj` owns its package behavior, public schematics, command names, options,
+templates, and documentation. `djng` may define wrappers, Tool contracts, and
+orchestration that invoke those public contracts, but it does not redefine
+them. Every `djng` requirement, implementation task, issue, test, Skill, Tool,
+and document that depends on an `ngdj` fact must resolve that fact through this
+section and the applicable upstream source. `djng` documents must not maintain
+a competing inventory of `ngdj` commands or options.
+
+Facts owned by `djng`, such as wrapper names, argument translation, allowlist
+behavior, and interface availability, remain defined and tested in `djng`.
+They must be clearly identified as integration behavior rather than `ngdj`
+behavior. If upstream sources conflict, report the conflict and resolve it
+upstream instead of selecting or inventing a local definition.
 
 ### 2.7 [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.
@@ -287,14 +313,16 @@ and construction configuration. See §2.5 and §19 Glossary.
 
 ### 3.4 ngdj
 
-implemented in [angular-django2-github] and deployed to [angular-django2] npm package.
+The authoritative `ngdj` identity, ownership, implementation, and documentation
+sources are defined once in §2.6. This section defines only the integration
+boundary within the `djng` architecture.
 
-- Purpose: A companion [Angular] ([npmjs] package) that provides the Angular-side construction substrate used to materialize required outputs.
-- Responsibilities:
-  - ngdj-o-1: Provide a set of commands for managing and assembling the Angular application, including workspace, project layout, application layout.
-  - ngdj-o-2: Provide Angular schematics and code generation templates for generating Angular building blocks from OpenAPI contracts.
-  - ngdj-o-3: Provide a set of Angular schematics and code generation templates for generating Angular building blocks from non-CRM content definitions.
-  - ngdj-o-4: Execute those schematics deterministically from validated structured inputs without depending on agent, provider, or SKILL infrastructure. Optional `djng` orchestration may invoke the same schematics through TOOL contracts but does not change their behavior or ownership.
+`djng` consumes installed `ngdj` public contracts to materialize Angular-side
+outputs. It may invoke them directly through wrappers or compose them through
+Tool contracts and orchestration. Those integration layers do not change the
+upstream command, option, behavior, output, or error contracts. Required
+changes to those contracts belong in the upstream `angular-django2` project;
+`djng` records only its dependency on and use of them.
 
 
 ### 3.5 Toolchain components
@@ -306,7 +334,9 @@ implemented in [angular-django2-github] and deployed to [angular-django2] npm pa
 - An OpenAPI schema extraction process - in `djng`.
 - An OpenAPI TypeScript generation process - in `ngdj`.
 - A structured UI definition management system - in `djng`.
-- Requirements for the AI automation subsystem and `ngdj` are derived from `djng`.
+- `djng` integration requirements must be validated against the `ngdj` sources
+  in §2.6; required upstream changes are defined and implemented in
+  `angular-django2`.
 
 ---
 
@@ -804,7 +834,7 @@ Key actors and terms. Full definitions are in §2.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `doc/GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agentic orchestrator, the AI automation subsystem, and construction configuration. | §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. Provides the Angular-side schematics and templates used during construction. | §2.6 |
+| **`ngdj`** | See the canonical identity and upstream-source policy. | §2.6 |
 | **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.16 |
 | **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.16.1 |
 | **provider adapter** | The portability boundary between an agent executor and a compatible AI runtime. | §2.12 |
@@ -820,6 +850,8 @@ Key actors and terms. Full definitions are in §2.
 [Django-github]: https://github.com/django/django
 [angular-django2]: https://www.npmjs.com/package/angular-django2
 [angular-django2-github]: https://github.com/shlomoa/angular-django2
+[angular-django2-docs]: https://angular-django2.readthedocs.io/
+[angular-django2-cli]: https://angular-django2.readthedocs.io/en/latest/cli/
 [django-angular3]: https://pypi.org/project/django-angular3/
 [django-angular3-github]: https://github.com/shlomoa/django-angular3
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen

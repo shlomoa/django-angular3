@@ -136,6 +136,9 @@ previous inputs; commands not selected by either change set are omitted.
 ### Automation boundaries
 
 The selected commands invoke the following documented automation contracts.
+All underlying `ngdj` command and behavior facts follow the upstream-source
+policy in `ARCHITECTURE.md` §2.6; this document defines only djng command
+selection and composition.
 Tool and hook names remain distinct from CLI wrapper command names, as defined
 by the automation naming layers in `ARCHITECTURE.md` §2.23. Contract identity
 and command-composition cardinalities are defined in
@@ -327,7 +330,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS. | `ARCHITECTURE.md` §2, `GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution: this repository, Django package, and tool. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | The `angular-django2` companion Angular package. | `ARCHITECTURE.md` §2.6 |
+| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` management command that compares inputs, translates changes to commands, executes them, and validates the generated app. | §Purpose |
 | **SKILLS** | Bounded AI skills that guide selected agent sessions. | `ARCHITECTURE.md` §2.14 |
 | **TOOLS** | Deterministic callable capabilities for bounded operations. | `GENERATE_AI_AUTOMATIONS.md` |
