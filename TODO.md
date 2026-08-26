@@ -355,7 +355,7 @@ The external `openui-spec` project defines three peer artifacts:
 - **Catalog (`openui.json`)** — the library of documented OpenUI items,
   including applications, controls, behaviors, pages, views, containers, and
   widgets.
-- **Concrete UI specification** — an application-specific UI manifest that
+- **Concrete UI document** — an application-specific UI manifest that
   follows the schema grammar and is composed of items defined by the catalog.
 
 `OpenUiJson` and the `openui-json` CLI are validation and editing tooling for
@@ -364,9 +364,9 @@ distributed by `openui-spec` and `djng` are non-normative test fixtures, not
 artifact definitions or application UI sources of truth.
 
 OpenUI is a unified, technology-independent UI abstraction, not an internal
-djangoangular format. A concrete UI specification can be implemented using
-Angular, Qt, or another UI technology. In djangoangular, `djng` governs the
-concrete UI specification and converts its manifest into explicit construction,
+djangoangular format. A concrete UI document can be implemented using Angular,
+Qt, or another UI technology. In djangoangular, `djng` governs the concrete UI
+document and converts its manifest into explicit construction,
 build, or generation operations that materialize the application.
 
 ---
@@ -555,12 +555,12 @@ into one document or classified as mutually exclusive CRM and non-CRM content.
     prescribe their target implementation.
   - Incremental generation is a technology-independent lifecycle notion and
     genuine use case. It defines reconciliation outcomes between a concrete UI
-    specification and an existing manifestation without prescribing Angular,
+    document and an existing manifestation without prescribing Angular,
     QML, files, schematics, or another target implementation. It does not need
     to repeat the UI-object semantics defined by the glossary and scope
     contracts.
 - [x] 15.1.2. Update `openui-spec` only if an actual defect is identified in
-  its schema, catalog, concrete UI specification, or implementation-independent
+  its schema, catalog, concrete UI document, or implementation-independent
   boundary; do not add djangoangular-specific responsibilities to it.
   - No actual `openui-spec` defect was identified. The three-artifact contract,
     framework-associated string representation, and incremental-generation
@@ -570,11 +570,11 @@ into one document or classified as mutually exclusive CRM and non-CRM content.
   SSOT from `djng` and `ngdj`.
   - `djng` maintained documentation now references the upstream OpenUI
     specification and artifact-role SSOT instead of restating schema, catalog,
-    and concrete UI specification responsibilities.
+    and concrete UI document responsibilities.
   - `ngdj` requirements reference the same external SSOT and explicitly avoid
-    redefining it. Its repository-specific `site` input is documented as a
-    site assembly definition, not mislabeled as an OpenUI concrete UI
-    specification.
+    redefining it. Its repository-specific `site` input is identified in
+    documentation, published schematic metadata, and runtime diagnostics as a
+    site assembly definition, not mislabeled as an OpenUI concrete UI document.
 - [ ] 15.1.4. Remove local definitions that incorrectly restrict OpenUI to
   non-CRM UI.
 

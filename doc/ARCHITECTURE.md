@@ -84,7 +84,7 @@ Content that is not directly derived from the OpenAPI contract, such as bespoke 
 A technology-independent UI-description specification maintained by
 [shlomoa/openui-spec][openui-spec]. Its purpose and vocabulary are defined by
 the [OpenUI specification][openui-spec], and the roles of its schema, catalog,
-and concrete UI specification are defined by the
+and concrete UI document are defined by the
 [OpenUI artifact-role SSOT][openui-artifacts]. `djng` consumes that external
 contract and does not redefine it.
 
@@ -568,9 +568,9 @@ does not get mixed with manually-authored UI definitions.
 
 ### 8.5 Non-CRM Input Source
 
-Use `spec/openui/app.openui.json` as the dedicated structured UI-description
-input. It is an OpenUI concrete UI specification whose role, grammar, and
-catalog relationship are defined by the
+Generated apps conventionally select `spec/openui/app.openui.json` as their
+dedicated structured UI-description input. It is an OpenUI concrete UI document
+whose role, grammar, and catalog relationship are defined by the
 [OpenUI artifact-role SSOT][openui-artifacts].
 
 This source should define:

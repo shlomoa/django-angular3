@@ -233,9 +233,9 @@ paths:
       operationId: updateUser
 ```
 
-Non-CRM pages and bespoke workflows are then supplied in `spec/openui/app.openui.json`
-as an OpenUI concrete UI specification. Its role, grammar, and catalog
-relationship are defined by the
+Under the generated-app convention, non-CRM pages and bespoke workflows are
+then supplied in `spec/openui/app.openui.json` as an OpenUI concrete UI
+document. Its role, grammar, and catalog relationship are defined by the
 [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
 see the [OpenUI examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 for the per-scope vocabulary.
