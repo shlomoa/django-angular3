@@ -29,10 +29,9 @@ Organizations need a repeatable way to connect [Django], [DRF - Django REST Fram
 manual glue work between backend contracts, frontend generation, and
 user-facing UI assembly.
 
-They also need a governed way to derive and evolve full-stack outputs from the
-OpenAPI contract and a separate structured input source for non-CRM pages and
-reactive forms, rather than coordinating those changes manually across tools
-and layers.
+They also need a governed way to derive and evolve full-stack outputs from
+separate OpenAPI contract and OpenUI description inputs, rather than
+coordinating those changes manually across tools and layers.
 
 Because the business domain is not yet specified, the platform must provide a
 maintainable, reusable, and modular foundation for business applications so
@@ -87,8 +86,7 @@ facing functionality.
 Within that context, `djng` governs the backend contract lifecycle and derives
 Angular-side work from contract and configuration inputs, while `ngdj`
 provides the Angular-side construction capabilities needed for workspace and
-application assembly and for generation from OpenAPI contracts and non-CRM
-content definitions.
+application assembly and for generation from explicit construction inputs.
 
 These requirements therefore address the generated application platform
 together with the governance and construction surfaces needed to support tight
@@ -117,22 +115,23 @@ The major subsystems in scope are the generated application platform, the
 `djng` governance and construction surface, and the `ngdj` Angular-side
 construction substrate consumed by governed construction.
 
-The generated application depends on a durable, versioned OpenAPI schema
-artifact as the contract input for CRM-facing content and on a separate
-structured input source for non-CRM pages, reactive forms, and custom
-workflows.
+The generated application depends on a durable, versioned OpenAPI schema as
+its API-contract input and on a separate OpenUI concrete UI document as its
+UI-description input. Their roles are distinct, but they may describe
+complementary aspects of the same feature.
 
 `djng` provides the Django/Python-side governance of the backend contract
 lifecycle and derives Angular-side work from contract and configuration
 inputs, while `ngdj` provides workspace assembly, application assembly, and
-generation capabilities for contract-derived and non-CRM Angular artifacts.
+generation capabilities invoked with explicit inputs selected by `djng` from
+OpenAPI- and OpenUI-derived changes.
 
 External dependencies and services include:
 
 - Swagger Studio / SwaggerHub-style authoring flow for designing or updating
   the OpenAPI specification before export
 - versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) exported into `spec/openapi/source/`. OAS 3.1 is the pinned version; the toolchain ([drf-spectacular], [oasdiff], [ng-openapi-gen]) does not yet support OAS 3.2.
-- structured non-CRM UI inputs maintained in `spec/openui/`
+- OpenUI concrete UI documents maintained in `spec/openui/`
 - [oasdiff] for OpenAPI schema diffing and change detection
 - [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
 - [datamodel-code-generator] (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]) for the contract-first use case: generating the Django data model from an existing OpenAPI Schema, using djng-owned custom Django templates, when no Django model exists yet (see [ARCHITECTURE.md] §§ 2.22 and 11.2)
@@ -154,8 +153,8 @@ At a high level, the platform must provide:
 - contract-driven integration between backend and frontend through durable
   OpenAPI artifacts, generated Angular integration artifacts, and governed
   change handling
-- support for non-CRM content through a separate structured input source for
-  bespoke pages, reactive forms, and custom workflows
+- support for UI-description-driven pages, reactive forms, navigation, and
+  workflows through an OpenUI concrete UI document
 - baseline health, error-handling, observability, automated-testing, and
   deployment-readiness capabilities suitable for local development and staged
   delivery
@@ -287,9 +286,9 @@ The platform must support the following primary user workflows:
   maintains core configuration and centrally managed reference data used across
   business modules.
 - **Run the first-time build from OpenAPI and UI inputs**: a user exports the
-  OpenAPI artifact into `spec/openapi/source/`, provides non-CRM UI inputs in
-  `spec/openui/`, triggers the build, and receives stage-specific feedback from
-  validation, generation, and final assembly.
+  OpenAPI artifact into `spec/openapi/source/`, provides an OpenUI concrete UI
+  document in `spec/openui/`, triggers the build, and receives stage-specific
+  feedback from validation, generation, and final assembly.
 
 ### 3.3. Preconditions and postconditions
 
@@ -336,13 +335,13 @@ endpoints that enforce validation and authorization on the server side.
 
 - **Run the first-time build from OpenAPI and UI inputs**
   - Preconditions: a versioned OpenAPI schema artifact is available in
-    `spec/openapi/source/`; non-CRM inputs are available in `spec/openui/`; the
-    OpenAPI contract is valid and generation-compatible; and non-CRM inputs are
+    `spec/openapi/source/`; an OpenUI input is available in `spec/openui/`; the
+    OpenAPI contract is valid and generation-compatible; and the OpenUI input is
     valid.
   - Postconditions: the build either produces generated CRM-facing artifacts,
     assembled application outputs, and stage results for valid inputs, or it
     fails fast with stage-specific feedback identifying contract validation,
-    code generation, non-CRM input validation, or final app assembly.
+    code generation, OpenUI input validation, or final app assembly.
 
 ### 3.4. Normal interaction sequences
 
@@ -386,9 +385,9 @@ role-appropriate, and validated through backend-enforced operations.
   1. A user designs or updates the OpenAPI specification in the authoring
     tool.
   2. The user exports the schema artifact into `spec/openapi/source/`.
-  3. The user provides non-CRM UI inputs in `spec/openui/`.
+  3. The user provides the OpenUI concrete UI document in `spec/openui/`.
   4. The user triggers the build from the repository.
-  5. The build validates the contract and non-CRM inputs, generates CRM-facing
+  5. The build validates the contract and OpenUI input, generates CRM-facing
     artifacts, assembles the Angular application, and reports the stage
     outcome.
 
@@ -407,11 +406,11 @@ recoverable.
 - **Contract invalid**: if the OpenAPI contract is invalid or incompatible
   with generation, the build must fail fast before downstream construction
   continues.
-- **Non-CRM input invalid**: if structured UI inputs in `spec/openui/` are
-  invalid, the build must fail fast and identify the non-CRM input stage as
+- **OpenUI input invalid**: if the OpenUI input in `spec/openui/` is invalid,
+  the build must fail fast and identify the OpenUI input stage as
   the point of failure.
 - **Build failure**: when generation or assembly fails, the flow must surface
-  which stage failed — contract validation, code generation, non-CRM input
+  which stage failed — contract validation, code generation, OpenUI input
   validation, or final app assembly — rather than reporting a generic error.
 - **Recoverable UI or server failure**: recoverable UI errors must not cause
   users to lose unsaved form state, and unexpected server errors must be
@@ -442,7 +441,7 @@ and assembled application outputs aligned.
   changes, `oasdiff` must identify the change before downstream construction
   uses the current contract.
 - **Generated artifacts → assembled app → verified app**: for valid inputs,
-  construction must move from validated contract and non-CRM sources to
+  construction must move from validated OpenAPI and OpenUI sources to
   generated CRM-facing artifacts, then to an assembled application, and then
   to verified outputs that satisfy the required acceptance checks.
 - **Backend, frontend, and generated-output synchronization points**: the
@@ -485,12 +484,13 @@ The platform uses these distinct configuration and input categories:
     `drf-spectacular` behavior.
   - Its `oasdiff` clause configures `oasdiff` schema comparison behavior.
 - **Project configuration** identifies the generated application and provides
-  command run-time locations for its OAS schema, OpenUI specification, and
-  Angular workspace. It does not duplicate tool settings or OAS/OpenUI content.
+  command run-time locations for its OAS schema, OpenUI concrete UI document,
+  and Angular workspace. It does not duplicate tool settings or OAS/OpenUI
+  content.
 - **OAS schema** defines CRM-facing contract content. In model-first workflows,
   it is extracted from the Django/DRF layer; it drives generation of Angular
   interfaces to that content and uses the OpenAPI Specification (OAS).
-- **OpenUI specification** defines UI requirements from user-provided and
+- **OpenUI concrete UI document** defines UI requirements from user-provided and
   predefined parts. It drives Angular generation for the required UI and uses
   the `openui-spec` schema and catalog.
 
@@ -498,7 +498,7 @@ Their ownership is:
 
 | Main category | Subcategory | Item / file | Owner | Purpose and relationship |
 |---|---|---|---|---|
-| Project configuration | — | `django-angular3-<project_name>.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI specification, and Angular workspace. |
+| Project configuration | — | `django-angular3-<project_name>.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI concrete UI document, and Angular workspace. |
 | Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from it. |
 | Tool configurations | `ng-openapi-gen` | `ngOpenApiGen` clause in `django-angular3.json` | `djng` | Global `ng-openapi-gen` settings, including `serviceSuffix` and `modelIndex`. |
 | Tool configurations | `ng-openapi-gen` | `ng-openapi-gen.json` in the project Angular workspace | `djng` | Derived per-run tool-configuration file. It combines global settings with command run-time `input` and `output` parameters. |
@@ -506,7 +506,7 @@ Their ownership is:
 | Tool configurations | `drf-spectacular` | `drfSpectacular.settings` clause in `django-angular3.json` | `djng` | Global `drf-spectacular` settings from which `SPECTACULAR_SETTINGS` is derived for schema export. |
 | Tool configurations | `oasdiff` | `oasdiff` clause in `django-angular3.json` | `djng` | Global output settings from which `oasdiff.settings` is derived. The executable and current/previous schema paths are run-time invocation parameters. |
 | OAS schema | — | OpenAPI document | `djng` package user | Defines CRM-facing contract content consumed during a command run. |
-| OpenUI specification | — | OpenUI document | `djng` package user | Defines UI requirements consumed during a command run. |
+| OpenUI concrete UI document | — | OpenUI document | `djng` package user | Defines UI requirements consumed during a command run. |
 
 The table classifies sources and artifacts only. The requirements below define
 their fields, defaults, ownership boundaries, lifecycle, discovery,
@@ -520,7 +520,7 @@ flowchart TB
     direction LR
     PROJECT["django-angular3-<project_name>.json"]
     OAS["OpenAPI contract"]
-    UI["OpenUI specification"]
+    UI["OpenUI concrete UI document"]
 
     PROJECT ~~~ OAS ~~~ UI
   end
@@ -578,22 +578,22 @@ flowchart TB
 
     WORKSPACE["Workspace and<br/>application generation"]
     CONTRACT["Contract-derived<br/>Angular generation"]
-    NONCRM["Non-CRM Angular<br/>generation"]
+    OPENUI["OpenUI-derived Angular<br/>construction"]
 
     NGOPENAPI["ng-openapi-gen"]
     ASSEMBLE["Angular application<br/>assembly"]
 
     CLI --> WORKSPACE
     CLI --> CONTRACT
-    CLI --> NONCRM
+    CLI --> OPENUI
 
-    WORKSPACE ~~~ CONTRACT ~~~ NONCRM
+    WORKSPACE ~~~ CONTRACT ~~~ OPENUI
 
     NGOPENAPI --> CONTRACT
 
     WORKSPACE --> ASSEMBLE
     CONTRACT --> ASSEMBLE
-    NONCRM --> ASSEMBLE
+    OPENUI --> ASSEMBLE
   end
 
   subgraph Output["Generated application"]
@@ -712,7 +712,7 @@ The project configuration must have these required fields:
 - `project.name`: a non-empty generated-application name;
 - `artifacts.openapiSchema`: a non-empty relative path to the OAS schema;
 - `artifacts.openuiSpecification`: a non-empty relative path to the OpenUI
-  specification;
+  concrete UI document;
 - `artifacts.angularWorkspace`: a non-empty relative path to the Angular
   workspace.
 
@@ -747,8 +747,8 @@ locations with:
 The project configuration must remain outside the
 `django-angular3.json` → `DJANGO_ANGULAR3` → `DjangoAngularSettings` derivation
 chain. It defines the generated application's identity and the locations of
-its OAS schema, OpenUI specification, and Angular workspace. It must not
-duplicate `djng` tool settings or OAS/OpenUI document content.
+its OAS schema, OpenUI concrete UI document, and Angular workspace. It must
+not duplicate `djng` tool settings or OAS/OpenUI document content.
 
 #### 4.2.5. Planned `ng-openapi-gen.json` contents
 
@@ -925,7 +925,7 @@ boundaries, architectural control-loop, verification, and build-flow model.
   schematics, templates, and assembly behavior defined by the authoritative
   `ngdj` sources in `ARCHITECTURE.md` §2.6. A missing capability is an upstream
   dependency, not a locally defined `ngdj` requirement.
-- Non-CRM content construction must be a discrete governed construction stage,
+- OpenUI-derived construction must be a discrete governed construction stage,
   as defined by `ARCHITECTURE.md` §7.1 stage 4
 - Governed construction must execute deterministic bounded operations,
   including `ngdj` schematics, through TOOL/wrapper contracts without
@@ -996,7 +996,7 @@ sequenceDiagram
   Drf-->>Djng: OpenAPI artifact
   Djng->>OAS: Validate, diff, and normalize contract
   OAS-->>Djng: Accepted contract or blocking result
-  Djng->>UI: Validate OpenUI specification
+  Djng->>UI: Validate OpenUI concrete UI document
   UI-->>Djng: Accepted input or blocking result
   Djng->>Djng: Derive changes and select ordered commands
   loop Until terminal verification accepts the generated application
@@ -1008,7 +1008,7 @@ sequenceDiagram
     Automation->>Ngdj: Run ngdj CLI with generated ng-openapi-gen.json
     Ngdj->>NgOpenApiGen: Generate typed Angular client artifacts
     NgOpenApiGen-->>Ngdj: Generated client artifacts
-    Ngdj->>Ngdj: Generate workspace, application, and non-CRM content
+    Ngdj->>Ngdj: Generate workspace and application outputs
     Ngdj->>Angular: Materialize Angular application
     Angular->>Rest: Consume REST API through generated client
     Backend->>App: Provide Django/DRF part
@@ -1022,10 +1022,10 @@ sequenceDiagram
 1. A user designs or updates the OpenAPI specification using SmartBear's
    OpenAPI authoring tools (Swagger Studio or SwaggerHub)
 2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
-3. The user adds non-CRM changes such as bespoke reactive forms, page
-   definitions, or workflow-specific UI content into `spec/openui/`
+3. The user adds the OpenUI concrete UI document describing pages, forms,
+  navigation, workflows, and related UI concerns into `spec/openui/`
 4. The user fires a build from the repository
-5. The build validates the OAS artifact and non-CRM inputs, generates
+5. The build validates the OAS and OpenUI artifacts, generates
    CRM-facing artifacts, assembles the Angular app, and reports any stage-
    specific contract or input errors clearly
 
@@ -1033,15 +1033,15 @@ For this flow:
 
 - The repository must provide a clear location for the source OAS artifact at
   `spec/openapi/source/`
-- The repository must provide a separate location for non-CRM content inputs at
-  `spec/openui/`
+- The repository must provide a separate location for the OpenUI concrete UI
+  document at `spec/openui/`
 - The build must fail fast when the OpenAPI contract is invalid or incompatible
   with generation
-- The build must fail fast when non-CRM content inputs are invalid
-- For the same OAS and non-CRM inputs, the build must preserve deterministic
+- The build must fail fast when the OpenUI input is invalid
+- For the same OAS and OpenUI inputs, the build must preserve deterministic
   validation and acceptance behavior even if internal construction steps vary
 - The build must allow a first-time user to understand which stage failed:
-  contract validation, code generation, non-CRM input validation, or final app
+  contract validation, code generation, OpenUI input validation, or final app
   assembly
 
 ### 4.4. Authentication and Identity
@@ -1123,7 +1123,7 @@ For this flow:
 - Reference data used across business modules must be centrally manageable
 - Administrative changes must be audited
 
-### 4.14. Content Source Strategy
+### 4.14. Input Artifact Strategy
 
 See `ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
 content-boundary and generated-artifact model.
@@ -1139,15 +1139,15 @@ content-boundary and generated-artifact model.
   generated or maintained as reusable Angular integration artifacts
 - Angular client generation may use `ng-openapi-gen` when its Angular-native
   output is a better fit than the baseline generator path
-- Non-CRM content — such as bespoke reactive forms, standalone pages, and
-  custom workflows — must come from a separate structured input source
-- The non-CRM input source must be versioned, validated, and able to reference
-  shared UI primitives and API contracts without becoming the CRM source of
-  truth
-- The Angular application must be assembled from two input streams: contract-
-  derived Angular integration artifacts produced from the OpenAPI contract, and
-  non-CRM content prepared from the structured input source; these two streams
-  must remain separate and must not be merged into a single source of truth
+- The OpenUI concrete UI document must be the structured source for pages,
+  forms, navigation, layouts, workflows, and related UI-description concerns
+- The OpenUI input must be versioned and validated and may reference shared UI
+  primitives and API contracts
+- OpenAPI and OpenUI must remain separate versioned artifacts with distinct
+  API-contract and UI-description roles; they may describe complementary
+  aspects of the same feature and must be checked for cross-input consistency
+- The Angular application must be assembled from outputs derived from both
+  artifacts without treating either artifact as a substitute for the other
 - Angular integration artifacts must include OpenAPI-derived typed API clients,
   CRM-oriented resource adapters, shared Angular Material integration patterns
   for list, detail, and standard form experiences, and authentication, CSRF,
@@ -1186,7 +1186,7 @@ See `ARCHITECTURE.md` §7.3 for the architectural verification model.
 Verification must occur throughout construction and integration, not only as a
 final check. The platform must support the following verification categories:
 
-- **Contract verification**: the OpenAPI contract and non-CRM inputs must be
+- **Contract verification**: the OpenAPI contract and OpenUI input must be
   validated before downstream construction proceeds; invalid or incompatible
   inputs must block the corresponding stage.
 - **Construction-output verification**: generated and assembled outputs must be
@@ -1331,7 +1331,7 @@ testing, and architectural decision model.
 
 The generated platform is acceptable when:
 
-- The OpenAPI contract and non-CRM input sources pass the required validation
+- The OpenAPI contract and OpenUI input pass the required validation
   gates for downstream construction
 - Generated and assembled outputs are sufficient to produce a runnable,
   integrated application rather than only isolated artifacts
@@ -1356,7 +1356,7 @@ The platform is ready for implementation handoff when:
 
 - The backend/frontend integration model is agreed upon
 - Authentication, authorization, and audit expectations are explicit
-- OpenAPI and non-CRM content inputs have clear ownership and boundaries
+- OpenAPI and OpenUI inputs have clear ownership and boundaries
 - The MVP scope includes one full business module and the shared platform
   services it needs
 - Non-functional requirements are concrete enough to guide engineering choices
@@ -1376,7 +1376,7 @@ The first implementation should include:
 - OpenAPI export and consumption flow for CRM-facing features
 - `ng-openapi-gen` configuration generated from the canonical tool and project
   configurations and runnable in CI
-- A structured non-CRM content input source for reactive forms and pages
+- An OpenUI concrete UI document for pages, forms, navigation, and workflows
 - One complete business module implemented end to end
 - Shared list, detail, and form patterns
 - Audit logging for key actions
@@ -1401,7 +1401,7 @@ following scenario classes:
   in dependency order.
 - **OpenUI-only change**: an `app.openui.json` change with no schema change; only
   OpenUI-derived automation commands run
-- **Combined schema and OpenUI change**: both the contract and the non-CRM
+- **Combined schema and OpenUI change**: both the contract and the OpenUI
   input source change in the same build; both change paths activate and
   interleave correctly
 - **Full replacement**: a resource is removed and a different resource is
@@ -1435,7 +1435,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 - [django_angular3/examples/01_simple_crm/] — runnable example workspace with schema,
   UI, and build artifacts.
 - [tests/fixtures/artifacts/openapi/example.openapi.json] — example OpenAPI source input.
-- [tests/fixtures/artifacts/openui/example.openui.json] — example non-CRM UI input.
+- [tests/fixtures/artifacts/openui/example.openui.json] — example OpenUI input.
 
 ### C. References
 

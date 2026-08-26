@@ -36,21 +36,21 @@ There are two configuration files that skills must not conflate.
 `django-angular3.json` is the `djng` tool configuration. It tells the tool
 how to behave: package-manager, stylesheet, routing, application, build, and
 executable settings, plus global generator configuration. The generated app's
-`django-angular3-<project_name>.json` separately identifies its project name, OpenAPI
-schema, OpenUI specification, and Angular workspace. `build_app` must receive
-those locations through discovered project configuration rather than through a
-public configuration-file argument. The authoritative distinction is in
-`REQUIREMENTS.md` §4.2.
+`django-angular3-<project_name>.json` separately identifies its project name,
+OpenAPI schema, OpenUI concrete UI document, and Angular workspace. `build_app`
+must receive those locations through discovered project configuration rather
+than through a public configuration-file argument. The authoritative
+distinction is in `REQUIREMENTS.md` §4.2.
 
 `app.openui.json` is the generated app's OpenUI concrete UI document. It defines
-the non-CRM UI artifacts and is selected by
+the UI description and is selected by
 `artifacts.openuiSpecification`. Its role, grammar, and catalog relationship
 are defined by the
 [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog).
-`build_app`
-compares current and previous `app.openui.json` documents to detect non-CRM UI
-changes. Skills that depend on those changes receive them as part of the
-`ChangeSet` command input rather than reading `app.openui.json` directly.
+`build_app` compares current and previous `app.openui.json` documents to detect
+OpenUI document changes. Skills that depend on those changes receive them as
+part of the `ChangeSet` command input rather than reading `app.openui.json`
+directly.
 
 Either configuration file may legitimately contain pointers to other files
 that are not yet present. A pointer to a missing-but-promised file is a valid

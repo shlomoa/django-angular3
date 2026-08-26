@@ -19,9 +19,11 @@ tests must implement this configuration-pair contract consistently.
 Derive the complete set of `angular-django2` capabilities and `djng` command
 wrappers needed to materialize the required Angular-side outputs.
 
-- Wrappers implemented: `ng_new`, `ng_workspace`, `ng_add`, `ng_config`,
-  `ng_gen_app`, `ng_openapi_gen`, `ng_build`, `ng_workspace_delete`,
-  `ng_workspace_modify`.
+- The executable wrapper registry in `django_angular3/angular.py`
+  (`_COMMAND_BUILDERS`) currently contains 17 wrappers. `docs/commands.md` owns
+  their djng interface documentation. Resolve all underlying ngdj command,
+  option, schema, and behavior facts through `doc/ARCHITECTURE.md` §2.6 and its
+  upstream sources rather than maintaining another inventory here.
 - `ng_gen_app` now emits the explicit Angular 22 `material-app` choices
   (`--ssr=false`, `--zoneless=true`, `--defaults`) sourced from the `ssr` and
   `zoneless` Angular settings, matching the upstream `angular-django2:material-app`
@@ -32,36 +34,33 @@ wrappers needed to materialize the required Angular-side outputs.
 - Broader repository docs under `doc/` still need wording alignment where they
   describe workspace creation as `ng_new`-first rather than the composite
   `ng_workspace` flow.
-- Complete derivation aligned with all 11 SKILLS not yet done; see §1.1 for the
-  outstanding `angular-django2` (ngdj) capability alignment tasks.
+- Complete djng integration derivation aligned with all 11 Skills is not yet
+  done; see §1.1 for the remaining wrapper and direct-build decisions.
 
 ### 1.1 angular-django2 (ngdj) capability alignment
 
-`angular-django2` (ngdj) was released with new and clarified schematic
-capabilities. Each ngdj change below is mapped to the corresponding djng
-alignment action (wrapper, direct-build command, or SKILL/doc wording) and its
-current status. `Done` items already have djng-side evidence; `Pending` items
-still require a djng wrapper, direct-build command, or SKILL/doc alignment.
+This section tracks only djng-owned integration decisions. The upstream
+schematic surface and its behavior are governed by `doc/ARCHITECTURE.md` §2.6.
 
-| ngdj change | djng alignment action | Status |
-|---|---|---|
-| Positional names for `component`/`service`/`class` pass-through generators | Add djng wrappers (or direct-build commands) that pass the generator name as a positional argument, not `--name=...`. | Pending |
-| Project-relative `--path` for `component`/`service`/`class` | Wrappers must pass `--project=<app> --path=src/app/features/...` and expect output under `projects/<app>/src/app/features/...`. | Pending |
-| New `embed-component` command (local mode) | File-mode `embed-component` usage documented in `docs/workflow.md` §6, `README.md`, and SKILL 07; a djng `embed-component` wrapper / direct-build command is still to be added. | Doc done; wrapper pending |
-| Embed generated component into app root | Documented as embedding a feature component into `projects/<app>/src/app/app.ts` in `docs/workflow.md` §6 and SKILL 07; wrapper composition pending. | Doc done; wrapper pending |
-| Compose nested component hierarchy | Repeated child→parent, parent→app-root `embed-component` flow documented in `docs/workflow.md` §6 and SKILL 07; wrapper support pending. | Doc done; wrapper pending |
-| Embed existing package component (package mode, `--from=<module>`) | Package-mode usage (`--from`, exported class as `--component`) documented in `docs/workflow.md` §6 and SKILL 07; a djng wrapper is still to be added. | Doc done; wrapper pending |
-| Explicit selector for package component (`--selector`) | Support `--selector=<element-selector>` in the package-mode wrapper. | Pending |
-| Explicit inputs/outputs for package component (`--inputs`/`--outputs`) | Support comma-separated `--inputs`/`--outputs` in the package-mode wrapper. | Pending |
-| Angular Material component embedding example | Add a SKILL/doc example embedding a Material package component (e.g. `MatDateRangePicker`). | Pending |
-| Rebuild after embedding (`ng build <app>`) | Reuse the existing `ng_build` wrapper as the post-embedding verification step. | Pending |
-| OpenAPI bootstrap command (`openapi-setup --openapi_spec_file`, `npm install`, `npm run generate:api`) | Standalone djng `ng_openapi_setup` wrapper added (`django_angular3/management/commands/ng_openapi_setup.py`, CLI, `build_ng_openapi_setup_invocations`) resolving `angular-django2:openapi-setup` with `--output-path`/`--helpers-path`/`--skip-helpers`/`--skip-tests`. Remaining: `build_app` must execute it when selected by schema changes (blocked on the unimplemented `build_app` engine). | Wrapper done; build_app wiring pending |
-| `openapi-setup` helper artifacts (`django-transport.ts`, `resource-adapter.ts`, `index.ts`, `provideDjangoApiTransport`) from ngdj PR #55 | Documented in SKILL 03 (`skill_creation/skills/03-angular-api-integration.md`) and asserted by `test_openapi_setup_schematic_emits_django_integration_helpers` in `tests/test_ngdj_requirements.py`. `ng_openapi_setup` exposes `--skip-helpers`/`--skip-tests`. | Done |
-| Data service wrapper command (`data-service <resource> --project=<app>`) | Standalone djng `ng_data_service` wrapper added (`django_angular3/management/commands/ng_data_service.py`, CLI, `build_ng_data_service_invocations`) passing `--project`. Remaining: `build_app` must execute it (blocked on the unimplemented `build_app` engine). | Wrapper done; build_app wiring pending |
-| `data-service` schematic must generate a typed `search` method | Present in ngdj `projects/angular-django2/schematics/data-service/templates.ts` (not `index.ts`); the earlier "Failing" note was stale. `test_data_service_schematic_exposes_search_wrapper` in `tests/test_ngdj_requirements.py` now asserts it. | Done |
-| Lower-level app setup alternative (`application` → `material-setup` → `project-structure`) | Standalone djng `ng_material_setup` wrapper added (`django_angular3/management/commands/ng_material_setup.py`, CLI, `build_ng_material_setup_invocations`) resolving `angular-django2:material-setup` with `--project`/`--theme`/`--typography`/`--animations`. Remaining: `application` and `project-structure` wrappers for the full lower-level flow. | material-setup done; remaining schematics pending |
-| `app-shell` schematic (SSR/prerender pass-through) | Per the ngdj 0.4.1 tutorial and CLI index, `angular-django2:app-shell` wraps Angular's SSR/prerender app-shell feature and is unrelated to the Material sidenav layout (which `material-app` produces). It is not part of the lower-level layout chain; a djng wrapper is optional and deprioritized. | Pending (deprioritized) |
-| `workspace-setup` file hooks are not normal CLI flags | Document for wrapper authors that advanced `workspace-setup` `files` hooks are programmatic (wrapper schematic, test runner, or direct factory), not nested CLI flags. | Pending |
+Implemented djng wrappers include the page, component, complex-component,
+reactive-form, site, OpenAPI setup, data-service, and Material-setup concerns in
+addition to the workspace lifecycle and build concerns registered previously.
+Their direct `build_app` selection and deterministic Tool contracts remain
+pending.
+
+Remaining djng decisions:
+
+- decide whether service, class, field-component, form-field, application,
+  project-structure, embed-component, and app-shell require dedicated wrappers
+  or bounded composition for an approved djng requirement;
+- add only wrappers justified by that decision rather than mirroring every
+  upstream schematic;
+- define direct-build selection, operation coverage, ordering, structured
+  results, and terminal validation for each approved concern;
+- keep direct upstream usage examples labeled as ngdj invocations rather than
+  implying that a djng wrapper exists; and
+- use the existing `ng_build` wrapper as the post-construction compile gate,
+  supplemented by the integration acceptance work in §8.
 
 ---
 
@@ -114,8 +113,10 @@ construction.
 
 - All current workspace/app/contract wrappers implemented, including the
   explicit `ng_workspace` bootstrap wrapper aligned with the upstream
-  `angular-django2:workspace-setup` schematic. Non-CRM construction wrappers
-  depend on the OpenUI input work described by this TODO.
+  `angular-django2:workspace-setup` schematic. Page, component,
+  complex-component, reactive-form, and site wrappers are also implemented.
+  Their direct `build_app` change mapping and execution remain pending and must
+  follow the approved source-derived terminology and input boundaries in §15.
 
 ---
 
@@ -229,7 +230,7 @@ coverage remains deferred until `build_app` is implemented.
 | Terminal validation | `ng_build` is the final validation command in the direct build sequence. | `ng_build` only confirms the Angular app compiles. It does not verify backend API / Angular client alignment, runtime integration, or business-logic correctness. | A build that compiles is not the same as a working integrated application. |
 | Backend/frontend alignment | REQUIREMENTS.md §4.2.2 requires "alignment between backend behavior, generated Angular integration artifacts, and frontend composition." | No specification of how this alignment is verified programmatically. | Alignment can silently break when the OpenAPI schema diverges from the running backend. |
 | Full-stack E2E test spec | REQUIREMENTS.md §4.16 defines four verification categories. | None has a concrete acceptance test specification. §6.4 Mandatory Acceptance Scenarios header exists but content is not populated. | No pass/fail criterion beyond "Angular compiled." |
-| ngdj test surface | ngdj schematics are not tested by the djng test suite. | No specification for how SKILL-generated ngdj outputs are tested against a real Angular workspace. | Correctness of the generated Angular application depends on ngdj schematic outputs, which are currently unverified. |
+| Cross-repository ngdj acceptance | Upstream ngdj has unit, integration, and generated-workspace E2E coverage for its schematic contracts. djng also has wrapper contract/drift tests. | Define how djng direct-build scenarios consume upstream evidence and verify the composed generated app in a real Angular workspace without duplicating ngdj's test ownership. | Upstream schematic correctness alone does not prove that djng selected, ordered, and composed the correct operations for a generated application. |
 
 ### 8.3 Global Acceptance Criteria Not Specified
 
@@ -575,8 +576,17 @@ into one document or classified as mutually exclusive CRM and non-CRM content.
     redefining it. Its repository-specific `site` input is identified in
     documentation, published schematic metadata, and runtime diagnostics as a
     site assembly definition, not mislabeled as an OpenUI concrete UI document.
-- [ ] 15.1.4. Remove local definitions that incorrectly restrict OpenUI to
+- [x] 15.1.4. Remove local definitions that incorrectly restrict OpenUI to
   non-CRM UI.
+  - Maintained `djng` architecture, requirements, workflow, configuration,
+    automation, skill-authoring, and example documentation now treats an
+    OpenUI concrete UI document as a general UI-description input that may
+    complement or reference API-contract-derived content.
+  - OpenAPI and OpenUI remain separate, versioned input artifacts with distinct
+    roles, not mutually exclusive content classifications. `djng` owns their
+    cross-input consistency and derived construction operations.
+  - Generic CRM/non-CRM terminology not defining OpenUI remains for the
+    dedicated Step 15.2 inventory and replacement.
 
 ### 15.2 Replace CRM and non-CRM terminology
 

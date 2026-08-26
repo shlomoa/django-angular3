@@ -1,8 +1,8 @@
 # Usage workflow
 
-`django-angular3` is **contract-first**: the OpenAPI schema exported from your
-DRF backend is the source of truth for CRM-facing functionality, and bespoke
-non-CRM pages and forms are supplied separately as a structured UI definition.
+`django-angular3` coordinates separate OpenAPI and OpenUI inputs. The OpenAPI
+schema describes the API contract, while the OpenUI concrete UI document
+describes the UI; both may concern complementary aspects of the same feature.
 This page describes the end-to-end cycle for your own project. For a guided
 run-through using a ready-made sample, start with
 [Getting started](getting-started.md).
@@ -14,8 +14,9 @@ run-through using a ready-made sample, start with
 - **Angular Material** owns the end-user application and the client-side route
   tree.
 - **OpenAPI** is the source of truth for CRM-facing, contract-derived content.
-- **The UI definition** supplies bespoke non-CRM pages, reactive forms, and
-  workflows, kept separate from the OpenAPI-derived content.
+- **The UI definition** supplies descriptions of pages, reactive forms, and
+  workflows and may complement or reference OpenAPI-derived content while
+  remaining a separate input artifact.
 
 ## The cycle
 
@@ -60,7 +61,7 @@ Author or update the OpenUI concrete UI document referenced by
 generated app convention names this document `app.openui.json`. Its grammar and vocabulary are defined by
 the [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog), not by djng;
 consult the [OpenUI per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
-when authoring non-CRM pages, forms, and workflows. The repository fixture at
+when authoring the OpenUI concrete UI document. The repository fixture at
 [`tests/fixtures/artifacts/openui/example.openui.json`](https://github.com/shlomoa/django-angular3/blob/main/tests/fixtures/artifacts/openui/example.openui.json)
 shows the accepted concrete-document structure.
 

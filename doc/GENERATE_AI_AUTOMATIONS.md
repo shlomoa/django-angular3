@@ -252,8 +252,8 @@ reference cases for new work.
 | `oasdiff_diff` (schema diff) | Yes | None | No | **TOOL** |
 | `angular_api_client_generate` (typed Angular client generation) | Yes | None | No | **TOOL** wrapper |
 | `pre-construction` contract validation gate | Yes | None | Yes (must run before construction) | **HOOK** wrapping the `validate_openapi_schema` TOOL |
-| Generating an Angular page from a validated OpenUI definition | Yes | None | No | **TOOL** — contract around `angular-django2:page` not yet defined |
-| Generating a non-CRM reactive form from a validated OpenUI definition | Yes | None | No | **TOOL** — contract around `angular-django2:reactive-form` not yet defined |
+| Generating an Angular page from a validated OpenUI concrete UI document | Yes | None | No | **TOOL** — contract around `angular-django2:page` not yet defined |
+| Generating a reactive form from a validated OpenUI concrete UI document | Yes | None | No | **TOOL** — contract around `angular-django2:reactive-form` not yet defined |
 | Interpreting underspecified intent or refining generated page/form behavior | No | High | No | **SKILL** (optional) |
 | `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** containing related SKILLS, TOOLS, and HOOKS |
 

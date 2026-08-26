@@ -14,7 +14,7 @@ It allows you to:
 - Keep Django responsible for data, authentication, and administration.
 - Keep Angular responsible for the end-user application and client-side route tree.
 - Use OpenAPI as the source of truth for CRM-facing functionality.
-- Support bespoke non-CRM pages, reactive forms, and workflows via a separate structured input source.
+- Support pages, reactive forms, navigation, and workflows through an OpenUI concrete UI document.
 - Automate the handoff from backend API contract to Angular integration artifacts through a deterministic, repeatable pipeline.
 
 ## Requirements
@@ -233,9 +233,10 @@ paths:
       operationId: updateUser
 ```
 
-Under the generated-app convention, non-CRM pages and bespoke workflows are
-then supplied in `spec/openui/app.openui.json` as an OpenUI concrete UI
-document. Its role, grammar, and catalog relationship are defined by the
+Under the generated-app convention, UI requirements are supplied in
+`spec/openui/app.openui.json` as an OpenUI concrete UI document. The document
+may complement or reference API-contract-derived content. Its role, grammar,
+and catalog relationship are defined by the
 [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
 see the [OpenUI examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 for the per-scope vocabulary.

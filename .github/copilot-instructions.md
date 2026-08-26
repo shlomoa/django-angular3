@@ -18,6 +18,8 @@ Use these terms consistently in all code, docs, and skills:
 - **djng**: the `django-angular3` meta-tool — this repository. See `doc/ARCHITECTURE.md` §2.5.
 - **ngdj**: use the canonical identity and upstream-source policy in
 	`doc/ARCHITECTURE.md` §2.6; do not redefine its commands or options in djng.
+- **djangoangular**: the code name for the tight Django–Angular integration
+	formed by djng and ngdj; see `doc/ARCHITECTURE.md` §2.6.1.
 - **generated app** or **app**: the full-stack application produced by using
 	djng and ngdj together. This is not this repository.
 - **Automation naming layers**: four distinct naming layers in the djng/ngdj
@@ -60,7 +62,8 @@ See `doc/ARCHITECTURE.md` §2.21 for the authoritative definition.
 	authorization, and administrative capabilities.
 - Keep Angular responsible for the user-facing route tree and SPA experience.
 - Treat OpenAPI as the source of truth for CRM-facing contract-derived content.
-- Keep bespoke non-CRM UI definitions separate from OpenAPI-derived content.
+- Treat OpenUI as the separate UI-description input. It may complement or
+	reference API-contract-derived content; validate cross-input consistency.
 - Prefer small, explicit, deterministic build and validation steps.
 - Do not make Angular tooling download packages at runtime. `ng_openapi_gen`
 	should continue to use locally installed workspace dependencies via

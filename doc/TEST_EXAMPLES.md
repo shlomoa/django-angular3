@@ -355,7 +355,7 @@ components:
 
 ### Input: `app.openui.json`
 
-The non-CRM input is the OpenUI concrete UI document selected by
+The OpenUI input is the OpenUI concrete UI document selected by
 `artifacts.openuiSpecification`.
 Its role, grammar, and catalog relationship are defined by the
 [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog). Use the

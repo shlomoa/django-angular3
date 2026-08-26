@@ -6,7 +6,7 @@ This document describes the architecture of `django-angular3` (package: [django-
 
 This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Optional `djng` AI-guided construction or repair may be non-deterministic, but `ngdj` schematic execution is deterministic and AI-independent. Acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validations and tests.
 
-`django-angular3` extends Django/DRF with contract-driven Angular integration. It governs the construction process, uses agentic orchestration to coordinate iterative bounded construction through SKILLS, TOOLS, HOOKS, and PLUGINS, and integrates generated building blocks into a working application while preserving architectural boundaries between backend, frontend, generated artifacts, and non-CRM content.
+`django-angular3` extends Django/DRF with contract-driven Angular integration. It governs the construction process, uses agentic orchestration to coordinate iterative bounded construction through SKILLS, TOOLS, HOOKS, and PLUGINS, and integrates generated building blocks into a working application while preserving architectural boundaries between backend, frontend, generated artifacts, and UI-description inputs.
 
 This document covers:
 - Architectural principles, architectural actors, system components, and integration workflows.
@@ -71,14 +71,24 @@ They must be clearly identified as integration behavior rather than `ngdj`
 behavior. If upstream sources conflict, report the conflict and resolve it
 upstream instead of selecting or inventing a local definition.
 
+### 2.6.1 djangoangular
+
+`djangoangular` is the code name for the tight Django–Angular integration
+formed by `djng` and `ngdj` working together. It names their combined
+integration architecture, not either package alone and not a package, command,
+or generated application.
+
 ### 2.7 [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.
 
 ### 2.8 CRM
 CRM stands for Customer Relationship Management. In this architecture, it is shorthand for contract-derived business-domain content represented by the backend schema and API. It is not limited to a literal customer-sales system.
 
-### 2.9 non-CRM content (non-OAS-originating functionality)
-Content that is not directly derived from the OpenAPI contract, such as bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata. This content is defined in a separate structured input source and complements the CRM-derived Angular integration artifacts.
+### 2.9 UI-description input
+The structured input that describes application UI independently of the API
+contract. It may define pages, forms, navigation, layouts, workflows, and other
+UI concerns, including concerns that complement or reference API-backed
+features.
 
 ### 2.9.1 [OpenUI]
 A technology-independent UI-description specification maintained by
@@ -275,7 +285,7 @@ cardinality.
 |DRF model (model-first)|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions. Origination input in the model-first mode (§2.22)|
 |OpenAPI Schema (contract-first)|An existing OpenAPI Schema used as the backend origination input when no Django model exists yet; the Django data model is generated from it (§2.22, §11.2)|
 |Project configuration|A json file describing the project, apps, UI parts, and other configuration details|
-|Non-CRM Angular content|Bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata defined in a separate structured input source|
+|OpenUI concrete UI document|The versioned UI-description input for pages, forms, navigation, layouts, workflows, and related UI concerns|
 
 ### 3.2 Generated artifacts
 
@@ -453,10 +463,10 @@ criteria.
 3. Angular integration artifacts generation stage: the OpenAPI contract produces typed
    clients, resource adapters, and reusable Angular Material-oriented
    integration helpers
-4. Non-CRM content stage: the `app.openui.json` OpenUI concrete UI document
-   provides bespoke reactive forms, standalone pages, and workflow definitions
-5. Application assembly stage: the Angular app composes CRM-derived outputs from
-   generated integration artifacts with the non-CRM content stream
+4. UI-description stage: the `app.openui.json` OpenUI concrete UI document
+  provides reactive forms, standalone pages, and workflow definitions
+5. Application assembly stage: the Angular app composes generated integration
+  artifacts with outputs derived from the UI description
 6. Verification stage: generated artifacts, contracts, and app integration are
    validated through automated tests and review
 
@@ -510,10 +520,10 @@ and runnable application flows.
 
 A representative construction run should follow this architectural flow:
 
-1. Contract-derived and non-CRM inputs are made available to construction.
+1. OpenAPI and OpenUI inputs are made available to construction.
 2. The contract is validated, diffed, and normalized for downstream use.
 3. Contract-derived Angular integration artifacts are generated.
-4. Non-CRM content definitions are validated and prepared for assembly.
+4. OpenUI document changes are validated and prepared for assembly.
 5. Generated and non-generated inputs are assembled into the Angular
   application.
 6. Verification categories are applied throughout construction and integration,
@@ -534,18 +544,19 @@ assumptions between construction stages.
 
 ### 8.2 Content Sources
 
-The application has two distinct input sources:
+The application has two distinct input abstractions:
 
-- CRM content source: the OpenAPI contract exported by Django and consumed by
-  the generated Angular integration artifacts
-- Non-CRM content source: a separate structured definition set for reactive
-  forms, standalone pages, and bespoke workflows
+- API contract: the OpenAPI document exported by Django or supplied by a
+  contract-first workflow
+- UI description: the OpenUI concrete UI document selected by project
+  configuration
 
 Here, CRM content means contract-derived resource content, not a narrow
 customer-sales domain assumption.
 
-These two streams must remain separate so contract-derived CRM functionality
-does not get mixed with manually-authored UI definitions.
+The documents remain separate versioned inputs with distinct roles, but they
+may describe complementary aspects of the same feature. `djng` validates their
+cross-input consistency before deriving construction operations.
 
 ### 8.3 Contract Rules
 
@@ -555,7 +566,7 @@ does not get mixed with manually-authored UI definitions.
 - Shared enumerations and reference data should come from the API, not be hard
   coded in the client
 - CRM-facing Angular content should always be generated or configured from OpenAPI
-- Non-CRM content definitions should be version-controlled and validated
+- The OpenUI concrete UI document should be version-controlled and validated
   separately from the OpenAPI contract
 - The user-facing product UI remains frontend-owned, while backend data
   administration services remain Django + DRF-owned
@@ -566,7 +577,7 @@ does not get mixed with manually-authored UI definitions.
   error handling
 - Centralize API base URL configuration by environment
 
-### 8.5 Non-CRM Input Source
+### 8.5 OpenUI Input Source
 
 Generated apps conventionally select `spec/openui/app.openui.json` as their
 dedicated structured UI-description input. It is an OpenUI concrete UI document
@@ -575,7 +586,7 @@ whose role, grammar, and catalog relationship are defined by the
 
 This source should define:
 
-- Reactive form metadata that is not directly derivable from OpenAPI
+- Reactive form metadata, including metadata that supplements API contracts
 - Standalone page definitions
 - Workflow-specific layouts or interaction rules
 
@@ -824,7 +835,7 @@ switch environments.
 - Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold
-- Non-CRM content is supplied by a separate structured input source
+- UI descriptions are supplied by an OpenUI concrete UI document
 - Modular backend apps and frontend feature areas are the scaling strategy
 
 ## 18. Implementation Roadmap
@@ -840,6 +851,7 @@ Key actors and terms. Full definitions are in §2.
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `doc/GENERATE_AI_AUTOMATIONS.md` |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agentic orchestrator, the AI automation subsystem, and construction configuration. | §2.5 |
 | **`ngdj`** | See the canonical identity and upstream-source policy. | §2.6 |
+| **`djangoangular`** | See the canonical code-name definition for the combined `djng` and `ngdj` integration architecture. | §2.6.1 |
 | **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.16 |
 | **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.16.1 |
 | **provider adapter** | The portability boundary between an agent executor and a compatible AI runtime. | §2.12 |

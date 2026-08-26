@@ -67,7 +67,7 @@ provider used by an agent session.
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | Resolves its own artifact selectors independently of the current configuration. A missing previous configuration starts a build from scratch. |
 | Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Baseline contract selected by the previous configuration. Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. |
-| Current `app.openui.json` | `artifacts.openuiSpecification` | JSON (`openui.schema.json`) | OpenUI concrete document defining non-CRM UI artifacts. |
+| Current `app.openui.json` | `artifacts.openuiSpecification` | JSON (`openui.schema.json`) | OpenUI concrete UI document selected for the candidate build. |
 | Previous `app.openui.json` | `artifacts.openuiSpecification` from the previous project configuration | JSON (`openui.schema.json`) | Baseline OpenUI document selected by the previous configuration. Absent on a first run; the OpenUI domain emits `create` changes for the candidate document. |
 
 Each project configuration resolves its own artifact selectors relative to its
@@ -235,7 +235,7 @@ they are not a substitute for execution.
 - The builder must compare all supported project-configuration keys and carry
   their changes in the `config` domain.
 - The builder must detect schema changes using `oasdiff`.
-- The builder must detect non-CRM changes by structurally diffing OpenUI
+- The builder must detect OpenUI document changes by structurally diffing OpenUI
   document trees.
 - If no previous schema is available, the OpenAPI domain must emit `create`
   changes for the candidate contract.
