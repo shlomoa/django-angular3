@@ -81,7 +81,12 @@ CRM stands for Customer Relationship Management. In this architecture, it is sho
 Content that is not directly derived from the OpenAPI contract, such as bespoke reactive form definitions, standalone page layouts, and workflow-specific UI metadata. This content is defined in a separate structured input source and complements the CRM-derived Angular integration artifacts.
 
 ### 2.9.1 [OpenUI]
-A technology-independent UI-description specification language and supporting tools, maintained by [shlomoa/openui-spec][openui-spec]. It defines the schema and canonical vocabulary used by concrete UI documents, with tooling to validate and process them. In this architecture, OpenUI provides the versioned, schema-validated structured input for non-CRM content (§2.9).
+A technology-independent UI-description specification maintained by
+[shlomoa/openui-spec][openui-spec]. Its purpose and vocabulary are defined by
+the [OpenUI specification][openui-spec], and the roles of its schema, catalog,
+and concrete UI specification are defined by the
+[OpenUI artifact-role SSOT][openui-artifacts]. `djng` consumes that external
+contract and does not redefine it.
 
 ### 2.10 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for CRM-facing functionality and the basis for generating Angular integration artifacts.
@@ -563,10 +568,10 @@ does not get mixed with manually-authored UI definitions.
 
 ### 8.5 Non-CRM Input Source
 
-Use `spec/openui/app.openui.json` as the dedicated structured input source for
-non-CRM content. It is an [OpenUI concrete UI document][openui-spec] that
-conforms to `openui.schema.json` and uses the vocabulary defined by
-`openui.json`.
+Use `spec/openui/app.openui.json` as the dedicated structured UI-description
+input. It is an OpenUI concrete UI specification whose role, grammar, and
+catalog relationship are defined by the
+[OpenUI artifact-role SSOT][openui-artifacts].
 
 This source should define:
 
@@ -857,7 +862,8 @@ Key actors and terms. Full definitions are in §2.
 [ng-openapi-gen]: https://www.npmjs.com/package/ng-openapi-gen
 [openui-examples]: https://openui-spec.readthedocs.io/en/latest/examples/
 [OpenUI comparison]: https://openui-spec.readthedocs.io/en/latest/tooling/comparison/
-[openui-spec]: https://github.com/shlomoa/openui-spec
+[openui-spec]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md
+[openui-artifacts]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/
 [datamodel-code-generator-github]: https://github.com/koxudaxi/datamodel-code-generator

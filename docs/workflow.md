@@ -58,7 +58,7 @@ python manage.py export_schema
 Author or update the OpenUI concrete UI document referenced by
 `artifacts.openuiSpecification` in the discovered project configuration. The
 generated app convention names this document `app.openui.json`. Its grammar and vocabulary are defined by
-[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec), not by djng;
+the [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog), not by djng;
 consult the [OpenUI per-scope examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 when authoring non-CRM pages, forms, and workflows. The repository fixture at
 [`tests/fixtures/artifacts/openui/example.openui.json`](https://github.com/shlomoa/django-angular3/blob/main/tests/fixtures/artifacts/openui/example.openui.json)

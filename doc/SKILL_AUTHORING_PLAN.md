@@ -44,9 +44,10 @@ public configuration-file argument. The authoritative distinction is in
 
 `app.openui.json` is the generated app's OpenUI concrete UI document. It defines
 the non-CRM UI artifacts and is selected by
-`artifacts.openuiSpecification`. Its grammar is
-defined by `openui.schema.json` and its vocabulary by `openui.json` in
-[shlomoa/openui-spec](https://github.com/shlomoa/openui-spec). `build_app`
+`artifacts.openuiSpecification`. Its role, grammar, and catalog relationship
+are defined by the
+[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog).
+`build_app`
 compares current and previous `app.openui.json` documents to detect non-CRM UI
 changes. Skills that depend on those changes receive them as part of the
 `ChangeSet` command input rather than reading `app.openui.json` directly.

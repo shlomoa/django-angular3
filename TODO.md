@@ -348,17 +348,26 @@ authority while providing the explicit Django command surface.
 
 ### 14.0 What openui-spec provides
 
-The `openui-spec` defines three layered artifacts:
+The external `openui-spec` project defines three peer artifacts:
 
-- **`openui.schema.json`** — grammar: validates the shape of any OpenUI JSON document
-- **`openui.json`** — catalog: machine-readable vocabulary of all scope objects (Application, Controls, Behaviors, Pages, Views, Containers, Widgets, …)
-- **concrete UI document** (`input.json`) — a schema-valid document using vocabulary from the catalog; this is the user-authored UI description
-- **`OpenUiJson` tooling API** — the published validation and editing boundary
-	that validates a concrete document against both the grammar and catalog and
-	rejects duplicate object IDs
+- **Schema (`openui.schema.json`)** — the grammar and structural rules for an
+  OpenUI specification document.
+- **Catalog (`openui.json`)** — the library of documented OpenUI items,
+  including applications, controls, behaviors, pages, views, containers, and
+  widgets.
+- **Concrete UI specification** — an application-specific UI manifest that
+  follows the schema grammar and is composed of items defined by the catalog.
 
-The concrete document format defines the non-CRM input consumed by the djng
-integration contract.
+`OpenUiJson` and the `openui-json` CLI are validation and editing tooling for
+these artifacts; they are not a fourth OpenUI artifact. Concrete examples
+distributed by `openui-spec` and `djng` are non-normative test fixtures, not
+artifact definitions or application UI sources of truth.
+
+OpenUI is a unified, technology-independent UI abstraction, not an internal
+djangoangular format. A concrete UI specification can be implemented using
+Angular, Qt, or another UI technology. In djangoangular, `djng` governs the
+concrete UI specification and converts its manifest into explicit construction,
+build, or generation operations that materialize the application.
 
 ---
 
@@ -411,7 +420,7 @@ implementation change.
 **Status: Not started.** `build_app` is WIP; its current implementation is not
 evidence that any §14.2 requirement is complete.
 
-#### Step 14.2.1 — Define previous-input handling
+#### 14.2.1 — Define previous-input handling
 
 **Status: Resolved — implementation pending.** `build_app` receives the current
 and previous project configurations through `--current-config` and
@@ -421,7 +430,7 @@ the baseline documents. No separate `--previous-openui` flag or `.previous`
 OpenUI filename convention is part of the interface. Implement this contract
 consistently in comparison, examples, and tests.
 
-#### Step 14.2.2 — Implement command execution
+#### 14.2.2 — Implement command execution
 
 **Targets:** `django_angular3/management/commands/build_app.py`,
 `django_angular3/angular.py`, and the required direct execution boundaries.
@@ -439,7 +448,7 @@ generated-app workspace. Normal execution must halt on the first wrapper, tool,
 hook, or validation failure and surface the failure through Django's normal
 error reporting.
 
-#### Step 14.2.3 — Define command translation and output validation
+#### 14.2.3 — Define command translation and output validation
 
 **Targets:** `doc/APP_BUILDER_REQUIREMENTS.md`, `TODO.md`, and
 `django_angular3/management/commands/build_app.py`.
@@ -453,7 +462,7 @@ silently skip their corresponding change. Define post-execution generated-file
 checks, Angular build, and required integration checks. Command execution and
 terminal validation—not an emitted plan—are the build result.
 
-#### Step 14.2.4 — Add direct-build acceptance coverage
+#### 14.2.4 — Add direct-build acceptance coverage
 
 **Targets:** `tests/test_export_schema.py`, new focused `build_app` tests, and
 the scenario fixtures in `doc/TEST_EXAMPLES.md`.
@@ -467,3 +476,128 @@ validated outputs—not an emitted plan. Cover dry-run separately by asserting
 no generated-app files are modified.
 
 ---
+
+## 15. Input and Construction Responsibility SSOT
+
+The generated application uses distinct but composable sources and execution
+boundaries:
+
+- **OpenUI** is the technology-independent contract for UI structure and
+  behavior. An OpenUI concrete UI document can describe routing, navigation,
+  pages, views, controls, widgets, and behaviors regardless of whether the UI
+  presents OpenAPI-backed business data or independently authored workflows.
+  The external `openui-spec` project owns the schema, catalog, concrete UI
+  specification contract, and their conformance rules. OpenUI is not internal
+  to djangoangular and does not prescribe Angular or any other implementation
+  technology. Examples distributed by either project are non-normative test
+  fixtures. In djangoangular, `djng` governs each selected concrete UI
+  specification, derives the required changes, and converts them into explicit
+  construction operations.
+- **OpenAPI** provides the implementation-independent API contract abstraction
+  between the Django/DRF backend and its consumers. In the djangoangular
+  lifecycle, the API contract originates in one of two modes. In model-first
+  mode, the Django/DRF API layer exports operations and data schemas informed by
+  the Django data model. In contract-first mode, an existing OpenAPI document
+  originates the backend data model and DRF elaboration. Both modes converge on
+  a versioned OpenAPI schema file as the durable API contract representation
+  once the backend exists. That file is the input for generating Angular API
+  clients, integration artifacts, and API-contract-derived UI requirements and
+  construction inputs. Those generated outputs do not become competing sources
+  of truth. OpenUI may additionally describe how API-backed data and operations
+  are presented and used in the UI.
+- **`ngdj`** owns deterministic Angular-specific construction operations,
+  including workspace setup, application setup, and Angular code
+  transformations. It validates each explicit schematic invocation, accepted
+  options or bounded input fragment, Angular workspace preconditions, and the
+  construction invariants it owns before applying a mutation. These commands
+  are execution mechanisms, not UI-content definitions.
+- **`djng`** owns input governance, validation, change derivation, command
+  selection, orchestration, cross-source integration, and final generated-app
+  verification. It validates selected OpenAPI and OpenUI inputs against their
+  governing contracts, validates project configuration and cross-input
+  consistency, rejects unsupported derived changes or missing construction
+  capabilities before execution, and verifies the composed generated app after
+  orchestration.
+
+Validation is required at all three boundaries. Validation by `openui-spec`
+does not replace `djng` validation of the concrete inputs and composition it
+governs, and `djng` validation does not replace `ngdj` validation of the
+invocation and Angular mutation boundary it executes.
+
+OpenAPI-derived and OpenUI-described concerns may intersect in the generated
+UI. Their source identities must remain explicit rather than being collapsed
+into one document or classified as mutually exclusive CRM and non-CRM content.
+
+### 15.1 OpenUI responsibility boundary
+
+- [x] 15.1.1. Audit the existing purpose, artifact-role, and glossary SSOT in
+  `openui-spec/spec/README.md`.
+  - The purpose statement correctly defines OpenUI as an
+    implementation-independent Web UI contract and does not use CRM/non-CRM as
+    a scope boundary.
+  - The glossary already covers applications, routing, navigation, behaviors,
+    pages, views of business objects and workflows, controls, widgets, and
+    concrete UI documents without tying them to a data-source classification.
+  - The grammar/catalog/concrete-document artifact roles are defined once and
+    are correctly referenced by `openui-spec/docs/REQUIREMENTS.md`.
+  - The three artifacts are peers: schema, catalog, and concrete UI
+    specification. Validation and editing tooling is not another artifact.
+  - OpenUI is an external, unified UI abstraction rather than a djangoangular
+    format. Djangoangular-specific consumption and orchestration boundaries
+    belong to `djng` and `ngdj` documentation, not the OpenUI specification.
+  - Examples in `openui-spec` and `djng` are non-normative test fixtures.
+  - Framework-associated names do not compromise technology independence.
+    OpenUI represents element types, attribute names, and attribute values as
+    structurally constrained strings. A name such as `ng-template` may be
+    familiar from one framework while remaining an OpenUI type name that an
+    Angular, QML, or other target compiler can materialize according to the
+    declared contract. OpenUI stores these values but does not execute them or
+    prescribe their target implementation.
+  - Incremental generation is a technology-independent lifecycle notion and
+    genuine use case. It defines reconciliation outcomes between a concrete UI
+    specification and an existing manifestation without prescribing Angular,
+    QML, files, schematics, or another target implementation. It does not need
+    to repeat the UI-object semantics defined by the glossary and scope
+    contracts.
+- [x] 15.1.2. Update `openui-spec` only if an actual defect is identified in
+  its schema, catalog, concrete UI specification, or implementation-independent
+  boundary; do not add djangoangular-specific responsibilities to it.
+  - No actual `openui-spec` defect was identified. The three-artifact contract,
+    framework-associated string representation, and incremental-generation
+    notion are consistent with its technology-independent boundary. No
+    `openui-spec` change is required.
+- [x] 15.1.3. Reference only the OpenUI specification and concrete-document
+  SSOT from `djng` and `ngdj`.
+  - `djng` maintained documentation now references the upstream OpenUI
+    specification and artifact-role SSOT instead of restating schema, catalog,
+    and concrete UI specification responsibilities.
+  - `ngdj` requirements reference the same external SSOT and explicitly avoid
+    redefining it. Its repository-specific `site` input is documented as a
+    site assembly definition, not mislabeled as an OpenUI concrete UI
+    specification.
+- [ ] 15.1.4. Remove local definitions that incorrectly restrict OpenUI to
+  non-CRM UI.
+
+### 15.2 Replace CRM and non-CRM terminology
+
+Investigate existing uses of `CRM` and `non-CRM` and replace them with terms
+based on source and derivation:
+
+- **API-contract-derived** — derived from OpenAPI.
+- **UI-description-derived** — derived from an OpenUI concrete UI document.
+- **explicitly authored UI** — UI declarations not inferred from OpenAPI.
+- **Angular construction operation** — a deterministic `ngdj` workspace or
+  code transformation.
+
+A concern may be both API-contract-backed and UI-description-derived; these
+classifications are not mutually exclusive.
+
+- [ ] 15.2.1. Inventory and classify existing terminology in `djng` and
+  `ngdj`.
+- [ ] 15.2.2. Approve the canonical replacement terms.
+- [ ] 15.2.3. Update `openui-spec` only if its existing generic UI boundary is
+  incomplete.
+- [ ] 15.2.4. Update `ngdj` references.
+- [ ] 15.2.5. Update `djng` references.
+- [ ] 15.2.6. Align GitHub issues and tests that still call `ngdj`-specific
+  inputs “non-CRM OpenUI.”
