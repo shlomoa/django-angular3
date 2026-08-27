@@ -236,7 +236,7 @@ See [openapi-integration.md](../shared/openapi-integration.md) — read this on 
   "workspacePath": "/workspace/admin-portal",
   "appName": "admin-portal",
   "uiSpecPath": "spec/openui/",
-  "openapi_source_path": "spec/openapi.yaml"
+   "openapi_source_path": "schema.yaml"
 }
 ```
 

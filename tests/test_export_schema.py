@@ -34,18 +34,18 @@ django.setup()
 
 class GetPreviousSchemaPathTests(unittest.TestCase):
     def test_json_extension(self) -> None:
-        source = Path("/project/spec/openapi/source/api.json")
-        expected = Path("/project/spec/openapi/source/api.previous.json")
+        source = Path("/project/api.json")
+        expected = Path("/project/api.previous.json")
         self.assertEqual(get_previous_schema_path(source), expected)
 
     def test_yaml_extension(self) -> None:
-        source = Path("/project/spec/openapi/source/api.yaml")
-        expected = Path("/project/spec/openapi/source/api.previous.yaml")
+        source = Path("/project/api.yaml")
+        expected = Path("/project/api.previous.yaml")
         self.assertEqual(get_previous_schema_path(source), expected)
 
     def test_multi_dot_stem(self) -> None:
-        source = Path("/project/spec/openapi/source/example.openapi.json")
-        expected = Path("/project/spec/openapi/source/example.openapi.previous.json")
+        source = Path("/project/example.openapi.json")
+        expected = Path("/project/example.openapi.previous.json")
         self.assertEqual(get_previous_schema_path(source), expected)
 
     def test_derived_from_project_config(self) -> None:
@@ -341,14 +341,16 @@ class ExportSchemaCommandTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            config_path = project_root / "django-angular3.json"
+            config_path = project_root / "django-angular3-invalid-ui.json"
             config_path.write_text(
                 json.dumps(
                     {
                         "project": {"name": "invalid-ui"},
-                        "openapi": {"source": "openapi.json"},
-                        "openui": {"source": "missing.openui.json"},
-                        "angular": {"output": "build/angular"},
+                        "artifacts": {
+                            "openapiSchema": "openapi.json",
+                            "openuiSpecification": "missing.openui.json",
+                            "angularWorkspace": "build/angular",
+                        },
                     }
                 ),
                 encoding="utf-8",

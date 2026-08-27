@@ -29,18 +29,18 @@ All skills support three operational modes:
 
 Generate a new Angular Material application inside the workspace with complete directory structure, theme configuration, and standalone bootstrap setup.
 
-**Input Requirements** (all from `django-angular3.json`):
-- `project.name` (required): Name of the application
-- `angular.output` (required): Absolute path to the Angular workspace root directory
-- `angular.workspace.prefix` (optional): Component selector prefix (defaults to `app`)
-- `angular.workspace.routing` (optional): Whether to include routing configuration (defaults to `true`)
+**Input Requirements**:
+- `project.name` (from discovered project configuration, required): Name of the application
+- `artifacts.angularWorkspace` (from discovered project configuration, required): Path to the Angular workspace root
+- `angular.workspace.prefix` (from static `django-angular3.json`, optional): Component selector prefix (defaults to `app`)
+- `angular.workspace.routing` (from static `django-angular3.json`, optional): Whether to include routing configuration (defaults to `true`)
 
 Note: `standalone: true` is a fixed Angular convention and is not configurable.
 
 **Process**:
 
 1. **Validate workspace exists**
-   - Check that `angular.output` exists and contains `angular.json`
+   - Check that `artifacts.angularWorkspace` exists and contains `angular.json`
    - Verify workspace is initialized and valid
    - Confirm `project.name` doesn't already exist in workspace
 
@@ -145,8 +145,8 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
 Update an existing Angular Material application with changes to providers, global styles, or routing configuration.
 
 **Input Requirements**:
-- `project.name` (from `django-angular3.json`, required): Name of the existing application to modify
-- `angular.output` (from `django-angular3.json`, required): Absolute path to the Angular workspace
+- `project.name` (from discovered project configuration, required): Name of the existing application to modify
+- `artifacts.angularWorkspace` (from discovered project configuration, required): Path to the Angular workspace
 - `modifications` (from command inputs, required): Object describing changes to make:
   - `providers`: Array of provider configurations to add/remove
   - `styles`: CSS/SCSS rules to add to global styles
@@ -233,20 +233,20 @@ Update an existing Angular Material application with changes to providers, globa
 
 Remove an Angular Material application completely from the workspace, including all source files and configuration.
 
-**Input Requirements** (all from `django-angular3.json`):
+**Input Requirements** (from discovered project configuration):
 - `project.name` (required): Name of the application to delete
-- `angular.output` (required): Absolute path to the Angular workspace
+- `artifacts.angularWorkspace` (required): Path to the Angular workspace
 
 **Process**:
 
 1. **Validate application exists**
-   - Verify `<angular.output>/projects/<project.name>/` exists
+   - Verify `<angular-workspace>/projects/<project.name>/` exists
    - Check `angular.json` contains configuration for `<project.name>`
    - Confirm no other applications depend on this one
 
 2. **Remove application directory** using Bash tool:
    ```bash
-   rm -rf <angular.output>/projects/<project.name>
+   rm -rf <angular-workspace>/projects/<project.name>
    ```
 
 3. **Update `angular.json`** using Read and Edit tools:
@@ -360,9 +360,9 @@ Optional dependencies:
 **Example 1: Create a new admin dashboard application**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "admin-dashboard"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 // Command-level: prefix = "admin"
 
 // Executes:
@@ -379,9 +379,9 @@ Optional dependencies:
 **Example 2: Modify existing app to add authentication provider**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "admin-dashboard"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 // Command-level: add provideAuth provider + styles
 
 // Executes:
@@ -397,9 +397,9 @@ Optional dependencies:
 **Example 3: Register lazy-loaded feature route**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "admin-dashboard"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.routes.ts
@@ -412,9 +412,9 @@ Optional dependencies:
 **Example 4: Delete an application**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "old-admin"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 // Command-level: confirm = true
 
 // Executes:

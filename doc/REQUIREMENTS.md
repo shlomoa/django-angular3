@@ -130,7 +130,10 @@ External dependencies and services include:
 
 - Swagger Studio / SwaggerHub-style authoring flow for designing or updating
   the OpenAPI specification before export
-- versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) exported into `spec/openapi/source/`. OAS 3.1 is the pinned version; the toolchain ([drf-spectacular], [oasdiff], [ng-openapi-gen]) does not yet support OAS 3.2.
+- versioned OpenAPI schema artifacts (see [OpenAPI 3.1 Specification]) selected
+  by the project configuration's `artifacts.openapiSchema` path. OAS 3.1 is
+  the pinned version; the toolchain ([drf-spectacular], [oasdiff],
+  [ng-openapi-gen]) does not yet support OAS 3.2.
 - OpenUI concrete UI documents maintained in `spec/openui/`
 - [oasdiff] for OpenAPI schema diffing and change detection
 - [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
@@ -198,7 +201,8 @@ contract inputs, generation support, delivery support, and client access.
 
 - OpenAPI authoring and export system: users may design or update the API
   contract in Swagger Studio / SwaggerHub-style tooling before exporting the
-  schema artifact into `spec/openapi/source/`.
+  schema artifact to the path selected by `artifacts.openapiSchema` in the
+  project configuration.
 - OpenAPI schema artifacts: durable, versioned schema files are external input
   artifacts consumed by downstream validation and generation flows.
 - Schema diff tool: `oasdiff` must participate in contract change detection
@@ -286,9 +290,10 @@ The platform must support the following primary user workflows:
   maintains core configuration and centrally managed reference data used across
   business modules.
 - **Run the first-time build from OpenAPI and UI inputs**: a user exports the
-  OpenAPI artifact into `spec/openapi/source/`, provides an OpenUI concrete UI
-  document in `spec/openui/`, triggers the build, and receives stage-specific
-  feedback from validation, generation, and final assembly.
+  OpenAPI artifact to the project configuration's `artifacts.openapiSchema`
+  path, provides an OpenUI concrete UI document in `spec/openui/`, triggers the
+  build, and receives stage-specific feedback from validation, generation, and
+  final assembly.
 
 ### 3.3. Preconditions and postconditions
 
@@ -334,10 +339,10 @@ endpoints that enforce validation and authorization on the server side.
     committed through validated administrative operations.
 
 - **Run the first-time build from OpenAPI and UI inputs**
-  - Preconditions: a versioned OpenAPI schema artifact is available in
-    `spec/openapi/source/`; an OpenUI input is available in `spec/openui/`; the
-    OpenAPI contract is valid and generation-compatible; and the OpenUI input is
-    valid.
+  - Preconditions: a versioned OpenAPI schema artifact is available at the
+    project configuration's `artifacts.openapiSchema` path; an OpenUI input is
+    available in `spec/openui/`; the OpenAPI contract is valid and generation-
+    compatible; and the OpenUI input is valid.
   - Postconditions: the build either produces generated CRM-facing artifacts,
     assembled application outputs, and stage results for valid inputs, or it
     fails fast with stage-specific feedback identifying contract validation,
@@ -384,7 +389,8 @@ role-appropriate, and validated through backend-enforced operations.
 - **Run the first-time build from OpenAPI and UI inputs**
   1. A user designs or updates the OpenAPI specification in the authoring
     tool.
-  2. The user exports the schema artifact into `spec/openapi/source/`.
+  2. The user exports the schema artifact to the path selected by
+    `artifacts.openapiSchema` in the project configuration.
   3. The user provides the OpenUI concrete UI document in `spec/openui/`.
   4. The user triggers the build from the repository.
   5. The build validates the contract and OpenUI input, generates CRM-facing
@@ -737,7 +743,7 @@ locations with:
     "name": "django-angular3-scaffold"
   },
   "artifacts": {
-    "openapiSchema": "spec/openapi/source/example.openapi.json",
+    "openapiSchema": "django_angular3/examples/01_simple_crm/schema.yaml",
     "openuiSpecification": "spec/openui/app.openui.json",
     "angularWorkspace": "build/angular"
   }
@@ -766,13 +772,13 @@ The derived file is an implementation artifact and must not be independently
 editable. `ngOpenApiGen` must not contain per-run `input` or `output` values.
 
 For example, a derived file for a project with an OAS schema at
-`spec/openapi/source/example.openapi.json` and an Angular workspace at
-`build/angular` is:
+`django_angular3/examples/01_simple_crm/schema.yaml` and an Angular workspace
+at `build/angular` is:
 
 ```json
 {
   "$schema": "https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/master/ng-openapi-gen-schema.json",
-  "input": "spec/openapi/source/example.openapi.json",
+  "input": "django_angular3/examples/01_simple_crm/schema.yaml",
   "output": "build/angular/generated/ng-openapi-gen",
   "serviceSuffix": "Api",
   "modelIndex": true
@@ -1021,7 +1027,8 @@ sequenceDiagram
 
 1. A user designs or updates the OpenAPI specification using SmartBear's
    OpenAPI authoring tools (Swagger Studio or SwaggerHub)
-2. The user exports or dumps the OAS artifact into `spec/openapi/source/`
+2. The user exports or dumps the OAS artifact to the path selected by
+  `artifacts.openapiSchema` in the project configuration
 3. The user adds the OpenUI concrete UI document describing pages, forms,
   navigation, workflows, and related UI concerns into `spec/openui/`
 4. The user fires a build from the repository
@@ -1031,8 +1038,8 @@ sequenceDiagram
 
 For this flow:
 
-- The repository must provide a clear location for the source OAS artifact at
-  `spec/openapi/source/`
+- The project configuration must select the source OAS artifact through
+  `artifacts.openapiSchema`
 - The repository must provide a separate location for the OpenUI concrete UI
   document at `spec/openui/`
 - The build must fail fast when the OpenAPI contract is invalid or incompatible

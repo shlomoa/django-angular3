@@ -882,7 +882,7 @@ command.
 
 **Deterministic action**:
 
-1. Read `openapi.source` from `django-angular3.json`.
+1. Read `artifacts.openapiSchema` from the discovered project configuration.
 2. Assert the schema file exists and its modification timestamp is greater
    than or equal to the newest migration file under the configured Django
    apps' `migrations/` directories.
@@ -927,8 +927,8 @@ sees a contract that matches the current data model.
 1. Enumerate the migration files added or modified during the wrapped tool
    call by listing the contents of each app's `migrations/` directory and
    comparing against the pre-call snapshot captured by the hook runner.
-2. If the set is non-empty, invoke the `openapi_schema_export` tool contract with
-   the project's `django-angular3.json` config path.
+2. If the set is non-empty, invoke the `openapi_schema_export` tool contract;
+  it discovers the project's `django-angular3-<project_name>.json` configuration.
 3. Append a `{ hook: "migration-triggered", migrations: [...], destination,
    previous_path, schema_changed }` record to `build/hook-log.jsonl`.
 4. Exit 0 regardless of `schema_changed`; the `pre-construction` hook will
@@ -972,7 +972,7 @@ generation tool contract.
    array returned by `angular_api_client_generate`) from the run's artifact location.
 2. Run a lightweight structural check appropriate to the wrapped tool:
    - For `angular_api_client_generate`: `tsc --noEmit` in the generated app workspace
-     (`angular.output`).
+     (`artifacts.angularWorkspace`).
    - For `angular_workspace_scaffold` / `angular_app_scaffold`: assert the expected
      workspace/app directories and files exist on disk.
 3. Append a verification entry
@@ -2491,7 +2491,7 @@ The mode to apply to each object is determined by running `oasdiff` against the 
 ---
 name: angular-workspace-foundation
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
-when_to_use: Use when build_app selects a workspace-creation or workspace-modification command, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
+when_to_use: Use when build_app selects a workspace-creation or workspace-modification command, or when a user runs /angular-workspace-foundation to scaffold or update the Angular workspace selected by the discovered project configuration.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -2510,11 +2510,13 @@ The `angular-workspace-foundation` skill manages the creation, modification, and
 
 #### Inputs
 
-All inputs are read from `django-angular3.json` passed as the command input.
+Project identity and artifact locations come from the discovered
+`django-angular3-<project_name>.json`; global Angular defaults come from static
+`django-angular3.json`.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `angular.output` | yes | string | — | Absolute path where the workspace will be created |
+| `artifacts.angularWorkspace` | yes | string | — | Path where the workspace will be created, relative to the project configuration |
 | `project.name` | yes | string | — | Name of the workspace |
 | `angular.workspace.packageManager` | no | `npm` \| `yarn` \| `pnpm` | `pnpm` | Package manager to use |
 | `angular.workspace.style` | no | `css` \| `scss` \| `sass` \| `less` | `scss` | Stylesheet format |
@@ -2526,7 +2528,7 @@ Generate an Angular Material workspace from scratch when it doesn't exist.
 
 ##### Input Requirements
 
-- **`angular.output`**: Must not already exist or must be an empty directory
+- **`artifacts.angularWorkspace`**: Must not already exist or must be an empty directory
 - **`project.name`**: Valid workspace name (lowercase, hyphenated)
 - **`angular.workspace.packageManager`**: Valid package manager executable must be available in PATH
 - **`angular.workspace.style`**: Must be a valid Angular CLI stylesheet option
@@ -2536,7 +2538,7 @@ Generate an Angular Material workspace from scratch when it doesn't exist.
 
 Before creating the workspace, verify:
 
-1. `angular.output` directory does not exist or is empty
+1. `artifacts.angularWorkspace` directory does not exist or is empty
 2. Node.js version meets Angular's requirements (currently Node 18.19+ or 20.11+ or 22.0+)
 3. Sufficient disk space is available (minimum 500MB recommended)
 
@@ -2616,7 +2618,7 @@ Package manager availability and Angular CLI access are validated by the `ng_new
 After successful execution, the workspace directory contains:
 
 ```
-<angular.output>/
+<angular-workspace>/
 ├── .angular/                     # Angular cache directory
 ├── .editorconfig                 # Editor configuration
 ├── .gitignore                    # Git ignore rules
@@ -2655,11 +2657,11 @@ After successful execution, the workspace directory contains:
 
 Update an existing workspace with configuration changes, package updates, or new tooling.
 
-> **Note**: `build_app` does not trigger `angular-workspace-foundation` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
+> **Note**: `build_app` does not trigger `angular-workspace-foundation` Modify mode during normal operation — the discovered project configuration and static tool configuration are always read as current and their changes are not tracked. Modify mode is available for manual invocation via `--force`.
 
 ##### Input Requirements
 
-- **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
+- **`artifacts.angularWorkspace`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 - **`modificationTarget`** (enum): Type of modification to perform:
   - `add-package`: Add NPM package(s)
   - `update-packages`: Update existing packages to latest versions
@@ -2680,7 +2682,7 @@ Update an existing workspace with configuration changes, package updates, or new
 5. Commit changes: `git add . && git commit -m "chore: add <packageName>"`
 
 **For `update-packages` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Update all packages: `pnpm update`
 3. Run build: `django-admin ng_build django-angular3.json`
 4. Run tests: `pnpm exec ng test --watch=false`
@@ -2688,7 +2690,7 @@ Update an existing workspace with configuration changes, package updates, or new
 6. Commit changes: `git add . && git commit -m "chore: update dependencies"`
 
 **For `update-angular` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Run Angular update: `pnpm exec ng update @angular/core @angular/cli @angular/material`
 3. Review migration messages
 4. Run build and tests: `django-admin ng_build django-angular3.json` and `pnpm exec ng test --watch=false`
@@ -2696,7 +2698,7 @@ Update an existing workspace with configuration changes, package updates, or new
 6. Commit changes: `git add . && git commit -m "chore: update Angular to v<version>"`
 
 **For `change-build-config` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Read `angular.json` using Read tool
 3. Apply requested configuration changes using Edit tool
 4. Validate JSON syntax
@@ -2704,14 +2706,14 @@ Update an existing workspace with configuration changes, package updates, or new
 6. Commit changes: `git add angular.json && git commit -m "chore: update build configuration"`
 
 **For `reconfigure-material` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Update `src/styles.scss` with new theme configuration using Edit tool
 3. Test build: `django-admin ng_build django-angular3.json`
 4. Verify Material components render correctly
 5. Commit changes: `git add . && git commit -m "style: update Material theme"`
 
 **For `add-eslint-rule` modifications**:
-1. Verify `angular.output` exists and ESLint is configured
+1. Verify `artifacts.angularWorkspace` exists and ESLint is configured
 2. Read `.eslintrc.json` using Read tool
 3. Add or modify rules using Edit tool
 4. Run linter: `pnpm exec ng lint`
@@ -2730,7 +2732,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
 ##### Input Requirements
 
-- **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
+- **`artifacts.angularWorkspace`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 
 ##### Process (Delete Mode)
 
@@ -2747,7 +2749,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
    > **Note**: `ng_workspace_delete` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
-2. **Verify deletion**: Confirm `angular.output` directory no longer exists.
+2. **Verify deletion**: Confirm `artifacts.angularWorkspace` directory no longer exists.
 
 ##### Output
 
@@ -2774,12 +2776,12 @@ After creating a workspace, verify:
 
 1. **Directory structure exists**:
    ```bash
-   [ -f <angular.output>/angular.json ] && echo "✓ Workspace created"
+  [ -f <angular-workspace>/angular.json ] && echo "✓ Workspace created"
    ```
 
 2. **Dependencies installed**:
    ```bash
-   [ -d <angular.output>/node_modules ] && echo "✓ Dependencies installed"
+  [ -d <angular-workspace>/node_modules ] && echo "✓ Dependencies installed"
    ```
 
 3. **Build succeeds**:
@@ -2836,7 +2838,7 @@ After modifying a workspace, verify:
 
 **Error**: `The serve command requires to be run in an Angular project`
 - **Cause**: Not in workspace root directory
-- **Resolution**: Verify `angular.output` in `django-angular3.json` is correct and points to a directory containing `angular.json`
+- **Resolution**: Verify `artifacts.angularWorkspace` in the discovered project configuration is correct and points to a directory containing `angular.json`
 
 **Error**: Workspace directory already exists and is not empty
 - **Cause**: Target directory contains files
@@ -2862,9 +2864,11 @@ After modifying a workspace, verify:
 
 ##### Example 1: Create New Workspace
 
-**Input** (from `django-angular3.json`):
+**Project input** (from discovered `django-angular3-<project_name>.json`):
 - `project.name`: `"my-shop"`
-- `angular.output`: `"/home/user/projects/my-shop"`
+- `artifacts.angularWorkspace`: `"/home/user/projects/my-shop"`
+
+**Tool defaults** (from static `django-angular3.json`):
 - `angular.workspace.packageManager`: `"pnpm"`
 - `angular.workspace.style`: `"scss"`
 - `angular.workspace.routing`: `true`
@@ -2880,9 +2884,9 @@ After modifying a workspace, verify:
 
 ##### Example 2: Update Angular Version
 
-**Input** (from `django-angular3.json`):
+**Input** (from discovered `django-angular3-<project_name>.json`):
 - `project.name`: `"my-shop"`
-- `angular.output`: `"/home/user/projects/my-shop"`
+- `artifacts.angularWorkspace`: `"/home/user/projects/my-shop"`
 
 **Execution**:
 1. Run `pnpm exec ng update @angular/core @angular/cli @angular/material`
@@ -2894,15 +2898,15 @@ After modifying a workspace, verify:
 
 ##### Example 3: Delete Workspace
 
-**Input** (from `django-angular3.json`):
+**Input** (from discovered `django-angular3-<project_name>.json`):
 - `project.name`: `"my-shop"`
-- `angular.output`: `"/home/user/projects/my-shop"`
+- `artifacts.angularWorkspace`: `"/home/user/projects/my-shop"`
 
 Command-level input: `confirmDelete: true`
 
 **Execution**:
 1. Run `django-admin ng_workspace_delete django-angular3.json` (when in `command_allowlist`)
-2. Confirm `angular.output` directory no longer exists
+2. Confirm `artifacts.angularWorkspace` directory no longer exists
 
 **Output**: Workspace deleted
 
@@ -2937,18 +2941,18 @@ All skills support three operational modes:
 
 Generate a new Angular Material application inside the workspace with complete directory structure, theme configuration, and standalone bootstrap setup.
 
-**Input Requirements** (all from `django-angular3.json`):
-- `project.name` (required): Name of the application
-- `angular.output` (required): Absolute path to the Angular workspace root directory
-- `angular.workspace.prefix` (optional): Component selector prefix (defaults to `app`)
-- `angular.workspace.routing` (optional): Whether to include routing configuration (defaults to `true`)
+**Input Requirements**:
+- `project.name` (from discovered project configuration, required): Name of the application
+- `artifacts.angularWorkspace` (from discovered project configuration, required): Path to the Angular workspace root
+- `angular.workspace.prefix` (from static `django-angular3.json`, optional): Component selector prefix (defaults to `app`)
+- `angular.workspace.routing` (from static `django-angular3.json`, optional): Whether to include routing configuration (defaults to `true`)
 
 Note: `standalone: true` is a fixed Angular convention and is not configurable.
 
 **Process**:
 
 1. **Validate workspace exists**
-   - Check that `angular.output` exists and contains `angular.json`
+  - Check that `artifacts.angularWorkspace` exists and contains `angular.json`
    - Verify workspace is initialized and valid
    - Confirm `project.name` doesn't already exist in workspace
 
@@ -3053,8 +3057,8 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
 Update an existing Angular Material application with changes to providers, global styles, or routing configuration.
 
 **Input Requirements**:
-- `project.name` (from `django-angular3.json`, required): Name of the existing application to modify
-- `angular.output` (from `django-angular3.json`, required): Absolute path to the Angular workspace
+- `project.name` (from discovered project configuration, required): Name of the existing application to modify
+- `artifacts.angularWorkspace` (from discovered project configuration, required): Path to the Angular workspace
 - `modifications` (from command inputs, required): Object describing changes to make:
   - `providers`: Array of provider configurations to add/remove
   - `styles`: CSS/SCSS rules to add to global styles
@@ -3141,20 +3145,20 @@ Update an existing Angular Material application with changes to providers, globa
 
 Remove an Angular Material application completely from the workspace, including all source files and configuration.
 
-**Input Requirements** (all from `django-angular3.json`):
+**Input Requirements** (from discovered project configuration):
 - `project.name` (required): Name of the application to delete
-- `angular.output` (required): Absolute path to the Angular workspace
+- `artifacts.angularWorkspace` (required): Path to the Angular workspace
 
 **Process**:
 
 1. **Validate application exists**
-   - Verify `<angular.output>/projects/<project.name>/` exists
+  - Verify `<angular-workspace>/projects/<project.name>/` exists
    - Check `angular.json` contains configuration for `<project.name>`
    - Confirm no other applications depend on this one
 
 2. **Remove application directory** using Bash tool:
    ```bash
-   rm -rf <angular.output>/projects/<project.name>
+  rm -rf <angular-workspace>/projects/<project.name>
    ```
 
 3. **Update `angular.json`** using Read and Edit tools:
@@ -3268,9 +3272,9 @@ Optional dependencies:
 **Example 1: Create a new admin dashboard application**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "admin-dashboard"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 // Command-level: prefix = "admin"
 
 // Executes:
@@ -3287,9 +3291,9 @@ Optional dependencies:
 **Example 2: Modify existing app to add authentication provider**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "admin-dashboard"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 // Command-level: add provideAuth provider + styles
 
 // Executes:
@@ -3305,9 +3309,9 @@ Optional dependencies:
 **Example 3: Register lazy-loaded feature route**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "admin-dashboard"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 
 // Executes:
 // 1. Reads projects/admin-dashboard/src/app/app.routes.ts
@@ -3320,9 +3324,9 @@ Optional dependencies:
 **Example 4: Delete an application**
 
 ```typescript
-// Inputs from django-angular3.json:
+// Inputs from discovered django-angular3-<project_name>.json:
 //   project.name = "old-admin"
-//   angular.output = "/workspace/my-project"
+//   artifacts.angularWorkspace = "/workspace/my-project"
 // Command-level: confirm = true
 
 // Executes:
@@ -3362,23 +3366,23 @@ Generate TypeScript API client code (services and models) from OpenAPI specifica
 Generate API client code from an OpenAPI specification when it doesn't exist.
 
 **Input Requirements**:
-- `openapi.source` (from `django-angular3.json`, required): Path to the current OpenAPI specification file (JSON or YAML)
-- `angular.output` (from `django-angular3.json`, required): Angular workspace root (used to locate `ng-openapi-gen.json`)
+- `artifacts.openapiSchema` (from discovered project configuration, required): Path to the current OpenAPI specification file (JSON or YAML)
+- `artifacts.angularWorkspace` (from discovered project configuration, required): Angular workspace root (used to locate `ng-openapi-gen.json`)
 
 Output path is configured in `ng-openapi-gen.json` at the workspace root; the
 `oasdiff_report` is available in the ChangeSet passed as command input.
 
 **Process**:
 1. **Preflight validation**:
-   - Verify `openapi.source` file exists and is well-formed JSON or YAML
+  - Verify `artifacts.openapiSchema` file exists and is well-formed JSON or YAML
    - Check `ng-openapi-gen` is installed in workspace: `pnpm list ng-openapi-gen`
-   - Check for `ng-openapi-gen.json` at `angular.output` root
+  - Check for `ng-openapi-gen.json` at `artifacts.angularWorkspace` root
 2. **Configuration setup** (if `ng-openapi-gen.json` doesn't exist):
    - Create `ng-openapi-gen.json` at workspace root with:
      ```json
      {
        "$schema": "node_modules/ng-openapi-gen/ng-openapi-gen-schema.json",
-       "input": "<openapi.source>",
+      "input": "<openapi-schema>",
        "output": "src/app/api",
        "ignoreUnusedModels": false
      }
@@ -3407,14 +3411,14 @@ Output path is configured in `ng-openapi-gen.json` at the workspace root; the
 Regenerate API client code after OpenAPI specification changes.
 
 **Input Requirements**:
-- `openapi.source` (from `django-angular3.json`, required): Path to the updated OpenAPI specification file
-- `angular.output` (from `django-angular3.json`, required): Angular workspace root
+- `artifacts.openapiSchema` (from discovered project configuration, required): Path to the updated OpenAPI specification file
+- `artifacts.angularWorkspace` (from discovered project configuration, required): Angular workspace root
 
 The `oasdiff_report` is available in the ChangeSet passed as command input.
 
 **Process**:
 1. **Verify existing generation**:
-   - Confirm `ng-openapi-gen.json` config exists at `angular.output`
+  - Confirm `ng-openapi-gen.json` config exists at `artifacts.angularWorkspace`
    - Confirm output directory exists with previous generation
 2. **Clean previous generation** (optional):
    - ng-openapi-gen handles incremental updates, but removed endpoints/models may leave orphaned files
@@ -3440,7 +3444,7 @@ The `oasdiff_report` is available in the ChangeSet passed as command input.
 Remove generated API client code directory; invoke Create mode to regenerate.
 
 **Input Requirements**:
-- `angular.output` (from `django-angular3.json`, required): Angular workspace root (output path is read from `ng-openapi-gen.json`)
+- `artifacts.angularWorkspace` (from discovered project configuration, required): Angular workspace root (output path is read from `ng-openapi-gen.json`)
 
 **Process**:
 1. **Verify target**:
@@ -3536,12 +3540,12 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Example 1: Initial API generation**
 ```markdown
-Input (from django-angular3.json):
-- openapi.source: "spec/openapi.yaml"
-- angular.output: "/path/to/workspace"
+Input (from discovered `django-angular3-<project_name>.json`):
+- artifacts.openapiSchema: "schema.yaml"
+- artifacts.angularWorkspace: "/path/to/workspace"
 
 Process:
-1. Verify spec/openapi.yaml exists
+1. Verify schema.yaml exists
 2. Create ng-openapi-gen.json config
 3. Run: django-admin ng_openapi_gen django-angular3.json
 4. Report generated files
@@ -3559,7 +3563,7 @@ Barrel exports created
 **Example 2: Regeneration after spec update**
 ```markdown
 Input:
-- openapi_source_path: "spec/openapi.yaml" (updated)
+- openapi_source_path: "schema.yaml" (updated)
 
 Process:
 1. Detect existing ng-openapi-gen.json
@@ -3611,8 +3615,8 @@ The `angular-data-service-composition` skill manages handwritten Angular data se
 
 #### Inputs
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path (used to locate the workspace)
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path (used to locate the workspace)
 - `project.name`: Project name (used to resolve the application directory)
 
 Command-level input (provided by `build_app` when invoking this skill):
@@ -3831,8 +3835,8 @@ Generate a standalone Angular Material small field-level component from scratch 
 
 **Input Requirements**:
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
 Command-level inputs (provided by `build_app`):
@@ -3851,8 +3855,8 @@ Command-level inputs (provided by `build_app`):
 **Process**:
 
 1. **Validate prerequisites**:
-   - Read `angular.output` and `project.name` from `django-angular3.json`
-   - Verify workspace exists at `angular.output` and contains `angular.json`
+  - Read `artifacts.angularWorkspace` and `project.name` from the discovered project configuration
+  - Verify the workspace exists at `artifacts.angularWorkspace` and contains `angular.json`
    - Verify application `<project.name>` exists in `projects/<project.name>/`
    - Confirm workspace uses standalone component architecture
    - Validate `componentName` follows naming conventions (lowercase, hyphenated)
@@ -4009,7 +4013,7 @@ Update an existing Angular Material small field-level component by adding/removi
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName` (string, required): Name of the existing component to modify
@@ -4112,7 +4116,7 @@ Remove an Angular Material small field-level component completely, including all
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName` (string, required): Name of the component to delete
@@ -4264,8 +4268,8 @@ Common errors and their resolution strategies:
 - **Resolution**: Use Modify mode to update existing component, or Delete mode first, or choose a different name
 
 **Error**: Application `<project.name>` not found in workspace
-- **Cause**: `project.name` in `django-angular3.json` does not match any project in the workspace
-- **Resolution**: Verify `angular.output` contains `angular.json` and the application exists in `projects/`
+- **Cause**: `project.name` in the discovered project configuration does not match any project in the workspace
+- **Resolution**: Verify `artifacts.angularWorkspace` contains `angular.json` and the application exists in `projects/`
 
 **Error**: `Invalid placement path: feature/<feature-name> does not exist`
 - **Cause**: Feature directory doesn't exist
@@ -4312,7 +4316,7 @@ Dependent skills (use this skill before):
 
 **Example 1: Create a status badge component in shared**
 
-Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `project.name = "admin-dashboard"`
+Input from the discovered project configuration: `artifacts.angularWorkspace = "/workspace/my-project"`, `project.name = "admin-dashboard"`
 
 ```json
 {
@@ -4454,8 +4458,8 @@ Generate a standalone Angular Material form field component implementing `Contro
 
 **Input Requirements**:
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
 Command-level inputs:
@@ -4476,8 +4480,8 @@ Command-level inputs:
 **Process**:
 
 1. **Validate prerequisites**:
-   - Read `angular.output` and `project.name` from `django-angular3.json`
-   - Verify workspace exists at `angular.output` and contains `angular.json`
+  - Read `artifacts.angularWorkspace` and `project.name` from the discovered project configuration
+  - Verify the workspace exists at `artifacts.angularWorkspace` and contains `angular.json`
    - Verify application `<project.name>` exists in `projects/<project.name>/`
    - Confirm workspace uses standalone component architecture
    - Validate `componentName` follows naming conventions (lowercase, hyphenated)
@@ -4716,7 +4720,7 @@ Update an existing form field component to change input type, add/remove validat
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName` (string, required): Name of the form field component to modify
@@ -4815,7 +4819,7 @@ Remove a form field component completely from the codebase, including all relate
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName` (string, required): Name of the form field component to delete
@@ -4981,8 +4985,8 @@ Common errors and their resolution strategies:
 - **Resolution**: Use Modify mode to update existing component, or Delete mode first, or choose a different name
 
 **Error**: Application `<project.name>` not found in workspace
-- **Cause**: `project.name` in `django-angular3.json` does not match any project in the workspace
-- **Resolution**: Verify `angular.output` contains `angular.json` and the application exists in `projects/`
+- **Cause**: `project.name` in the discovered project configuration does not match any project in the workspace
+- **Resolution**: Verify `artifacts.angularWorkspace` contains `angular.json` and the application exists in `projects/`
 
 **Error**: `Invalid placement path: feature/<feature-name> does not exist`
 - **Cause**: Feature directory doesn't exist
@@ -5045,7 +5049,7 @@ Dependent skills (use this skill before):
 
 **Example 1: Create an email input form field in shared**
 
-Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `project.name = "admin-dashboard"`
+Input from the discovered project configuration: `artifacts.angularWorkspace = "/workspace/my-project"`, `project.name = "admin-dashboard"`
 
 ```json
 {
@@ -5291,8 +5295,8 @@ When components are generated through the `angular-django2:component` schematic,
 
 #### Inputs
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
 Command-level inputs:
@@ -5317,8 +5321,8 @@ Generate a new Angular component from scratch when it doesn't exist.
 
 Before creating the component, verify:
 
-1. Read `angular.output` and `project.name` from `django-angular3.json`
-2. Workspace exists at `angular.output` and contains `angular.json`
+1. Read `artifacts.angularWorkspace` and `project.name` from the discovered project configuration
+2. The workspace exists at `artifacts.angularWorkspace` and contains `angular.json`
 3. Target directory exists or can be created
 4. Component with same name doesn't already exist at target path
 
@@ -5636,7 +5640,7 @@ Update an existing Angular component with changes to template, services, or type
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName`: Must reference existing component
@@ -5706,7 +5710,7 @@ Remove an Angular component completely, including all files and references in pa
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName`: Must reference existing component to delete
@@ -5947,7 +5951,7 @@ Optional dependencies:
 **Example 1: Create a display component for product card**
 
 ```typescript
-// Inputs from django-angular3.json: angular.output, project.name = "admin-dashboard"
+// Inputs from discovered project configuration: artifacts.angularWorkspace, project.name = "admin-dashboard"
 // Command-level:
 {
   componentName: "product-card",
@@ -5969,7 +5973,7 @@ Optional dependencies:
 **Example 2: Create a container component for user list**
 
 ```typescript
-// Inputs from django-angular3.json: angular.output, project.name
+// Inputs from discovered project configuration: artifacts.angularWorkspace, project.name
 // Command-level:
 {
   componentName: "user-list",
@@ -5991,7 +5995,7 @@ Optional dependencies:
 **Example 3: Create a dialog component for confirmation**
 
 ```typescript
-// Inputs from django-angular3.json: angular.output, project.name
+// Inputs from discovered project configuration: artifacts.angularWorkspace, project.name
 // Command-level:
 {
   componentName: "confirm-delete",
@@ -6013,7 +6017,7 @@ Optional dependencies:
 **Example 4: Modify existing component to add service injection**
 
 ```typescript
-// Inputs from django-angular3.json: angular.output, project.name
+// Inputs from discovered project configuration: artifacts.angularWorkspace, project.name
 // Command-level:
 {
   componentName: "user-list",
@@ -6043,7 +6047,7 @@ Optional dependencies:
 **Example 5: Delete a component and clean up references**
 
 ```typescript
-// Inputs from django-angular3.json: angular.output, project.name
+// Inputs from discovered project configuration: artifacts.angularWorkspace, project.name
 // Command-level:
 {
   componentName: "old-widget",
@@ -6115,8 +6119,8 @@ The `angular-complex-component-composition` skill manages Angular Material compo
 
 #### Inputs
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
 Command-level inputs:
@@ -6145,8 +6149,8 @@ Generate a new Angular Material complex component from scratch.
 
 Before creating the component, verify:
 
-1. Read `angular.output` and `project.name` from `django-angular3.json`
-2. `angular.json` exists under `angular.output`
+1. Read `artifacts.angularWorkspace` and `project.name` from the discovered project configuration
+2. `angular.json` exists under `artifacts.angularWorkspace`
 3. Angular Material and `@angular/cdk` are installed when `cdk-overlay` is requested
 4. The target component directory does not already exist
 5. Root theme entrypoint (typically `src/styles.scss`) exists and is writable when `mixins` is requested
@@ -6227,7 +6231,7 @@ Update an existing complex component by adding advanced composition features wit
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName` must reference an existing component directory
@@ -6253,7 +6257,7 @@ Remove a complex component and its advanced integrations completely.
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `componentName` must reference an existing complex component
@@ -6358,7 +6362,7 @@ Required prerequisites before executing this skill:
 
 **Example 1: Create a themed complex component with nested children**
 
-Input from `django-angular3.json`: `angular.output = "/workspace/my-project"`, `project.name = "admin-dashboard"`
+Input from the discovered project configuration: `artifacts.angularWorkspace = "/workspace/my-project"`, `project.name = "admin-dashboard"`
 
 ```json
 {
@@ -6403,8 +6407,8 @@ The `angular-reactive-form-composition` skill manages Angular reactive form comp
 
 #### Inputs
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
 Command-level inputs:
@@ -6428,7 +6432,7 @@ Generate a new Angular reactive form component from scratch with typed `FormGrou
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `formName` (string): Form component name in kebab-case
@@ -6439,8 +6443,8 @@ Command-level inputs:
 **Process**:
 
 1. **Pre-flight validation**:
-   - Read `angular.output` and `project.name` from `django-angular3.json`
-   - Verify workspace exists at `angular.output` and contains `angular.json`
+  - Read `artifacts.angularWorkspace` and `project.name` from the discovered project configuration
+  - Verify the workspace exists at `artifacts.angularWorkspace` and contains `angular.json`
    - Verify application `<project.name>` exists in `projects/<project.name>/`
    - Validate `formName` follows naming conventions (lowercase, hyphenated)
    - Check form component doesn't already exist at `targetPath/<formName>/`
@@ -6722,7 +6726,7 @@ Update an existing reactive form component to add/remove fields, change validato
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `formName` (string): Name of the form to modify
@@ -6774,7 +6778,7 @@ Remove a reactive form component and clean up references (route configurations, 
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - `formName` (string): Name of the form to delete
@@ -6892,7 +6896,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Example 1: Create a user profile form with API integration**
 
-Input from `django-angular3.json`: `angular.output = "/workspace/my-app"`, `project.name = "admin-dashboard"`
+Input from the discovered project configuration: `artifacts.angularWorkspace = "/workspace/my-app"`, `project.name = "admin-dashboard"`
 
 ```json
 {
@@ -6949,7 +6953,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/my-app"`, `proj
 **Example 3: Modify existing form to add a new field**
 
 ```markdown
-Input from django-angular3.json: angular.output, project.name = "admin-dashboard"
+Input from discovered project configuration: artifacts.angularWorkspace, project.name = "admin-dashboard"
 - formName: "product-edit"
 - targetPath: "features/products/forms"
 - change: "Add 'category' select field with dropdown options"
@@ -6996,8 +7000,8 @@ The `angular-page-composition` skill manages top-level Angular Material pages in
 
 #### Inputs
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path
 - `project.name`: Application name within the workspace
 
 Command-level inputs:
@@ -7262,10 +7266,10 @@ The `angular-site-composition` skill coordinates complete Angular Material site 
 
 #### Inputs
 
-Read from `django-angular3.json`:
-- `angular.output`: Angular workspace root path
+Read from the discovered project configuration:
+- `artifacts.angularWorkspace`: Angular workspace root path
 - `project.name`: Application name within the workspace
-- `openapi.source`: Path to the OpenAPI source used by `angular-api-integration` for client generation
+- `artifacts.openapiSchema`: Path to the OpenAPI source used by `angular-api-integration` for client generation
 
 Command-level inputs:
 - **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/openui/`, used to discover pages, navigation structure, and forms
@@ -7280,15 +7284,15 @@ All skills support three operational modes:
 Create a complete Angular Material site by orchestrating the existing Angular generation skills in the correct order and then wiring shared site-level infrastructure.
 
 **Input Requirements**:
-- `angular.output` must point to an existing Angular workspace
+- `artifacts.angularWorkspace` must point to an existing Angular workspace
 - `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/openui/`
-- `openapi.source` is optional; when provided it should resolve to a valid OpenAPI document
+- `artifacts.openapiSchema` is optional; when provided it should resolve to a valid OpenAPI document
 
 **Process (Create Mode)**:
 
 1. **Verify workspace and app exist before orchestration**
-   - Read `angular.output` and `project.name` from `django-angular3.json`
-   - Confirm `angular.output` exists and contains `angular.json`
+  - Read `artifacts.angularWorkspace` and `project.name` from the discovered project configuration
+  - Confirm `artifacts.angularWorkspace` exists and contains `angular.json`
    - Confirm the target Angular application already exists in the workspace
    - If either the workspace or application is missing, stop and instruct the caller to run `angular-workspace-foundation` first and then `angular-app-composition`
 
@@ -7307,7 +7311,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - Ensure the shell exposes a stable place for feature navigation and authenticated child routes
 
 4. **Invoke `angular-api-integration` when an OpenAPI source is available**
-   - If `openapi.source` is present in `django-angular3.json`, pass through to `angular-api-integration` and generate or refresh Angular API clients before page or form generation
+  - If `artifacts.openapiSchema` is present in the discovered project configuration, pass it through to `angular-api-integration` and generate or refresh Angular API clients before page or form generation
    - Reuse the generated models and services as the typed foundation for resource-backed pages and forms
 
 5. **Invoke `angular-page-composition` for each site page**
@@ -7341,7 +7345,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 **Output**:
 - Site-level `app.component.ts` shell with `MatSidenav` layout
 - Root route configuration wired for generated pages and auth protection
-- Generated OpenAPI clients when `openapi.source` is provided in `django-angular3.json`
+- Generated OpenAPI clients when `artifacts.openapiSchema` is provided in the discovered project configuration
 - Generated Angular Material pages for each discovered or default page
 - Generated reactive forms for each discovered form definition
 - Global Material theme in `styles.scss`
@@ -7378,7 +7382,7 @@ Remove the Angular application that owns the generated site from the workspace.
 
 **Input Requirements**:
 
-Read from `django-angular3.json`: `angular.output`, `project.name`
+Read from the discovered project configuration: `artifacts.angularWorkspace`, `project.name`
 
 Command-level inputs:
 - Explicit confirmation before removal
@@ -7468,7 +7472,7 @@ See [openapi-integration.md](../shared/openapi-integration.md)
 
 **Example 1: Create a site from UI spec and OpenAPI**
 
-Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`, `project.name = "admin-portal"`, `openapi.source = "spec/openapi.yaml"`
+Input from the discovered project configuration: `artifacts.angularWorkspace = "/workspace/admin-portal"`, `project.name = "admin-portal"`, `artifacts.openapiSchema = "schema.yaml"`
 
 ```json
 {
@@ -7487,7 +7491,7 @@ Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`,
 
 **Example 2: Modify site navigation**
 
-Input from `django-angular3.json`: `angular.output = "/workspace/admin-portal"`, `project.name = "admin-portal"`
+Input from the discovered project configuration: `artifacts.angularWorkspace = "/workspace/admin-portal"`, `project.name = "admin-portal"`
 
 ```json
 {

@@ -37,7 +37,7 @@ def _project_config(
     return ProjectConfig(
         config_path=Path("django-angular3-portal.json"),
         project_name=name,
-        openapi_schema=Path("spec/openapi.json"),
+        openapi_schema=Path("schema.json"),
         openui_specification=Path("spec/app.openui.json"),
         angular_workspace=Path(workspace),
     )

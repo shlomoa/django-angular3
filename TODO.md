@@ -594,17 +594,95 @@ Investigate existing uses of `CRM` and `non-CRM` and replace them with terms
 based on source and derivation:
 
 - **API-contract-derived** — derived from OpenAPI.
+- **API-contract-backed** — uses an operation or data shape supplied through
+  the API contract, without implying that the UI structure was derived from
+  OpenAPI.
 - **UI-description-derived** — derived from an OpenUI concrete UI document.
 - **explicitly authored UI** — UI declarations not inferred from OpenAPI.
 - **Angular construction operation** — a deterministic `ngdj` workspace or
   code transformation.
+- **resource operation** — a generic list, retrieve, create, update, partial
+  update, or delete capability; it is not a CRM classification.
 
 A concern may be both API-contract-backed and UI-description-derived; these
 classifications are not mutually exclusive.
 
-- [ ] 15.2.1. Inventory and classify existing terminology in `djng` and
+- [x] 15.2.1. Inventory and classify existing terminology in `djng` and
   `ngdj`.
-- [ ] 15.2.2. Approve the canonical replacement terms.
+  - **API-contract-derived:** `djng` uses `CRM`, `CRM-facing`, and
+    `CRM-oriented` as OpenAPI-source shorthand in its instructions, README,
+    architecture, requirements, configuration, workflow, and Angular API
+    integration skill. `ngdj` uses `CRM-oriented` for its OpenAPI-generated
+    resource-adapter helpers in implementation comments, requirements, README,
+    and tests.
+  - **Angular construction operation:** `ngdj` uses `CRM resource`,
+    `CRM-style`, and `CRM-shaped` for the reactive-form schematic's rejection
+    of resource-operation keys. The affected implementation identifier is
+    `CRM_KEYS`; related schema descriptions, CLI docs, diagnostics, and tests
+    use the same classification. The `site` CLI documentation also uses `CRM
+    resource` for an input boundary that accepts no resource-operation
+    definition.
+  - **UI-description-derived / explicitly authored UI:** current maintained
+    uses occur mainly as the former `non-CRM` side of an OpenAPI/UI opposition,
+    including the older `djng` wrapper summary and historical issue-review
+    language. No current `ngdj` implementation contract requires a UI input to
+    be classified as non-CRM.
+  - **Genuine business-domain identity:** `Simple CRM` and `simple_crm` name the
+    bundled customer/product tutorial, its paths, project identifiers, CLI
+    defaults, tests, and end-to-end planning references. These are distinct
+    from architectural source classification and are candidates to retain.
+  - **Historical and tracking language:** the Step 15.1 completion record,
+    this Step 15.2 definition, `ngdj` issue #27 review quotations, and the issue
+    #74 title describe terminology being corrected. Their retention or
+    normalization is a Step 15.2.2/15.2.6 decision, not an implementation
+    classification.
+  - **Incidental tokens:** opaque test values named `crm`, generated
+    documentation output, and a package-lock integrity substring carry no
+    architectural meaning. Step 15.2.2 must decide whether to neutralize test
+    tokens; generated output follows its source documents and integrity data is
+    not terminology.
+  - No maintained occurrence establishes `CRM` as a necessary product-wide
+    abstraction. The replacement decisions still requiring approval are:
+    source-derived wording, resource-operation wording, tutorial-name
+    retention, incidental test-token cleanup, and historical-record policy.
+- [x] 15.2.2. Approve the canonical replacement terms.
+  - Use **API-contract-derived** only when an artifact, requirement, or
+    construction input is inferred or generated from OpenAPI. Normalize
+    architectural `CRM-facing`, `CRM-oriented`, and generic
+    `contract-derived` wording to this term where that is the intended source.
+  - Use **API-contract-backed** when UI described by OpenUI or authored
+    explicitly presents API data or invokes API operations but was not itself
+    inferred from OpenAPI. A concern may therefore be both
+    UI-description-derived and API-contract-backed.
+  - Use **UI-description-derived** when the immediate source is an OpenUI
+    concrete UI document. Use **explicitly authored UI** when distinguishing
+    declarations supplied by an author from requirements inferred from
+    OpenAPI; explicitly authored declarations encoded in OpenUI may have both
+    classifications.
+  - Use **Angular construction operation** for a deterministic `ngdj`
+    workspace or code transformation. This describes execution, not the source
+    or business domain of its input. `djng` derives and selects operations;
+    `ngdj` validates explicit invocation inputs and executes them.
+  - Use **resource operation**, **resource-operation key**, and
+    **API-contract-derived resource adapter** for the current `ngdj` meanings
+    of `CRM resource`, `CRM-style` key, and `CRM-oriented` adapter. Rename the
+    implementation identifiers to `RESOURCE_OPERATION_KEYS` and
+    `resourceOperationKeys`; retain the public `ResourceAdapter` type name.
+  - Do not use `CRM` or `non-CRM` as architectural source, ownership, input,
+    stream, artifact, or construction classifications. Remove the generic CRM
+    glossary definition rather than replacing it with another alias.
+  - Retain `Simple CRM` and `simple_crm` as the literal business-domain and
+    project identity of the bundled tutorial. Genuine future
+    customer-relationship-management domain references may also use CRM when
+    their meaning is explicit.
+  - Replace opaque `crm` test tokens with domain-neutral values when the owning
+    repository is updated, so terminology checks distinguish intentional
+    domain names from incidental strings. Do not edit dependency integrity
+    data; regenerate derived documentation from its maintained sources.
+  - Historical quotations may retain superseded wording when clearly marked
+    as quotations or history. Active recommendations, issue titles, and issue
+    descriptions should use the canonical terms; cross-repository issue and
+    test alignment remains Step 15.2.6.
 - [ ] 15.2.3. Update `openui-spec` only if its existing generic UI boundary is
   incomplete.
 - [ ] 15.2.4. Update `ngdj` references.

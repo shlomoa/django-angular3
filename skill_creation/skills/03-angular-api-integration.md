@@ -229,11 +229,11 @@ See [openapi-integration.md](../shared/openapi-integration.md) — read this on 
 **Example 1: Initial API generation**
 ```markdown
 Input:
-- openapi_source_path: "spec/openapi.yaml"
+- openapi_source_path: "schema.yaml"
 - output_path: "src/app/api"
 
 Process:
-1. Verify spec/openapi.yaml exists
+1. Verify schema.yaml exists
 2. Create ng-openapi-gen.json config
 3. Run pnpm exec ng-openapi-gen (via django-admin ng_openapi_gen)
 4. Report generated files
@@ -251,7 +251,7 @@ Barrel exports created
 **Example 2: Regeneration after spec update**
 ```markdown
 Input:
-- openapi_source_path: "spec/openapi.yaml" (updated)
+- openapi_source_path: "schema.yaml" (updated)
 
 Process:
 1. Detect existing ng-openapi-gen.json

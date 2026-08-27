@@ -8,7 +8,7 @@
 ---
 name: angular-workspace-foundation
 description: Create, modify, or delete an Angular Material workspace with modern conventions (standalone components, signals, SCSS theming)
-when_to_use: Use when build_app selects a workspace-creation or workspace-modification command, or when a user runs /angular-workspace-foundation to scaffold or update an Angular workspace from django-angular3.json.
+when_to_use: Use when build_app selects a workspace-creation or workspace-modification command, or when a user runs /angular-workspace-foundation to scaffold or update the Angular workspace selected by the discovered project configuration.
 user-invocable: false
 context: fork
 allowed-tools:
@@ -27,11 +27,13 @@ The `angular-workspace-foundation` skill manages the creation, modification, and
 
 ### Inputs
 
-All inputs are read from `django-angular3.json` passed as the command input.
+Project identity and artifact locations come from the discovered
+`django-angular3-<project_name>.json`; global Angular defaults come from static
+`django-angular3.json`.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `angular.output` | yes | string | — | Absolute path where the workspace will be created |
+| `artifacts.angularWorkspace` | yes | string | — | Path where the workspace will be created, relative to the project configuration |
 | `project.name` | yes | string | — | Name of the workspace |
 | `angular.workspace.packageManager` | no | `npm` \| `yarn` \| `pnpm` | `pnpm` | Package manager to use |
 | `angular.workspace.style` | no | `css` \| `scss` \| `sass` \| `less` | `scss` | Stylesheet format |
@@ -43,7 +45,7 @@ Generate an Angular Material workspace from scratch when it doesn't exist.
 
 #### Input Requirements
 
-- **`angular.output`**: Must not already exist or must be an empty directory
+- **`artifacts.angularWorkspace`**: Must not already exist or must be an empty directory
 - **`project.name`**: Valid workspace name (lowercase, hyphenated)
 - **`angular.workspace.packageManager`**: Valid package manager executable must be available in PATH
 - **`angular.workspace.style`**: Must be a valid Angular CLI stylesheet option
@@ -53,7 +55,7 @@ Generate an Angular Material workspace from scratch when it doesn't exist.
 
 Before creating the workspace, verify:
 
-1. `angular.output` directory does not exist or is empty
+1. `artifacts.angularWorkspace` directory does not exist or is empty
 2. Node.js version meets Angular's requirements (currently Node 18.19+ or 20.11+ or 22.0+)
 3. Sufficient disk space is available (minimum 500MB recommended)
 
@@ -133,7 +135,7 @@ Package manager availability and Angular CLI access are validated by the `ng_new
 After successful execution, the workspace directory contains:
 
 ```
-<angular.output>/
+<angular-workspace>/
 ├── .angular/                    # Angular cache directory
 ├── .editorconfig               # Editor configuration
 ├── .gitignore                  # Git ignore rules
@@ -172,11 +174,11 @@ After successful execution, the workspace directory contains:
 
 Update an existing workspace with configuration changes, package updates, or new tooling.
 
-> **Note**: `build_app` does not trigger `angular-workspace-foundation` Modify mode during normal operation — `django-angular3.json` is always read as current and its changes are not tracked. Modify mode is available for manual invocation via `--force`.
+> **Note**: `build_app` does not trigger `angular-workspace-foundation` Modify mode during normal operation — the discovered project configuration and static tool configuration are always read as current and their changes are not tracked. Modify mode is available for manual invocation via `--force`.
 
 #### Input Requirements
 
-- **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
+- **`artifacts.angularWorkspace`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 - **`modificationTarget`** (enum): Type of modification to perform:
   - `add-package`: Add NPM package(s)
   - `update-packages`: Update existing packages to latest versions
@@ -197,7 +199,7 @@ Update an existing workspace with configuration changes, package updates, or new
 5. Commit changes: `git add . && git commit -m "chore: add <packageName>"`
 
 **For `update-packages` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Update all packages: `pnpm update`
 3. Run build: `django-admin ng_build django-angular3.json`
 4. Run tests: `pnpm exec ng test --watch=false`
@@ -205,7 +207,7 @@ Update an existing workspace with configuration changes, package updates, or new
 6. Commit changes: `git add . && git commit -m "chore: update dependencies"`
 
 **For `update-angular` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Run Angular update: `pnpm exec ng update @angular/core @angular/cli @angular/material`
 3. Review migration messages
 4. Run build and tests: `django-admin ng_build django-angular3.json` and `pnpm exec ng test --watch=false`
@@ -213,7 +215,7 @@ Update an existing workspace with configuration changes, package updates, or new
 6. Commit changes: `git add . && git commit -m "chore: update Angular to v<version>"`
 
 **For `change-build-config` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Read `angular.json` using Read tool
 3. Apply requested configuration changes using Edit tool
 4. Validate JSON syntax
@@ -221,14 +223,14 @@ Update an existing workspace with configuration changes, package updates, or new
 6. Commit changes: `git add angular.json && git commit -m "chore: update build configuration"`
 
 **For `reconfigure-material` modifications**:
-1. Verify `angular.output` exists and contains `angular.json`
+1. Verify `artifacts.angularWorkspace` exists and contains `angular.json`
 2. Update `src/styles.scss` with new theme configuration using Edit tool
 3. Test build: `django-admin ng_build django-angular3.json`
 4. Verify Material components render correctly
 5. Commit changes: `git add . && git commit -m "style: update Material theme"`
 
 **For `add-eslint-rule` modifications**:
-1. Verify `angular.output` exists and ESLint is configured
+1. Verify `artifacts.angularWorkspace` exists and ESLint is configured
 2. Read `.eslintrc.json` using Read tool
 3. Add or modify rules using Edit tool
 4. Run linter: `pnpm exec ng lint`
@@ -247,7 +249,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
 #### Input Requirements
 
-- **`angular.output`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
+- **`artifacts.angularWorkspace`**: Must exist and contain a valid Angular workspace (check for `angular.json`)
 
 #### Process (Delete Mode)
 
@@ -264,7 +266,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
    > **Note**: `ng_workspace_delete` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
-2. **Verify deletion**: Confirm `angular.output` directory no longer exists.
+2. **Verify deletion**: Confirm `artifacts.angularWorkspace` directory no longer exists.
 
 #### Output
 
@@ -291,12 +293,12 @@ After creating a workspace, verify:
 
 1. **Directory structure exists**:
    ```bash
-   [ -f <angular.output>/angular.json ] && echo "✓ Workspace created"
+   [ -f <angular-workspace>/angular.json ] && echo "✓ Workspace created"
    ```
 
 2. **Dependencies installed**:
    ```bash
-   [ -d <angular.output>/node_modules ] && echo "✓ Dependencies installed"
+   [ -d <angular-workspace>/node_modules ] && echo "✓ Dependencies installed"
    ```
 
 3. **Build succeeds**:
@@ -353,7 +355,7 @@ After modifying a workspace, verify:
 
 **Error**: `The serve command requires to be run in an Angular project`
 - **Cause**: Not in workspace root directory
-- **Resolution**: Verify `angular.output` in `django-angular3.json` is correct and points to a directory containing `angular.json`
+- **Resolution**: Verify `artifacts.angularWorkspace` in the discovered project configuration is correct and points to a directory containing `angular.json`
 
 **Error**: Workspace directory already exists and is not empty
 - **Cause**: Target directory contains files
@@ -379,9 +381,11 @@ After modifying a workspace, verify:
 
 #### Example 1: Create New Workspace
 
-**Input** (from `django-angular3.json`):
+**Project input** (from discovered `django-angular3-<project_name>.json`):
 - `project.name`: `"my-shop"`
-- `angular.output`: `"/home/user/projects/my-shop"`
+- `artifacts.angularWorkspace`: `"/home/user/projects/my-shop"`
+
+**Tool defaults** (from static `django-angular3.json`):
 - `angular.workspace.packageManager`: `"pnpm"`
 - `angular.workspace.style`: `"scss"`
 - `angular.workspace.routing`: `true`
@@ -397,9 +401,9 @@ After modifying a workspace, verify:
 
 #### Example 2: Update Angular Version
 
-**Input** (from `django-angular3.json`):
+**Input** (from discovered `django-angular3-<project_name>.json`):
 - `project.name`: `"my-shop"`
-- `angular.output`: `"/home/user/projects/my-shop"`
+- `artifacts.angularWorkspace`: `"/home/user/projects/my-shop"`
 
 **Execution**:
 1. Run `pnpm exec ng update @angular/core @angular/cli @angular/material`
@@ -411,9 +415,9 @@ After modifying a workspace, verify:
 
 #### Example 3: Delete Workspace
 
-**Input** (from `django-angular3.json`):
+**Input** (from discovered `django-angular3-<project_name>.json`):
 - `project.name`: `"my-shop"`
-- `angular.output`: `"/home/user/projects/my-shop"`
+- `artifacts.angularWorkspace`: `"/home/user/projects/my-shop"`
 
 Command-level input: `confirmDelete: true`
 

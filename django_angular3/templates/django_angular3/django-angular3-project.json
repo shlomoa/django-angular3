@@ -3,7 +3,7 @@
     "name": "django-angular3-scaffold"
   },
   "artifacts": {
-    "openapiSchema": "spec/openapi/source/example.openapi.json",
+    "openapiSchema": "schema.yaml",
     "openuiSpecification": "spec/openui/app.openui.json",
     "angularWorkspace": "build/angular"
   }

@@ -391,10 +391,10 @@ Deterministic TOOL commands (see `GENERATE_AI_AUTOMATIONS.md` §Tool
 Contracts Catalog) precede the SKILL sessions:
 
 1. `openapi_schema_export` *(tool)* — produce the current OpenAPI artifact at
-   `openapi.source`
+  `artifacts.openapiSchema`
 2. `validate_openapi_schema` *(tool)* — validate the freshly exported schema
 3. `angular_workspace_scaffold` *(tool)* — scaffold the Angular workspace at
-   `angular.output`
+  `artifacts.angularWorkspace`
 4. `angular-workspace-foundation` *(skill)* — apply Angular Material workspace conventions on
    the scaffolded workspace `simple_crm`
 5. `angular_app_scaffold` *(tool)* — add the Angular application `simple_crm` into

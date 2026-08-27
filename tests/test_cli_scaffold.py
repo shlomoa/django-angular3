@@ -220,7 +220,9 @@ class ScaffoldTests(unittest.TestCase):
 
         self.assertEqual(errors, ["unsupported object type: UnknownType"])
 
-    def test_consumer_project_template_uses_generated_app_input_paths(self) -> None:
+    def test_consumer_project_template_uses_project_relative_artifact_paths(
+        self,
+    ) -> None:
         template_path = (
             ROOT
             / "django_angular3"
@@ -234,11 +236,7 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(config.project_name, "django-angular3-scaffold")
         self.assertEqual(
             config.openapi_schema,
-            template_path.parent
-            / "spec"
-            / "openapi"
-            / "source"
-            / "example.openapi.json",
+            template_path.parent / "schema.yaml",
         )
         self.assertEqual(
             config.openui_specification,
