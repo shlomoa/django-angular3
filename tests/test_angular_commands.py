@@ -525,7 +525,7 @@ class AngularCliCommandTests(unittest.TestCase):
         exit_code, stdout, stderr = self.run_cli(
             "ng_site",
             "--source",
-            "spec/openui/app.openui.json",
+            "app.openui.json",
             "--project",
             "portal",
             "--operation",
@@ -552,7 +552,7 @@ class AngularCliCommandTests(unittest.TestCase):
                 "--authGuard=portalGuard",
                 "--csrfCookieName=portalcsrftoken",
                 "--csrfHeaderName=X-Portal-CSRFToken",
-                "--source=spec/openui/app.openui.json",
+                "--source=app.openui.json",
                 "--project=portal",
             ],
         )

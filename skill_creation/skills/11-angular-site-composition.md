@@ -30,7 +30,7 @@ The `angular-site-composition` skill coordinates complete Angular Material site 
 **From invocation context**:
 - **`workspacePath`** (string, required): Absolute path to the Angular workspace root
 - **`appName`** (string, optional): Angular application name when the workspace contains more than one app and for validation commands
-- **`uiSpecPath`** (string, optional): Path to a UI specification directory, typically under `spec/openui/`, used to discover pages, navigation structure, and forms
+- **`openuiSpecificationPath`** (string, optional): Path to the OpenUI concrete UI document selected by `artifacts.openuiSpecification`, used to discover pages, navigation structure, and forms
 - **`openapi_source_path`** (string, optional): Path to the OpenAPI source used by `angular-api-integration` for client generation
 - **`defaults`** (object, optional): Fallback definitions to use when no UI spec is provided, such as default pages, route prefixes, or auth requirements
 
@@ -45,7 +45,7 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
 **Input Requirements**:
 - `workspacePath` must point to an existing Angular workspace
 - `appName` is required when the workspace contains multiple applications
-- `uiSpecPath` is optional; when provided it should point at the UI spec root or `spec/openui/`
+- `openuiSpecificationPath` is optional; when provided it must point to a valid OpenUI concrete UI document
 - `openapi_source_path` is optional; when provided it should resolve to a valid OpenAPI document
 
 **Process (Create Mode)**:
@@ -55,8 +55,8 @@ Create a complete Angular Material site by orchestrating the existing Angular ge
    - Confirm the target Angular application already exists in the workspace
    - If either the workspace or application is missing, stop and instruct the caller to run `angular-workspace-foundation` first and then `angular-app-composition`
 
-2. **Read UI spec when provided**
-   - If `uiSpecPath` is supplied, read `spec/openui/` (or the supplied equivalent) to determine:
+2. **Read the OpenUI document when provided**
+   - If `openuiSpecificationPath` is supplied, read that document to determine:
      - top-level pages
      - route structure
      - navigation labels
@@ -198,7 +198,7 @@ See [openapi-integration.md](../shared/openapi-integration.md) — read this on 
    - Resolution: run `angular-workspace-foundation` first, then `angular-app-composition`, before invoking `angular-site-composition`
 
 2. **UI spec missing or incomplete**:
-   - Resolution: fall back to defaults or stop and request a valid `spec/openui/` source when page/form inference is required
+   - Resolution: fall back to defaults or stop and request a valid OpenUI concrete UI document when page/form inference is required
 
 3. **OpenAPI source unavailable**:
    - Resolution: skip `angular-api-integration` orchestration when no OpenAPI source is provided, or request a valid source path before generating resource-backed pages/forms
@@ -235,14 +235,14 @@ See [openapi-integration.md](../shared/openapi-integration.md) — read this on 
 {
   "workspacePath": "/workspace/admin-portal",
   "appName": "admin-portal",
-  "uiSpecPath": "spec/openui/",
+   "openuiSpecificationPath": "app.openui.json",
    "openapi_source_path": "schema.yaml"
 }
 ```
 
 **Process**:
 1. Verify the workspace and app already exist
-2. Read `spec/openui/` to discover pages and forms
+2. Read `app.openui.json` to discover pages and forms
 3. Create the Material app shell and root routes
 4. Invoke `angular-api-integration`
 5. Invoke `angular-page-composition` for each discovered page

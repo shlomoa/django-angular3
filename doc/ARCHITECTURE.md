@@ -573,9 +573,10 @@ cross-input consistency before deriving construction operations.
 
 ### 8.5 OpenUI Input Source
 
-Generated apps conventionally select `spec/openui/app.openui.json` as their
-dedicated structured UI-description input. It is an OpenUI concrete UI document
-whose role, grammar, and catalog relationship are defined by the
+Generated apps conventionally select the project-root `app.openui.json` through
+`artifacts.openuiSpecification` as their dedicated structured UI-description
+input. It is an OpenUI concrete UI document whose role, grammar, and catalog
+relationship are defined by the
 [OpenUI artifact-role SSOT][openui-artifacts].
 
 This source should define:

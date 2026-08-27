@@ -134,7 +134,8 @@ External dependencies and services include:
   by the project configuration's `artifacts.openapiSchema` path. OAS 3.1 is
   the pinned version; the toolchain ([drf-spectacular], [oasdiff],
   [ng-openapi-gen]) does not yet support OAS 3.2.
-- OpenUI concrete UI documents maintained in `spec/openui/`
+- project-owned OpenUI concrete UI documents selected through
+  `artifacts.openuiSpecification`
 - [oasdiff] for OpenAPI schema diffing and change detection
 - [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
 - [datamodel-code-generator] (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]) for the contract-first use case: generating the Django data model from an existing OpenAPI Schema, using djng-owned custom Django templates, when no Django model exists yet (see [ARCHITECTURE.md] §§ 2.22 and 11.2)
@@ -291,9 +292,9 @@ The platform must support the following primary user workflows:
   business modules.
 - **Run the first-time build from OpenAPI and UI inputs**: a user exports the
   OpenAPI artifact to the project configuration's `artifacts.openapiSchema`
-  path, provides an OpenUI concrete UI document in `spec/openui/`, triggers the
-  build, and receives stage-specific feedback from validation, generation, and
-  final assembly.
+  path, provides the OpenUI concrete UI document selected by
+  `artifacts.openuiSpecification`, triggers the build, and receives
+  stage-specific feedback from validation, generation, and final assembly.
 
 ### 3.3. Preconditions and postconditions
 
@@ -341,8 +342,9 @@ endpoints that enforce validation and authorization on the server side.
 - **Run the first-time build from OpenAPI and UI inputs**
   - Preconditions: a versioned OpenAPI schema artifact is available at the
     project configuration's `artifacts.openapiSchema` path; an OpenUI input is
-    available in `spec/openui/`; the OpenAPI contract is valid and generation-
-    compatible; and the OpenUI input is valid.
+    available at the project configuration's `artifacts.openuiSpecification`
+    path; the OpenAPI contract is valid and generation-compatible; and the
+    OpenUI input is valid.
   - Postconditions: the build either produces generated API-contract-derived artifacts,
     assembled application outputs, and stage results for valid inputs, or it
     fails fast with stage-specific feedback identifying contract validation,
@@ -391,7 +393,8 @@ role-appropriate, and validated through backend-enforced operations.
     tool.
   2. The user exports the schema artifact to the path selected by
     `artifacts.openapiSchema` in the project configuration.
-  3. The user provides the OpenUI concrete UI document in `spec/openui/`.
+  3. The user provides the OpenUI concrete UI document at the path selected by
+     `artifacts.openuiSpecification`.
   4. The user triggers the build from the repository.
   5. The build validates the contract and OpenUI input, generates API-contract-derived
     artifacts, assembles the Angular application, and reports the stage
@@ -412,9 +415,9 @@ recoverable.
 - **Contract invalid**: if the OpenAPI contract is invalid or incompatible
   with generation, the build must fail fast before downstream construction
   continues.
-- **OpenUI input invalid**: if the OpenUI input in `spec/openui/` is invalid,
-  the build must fail fast and identify the OpenUI input stage as
-  the point of failure.
+- **OpenUI input invalid**: if the OpenUI input selected by
+  `artifacts.openuiSpecification` is invalid, the build must fail fast and
+  identify the OpenUI input stage as the point of failure.
 - **Build failure**: when generation or assembly fails, the flow must surface
   which stage failed — contract validation, code generation, OpenUI input
   validation, or final app assembly — rather than reporting a generic error.
@@ -744,7 +747,7 @@ locations with:
   },
   "artifacts": {
     "openapiSchema": "django_angular3/examples/01_simple_crm/schema.yaml",
-    "openuiSpecification": "spec/openui/app.openui.json",
+    "openuiSpecification": "app.openui.json",
     "angularWorkspace": "build/angular"
   }
 }
@@ -1030,7 +1033,8 @@ sequenceDiagram
 2. The user exports or dumps the OAS artifact to the path selected by
   `artifacts.openapiSchema` in the project configuration
 3. The user adds the OpenUI concrete UI document describing pages, forms,
-  navigation, workflows, and related UI concerns into `spec/openui/`
+  navigation, workflows, and related UI concerns at the path selected by
+  `artifacts.openuiSpecification`
 4. The user fires a build from the repository
 5. The build validates the OAS and OpenUI artifacts, generates
   API-contract-derived artifacts, assembles the Angular app, and reports any stage-
@@ -1040,8 +1044,8 @@ For this flow:
 
 - The project configuration must select the source OAS artifact through
   `artifacts.openapiSchema`
-- The repository must provide a separate location for the OpenUI concrete UI
-  document at `spec/openui/`
+- The project configuration must select the separate OpenUI concrete UI
+  document through `artifacts.openuiSpecification`
 - The build must fail fast when the OpenAPI contract is invalid or incompatible
   with generation
 - The build must fail fast when the OpenUI input is invalid
@@ -1445,7 +1449,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 ### C. References
 
-Labels used in this document are defined in the link-definitions block at the end of this file. Internal labels (other docs in this repo and `spec/*` artifacts) are owned here. External labels mirror `ARCHITECTURE.md` §20 — update both files when changing an external URL.
+Labels used in this document are defined in the link-definitions block at the end of this file. Internal labels for other files in this repository are owned here. External labels mirror `ARCHITECTURE.md` §20 — update both files when changing an external URL.
 
 <!-- External URLs below mirror ARCHITECTURE.md §20 — update both files when changing an external URL. -->
 [ARCHITECTURE.md]: ARCHITECTURE.md

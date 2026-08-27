@@ -233,10 +233,11 @@ paths:
       operationId: updateUser
 ```
 
-Under the generated-app convention, UI requirements are supplied in
-`spec/openui/app.openui.json` as an OpenUI concrete UI document. The document
-may complement or reference API-contract-derived content. Its role, grammar,
-and catalog relationship are defined by the
+Under the generated-app convention, UI requirements are supplied in the
+project-root `app.openui.json` selected by
+`artifacts.openuiSpecification`. The OpenUI concrete UI document may
+complement or reference API-contract-derived content. Its role, grammar, and
+catalog relationship are defined by the
 [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
 see the [OpenUI examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 for the per-scope vocabulary.
@@ -290,7 +291,7 @@ Current project documents:
 
 ## Status
 
-This project now includes a first scaffolded Python package, example specs, and
+This project now includes a first scaffolded Python package, example inputs, and
 the current contributor workflow. The repository does not yet include a
 frontend workspace. Actual code generation and Angular assembly are still
 pending.

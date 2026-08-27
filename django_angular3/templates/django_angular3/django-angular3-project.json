@@ -4,7 +4,7 @@
   },
   "artifacts": {
     "openapiSchema": "schema.yaml",
-    "openuiSpecification": "spec/openui/app.openui.json",
+    "openuiSpecification": "app.openui.json",
     "angularWorkspace": "build/angular"
   }
 }

@@ -38,7 +38,7 @@ def _project_config(
         config_path=Path("django-angular3-portal.json"),
         project_name=name,
         openapi_schema=Path("schema.json"),
-        openui_specification=Path("spec/app.openui.json"),
+        openui_specification=Path("app.openui.json"),
         angular_workspace=Path(workspace),
     )
 
@@ -172,7 +172,7 @@ class ProjectConfigComparisonTests(unittest.TestCase):
                 ProjectConfig(
                     config_path=baseline.config_path,
                     project_name=baseline.project_name,
-                    openapi_schema=Path("spec/current.openapi.json"),
+                    openapi_schema=Path("current.openapi.json"),
                     openui_specification=baseline.openui_specification,
                     angular_workspace=baseline.angular_workspace,
                 ),
@@ -183,7 +183,7 @@ class ProjectConfigComparisonTests(unittest.TestCase):
                     config_path=baseline.config_path,
                     project_name=baseline.project_name,
                     openapi_schema=baseline.openapi_schema,
-                    openui_specification=Path("spec/current.openui.json"),
+                    openui_specification=Path("current.openui.json"),
                     angular_workspace=baseline.angular_workspace,
                 ),
                 "/artifacts/openuiSpecification",

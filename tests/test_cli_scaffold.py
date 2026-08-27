@@ -120,8 +120,8 @@ class ScaffoldTests(unittest.TestCase):
                     {
                         "project": {"name": "portal"},
                         "artifacts": {
-                            "openapiSchema": "spec/api.json",
-                            "openuiSpecification": "spec/app.openui.json",
+                            "openapiSchema": "contracts/api.json",
+                            "openuiSpecification": "app.openui.json",
                             "angularWorkspace": "frontend",
                         },
                     }
@@ -132,8 +132,8 @@ class ScaffoldTests(unittest.TestCase):
             config = load_project_config(config_path)
 
         self.assertEqual(config.project_name, "portal")
-        self.assertEqual(config.openapi_schema, root / "spec" / "api.json")
-        self.assertEqual(config.openui_specification, root / "spec" / "app.openui.json")
+        self.assertEqual(config.openapi_schema, root / "contracts" / "api.json")
+        self.assertEqual(config.openui_specification, root / "app.openui.json")
         self.assertEqual(config.angular_workspace, root / "frontend")
         self.assertFalse(isinstance(config, dict))
 
@@ -240,7 +240,7 @@ class ScaffoldTests(unittest.TestCase):
         )
         self.assertEqual(
             config.openui_specification,
-            template_path.parent / "spec" / "openui" / "app.openui.json",
+            template_path.parent / "app.openui.json",
         )
         self.assertEqual(
             config.angular_workspace, template_path.parent / "build" / "angular"
