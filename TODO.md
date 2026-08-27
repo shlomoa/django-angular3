@@ -53,9 +53,11 @@ Change Model from `doc/REQUIREMENTS.md` §4.2.9.
 Implement the decisions from §1 with dry-run, command-contract, and public
 interface coverage.
 
-## 5. Complete Direct `build_app` Execution
+## 5. Implement `build_app` Orchestration
 
-`doc/APP_BUILDER_REQUIREMENTS.md` owns the direct-build contract.
+`doc/APP_BUILDER_REQUIREMENTS.md` owns the complete orchestration contract.
+Implement its deterministic and AI-guided execution stages in the order owned
+by `doc/phased_implementation_plan.md`.
 
 ### 5.1 Implement previous-input handling
 
@@ -81,123 +83,118 @@ Execute wrappers, Tools, and Hooks in dependency order, halt on the first
 failure, and surface it through Django error handling. Keep `--dry-run`
 diagnostic-only and non-mutating.
 
-### 5.5 Implement terminal validation
-
-Use `ng_build` as the compile gate and add the integration and global
-acceptance checks required by `doc/APP_BUILDER_REQUIREMENTS.md` FR-9.
-
-## 6. Author Skills
-
-### 6.1 Author the eleven canonical Skills
+### 5.5 Author and integrate the canonical Skills
 
 Follow `doc/SKILL_AUTHORING_PLAN.md` for each Skill: plan, implement, test,
 integrate with `build_app`, and verify explicit acceptance criteria.
 
-## 7. Implement Provider-Neutral Orchestration
-
-### 7.1 Implement provider-neutral adapter contracts
+### 5.6 Implement provider-neutral adapter contracts
 
 Implement session lifecycle, Skill loading, Tool dispatch, Hook normalization,
 structured results, cancellation, timeouts, and credential handling without
 changing direct-execution semantics.
 
-### 7.2 Add credential-free adapter tests
+### 5.7 Add credential-free adapter tests
 
 Cover success, unmet acceptance, timeout or context exhaustion, Tool denial,
 Hook failure, evidence handling, and teardown with provider-independent stubs.
 
-### 7.3 Implement provider adapters
+### 5.8 Implement provider adapters
 
 Implement and runtime-gate the Claude, OpenAI, Gemini, and Copilot adapters
 against the provider-neutral contract.
 
-## 8. Complete Automated Verification
+### 5.9 Implement terminal validation
 
-### 8.1 Add direct-build scenario coverage
+Use `ng_build` as the compile gate and add the integration and global
+acceptance checks required by `doc/APP_BUILDER_REQUIREMENTS.md` FR-9.
+
+## 6. Complete Automated Verification
+
+### 6.1 Add direct-build scenario coverage
 
 Use `doc/TEST_EXAMPLES.md` fixtures to cover all configuration, OpenAPI, and
 OpenUI scenario-axis combinations, plus first-run, source-selection, mixed
 create/delete, deletion, and command-failure cases.
 
-### 8.2 Add composed generated-app acceptance coverage
+### 6.2 Add composed generated-app acceptance coverage
 
 Verify that djng selects, orders, and composes upstream ngdj operations in a
 real generated Angular workspace without duplicating ngdj's schematic tests.
 
-### 8.3 Add global acceptance regression coverage
+### 6.3 Add global acceptance regression coverage
 
 Verify cross-Skill interface consistency, backend-contract/Angular-client
 alignment, and runnable application flows according to
 `doc/REQUIREMENTS.md` §6.4 and `doc/ARCHITECTURE.md` §§7.2–7.3.
 
-## 9. Build One Business Module End to End
+## 7. Build One Business Module End to End
 
-### 9.1 Implement and verify one complete business module
+### 7.1 Implement and verify one complete business module
 
 Build one module through the governed wrappers, Tools, Hooks, Skills, direct
 execution, and global acceptance gate.
 
-## 10. Add Operational Verification
+## 8. Add Operational Verification
 
-### 10.1 Implement audit logging and health checks
+### 8.1 Implement audit logging and health checks
 
 Add durable audit records and generated-app health checks.
 
-### 10.2 Add staging smoke tests
+### 8.2 Add staging smoke tests
 
 Verify representative generated-app workflows in staging.
 
-## 11. Implement the Automation Phases
+## 9. Package Automation Plugins
 
-`doc/phased_implementation_plan.md` owns the implementation sequence and
-acceptance criteria.
+`doc/GENERATE_AI_AUTOMATIONS.md` owns the canonical Plugin contracts.
 
-### 11.1 Execute the phased implementation plan
+### 9.1 Implement Plugin packaging and distribution
 
-Implement and verify its remaining phases without copying their contracts or
-acceptance criteria into this backlog.
+Implement and verify the provider-specific derived packages according to
+`doc/phased_implementation_plan.md` Phase 8.
 
-## 12. Make Command Execution Cross-Platform
+## 10. Make Command Execution Cross-Platform
 
-### 12.1 Test Angular executable resolution
+### 10.1 Test Angular executable resolution
 
 Cover Windows and non-Windows defaults and explicit `tool.executables` values.
 
-### 12.2 Validate subprocess portability
+### 10.2 Validate subprocess portability
 
 Validate Python subprocess path resolution, environment handling, and shell
 invocation on Windows, Linux, and macOS.
 
-## 13. Add Direct OpenUI Validation
+## 11. Add Direct OpenUI Validation
 
-### 13.1 Add the management command
+### 11.1 Add the management command
 
 Add `django-admin validate_openui <path>` as a thin wrapper around
 `validate_openui_file(path)`. Propagate upstream diagnostics without copying
 OpenUI grammar, catalog, or duplicate-ID validation logic.
 
-### 13.2 Add command tests
+### 11.2 Add command tests
 
 Cover a valid document and propagation of an upstream `openui-spec`
 diagnostic.
 
-## 14. Complete OpenUI Integration
+## 12. Complete OpenUI Integration
 
-OpenUI artifact roles remain defined by the external artifact-role SSOT linked
-from `doc/ARCHITECTURE.md` §2.9.1.
+OpenUI artifact roles remain defined by the external artifact-role SSOT
+linked from `doc/ARCHITECTURE.md` §2.9.1.
 
-### 14.1 Add invalid-input build coverage
+### 12.1 Add invalid-input build coverage
 
 Verify that `build_app` rejects an invalid OpenUI document before change
 derivation.
 
-### 14.2 Implement the OpenUI transformation boundary
+### 12.2 Implement the OpenUI transformation boundary
 
 Transform validated canonical OpenUI atomic changes into explicit ngdj
 construction inputs without treating ngdj's package-local site assembly
 definition as a canonical OpenUI document.
 
-### 14.3 Add transformation and integration coverage
+### 12.3 Add transformation and integration coverage
 
 Cover the transformation contract, unsupported changes, command ordering,
 dry-run non-modification, and composed generated-app output.
