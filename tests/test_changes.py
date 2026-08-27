@@ -76,7 +76,7 @@ class ChangeSetTests(unittest.TestCase):
             path="/project/name",
             operation=ChangeOperation.UPDATE,
             before="portal",
-            after="crm",
+            after="updated_project",
         )
         domains = _empty_domain_results()
         domains[ChangeDomain.PROJECT_CONFIG] = ChangeDomainResult(

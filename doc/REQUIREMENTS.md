@@ -80,8 +80,8 @@ Framework (DRF), and Angular Material.
 The system context is a production-ready full-stack business application in
 which Django is the primary backend framework, DRF is the API layer, [Angular]
 is the single-page application frontend, Angular Material is the design system
-and component library, and OpenAPI is the contract source of truth for CRM-
-facing functionality.
+and component library, and OpenAPI is the contract source of truth for
+API-contract-derived functionality.
 
 Within that context, `djng` governs the backend contract lifecycle and derives
 Angular-side work from contract and configuration inputs, while `ngdj`
@@ -343,7 +343,7 @@ endpoints that enforce validation and authorization on the server side.
     project configuration's `artifacts.openapiSchema` path; an OpenUI input is
     available in `spec/openui/`; the OpenAPI contract is valid and generation-
     compatible; and the OpenUI input is valid.
-  - Postconditions: the build either produces generated CRM-facing artifacts,
+  - Postconditions: the build either produces generated API-contract-derived artifacts,
     assembled application outputs, and stage results for valid inputs, or it
     fails fast with stage-specific feedback identifying contract validation,
     code generation, OpenUI input validation, or final app assembly.
@@ -393,7 +393,7 @@ role-appropriate, and validated through backend-enforced operations.
     `artifacts.openapiSchema` in the project configuration.
   3. The user provides the OpenUI concrete UI document in `spec/openui/`.
   4. The user triggers the build from the repository.
-  5. The build validates the contract and OpenUI input, generates CRM-facing
+  5. The build validates the contract and OpenUI input, generates API-contract-derived
     artifacts, assembles the Angular application, and reports the stage
     outcome.
 
@@ -448,7 +448,7 @@ and assembled application outputs aligned.
   uses the current contract.
 - **Generated artifacts → assembled app → verified app**: for valid inputs,
   construction must move from validated OpenAPI and OpenUI sources to
-  generated CRM-facing artifacts, then to an assembled application, and then
+  generated API-contract-derived artifacts, then to an assembled application, and then
   to verified outputs that satisfy the required acceptance checks.
 - **Backend, frontend, and generated-output synchronization points**: the
   backend contract, generated Angular integration artifacts, and frontend
@@ -470,7 +470,7 @@ These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 - List endpoints must support filtering, sorting, and pagination
 - API errors must return a predictable structure usable by the Angular client
 - The backend must expose a durable, versioned OpenAPI schema artifact for
-  downstream tooling and generated CRM-facing content; schema versioning is the
+  downstream tooling and generated API-contract-derived content; schema versioning is the
   contract versioning mechanism that drives frontend alignment
 - `oasdiff` must be used as the OpenAPI schema diff and change detection tool
 - `oasdiff` must run as part of the contract normalization stage to identify
@@ -493,7 +493,7 @@ The platform uses these distinct configuration and input categories:
   command run-time locations for its OAS schema, OpenUI concrete UI document,
   and Angular workspace. It does not duplicate tool settings or OAS/OpenUI
   content.
-- **OAS schema** defines CRM-facing contract content. In model-first workflows,
+- **OAS schema** defines API-contract-derived content. In model-first workflows,
   it is extracted from the Django/DRF layer; it drives generation of Angular
   interfaces to that content and uses the OpenAPI Specification (OAS).
 - **OpenUI concrete UI document** defines UI requirements from user-provided and
@@ -511,7 +511,7 @@ Their ownership is:
 | Tool configurations | `ng-openapi-gen` | `tests/fixtures/artifacts/ng-openapi-gen/ng-openapi-gen.json` | This repository | Validation-only fixture; it is not production configuration and is not released. |
 | Tool configurations | `drf-spectacular` | `drfSpectacular.settings` clause in `django-angular3.json` | `djng` | Global `drf-spectacular` settings from which `SPECTACULAR_SETTINGS` is derived for schema export. |
 | Tool configurations | `oasdiff` | `oasdiff` clause in `django-angular3.json` | `djng` | Global output settings from which `oasdiff.settings` is derived. The executable and current/previous schema paths are run-time invocation parameters. |
-| OAS schema | — | OpenAPI document | `djng` package user | Defines CRM-facing contract content consumed during a command run. |
+| OAS schema | — | OpenAPI document | `djng` package user | Defines API-contract-derived content consumed during a command run. |
 | OpenUI concrete UI document | — | OpenUI document | `djng` package user | Defines UI requirements consumed during a command run. |
 
 The table classifies sources and artifacts only. The requirements below define
@@ -1033,7 +1033,7 @@ sequenceDiagram
   navigation, workflows, and related UI concerns into `spec/openui/`
 4. The user fires a build from the repository
 5. The build validates the OAS and OpenUI artifacts, generates
-   CRM-facing artifacts, assembles the Angular app, and reports any stage-
+  API-contract-derived artifacts, assembles the Angular app, and reports any stage-
    specific contract or input errors clearly
 
 For this flow:
@@ -1135,12 +1135,11 @@ For this flow:
 See `ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
 content-boundary and generated-artifact model.
 
-- Terms such as CRM, non-CRM content, OpenAPI contract, and Angular
-  integration artifacts use the definitions in `ARCHITECTURE.md` §§ 2.8-
-  2.11.
-- The OpenAPI contract must be the source of truth for CRM-facing content,
+- OpenAPI contract and Angular integration artifact terminology uses the
+  definitions in `ARCHITECTURE.md` §§ 2.10-2.11.
+- The OpenAPI contract must be the source of truth for API-contract-derived content,
   contracts, and generated Angular integration artifacts
-- CRM list, detail, and standard form experiences should be derived from the
+- API-contract-derived list, detail, and standard form experiences should be derived from the
   OpenAPI contract where practical instead of being duplicated by hand
 - Angular-related integration functionality shared across modules must be
   generated or maintained as reusable Angular integration artifacts
@@ -1156,7 +1155,7 @@ content-boundary and generated-artifact model.
 - The Angular application must be assembled from outputs derived from both
   artifacts without treating either artifact as a substitute for the other
 - Angular integration artifacts must include OpenAPI-derived typed API clients,
-  CRM-oriented resource adapters, shared Angular Material integration patterns
+  API-contract-derived resource adapters, shared Angular Material integration patterns
   for list, detail, and standard form experiences, and authentication, CSRF,
   and transport helpers needed for Django integration
 - Angular integration artifacts must not own product-specific application shell
@@ -1380,7 +1379,7 @@ The first implementation should include:
   logic
 - Authentication and role-based authorization
 - User profile and user administration
-- OpenAPI export and consumption flow for CRM-facing features
+- OpenAPI export and consumption flow for API-contract-derived features
 - `ng-openapi-gen` configuration generated from the canonical tool and project
   configurations and runnable in CI
 - An OpenUI concrete UI document for pages, forms, navigation, and workflows

@@ -167,7 +167,7 @@ class ProjectConfigComparisonTests(unittest.TestCase):
     def test_every_project_field_emits_a_separate_update(self) -> None:
         baseline = _project_config()
         candidates = (
-            (_project_config(name="crm"), "/project/name"),
+            (_project_config(name="updated_project"), "/project/name"),
             (
                 ProjectConfig(
                     config_path=baseline.config_path,

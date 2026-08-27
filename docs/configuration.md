@@ -10,7 +10,7 @@ in `doc/REQUIREMENTS.md` §4.2.
 |---|---|---|
 | `django-angular3.json` | `djng` | Static tool configuration: Angular execution settings, global `ng-openapi-gen` settings, and `drf-spectacular` settings. |
 | Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/REQUIREMENTS.md` §4.2.4. |
-| OpenAPI schema | generated-app user | CRM-facing contract input or the artifact exported from Django/DRF. |
+| OpenAPI schema | generated-app user | API-contract input or the artifact exported from Django/DRF. |
 | OpenUI concrete UI document | generated-app user | Structured UI-description input. |
 
 `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from the static tool

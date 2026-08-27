@@ -2,7 +2,7 @@
 
 ## 1. Purpose and scope
 
-This document describes the architecture of `django-angular3` (package: [django-angular3]; source: [django-angular3-github]) as a contract-driven, agentically orchestrated, AI-automation-based system for generating and integrating Angular application building blocks against a [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] backend. The backend contract is expressed as a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification], which serves as the integration boundary and the source of truth for CRM-facing functionality.
+This document describes the architecture of `django-angular3` (package: [django-angular3]; source: [django-angular3-github]) as a contract-driven, agentically orchestrated, AI-automation-based system for generating and integrating Angular application building blocks against a [Django] and [Django REST Framework (DRF)][DRF - Django REST Framework] backend. The backend contract is expressed as a structured [OpenAPI contract (Schema)][OpenAPI 3.1 Specification], which serves as the integration boundary and the source of truth for API-contract-derived functionality.
 
 This solution is not an application and not a general development environment. It is an architecture for constructing and evolving generated applications. Optional `djng` AI-guided construction or repair may be non-deterministic, but `ngdj` schematic execution is deterministic and AI-independent. Acceptance is deterministic: the generated application is considered correct only when it assembles into a working whole and passes the defined validations and tests.
 
@@ -81,9 +81,6 @@ or generated application.
 ### 2.7 [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.
 
-### 2.8 CRM
-CRM stands for Customer Relationship Management. In this architecture, it is shorthand for contract-derived business-domain content represented by the backend schema and API. It is not limited to a literal customer-sales system.
-
 ### 2.9 UI-description input
 The structured input that describes application UI independently of the API
 contract. It may define pages, forms, navigation, layouts, workflows, and other
@@ -99,7 +96,7 @@ and concrete UI document are defined by the
 contract and does not redefine it.
 
 ### 2.10 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
-The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for CRM-facing functionality and the basis for generating Angular integration artifacts.
+The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for API-contract-derived functionality and the basis for generating Angular integration artifacts.
 
 ### 2.11 Angular integration artifacts
 Generated Angular outputs derived from the OpenAPI contract and related tooling, including typed API clients, resource adapters, transport helpers, reusable Angular Material-oriented integration helpers, and supporting metadata.
@@ -219,7 +216,7 @@ truth.
   on the generated model.
 
 Both modes converge on the same invariant: once a backend exists, the OpenAPI
-contract is the source of truth for CRM-facing functionality (§11.1). See §11.2
+contract is the source of truth for API-contract-derived functionality (§11.1). See §11.2
 for the generation toolchain and §17 for the corresponding decision.
 
 ### 2.23 Automation naming layers
@@ -291,7 +288,7 @@ cardinality.
 
 |Artifact|Description|
 |:-|:-|
-|`OpenAPI contract`|A versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for CRM-facing functionality|
+|`OpenAPI contract`|A versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for API-contract-derived functionality|
 |Angular integration artifacts|Generated Angular code including typed API clients, resource adapters, and reusable Angular Material-oriented integration helpers derived from the OpenAPI contract|
 
 
@@ -458,7 +455,7 @@ criteria.
 1. Backend contract stage: Django models, serializers, and DRF endpoints define
    the business contract and emit an OpenAPI artifact
 2. Contract normalization stage: the OpenAPI artifact is validated, diffed
-  against the previous version, versioned, and prepared for CRM-facing
+  against the previous version, versioned, and prepared for API-contract-derived
   generation
 3. Angular integration artifacts generation stage: the OpenAPI contract produces typed
    clients, resource adapters, and reusable Angular Material-oriented
@@ -551,9 +548,6 @@ The application has two distinct input abstractions:
 - UI description: the OpenUI concrete UI document selected by project
   configuration
 
-Here, CRM content means contract-derived resource content, not a narrow
-customer-sales domain assumption.
-
 The documents remain separate versioned inputs with distinct roles, but they
 may describe complementary aspects of the same feature. `djng` validates their
 cross-input consistency before deriving construction operations.
@@ -565,7 +559,7 @@ cross-input consistency before deriving construction operations.
   data content.
 - Shared enumerations and reference data should come from the API, not be hard
   coded in the client
-- CRM-facing Angular content should always be generated or configured from OpenAPI
+- API-contract-derived Angular content should always be generated or configured from OpenAPI
 - The OpenUI concrete UI document should be version-controlled and validated
   separately from the OpenAPI contract
 - The user-facing product UI remains frontend-owned, while backend data
@@ -640,7 +634,7 @@ Their responsibilities should include:
 
 - OpenAPI-derived typed API clients
 - Wrapping or normalizing generated code.
-- CRM-oriented resource adapters and data-access helpers
+- API-contract-derived resource adapters and data-access helpers
 - Shared Angular Material integration patterns for list, detail, and standard
   form experiences.
 - Authentication, CSRF, and transport helpers needed for Django integration
@@ -649,7 +643,7 @@ Their responsibilities should include:
 It should not own:
 
 - Product-specific application shell decisions
-- Fully bespoke pages that are not OpenAPI-derived
+- Explicitly authored UI that is not API-contract-derived
 - Business content that belongs to the main frontend application
 - Backend data administration concerns that belong to Django and DRF
 
@@ -695,7 +689,7 @@ It should not own:
 
 - Assumption: schema extractor and Angular code generator are aligned to OpenAPI specification and match in API.
 - DRF must publish a versioned OpenAPI schema as the contract source of truth
-  for CRM-facing functionality.
+  for API-contract-derived functionality.
 - The exported schema should be stored as a durable build artifact so downstream
   agent-chain stages can consume it deterministically.
 - Change detection must be run as part of the contract normalization stage to
@@ -823,7 +817,7 @@ switch environments.
 - Same-origin deployment is the default production target
 - Django session authentication will be the initial first-party auth model.
 - Will begin prototyping with sqlite, next will be PostgreSQL
-- OpenAPI is the source of truth for CRM-facing contracts.
+- OpenAPI is the source of truth for API-contract-derived contracts.
 - Contract validation and `oasdiff`-based change detection are required before downstream construction continues.
 - [oasdiff] is the OpenAPI schema diff and change detection tool (source: [oasdiff-github]).
 - [openapi-spec-validator] is used for full OAS compliance validation of OpenAPI documents in `djng`.

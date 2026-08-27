@@ -61,7 +61,7 @@ See `doc/ARCHITECTURE.md` §2.21 for the authoritative definition.
 - Keep Django and DRF responsible for backend data, authentication,
 	authorization, and administrative capabilities.
 - Keep Angular responsible for the user-facing route tree and SPA experience.
-- Treat OpenAPI as the source of truth for CRM-facing contract-derived content.
+- Treat OpenAPI as the source of truth for API-contract-derived content.
 - Treat OpenUI as the separate UI-description input. It may complement or
 	reference API-contract-derived content; validate cross-input consistency.
 - Prefer small, explicit, deterministic build and validation steps.

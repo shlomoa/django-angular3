@@ -13,7 +13,7 @@ Related docs:
 It allows you to:
 - Keep Django responsible for data, authentication, and administration.
 - Keep Angular responsible for the end-user application and client-side route tree.
-- Use OpenAPI as the source of truth for CRM-facing functionality.
+- Use OpenAPI as the source of truth for API-contract-derived functionality.
 - Support pages, reactive forms, navigation, and workflows through an OpenUI concrete UI document.
 - Automate the handoff from backend API contract to Angular integration artifacts through a deterministic, repeatable pipeline.
 
@@ -215,7 +215,7 @@ REST_FRAMEWORK = {
 At this point, Django + DRF own the backend data and authentication services.
 
 The next step is to export the OpenAPI contract from that backend and use it as
-the source for Angular-side CRM-facing integration.
+the source for API-contract-derived Angular integration.
 
 A simplified schema fragment might look like this:
 

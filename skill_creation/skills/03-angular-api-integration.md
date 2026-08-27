@@ -55,7 +55,7 @@ Generate API client code from an OpenAPI specification when it doesn't exist.
    - Generating Django integration helpers under `--helpersPath` (default
      `src/app/api-integration`): `django-transport.ts` (auth/CSRF/transport,
      exposing `provideDjangoApiTransport`), `resource-adapter.ts`
-     (CRM-oriented `ResourceAdapter`/`ResourceQuery`/`PaginatedResult`), and an
+   (API-contract-derived `ResourceAdapter`/`ResourceQuery`/`PaginatedResult`), and an
      `index.ts` barrel. Pass `--skipHelpers=true` to omit them and
      `--skipTests=true` to omit their `*.spec.ts` files.
    - Scheduling a package install task

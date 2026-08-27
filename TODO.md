@@ -108,7 +108,8 @@ on the Django/DRF side.
 **Status: Substantially implemented**
 
 Implement the `djng` generator app entry points and the governed wrappers around
-`ngdj` actions used for workspace, app, contract-derived, and non-CRM
+`ngdj` actions used for workspace, app, API-contract-derived, and
+UI-description-derived
 construction.
 
 - All current workspace/app/contract wrappers implemented, including the
@@ -683,9 +684,25 @@ classifications are not mutually exclusive.
     as quotations or history. Active recommendations, issue titles, and issue
     descriptions should use the canonical terms; cross-repository issue and
     test alignment remains Step 15.2.6.
-- [ ] 15.2.3. Update `openui-spec` only if its existing generic UI boundary is
+- [x] 15.2.3. Update `openui-spec` only if its existing generic UI boundary is
   incomplete.
-- [ ] 15.2.4. Update `ngdj` references.
-- [ ] 15.2.5. Update `djng` references.
+  - No update is required. Maintained `openui-spec` sources contain no
+    CRM/non-CRM classification, define OpenUI as technology-independent, and
+    explicitly avoid requiring a particular data source. Its generic boundary
+    already permits concrete UI documents that describe API-backed UI.
+- [x] 15.2.4. Update `ngdj` references.
+  - Replaced architectural CRM wording with API-contract-derived and
+    resource-operation terminology across implementation comments,
+    diagnostics, schemas, CLI documentation, requirements, README, and tests.
+  - Renamed private `CRM_KEYS`/`crmKeys` identifiers to
+    `RESOURCE_OPERATION_KEYS`/`resourceOperationKeys`; retained the public
+    `ResourceAdapter` name and kept the site assembly definition distinct from
+    OpenUI.
+- [x] 15.2.5. Update `djng` references.
+  - Replaced architectural CRM/non-CRM terminology with the approved source
+    and relationship terms across instructions, architecture, requirements,
+    README, workflow, configuration, active plans, and skill documentation.
+  - Removed the generic CRM glossary alias, retained the literal `Simple CRM`
+    tutorial identity, and neutralized incidental `crm` test values.
 - [ ] 15.2.6. Align GitHub issues and tests that still call `ngdj`-specific
   inputs “non-CRM OpenUI.”
