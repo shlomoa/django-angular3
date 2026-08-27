@@ -95,6 +95,32 @@ and concrete UI document are defined by the
 [OpenUI artifact-role SSOT][openui-artifacts]. `djng` consumes that external
 contract and does not redefine it.
 
+### 2.9.2 Source and construction terminology
+
+- **API-contract-derived** means inferred or generated from OpenAPI.
+- **API-contract-backed** means that a UI presents data or invokes operations
+  supplied through the API contract; it does not imply that the UI structure
+  was derived from OpenAPI.
+- **UI-description-derived** means derived from an OpenUI concrete UI document.
+- **Explicitly authored UI** means UI declarations that were authored rather
+  than inferred from OpenAPI. Such declarations may be encoded in OpenUI and
+  therefore also be UI-description-derived.
+- **Angular construction operation** means a deterministic `ngdj` workspace or
+  code transformation. `djng` derives and selects these operations; `ngdj`
+  validates their explicit invocation inputs and executes them.
+- **Resource operation** means a generic list, retrieve, create, update,
+  partial update, or delete capability. A **resource-operation key** identifies
+  one of these capabilities, and an **API-contract-derived resource adapter**
+  is generated from OpenAPI. The public `ResourceAdapter` type name is retained.
+
+A concern may be both API-contract-backed and UI-description-derived. These
+terms describe source, relationship, or execution and are not mutually
+exclusive business-domain categories. Do not use `CRM` or `non-CRM` as an
+architectural classification for a source, input, stream, artifact, ownership
+boundary, or construction operation. `Simple CRM` and `simple_crm` remain valid
+names for the bundled customer-relationship-management tutorial, and explicit
+references to that business domain may use CRM.
+
 ### 2.10 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for API-contract-derived functionality and the basis for generating Angular integration artifacts.
 
@@ -550,7 +576,19 @@ The application has two distinct input abstractions:
 
 The documents remain separate versioned inputs with distinct roles, but they
 may describe complementary aspects of the same feature. `djng` validates their
-cross-input consistency before deriving construction operations.
+governing contracts and cross-input consistency before deriving and selecting
+explicit Angular construction operations. It rejects unsupported changes or
+missing construction capabilities, orchestrates the selected operations, and
+verifies the composed generated application.
+
+`ngdj` validates each public schematic invocation, its explicit options or
+bounded input, Angular workspace preconditions, and the construction invariants
+it owns before applying a deterministic mutation. It does not independently
+interpret the generated application's canonical OpenUI document or derive the
+application-wide change plan. Validation by `openui-spec`, `djng`, and `ngdj`
+therefore applies at distinct, complementary boundaries; validation at one
+boundary does not replace validation at another. See §2.6 for the canonical
+`ngdj` ownership policy and §2.9.2 for source and construction terminology.
 
 ### 8.3 Contract Rules
 
