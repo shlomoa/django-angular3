@@ -1,6 +1,6 @@
 # Skill Creation Working Set
 
-This folder splits `doc/GENERATE_AI_AUTOMATIONS.md` into smaller working files for the
+This folder splits `doc/contracts/AI_AUTOMATION_CONTRACTS.md` into smaller working files for the
 skill authoring cadence described in `doc/SKILL_AUTHORING_PLAN.md`.
 
 This folder is intentionally skill-specific. It is the working set for the
@@ -10,17 +10,16 @@ No sibling `tools_creation/` workspace is defined today. Tool candidates are
 still tracked at the design and analysis level in `doc/` rather than as a
 split, step-by-step authoring program comparable to the eleven skills.
 
-`doc/GENERATE_AI_AUTOMATIONS.md` remains the canonical Skill source. These files are
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md` remains the canonical Skill source. These files are
 derived working copies for planning, implementing, and verifying one Skill at a
 time through the cadence in `doc/SKILL_AUTHORING_PLAN.md`. If a split file appears incomplete or inconsistent with
-`doc/GENERATE_AI_AUTOMATIONS.md`, resolve the discrepancy against `doc/GENERATE_AI_AUTOMATIONS.md` and
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md`, resolve the discrepancy against `doc/contracts/AI_AUTOMATION_CONTRACTS.md` and
 then update the split file.
 
 For the umbrella automation model and primitive-selection policy, use
-`doc/GENERATE_AI_AUTOMATIONS.md`, `doc/ARCHITECTURE.md`,
-`doc/REQUIREMENTS.md`, and `doc/APP_BUILDER_REQUIREMENTS.md`. Use this folder
-only when the task is specifically about authoring, reviewing, or verifying a
-skill.
+`doc/ARCHITECTURE.md`; use `doc/contracts/AI_AUTOMATION_CONTRACTS.md` for canonical
+automation contracts. Use this folder only when the task is specifically about
+authoring, reviewing, or verifying a skill.
 
 All ngdj-dependent Skill work in this folder follows the identity, ownership,
 and upstream-source policy in `doc/ARCHITECTURE.md` §2.6. Command examples in

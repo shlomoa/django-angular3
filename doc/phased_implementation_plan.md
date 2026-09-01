@@ -3,7 +3,8 @@
 ## Purpose
 
 This document derives a phased implementation plan from the normative contracts
-in `doc/GENERATE_AI_AUTOMATIONS.md` into an ordered, acceptance-gated sequence
+in `doc/contracts/AI_AUTOMATION_CONTRACTS.md` and the requirements in
+`doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` into an ordered, acceptance-gated sequence
 of implementation work. It also incorporates the provider-portability research
 and code-level implementation details formerly maintained in a separate AI
 knowledge integration plan, making this document the single sequencing
@@ -11,8 +12,9 @@ authority for that work.
 
 It fulfils the "phased implementation plan" deliverable of the
 *Architecture alignment — Phased implementation plan* issue and feeds the
-finalisation of `doc/GENERATE_AI_AUTOMATIONS.md` as the umbrella design spec for
-the full automation model (Skills + Tools + Hooks + Plugins), not Skills alone.
+finalisation of the canonical contracts in
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md`.
+The full automation model is defined in `doc/ARCHITECTURE.md` §3.6.
 
 ### How to read this plan
 
@@ -21,17 +23,20 @@ the full automation model (Skills + Tools + Hooks + Plugins), not Skills alone.
   before the phase is considered done), and **test / verification coverage**.
 - Phases are ordered by dependency. A phase must not start while an upstream
   phase it is blocked on is unsatisfied — the same dependency-gating principle
-  direct command execution enforces at runtime (`APP_BUILDER_REQUIREMENTS.md`
+  direct command execution enforces at runtime (`doc/requirements/APP_BUILDER_REQUIREMENTS.md`
   FR-2, FR-7).
-- Authoritative sources are the contracts in `doc/GENERATE_AI_AUTOMATIONS.md`
-  and the functional requirements in `doc/APP_BUILDER_REQUIREMENTS.md`. Where
-  this plan and those documents disagree, the contracts and FRs win; update this
-  plan to match.
+- Authoritative sources are the contracts in
+  `doc/contracts/AI_AUTOMATION_CONTRACTS.md` and the requirements in
+  `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` and
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md`. Exact automation realization
+  is defined in `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md`. This plan
+  sequences those sources and does not redefine them. Where this plan
+  disagrees with an authoritative source, update this plan to match.
 
 ### Primitive-selection policy
 
 This plan applies the primitive-selection policy from
-`doc/GENERATE_AI_AUTOMATIONS.md` §Primitive-selection policy:
+`doc/ARCHITECTURE.md` §3.6.3:
 
 | If the work… | Use |
 |---|---|
@@ -55,19 +60,19 @@ for this plan:
   (`django_angular3/management/commands/`).
 - **oasdiff acquisition**: `django_angular3/tools.py:ensure_oasdiff()`.
 - **Normative contract catalogs** for Tools, Hooks, and Plugins
-  (`doc/GENERATE_AI_AUTOMATIONS.md` §Tool / §Hook / §Plugin Contracts Catalog).
+  (`doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Tool / §Hook / §Plugin Contracts Catalog).
   The catalogs define the primitives scheduled in Phases 1, 2, and 8; most
   carry an *Implementation reference* of "planned" because the backing artifact
   does not yet exist. The additional OpenUI wrapper contracts identified in
-  `APP_BUILDER_REQUIREMENTS.md` remain undefined and must be added before the
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md` remain undefined and must be added before the
   corresponding operations can be claimed as supported.
 - **build_app functional requirements** for traversal, failure handling, and
-  terminal verification (`doc/APP_BUILDER_REQUIREMENTS.md` FR-1…FR-9), including
+  terminal verification (`doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-1…FR-10), including
   FR-8 (command and hook failure handling) and FR-9 (terminal verification
   contract).
 - **Skill working copies** under `skill_creation/skills/` (split copies of the
-  `GENERATE_AI_AUTOMATIONS.md` Skills Catalog); the eleven Skills are not yet
-  authored as runnable `SKILL.md` units (`TODO.md` item 7).
+  `doc/contracts/AI_AUTOMATION_CONTRACTS.md` Skills Catalog); the eleven Skills are not yet
+  authored as runnable `SKILL.md` units (`doc/plan/TODO.md` item 7).
 - **Provider research evidence** in the private `shlomoa/ai` repository,
   validated through authenticated access: Claude Agent SDK `query`, MCP tools,
   native hooks, filesystem Skills, and `.claude-plugin`; OpenAI Responses API /
@@ -96,20 +101,17 @@ stable contracts.
 
 **Work items**:
 - Promote Tools / Hooks / Plugins recommendations into normative contracts in
-  `doc/GENERATE_AI_AUTOMATIONS.md` (done — see its Contracts Catalogs).
+  `doc/contracts/AI_AUTOMATION_CONTRACTS.md` (done — see its Contracts Catalogs).
 - Add build_app FRs for failure handling and terminal verification
-  (`doc/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9) (done).
+  (`doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9) (done).
 - Record this phased implementation plan (this document).
 - Record the local-to-global acceptance decision (Phase 7).
-- Define every additional Tool contract that `APP_BUILDER_REQUIREMENTS.md`
+- Define every additional Tool contract that `doc/requirements/APP_BUILDER_REQUIREMENTS.md`
   identifies as planned before claiming Phase 0 contract coverage (open).
 
 **Acceptance criteria**:
-- Every planned Tool, Hook, and Plugin has exactly one canonical normative
-  contract, as defined by `doc/GENERATE_AI_AUTOMATIONS.md`
-  §Contract identity and relationship cardinality. Multiple commands, Hooks,
-  Plugins, and provider bindings may reference or compose that contract; they
-  must not redefine it.
+- The design and contract sources satisfy
+  `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` AIR-1.
 - This plan exists and references the contracts and FRs by name.
 
 **Test / verification coverage**: documentation review only — no code behaviour
@@ -126,60 +128,24 @@ results instead of requiring raw CLI parsing.
 **Dependencies**: Phase 0.
 
 **Work items** (one per Tool contract in
-`doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog):
-- Add a provider-free `django_angular3/automation/` package. Define immutable,
-  serializable contracts for structured errors, Tool invocations/results, Hook
-  outcomes, acceptance evidence, command outcomes, and run outcomes. Use
-  standard-library types, deterministic `to_dict()`/parsing behavior, and
-  execution-boundary injection for identifiers and timestamps.
-- Add an append-only, dependency-injected `EvidenceRecorder` that writes stable
-  UTF-8 JSON Lines below the selected build output. Record run metadata plus an
-  ordered stream of Tool, Hook, and acceptance events; flush completed events
-  so halted runs remain inspectable. Convert recorder failures into structured
-  direct-execution failures, and prohibit secrets, credentials, request headers,
-  and provider-native payloads from serialized evidence.
-- Define the future adapter-result hand-off as a provider-neutral protocol:
-  adapter results reference the run and canonical Skill/command but cannot
-  mutate `RunOutcome` or write directly to the evidence stream. `build_app`
-  remains responsible for normalization and recording after direct gates pass.
-- Implement these boundaries in `automation/contracts.py` and
-  `automation/evidence.py`, keeping `automation/__init__.py` free of SDK
-  imports. Cover them in `tests/test_automation_contracts.py` and
-  `tests/test_automation_evidence.py`.
-- `openapi_schema_export` — wrap `export_schema` to return schema path and a
-  `schema_changed` flag.
-- `oasdiff_diff` — wrap the `ensure_oasdiff()` binary to return
-  `{ changes: [], schema_changed: bool }`.
-- `validate_openapi_schema` — wrap an OAS 3.1 validator to return
-  `{ valid: bool, errors: [] }`.
-- `angular_api_client_generate` — wrap `ng_openapi_gen` to return
-  `generated_files: []`.
-- `angular_workspace_scaffold`, `angular_app_scaffold` — wrap `ng_new` / the
-  app-scaffold wrapper to return structured result objects.
-- `ngdj_add_feature`, `ngdj_add_component`, `ngdj_run_schematic` — expose the
-  supported ngdj feature/component/schematic surface through validated,
-  structured calls.
-- `oasdiff_changelog` — generate and archive a human-readable schema-change
-  report from the same artifact pair used by `oasdiff_diff`.
-
-Each tool MUST honour the **Tool contract shape**
-(`doc/GENERATE_AI_AUTOMATIONS.md` §Tool contract shape): structured inputs,
-structured outputs, and a structured error object whose `category` is one of
-`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Tool Contracts Catalog):
+- Implement the provider-neutral foundation and evidence persistence defined
+  in `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` §§2–3.
+- Implement the provider-neutral result hand-off defined in the specification
+  and governed by AIR-3 and AIR-5.
+- Implement the `openapi_schema_export`, `oasdiff_diff`,
+  `validate_openapi_schema`, `angular_api_client_generate`,
+  `angular_workspace_scaffold`, `angular_app_scaffold`, `ngdj_add_feature`,
+  `ngdj_add_component`, `ngdj_run_schematic`, and `oasdiff_changelog` Tool
+  contracts without redefining their input, output, or error boundaries here.
+- Add the Phase 1 contract, evidence, and Tool tests listed below.
 
 **Acceptance criteria**:
-- The automation foundation imports no provider SDK and makes no network call.
-- Contract objects round-trip deterministically, reject invalid categories or
-  shapes, and serialize no secret-bearing fields.
-- Evidence remains ordered and machine-readable after success, failure, or a
-  halted run.
-- Each tool's return value validates against its contract's declared output
-  shape.
-- Each tool surfaces failures through the structured error object — never as an
-  unstructured exception or stdout-only message — so FR-8 handling can act on
-  `category`.
-- Tool names exactly match the contract names selected during command
-  translation (FR-7).
+- The implemented foundation satisfies AIR-2 through AIR-4, AIR-NFR-1, and
+  AIR-NFR-2 in `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md`.
+- Every implemented Tool passes its canonical contract-conformance checks and
+  the applicable FR-7 and FR-8 checks in
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - Contract serialization, validation, deterministic ID/timestamp injection,
@@ -200,34 +166,19 @@ and mandatory side effects always run, independent of agent choices.
 **Dependencies**: Phase 1 (hooks wrap tool outputs).
 
 **Work items** (one per Hook contract in
-`doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog):
-- Add a provider-neutral Hook registry keyed by canonical Hook name and
-  lifecycle family (`pre-tool`, `post-tool`, or `session-stop`). Definitions
-  declare Tool/command scope, block/halt/warn consequence, evidence payload,
-  and idempotency behavior; shared matching must not depend on raw shell strings
-  or provider event names.
-- Implement the registry and contract bindings in `automation/hooks.py`; keep
-  direct dispatch tests in `tests/test_hooks.py` and provider event-mapping
-  assertions in the adapter suites.
-- `pre-construction` — `Pre*` gate: schema exists, is valid OAS 3.1, and is at
-  least as fresh as the latest migration before any Angular generation tool.
-- `migration-triggered` — `Post*`: re-export the schema when a new migration
-  appears; append a status record to `build/hook-log.jsonl`.
-- `post-generation` — `Post*`: run a structural check after each generation tool
-  and append a pass/fail entry to `build/verification.log`.
-- `session-stop` — `Stop`: archive durable artifacts and write a session
-  summary; MUST NOT change the session exit code (FR-8).
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Hook Contracts Catalog):
+- Implement the Hook registry, dispatch, idempotency, and persistence mechanics
+  defined in `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` §§3–4.
+- Implement the `pre-construction`, `migration-triggered`, `post-generation`,
+  and `session-stop` Hook contracts without redefining their triggers, actions,
+  artifacts, or failure consequences here.
+- Add the Phase 2 direct-dispatch and provider-event-mapping tests listed
+  below.
 
 **Acceptance criteria**:
-- Every Hook start, skip, outcome, and failure is correlated with its run,
-  command, and Tool invocation in the provider-independent evidence stream.
-- Duplicate lifecycle observations do not repeat destructive Hook work or emit
-  conflicting acceptance evidence.
-- `Pre*` hook non-zero exit blocks the wrapped tool and every dependent command
-  (FR-8).
-- Hook failures return a distinct hook-failure exit code (FR-8).
-- `session-stop` only appends warnings and never alters the exit code.
-- Each hook writes its structured error fields to stderr / `build/hook-log.jsonl`.
+- The implemented Hook registry and Hooks satisfy AIR-3 through AIR-5 in
+  `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` and FR-8 in
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - Per-hook tests: trigger event fires the hook, blocking hook halts command execution,
@@ -247,45 +198,27 @@ each command through the right primitive.
 **Dependencies**: Phases 1–2.
 
 **Work items**:
-- Add a synchronous direct-execution controller in
-  `django_angular3/automation/execution.py`; the current Django command and
-  subprocess model does not require a new asynchronous framework. Its injected
-  context contains the validated project configuration, output path, run ID,
-  dry-run/acknowledgement flags, and evidence recorder.
-- Implement `run_tool` and pre-/post-/session-stop Hook boundaries that normalize
-  expected failures and unexpected exceptions, record outcomes, and enforce
-  block/halt/warn consequences. Only this controller may make dependency,
-  gate, terminal-validation, and final run-acceptance decisions.
+- Implement the direct controller, execution context, Hook boundaries, and
+  validation integration defined in
+  `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` §5.
 - Translate selected TOOL, HOOK, and SKILL contracts into ordered commands whose
   contract names match the documented surfaces (FR-7).
 - Execute in dependency order; TOOL commands call the Phase 1 tools and HOOK
   boundaries apply the Phase 2 hooks.
-- Implement FR-8 failure handling: halt at the failed command, refuse
-  to start dependents, emit a structured error, and exit with the
-  contract-specific code.
-- Keep `--dry-run` validating inputs, identifying changes, and reporting the
-  ordered diagnostic command output without invoking automation (FR-3).
+- Implement FR-3 dry-run behavior and FR-8 failure handling.
 - Integrate at `build_app` entry and error boundaries: create the execution
-  context after project-config validation, record validation and schema-diff
-  outcomes, and finalize evidence on every normal or error exit. Preserve the
+  context after project-config validation and finalize evidence on every
+  normal or error exit. Preserve the
   current OpenUI-diff and `NotImplementedError` limitations until their owning
   work lands; foundation wiring must not imply complete execution.
-- Keep existing validation functions authoritative and preserve their public
-  diagnostics, messages, and return types. They may receive an injected
-  recorder only after producing their normal result; they must not open ad-hoc
-  logs.
 - Keep controller coverage in `tests/test_automation_execution.py` and focused
   command-boundary coverage in a dedicated `build_app` test module. Do not add
   provider fixtures or adapter SDK stubs to this phase.
 
 **Acceptance criteria**:
-- A provider result cannot invoke direct gates, mark a command successful,
-  mutate the run outcome, or substitute for terminal validation.
-- A command never starts while a dependency it is blocked on is unsatisfied
-  (FR-2, FR-7).
-- A failed tool or `Pre*`/`Post*` hook stops execution and produces the correct,
-  distinct exit code.
-- `--dry-run` output is deterministic and human-readable for the same inputs.
+- Direct execution satisfies AIR-5 in
+  `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` and FR-2, FR-3, FR-7, and
+  FR-8 in `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - Direct controller tests: successful evidence; pre-tool block without Tool
@@ -311,37 +244,23 @@ skill content with per-skill acceptance criteria and provider-specific rendering
 - Author each canonical Skill per `doc/SKILL_AUTHORING_PLAN.md` (plan,
   implementation + tests, build_app command integration, verification).
 - Keep `skill_creation/skills/` working copies aligned with the authoritative
-  `GENERATE_AI_AUTOMATIONS.md` Skills Catalog.
-- Define an executable canonical Skill catalog containing each Skill's name,
-  purpose, inputs, outputs, dependencies, acceptance criteria, Tool/Hook
-  bindings, and version. Generate or validate it against the authoritative
-  catalog instead of parsing Markdown during `build_app` execution.
-- Add a provider-neutral Skill resolver. It rejects unknown Skills, incomplete
-  dependencies, and unknown Tool bindings before a session request can be
-  created. Provider-specific rendering remains derived work in Phase 8; no
-  provider's native skill-file format is the canonical `djng` source.
-- Implement the resolver and catalog in `automation/skills.py` and
-  `automation/skill_catalog.py`; cover catalog integrity in
-  `tests/test_skill_catalog.py`. A temporary fixture registry is acceptable
-  only until the executable catalog lands.
+  `doc/contracts/AI_AUTOMATION_CONTRACTS.md` Skills Catalog.
+- Implement the executable catalog and provider-neutral resolver defined in
+  `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` §6.
+- Cover catalog integrity in `tests/test_skill_catalog.py`.
 - Define each Skill's local acceptance criteria during its Plan phase: the exact
   pass/fail conditions, the tools used to verify them, and what "done" means
   locally.
 
 **Acceptance criteria**:
-- Each Skill declares explicit, checkable acceptance criteria (no arbitrary
-  termination).
-- The Skill dependency chain matches the dependency ordering selected for
-  AI-guided commands (FR-2).
-- Canonical skill content has one source of truth, and each provider-specific
-  rendering is verifiably derived from it.
-- Runtime Skill resolution consumes the executable catalog and does not parse
-  provider-native files or the planning documents.
+- Skill authoring and runtime resolution satisfy AIR-1 and AIR-6 in
+  `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` and FR-2 in
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - Per-skill component tests for the generated Angular artifacts.
 - Skill-catalog-alignment check between `skill_creation/skills/` and
-  `GENERATE_AI_AUTOMATIONS.md`.
+  `doc/contracts/AI_AUTOMATION_CONTRACTS.md`.
 - Catalog validation for unique identifiers, valid dependencies, known
   Tool/Hook bindings, and complete acceptance criteria.
 
@@ -356,32 +275,9 @@ command-execution semantics owned by `djng`.
 **Dependencies**: Phases 3–4.
 
 **Work items**:
-- Define a provider-neutral adapter interface for session creation, canonical
-  skill loading, tool dispatch, lifecycle-event normalization, structured
-  results, cancellation, timeouts, and credential configuration.
-- Implement the interface in a provider-free adapter base package with
-  synchronous methods for session creation, Skill loading, command execution,
-  cancellation, and close. Use immutable session request/handle/result objects;
-  handles must not expose provider clients to `build_app`.
-- Normalize adapter failures into stable categories including
-  `unmet_acceptance`, `timeout`, `context_exhausted`, `tool_denied`,
-  `provider_unavailable`, `cancelled`, and `provider_protocol_error`, with
-  redacted details only.
-- Add a guided-session orchestrator injected with the adapter, Skill resolver,
-  direct execution context, and recorder. It validates dependencies, resolves
-  canonical Skills, creates a sanitized request, runs one guided command,
-  normalizes and records its result, requires contract-matching evidence, and
-  closes the session in a `finally` path. The first implementation performs no
-  implicit retries.
-- Add an internal adapter registry/factory. Every adapter declares immutable
-  capabilities for Skill loading, Tool calling, lifecycle observation,
-  structured results, cancellation/timeouts, and teardown, distinguishing
-  native support from a local mapping. Reject registrations or command requests
-  that lack required normalization capabilities.
-- Use `automation/adapters/base.py` for the SDK-free interface,
-  `automation/adapters/capabilities.py` for metadata, and
-  `automation/orchestrator.py` for guided sessions. Keep adapter registration in
-  the package boundary rather than branching on providers in `build_app`.
+- Implement the provider-neutral adapter boundary, guided-session algorithm,
+  capability registration, provider isolation, and credential handling defined
+  in `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` §7.
 - Implement adapters against that interface. The validated reference examples
   in `shlomoa/ai` are:
   - **Claude:** Agent SDK `query`, native hooks, filesystem skills, and plugins.
@@ -390,48 +286,21 @@ command-execution semantics owned by `djng`.
   - **Gemini:** `google-genai`, function tools, and decorator/wrapper hooks.
   - **Copilot:** `github-copilot-sdk`, sessions, permission handlers, and
     pre-/post-tool hooks.
-- Keep `djng` direct command-execution gates authoritative for correctness.
-  Provider-native hooks and local wrappers normalize provider events into the
-  adapter interface; they do not create an independent gate or permit bypassing
-  the `djng` enforcement boundary.
-- Specify and implement what `build_app` does when an agent session ends without
-  evidence of success — halt, surface a structured error, and refuse to advance
-  (no silent advance past unmet acceptance criteria).
-- Pass adapters only sanitized canonical command context and allowed Tool names,
-  never the mutable execution controller or `RunOutcome`. Provider permission,
-  Tool-use, and lifecycle events are correlated observations; the direct
-  controller decides and records their consequences.
-- Keep `build_app --dry-run` provider-free: resolve and render the planned
-  canonical selection without constructing an adapter, importing an SDK,
-  discovering credentials, opening a session, or writing provider artifacts.
+- Apply AIR-5 enforcement ownership to every adapter implementation.
+- Implement AIR-7 handling for an agent session that ends without sufficient
+  acceptance evidence.
+- Apply FR-3 and AIR-8 to keep dry runs provider-free.
 - Keep provider selection internal until the configuration taxonomy assigns its
   public ownership. Deterministic-only runs require no adapter.
-- Isolate each implementation in its own module and optional dependency extra.
+- Package each provider SDK as an optional dependency extra.
   Move `claude-agent-sdk` out of required dependencies only when the Claude
   adapter owns all consumers; add OpenAI, Gemini, and Copilot extras only with
-  their adapters. Importing one adapter must not import any other SDK.
-- Name implementation modules `automation/adapters/claude.py`, `openai.py`,
-  `gemini.py`, and `copilot.py`. Each module may import only its own optional
-  SDK; the factory maps an unavailable SDK to `missing_dependency` with
-  installation guidance naming the relevant extra.
-- Keep credential discovery inside the selected adapter and use only the
-  provider-approved runtime mechanism. Never store credentials in source,
-  fixtures, evidence, or command output.
+  their adapters.
 
 **Acceptance criteria**:
-- The adapter interface can be exercised with a stub without changing direct
-  command-execution, Tool, Hook, or terminal-validation semantics.
-- `build_app` detects a session that ended without satisfying its acceptance
-  criteria and halts instead of advancing.
-- Session failures are surfaced as structured errors consistent with FR-8.
-- Provider-native hook or wrapper behavior cannot bypass `djng` direct
-  command-execution gates.
-- Every registered adapter exposes auditable capabilities consistent with the
-  architecture matrix; metadata alone is not proof that a capability works.
-- Session close runs on success, failure, and cancellation, and teardown
-  warnings do not mask an earlier result.
-- Each adapter is considered implemented only after both credential-free
-  contract tests and its explicitly opted-in runtime suite pass.
+- Provider adapters and guided-session orchestration satisfy AIR-5 and AIR-7
+  through AIR-9 in `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` and FR-7
+  and FR-8 in `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - Provider-independent adapter-contract tests with stubs: success advances,
@@ -475,24 +344,19 @@ the shared assertions.
 
 ## Phase 6 — Terminal verification
 
-**Goal**: Make every run terminate in validation commands that decide success
-on recorded construction results, not a separate filesystem rescan.
+**Goal**: Implement the terminal validation required by FR-9 and FR-10.
 
 **Dependencies**: Phases 3–5.
 
 **Work items**:
-- Implement the terminal validation commands that direct execution always ends
-  in (FR-9), consuming structured tool outputs (for example the
-  `generated_files` array from `angular_api_client_generate`).
+- Implement the terminal validation commands required by FR-9 and FR-10.
 - Cover the four verification categories in `doc/ARCHITECTURE.md` §7.3: contract,
   construction-output, integration, and test-based verification.
-- Record terminal outcomes as acceptance evidence through the same
-  provider-neutral recorder. Adapter-reported success remains insufficient.
+- Apply AIR-3 and AIR-5 to terminal acceptance evidence.
 
 **Acceptance criteria**:
-- A run is reported successful only when every terminal validation command
-  reports success (FR-9).
-- A failed terminal verification follows FR-8 failure handling.
+- Terminal verification satisfies FR-8 and FR-9 in
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - Terminal-verification tests: success only on all-pass; failure path mirrors
@@ -504,40 +368,23 @@ on recorded construction results, not a separate filesystem rescan.
 
 **Goal**: Close the gap where each Skill declares "done" locally but the composed
 application is still incorrect (the `getOrder(id: number)` →
-`load(id: string)` interface-drift chain in `TODO.md` §9.3).
+`load(id: string)` interface-drift chain in `doc/plan/TODO.md` §9.3).
 
 **Dependencies**: Phases 4–6.
 
-**Local-to-global architectural decision** (records the decision required by the
-issue for `doc/ARCHITECTURE.md` §7.2/§7.3):
+The global acceptance requirement is defined by
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-10. Its architectural
+ownership and rationale are defined in `doc/ARCHITECTURE.md` §§7.2–7.3.
 
-> Local acceptance by an individual Skill session is necessary but **not
-> sufficient** for global correctness. The architecture therefore requires a
-> distinct **global acceptance gate**, applied after all Skill sessions and
-> deterministic commands complete, that verifies properties no single Skill
-> can see:
->
-> 1. **Cross-Skill interface consistency** — types and signatures produced by one
->    Skill match what downstream Skills consume (no silent `number`/`string`
->    drift across the api → data-service → page chain).
-> 2. **Backend-contract / Angular-client alignment** — the generated client
->    matches the exported OpenAPI contract.
-> 3. **Runtime smoke tests** — the composed application starts and the main
->    flows run.
->
-> This gate is owned by the terminal validation commands (Phase 6 / FR-9),
-> not by any Skill. A run is "a correct working application"
-> (`doc/ARCHITECTURE.md` §2.17) only when this global gate passes. This decision
-> belongs in `doc/ARCHITECTURE.md` §7.2/§7.3 and the global acceptance criteria
-> in `doc/REQUIREMENTS.md` §6.4.
+**Work items**:
+- Implement the FR-10 global acceptance gate after the Phase 6 terminal
+  validation foundation exists.
+- Keep the global gate independent of any individual Skill's local acceptance
+  decision.
 
 **Acceptance criteria**:
-- The global acceptance gate is documented in `doc/ARCHITECTURE.md` §7.2/§7.3 and
-  `doc/REQUIREMENTS.md` §6.4 (recorded for the design-alignment phase; future
-  implementation phases must keep those sections aligned with the executable
-  gate).
-- The gate fails the run on cross-Skill interface drift even when every Skill
-  passed its local acceptance.
+- The implemented gate satisfies FR-10 in
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - A regression test reproducing the interface-drift failure chain and asserting
@@ -554,31 +401,19 @@ Hooks.
 **Dependencies**: Phases 1–7 (a plugin bundles already-implemented primitives).
 
 **Work items** (one per Plugin contract in
-`doc/GENERATE_AI_AUTOMATIONS.md` §Plugin Contracts Catalog):
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Plugin Contracts Catalog):
 - `djng-angular-construction` — all eleven Skills + schema/generation tools +
   validation/enforcement hooks.
 - `ngdj-scaffold` — workspace/app/feature scaffold tools.
 - `contract-lifecycle` — export → validate → diff → version tools and
   hooks.
-- Define each provider's packaging and installation artifact as a derived
-  distribution representation. A Claude plugin, including `.claude-plugin`, is
-  one provider-specific representation and is not the canonical plugin source.
-- Add provider-neutral Skill and package renderer interfaces that consume only
-  canonical catalog records. Renderers preserve canonical identity, purpose,
-  inputs, outputs, dependencies, acceptance criteria, Tool/Hook bindings, and
-  lifecycle families; provider-native metadata stays namespaced in derived
-  output.
-- Implement the interfaces in `automation/rendering.py`; cover canonical
-  preservation and provider derivation in `tests/test_provider_rendering.py`.
-- Define a generic package manifest with canonical plugin identity/version and
-  exact bundled Skills, Tools, and Hooks. Keep rendered output under ignored
-  build/distribution directories with source provenance and content hashes;
-  never write native frontmatter or manifests back into canonical sources.
-- Implement renderers incrementally with their adapters. Claude may emit
-  `SKILL.md` and `.claude-plugin`; other providers may use session/tool
-  registrations rather than an invented common filesystem format.
-- Make provider installation/discovery opt-in and absent from dry runs and
-  default tests.
+- Implement the derived package rendering, generic manifest realization, and
+  artifact storage defined in
+  `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` §8.
+- Cover canonical preservation and provider derivation in
+  `tests/test_provider_rendering.py`.
+- Implement renderers incrementally with their adapters.
+- Apply AIR-10 to provider installation and discovery.
 - Establish release controls: the credential-free Ruff/unittest/catalog
   baseline remains required; optional import/conformance tests run for affected
   adapters; live suites run only in approved secret-managed environments. Do
@@ -586,14 +421,8 @@ Hooks.
   runtime suite, capability metadata, and package conformance all pass.
 
 **Acceptance criteria**:
-- Each plugin bundles exactly the Skills / Tools / Hooks named in its contract.
-- Each provider-specific package is traceably derived from the canonical
-  plugin contract and preserves its declared contents.
-- Each package installs and versions independently of the Python package.
-- Every generated artifact is traceable to canonical content and cannot add an
-  uncontracted capability.
-- Release status reflects verified provider support; a skipped live suite is
-  not implementation evidence.
+- Packaging, distribution, and release evidence satisfy AIR-9 and AIR-10 in
+  `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md`.
 
 **Test / verification coverage**:
 - Plugin-manifest conformance tests (declared contents match the contract).
@@ -664,12 +493,18 @@ provider support.
 
 ## Related documents
 
-- `doc/GENERATE_AI_AUTOMATIONS.md` — authoritative Tool / Hook / Plugin / Skill
+- `doc/contracts/AI_AUTOMATION_CONTRACTS.md` — authoritative Tool / Hook / Plugin / Skill
   contracts.
-- `doc/APP_BUILDER_REQUIREMENTS.md` — FR-1…FR-9 (traversal, failure handling,
-  terminal verification).
+- `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` — exact automation
+  module organization, persistence, execution, adapter, and rendering
+  realization.
+- `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md` — AIR-1…AIR-10 and
+  AIR-NFR-1…AIR-NFR-3 for the automation subsystem.
+- `doc/requirements/APP_BUILDER_REQUIREMENTS.md` — FR-1…FR-10 (traversal,
+  failure handling, terminal verification, and global acceptance).
 - `doc/ARCHITECTURE.md` — §2 automation primitive definitions, §7 construction
   and verification flow.
 - `shlomoa/ai` — private, authenticated provider examples used as portability
   research evidence only; not a runtime dependency or normative source.
-- `TODO.md` — open backlog items this plan sequences (notably items 6–9, 12).
+- `doc/plan/TODO.md` — open backlog items this plan sequences (notably items
+  6–9, 12).

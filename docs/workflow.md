@@ -106,7 +106,7 @@ implementation discovers and validates the project inputs, but its planning and
 execution workflow is not implemented yet. Do not rely on it to build or
 validate a generated app; use the individual wrappers below while the planner
 is completed. Its target requirements are documented in
-`doc/APP_BUILDER_REQUIREMENTS.md`.
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 ### 5. Run individual Angular wrappers when needed
 

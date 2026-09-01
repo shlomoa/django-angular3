@@ -71,7 +71,7 @@ They must be clearly identified as integration behavior rather than `ngdj`
 behavior. If upstream sources conflict, report the conflict and resolve it
 upstream instead of selecting or inventing a local definition.
 
-### 2.6.1 djangoangular
+#### 2.6.1 djangoangular
 
 `djangoangular` is the code name for the tight Django–Angular integration
 formed by `djng` and `ngdj` working together. It names their combined
@@ -81,13 +81,13 @@ or generated application.
 ### 2.7 [OpenAPI]
 A specification for building APIs that allows both humans and computers to understand the capabilities of a service without access to source code. It serves as a contract between the backend and frontend in this architecture.
 
-### 2.9 UI-description input
+### 2.8 UI-description input
 The structured input that describes application UI independently of the API
 contract. It may define pages, forms, navigation, layouts, workflows, and other
 UI concerns, including concerns that complement or reference API-backed
 features.
 
-### 2.9.1 [OpenUI]
+#### 2.8.1 [OpenUI]
 A technology-independent UI-description specification maintained by
 [shlomoa/openui-spec][openui-spec]. Its purpose and vocabulary are defined by
 the [OpenUI specification][openui-spec], and the roles of its schema, catalog,
@@ -95,7 +95,7 @@ and concrete UI document are defined by the
 [OpenUI artifact-role SSOT][openui-artifacts]. `djng` consumes that external
 contract and does not redefine it.
 
-### 2.9.2 Source and construction terminology
+#### 2.8.2 Source and construction terminology
 
 - **API-contract-derived** means inferred or generated from OpenAPI.
 - **API-contract-backed** means that a UI presents data or invokes operations
@@ -121,22 +121,39 @@ boundary, or construction operation. `Simple CRM` and `simple_crm` remain valid
 names for the bundled customer-relationship-management tutorial, and explicit
 references to that business domain may use CRM.
 
-### 2.10 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
+### 2.9 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for API-contract-derived functionality and the basis for generating Angular integration artifacts.
 
-### 2.11 Angular integration artifacts
+### 2.10 Angular integration artifacts
 Generated Angular outputs derived from the OpenAPI contract and related tooling, including typed API clients, resource adapters, transport helpers, reusable Angular Material-oriented integration helpers, and supporting metadata.
 
-### 2.12 provider adapter
+### 2.11 provider adapter
 A portability boundary that connects an agent executor to a compatible AI
 runtime. It isolates provider-specific session, tool-dispatch, lifecycle, and
 cancellation concerns from the architecture's construction and acceptance
 model. Provider bindings, derived renderings, and their relationship to the
-canonical automation contracts are defined in
-`doc/GENERATE_AI_AUTOMATIONS.md` §Contract identity and relationship
-cardinality.
+canonical automation contracts are defined in §3.6.2.
 
-#### 2.12.1 Provider-adapter capability matrix
+A provider adapter owns the provider-specific work needed to:
+
+- create, configure, and close provider sessions;
+- load prompts and Skills into the provider's supported representation;
+- dispatch the Tool contracts that a session may call;
+- connect provider lifecycle events or local wrappers to Hook enforcement and
+  normalize their outcomes;
+- normalize provider responses into the structured session result consumed by
+  `build_app`, including acceptance evidence, errors, and diagnostics;
+- request and report cancellation, timeouts, and context exhaustion; and
+- obtain provider credentials and apply provider-specific runtime
+  configuration without exposing credentials through contracts or logs.
+
+The adapter does not own command selection, dependency ordering,
+deterministic Tool behavior, acceptance criteria, terminal validation, or the
+durable construction record. Those remain `djng` responsibilities. An adapter
+must report provider-native hook or wrapper outcomes in its normalized result,
+but it cannot turn a failed `djng` enforcement boundary into success.
+
+#### 2.11.1 Provider-adapter capability matrix
 
 This matrix is the authoritative architecture reference for the capabilities a
 provider adapter must map into the provider-neutral `djng` automation contract.
@@ -162,7 +179,7 @@ No provider adapter is implemented in `djng`. A future adapter must satisfy
 provider-independent adapter-contract tests and its credential- and
 runtime-gated provider integration suite before being treated as implemented.
 
-### 2.13 agentic orchestration
+### 2.12 agentic orchestration
 An orchestration model in which an agentic orchestrator derives construction
 work from contract and configuration changes, coordinates deterministic and
 AI-guided automations, and enforces dependency, lifecycle, and acceptance
@@ -171,17 +188,24 @@ handle deterministic operations; and HOOKS enforce mandatory lifecycle
 behavior. The resulting construction remains inspectable and subject to
 deterministic validation.
 
-### 2.14 SKILLS
+### 2.13 SKILLS
 Bounded AI skills that guide the agent within each guided agent session. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
 
-SKILLS are one primitive family within the broader AI automation subsystem of `django-angular3`. That automation subsystem architecture is defined in `doc/GENERATE_AI_AUTOMATIONS.md`, and the per-Skill authoring and verification cadence is defined in `doc/SKILL_AUTHORING_PLAN.md`. This document defines the role of SKILLS in the overall architecture and does not restate their internal design.
+SKILLS are one primitive family within the broader AI automation subsystem of
+`django-angular3`. The subsystem architecture is defined in §3.6, canonical
+Skill contracts are specified in `doc/contracts/AI_AUTOMATION_CONTRACTS.md`, and the
+per-Skill authoring and verification cadence is defined in
+`doc/SKILL_AUTHORING_PLAN.md`.
 
-### 2.15 AI-automation-based construction
+### 2.14 AI-automation-based construction
 A construction model in which bounded AI automations are the execution units for generating, modifying, validating, and integrating application building blocks. In this model, SKILLS provide AI-guided generation and integration behavior, TOOLS provide deterministic bounded operations, HOOKS enforce lifecycle gates and mandatory side effects, and PLUGINS package coherent capability bundles for reuse. This model allows controlled generative freedom while keeping construction within architectural, contract-defined, and validation-defined boundaries.
 
-The normative selection rule for classifying a new capability as a SKILL, TOOL, HOOK, or PLUGIN is defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Primitive-selection policy. New capabilities added to the automation subsystem MUST be classified through that policy before implementation begins.
+The normative selection rule for classifying a new capability as a SKILL,
+TOOL, HOOK, or PLUGIN is defined in §3.6.3. New capabilities added to the
+automation subsystem MUST be classified through that policy before
+implementation begins.
 
-### 2.16 agentic orchestrator
+### 2.15 agentic orchestrator
 The architectural actor that coordinates construction in `djng`. It identifies
 the work required by contract and configuration changes, selects the applicable
 automation primitives, enforces their dependency and lifecycle boundaries, and
@@ -189,24 +213,24 @@ accepts the resulting generated application only after deterministic
 validation. It delegates bounded AI-guided work to an agent executor and
 delegates provider-specific concerns to a provider adapter.
 
-### 2.16.1 agent executor
+#### 2.15.1 agent executor
 The execution capability that carries out a bounded AI-guided task within a
 guided agent session. It operates under the constraints supplied by the
 agentic orchestrator and reports its result for deterministic acceptance.
 
-### 2.17 correct working application
+### 2.16 correct working application
 An application that assembles into a runnable whole and satisfies the deterministic validations and tests defined by this architecture. Individual generated artifacts alone do not establish correctness.
 
-### 2.18 correct-by-construction
+### 2.17 correct-by-construction
 An architectural goal in which bounded construction, architectural constraints, contract-defined rules, and deterministic validation gates drive generation toward a correct working application, even when the internal construction path is not deterministic.
 
-### 2.19 non-deterministic generation
+### 2.18 non-deterministic generation
 Generation in which the internal construction path, intermediate decisions, or exact emitted outputs may vary across valid runs. This variation is allowed as long as the resulting application still satisfies the architecture's deterministic acceptance criteria.
 
-### 2.20 deterministic acceptance
+### 2.19 deterministic acceptance
 An acceptance model in which correctness is decided by explicit validations and tests. Regardless of how generation proceeds internally, acceptance criteria remain stable and repeatable.
 
-### 2.21 Django Project vs Django App
+### 2.20 Django Project vs Django App
 
 A **Django project** is the root configuration container: it holds `settings.py`,
 the root `urls.py`, `wsgi.py`/`asgi.py`, and `manage.py`. There is exactly one
@@ -222,9 +246,9 @@ application and supplies the default name used by workspace and application
 wrappers. The project configuration does not define a Django app name: Django
 apps remain domain modules selected by the generated application. The static
 `django-angular3.json` configures `djng` tooling, not generated-app identity.
-See `REQUIREMENTS.md` §4.2 for the authoritative configuration model.
+See `SPECIFICATIONS.md` §2 for the authoritative configuration structure.
 
-### 2.22 model-first and contract-first backend origination
+### 2.21 model-first and contract-first backend origination
 
 Two distinct ways the backend data model and its OpenAPI contract come into
 existence. They are alternative origination paths, not competing sources of
@@ -245,7 +269,7 @@ Both modes converge on the same invariant: once a backend exists, the OpenAPI
 contract is the source of truth for API-contract-derived functionality (§11.1). See §11.2
 for the generation toolchain and §17 for the corresponding decision.
 
-### 2.23 Automation naming layers
+### 2.22 Automation naming layers
 
 Four distinct naming layers appear in the `djng`/`ngdj` automation subsystem.
 Each layer has a different owner, stability contract, and purpose. Keeping them
@@ -263,6 +287,7 @@ the AI-guided session API.
   |---|---|
   | `angular.workspace` | Workspace scaffold and configuration |
   | `angular.app` | Application scaffold |
+  | `angular.feature` | Feature area, initial page, and route scaffold |
   | `angular.api-client` | Typed API client generation from OpenAPI |
   | `angular.data-service` | Data service layer |
   | `angular.field-component` | Reusable form field components |
@@ -285,17 +310,50 @@ the AI-guided session API.
   without a deprecation cycle.
 - **TOOL contract** — The deterministic operation name exposed to the agent and
   to deterministic automation execution. Defined in
-  `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog. Every selected
+  `doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Tool Contracts Catalog. Every selected
   deterministic operation MUST use one of these names.
 - **SKILL name** — The AI-guided session identifier selected by the agentic
-  orchestrator. Defined in `doc/GENERATE_AI_AUTOMATIONS.md` §Skills Catalog.
+  orchestrator. Defined in `doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Skills Catalog.
   Every selected AI-guided operation MUST use one of these names.
 
-The complete mapping of all four layers for every construction concern is
-maintained in `doc/GENERATE_AI_AUTOMATIONS.md` §Automation Naming Crosswalk.
-Contract uniqueness, composition, bundling, and provider-binding cardinalities
-are defined once in that document's §Contract identity and relationship
-cardinality.
+#### 2.22.1 Automation naming crosswalk
+
+All `ngdj` command, option, and behavior facts used by `djng` automation
+contracts are governed by §2.6 and its upstream sources. The crosswalk defines
+only `djng`-owned wrappers, Tool contracts, Skills, Hooks, and Plugins; it does
+not define the underlying `ngdj` schematic surface.
+
+This table is the single source of truth mapping every construction concern to
+its name in each of the four automation naming layers. Hook lifecycle mappings
+are defined separately in the
+[Hook Contracts Catalog](contracts/AI_AUTOMATION_CONTRACTS.md#hook-contracts-catalog).
+Because relationships are not one-to-one, a cell may list multiple canonical
+identifiers for the same concern. `—` means that no canonical identifier exists
+for that concern in that layer; it does not mean planned or unknown. The
+cross-cutting `ngdj_run_schematic` Tool is intentionally omitted because it can
+execute allowlisted schematics for multiple concerns rather than naming one
+construction concern.
+
+| Concern key | Operator wrapper identifier | Tool contract | Skill name |
+|---|---|---|---|
+| `angular.workspace` | `ng_new`, `ng_workspace`, `ng_workspace_modify`, `ng_workspace_delete` | `angular_workspace_scaffold` | `angular-workspace-foundation` |
+| `angular.app` | `ng_gen_app` | `angular_app_scaffold` | `angular-app-composition` |
+| `angular.feature` | — | `ngdj_add_feature` | — |
+| `angular.api-client` | `ng_openapi_gen` | `angular_api_client_generate` | `angular-api-integration` |
+| `angular.data-service` | `ng_data_service` | — | `angular-data-service-composition` |
+| `angular.field-component` | — | — | `angular-field-component-composition` |
+| `angular.form-field` | — | — | `angular-form-field-composition` |
+| `angular.component` | `ng_component` | `ngdj_add_component` | `angular-component-composition` |
+| `angular.complex-component` | `ng_complex_component` | — | `angular-complex-component-composition` |
+| `angular.reactive-form` | `ng_reactive_form` | — | `angular-reactive-form-composition` |
+| `angular.page` | `ng_page` | — | `angular-page-composition` |
+| `angular.site` | `ng_site` | — | `angular-site-composition` |
+| `contract.schema-export` | `export_schema` | `openapi_schema_export` | — |
+| `contract.schema-validate` | — | `validate_openapi_schema` | — |
+| `contract.schema-diff` | — | `oasdiff_diff`, `oasdiff_changelog` | — |
+
+Contract uniqueness, composition, bundling, and provider-binding
+cardinalities are defined in §3.6.2.
 
 ---
 
@@ -305,8 +363,8 @@ cardinality.
 
 |Input|Description|
 |:-|:-|
-|DRF model (model-first)|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions. Origination input in the model-first mode (§2.22)|
-|OpenAPI Schema (contract-first)|An existing OpenAPI Schema used as the backend origination input when no Django model exists yet; the Django data model is generated from it (§2.22, §11.2)|
+|DRF model (model-first)|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions. Origination input in the model-first mode (§2.21)|
+|OpenAPI Schema (contract-first)|An existing OpenAPI Schema used as the backend origination input when no Django model exists yet; the Django data model is generated from it (§2.21, §11.2)|
 |Project configuration|A json file describing the project, apps, UI parts, and other configuration details|
 |OpenUI concrete UI document|The versioned UI-description input for pages, forms, navigation, layouts, workflows, and related UI concerns|
 
@@ -375,6 +433,139 @@ changes to those contracts belong in the upstream `angular-django2` project;
 - `djng` integration requirements must be validated against the `ngdj` sources
   in §2.6; required upstream changes are defined and implemented in
   `angular-django2`.
+
+### 3.6 AI automation subsystem
+
+The automation subsystem has four primitive families:
+
+- **SKILLS** handle AI-guided generation, modification, and integration work
+  that requires judgment, iteration, or code authoring.
+- **TOOLS** handle deterministic commands, validations, file operations, and
+  other bounded capabilities that the agent can call directly.
+- **HOOKS** handle deterministic lifecycle enforcement points that must run
+  regardless of agent choice.
+- **PLUGINS** package coherent bundles of SKILLS, TOOLS, HOOKS, and related
+  agent capabilities for reuse and distribution.
+
+Each family has an architectural boundary defined here and per-capability
+contracts in `doc/contracts/AI_AUTOMATION_CONTRACTS.md`. The selection policy below
+governs which family a new capability belongs to before it is added to a
+contract catalog.
+
+#### 3.6.1 Provider portability and evidence
+
+Automation contracts are provider-neutral. Tool contract shapes, ordered
+`build_app` command execution, structured errors, recorded acceptance evidence,
+and terminal validation define `djng` construction semantics independently of
+an AI provider, SDK, Skill format, or Plugin format. Provider integrations MUST
+adapt to these semantics and MUST NOT redefine them.
+
+The provider-adapter boundary and capability matrix are defined in §2.11. An
+adapter is implemented only when it satisfies provider-independent contract
+tests and its credential- and runtime-gated provider integration suite. The
+tested provider examples in `shlomoa/ai` are design evidence for future
+adapters; they are not evidence that an adapter is implemented in `djng`.
+
+#### 3.6.2 Contract identity and relationship cardinality
+
+Each named SKILL, TOOL, HOOK, or PLUGIN has exactly one canonical normative
+contract in its matching catalog. A second contract for the same primitive
+identity would be a competing source of truth. This uniqueness applies to the
+primitive's definition, not to its use or packaging:
+
+| Relationship | Cardinality and meaning |
+|---|---|
+| Primitive identity → canonical contract | Exactly one. The matching catalog owns the primitive's normative definition. |
+| Commands ↔ primitive contracts | Many-to-many. A command may compose several contracts, and a contract may be selected by several commands or invocation contexts. |
+| Hook contracts ↔ Tool contracts | Many-to-many within each Hook's `Allowed wrapped tools`. A Hook may wrap several Tools, and a Tool may participate in several lifecycle boundaries. |
+| Plugin contracts ↔ primitive contracts | Many-to-many bundling or exposure, subject to the Plugin catalog's ownership and duplicate-Hook rules. A Plugin does not invoke a Tool merely by bundling it. |
+| Canonical Skill or Plugin contract → provider rendering | One-to-many. Provider-native files and packages are derived representations that preserve the canonical contract. |
+| Tool or Hook contract → provider binding | One-to-many. Provider adapters may register or bind the same provider-neutral contract through different native APIs without redefining its semantics. |
+
+Use **implementation** for concrete deterministic behavior backing a Tool or
+Hook. Use **binding** or **registration** for exposing Tool and Hook contracts
+through a provider adapter. Use **derived rendering** for provider-specific
+Skill and Plugin artifacts. A provider binding or rendering is neither another
+canonical contract nor an independent implementation of provider-neutral
+semantics.
+
+Catalog entries may be reused and composed through the relationships above.
+Reuse MUST reference the canonical identity; consumers MUST NOT copy, redefine,
+or fork its contract inline.
+
+#### 3.6.3 Primitive-selection policy
+
+Every new capability added to the `djng`/`ngdj` automation subsystem MUST be
+classified through this policy before implementation begins.
+
+##### Decision axes
+
+| Axis | Question | Implication |
+|---|---|---|
+| **Determinism** | Does the operation always produce the same structured result for the same inputs, with no AI judgment in its body? | Deterministic → **TOOL** or **HOOK**. Non-deterministic → **SKILL**. |
+| **AI involvement** | Does carrying out the work require interpreting intent, iterating on artifacts, or authoring/modifying code? | High AI involvement → **SKILL**. None → **TOOL** or **HOOK**. |
+| **Invocation binding** | Is the operation invoked on demand by `build_app` or an agent, or must it run automatically at a lifecycle event regardless of caller choice? | On-demand → **SKILL** or **TOOL**, according to the other axes. Lifecycle-bound and mandatory → **HOOK**. |
+| **Distribution** | Is the unit a single capability, or a coherent bundle of SKILLS, TOOLS, and HOOKS intended for reuse? | Single capability → primitive itself. Bundle → **PLUGIN**. |
+
+A capability is a SKILL only if it is non-deterministic and requires high AI
+involvement. A capability is a HOOK only if it must run at a defined lifecycle
+event without the agent choosing to invoke it. A PLUGIN packages primitives;
+it does not replace them.
+
+##### Selection table
+
+| If the work… | Use |
+|---|---|
+| Requires AI judgment, iteration, or multi-step code authoring | **SKILL** |
+| Is a single deterministic command, API call, validation, or file operation called on demand by `build_app` or an agent | **TOOL** |
+| Must always run at a lifecycle event regardless of agent choice | **HOOK** |
+| Is deterministic and must be guaranteed at a lifecycle event | **HOOK** wrapping a **TOOL** |
+| Is a reusable bundle of SKILLS, TOOLS, and/or HOOKS intended for distribution | **PLUGIN** |
+
+##### Application procedure
+
+When a new capability is proposed:
+
+1. State its purpose, inputs, outputs, and lifecycle stage in one sentence.
+2. Answer the four decision-axis questions in its design note or issue.
+3. Select the resulting primitive from the selection table.
+4. If deterministic work must also be lifecycle-guaranteed, implement the body
+  once under a [Tool contract](contracts/AI_AUTOMATION_CONTRACTS.md#tool-contracts-catalog)
+   and wrap it with a
+  [Hook contract](contracts/AI_AUTOMATION_CONTRACTS.md#hook-contracts-catalog).
+5. If related capabilities form a cross-project distribution unit, register a
+  [Plugin contract](contracts/AI_AUTOMATION_CONTRACTS.md#plugin-contracts-catalog).
+   A Plugin never replaces its contents' contracts.
+6. Author the per-capability contract in the matching catalog using that
+   primitive's contract shape.
+
+##### Tie-breakers
+
+- If agent-supplied defaults can be expressed as typed inputs and the body is
+  deterministic, use a TOOL and put the defaults in its input contract.
+- If deterministic work must always run at a lifecycle event, use a HOOK that
+  wraps a TOOL; do not duplicate the Tool body in the Hook.
+- For mixed AI-guided and deterministic work, use a SKILL for the guided work
+  and extract stable deterministic operations into TOOLS.
+- Do not introduce a PLUGIN until at least two related primitives are bundled
+  for reuse.
+- A standalone script is not a primitive. Classify its behavior using the axes,
+  usually as a TOOL or HOOK.
+
+##### Worked examples
+
+| Capability | Determinism | AI involvement | Lifecycle-bound | Primitive |
+|---|---|---|---|---|
+| `openapi_schema_export` | Yes | None | No | **TOOL** |
+| `oasdiff_diff` | Yes | None | No | **TOOL** |
+| `angular_api_client_generate` | Yes | None | No | **TOOL** |
+| `pre-construction` contract validation gate | Yes | None | Yes | **HOOK** wrapping `validate_openapi_schema` |
+| Generate an Angular page or reactive form from validated OpenUI | Yes | None | No | **TOOL**; contract not yet defined |
+| Interpret underspecified intent or refine generated behavior | No | High | No | Optional **SKILL** |
+| `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** |
+
+When classifying a new capability, prefer an analogous existing classification
+before introducing a new pattern.
 
 ---
 
@@ -588,7 +779,7 @@ interpret the generated application's canonical OpenUI document or derive the
 application-wide change plan. Validation by `openui-spec`, `djng`, and `ngdj`
 therefore applies at distinct, complementary boundaries; validation at one
 boundary does not replace validation at another. See §2.6 for the canonical
-`ngdj` ownership policy and §2.9.2 for source and construction terminology.
+`ngdj` ownership policy and §2.8.2 for source and construction terminology.
 
 ### 8.3 Contract Rules
 
@@ -737,7 +928,7 @@ It should not own:
 
 ### 11.2 Generation Toolchain
 
-- Backend origination follows one of two modes (see §2.22):
+- Backend origination follows one of two modes (see §2.21):
   - **Model-first:** an existing Django model is the starting point; the OpenAPI
     contract is exported from DRF via [drf-spectacular].
   - **Contract-first:** no Django model exists yet; the Django data model is
@@ -864,7 +1055,7 @@ switch environments.
   Documents are validated against the full OpenAPI specification.  No external
   toolchain (such as Go) is required.
 - [ng-openapi-gen] is the Angular client OpenAPI code-generation tool (source: [ng-openapi-gen-github]).
-- [datamodel-code-generator] is the contract-first backend generator (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]). For the use case where no Django model exists yet, it generates the Django data model from an existing OpenAPI Schema using djng-owned custom Django templates. This is the inverse origination path to the model-first [drf-spectacular] export; see §2.22.
+- [datamodel-code-generator] is the contract-first backend generator (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]). For the use case where no Django model exists yet, it generates the Django data model from an existing OpenAPI Schema using djng-owned custom Django templates. This is the inverse origination path to the model-first [drf-spectacular] export; see §2.21.
 - Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold
@@ -881,18 +1072,18 @@ Key actors and terms. Full definitions are in §2.
 
 | Term | Definition | See |
 |---|---|---|
-| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `doc/GENERATE_AI_AUTOMATIONS.md` |
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | §3.6 |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agentic orchestrator, the AI automation subsystem, and construction configuration. | §2.5 |
 | **`ngdj`** | See the canonical identity and upstream-source policy. | §2.6 |
 | **`djangoangular`** | See the canonical code-name definition for the combined `djng` and `ngdj` integration architecture. | §2.6.1 |
-| **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.16 |
-| **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.16.1 |
-| **provider adapter** | The portability boundary between an agent executor and a compatible AI runtime. | §2.12 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | §2.14, `doc/GENERATE_AI_AUTOMATIONS.md` |
-| **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | `doc/GENERATE_AI_AUTOMATIONS.md` |
-| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | `doc/GENERATE_AI_AUTOMATIONS.md` |
-| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | `doc/GENERATE_AI_AUTOMATIONS.md` |
-| **guided agent session** | A bounded session in which an agent executor carries out AI-guided work. | §2.13, §2.16.1 |
+| **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.15 |
+| **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.15.1 |
+| **provider adapter** | The portability boundary between an agent executor and a compatible AI runtime. | §2.11 |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | §2.13, §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
+| **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
+| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
+| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
+| **guided agent session** | A bounded session in which an agent executor carries out AI-guided work. | §2.12, §2.15.1 |
 
 ## 20. References
 

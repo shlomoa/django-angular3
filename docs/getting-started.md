@@ -74,7 +74,7 @@ python manage.py validate_project
 ```
 
 `validate_project` uses the project-configuration discovery rules in
-`doc/REQUIREMENTS.md` §4.2.4. See [Command reference](commands.md) for the
+`doc/specifications/SPECIFICATIONS.md` §2.1. See [Command reference](commands.md) for the
 command interface.
 
 ## 5. Scaffold the Angular workspace

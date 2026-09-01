@@ -46,7 +46,7 @@ normal command error reporting.
 
 ### Provider adapters and enforcement ownership
 
-`ARCHITECTURE.md` §2.12.1 is the authoritative provider-adapter capability
+`doc/ARCHITECTURE.md` §2.11.1 is the authoritative provider-adapter capability
 matrix. Provider-native hooks, handlers, and wrappers may map provider events
 into the adapter interface, but they are not independent correctness gates.
 During direct `build_app` execution, `djng` applies the selected TOOL and HOOK
@@ -63,7 +63,7 @@ provider used by an agent session.
 | Input | Source | Format | Notes |
 |---|---|---|---|
 | `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. |
-| Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The discovered default is defined in `REQUIREMENTS.md` §4.2.4. |
+| Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The filename convention is defined in `doc/specifications/SPECIFICATIONS.md` §2.1. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | Resolves its own artifact selectors independently of the current configuration. A missing previous configuration starts a build from scratch. |
 | Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Baseline contract selected by the previous configuration. Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. |
@@ -81,7 +81,7 @@ convention. Its concrete-document role, grammar, and catalog relationship are
 defined by the
 [OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
 djng owns only the configured input path and its build-stage handling. See
-`ARCHITECTURE.md` §2.9.1 and §8.5.
+`doc/ARCHITECTURE.md` §2.8.1 and §8.5.
 
 ### Optional
 
@@ -96,7 +96,8 @@ djng owns only the configured input path and its build-stage handling. See
 
 The project configuration supplies the locations used by the builder. Static
 tool settings remain in `django-angular3.json`. The authoritative project
-configuration definition and discovery rules are in `REQUIREMENTS.md` §4.2.4.
+configuration definition is in `doc/specifications/SPECIFICATIONS.md` §2.1; discovery behavior is
+defined in §Inputs above.
 
 ---
 
@@ -104,7 +105,7 @@ configuration definition and discovery rules are in `REQUIREMENTS.md` §4.2.4.
 
 The canonical Change Model, including `Change`, the four domains, identity
 rules, baseline/candidate semantics, and the complete `ChangeSet` schema, is
-defined in `REQUIREMENTS.md` §4.2.9. This section defines how `build_app`
+defined in `doc/contracts/CONTRACTS.md` §2. This section defines how `build_app`
 applies that model.
 
 For every run, the builder must compare the accepted baseline and candidate
@@ -137,12 +138,11 @@ previous inputs; commands not selected by either change set are omitted.
 
 The selected commands invoke the following documented automation contracts.
 All underlying `ngdj` command and behavior facts follow the upstream-source
-policy in `ARCHITECTURE.md` §2.6; this document defines only djng command
+policy in `doc/ARCHITECTURE.md` §2.6; this document defines only djng command
 selection and composition.
 Tool and hook names remain distinct from CLI wrapper command names, as defined
-by the automation naming layers in `ARCHITECTURE.md` §2.23. Contract identity
-and command-composition cardinalities are defined in
-`GENERATE_AI_AUTOMATIONS.md` §Contract identity and relationship cardinality;
+by the automation naming layers in `doc/ARCHITECTURE.md` §2.22. Contract identity
+and command-composition cardinalities are defined in `doc/ARCHITECTURE.md` §3.6.2;
 this document selects and composes those contracts but does not redefine them.
 
 | Construction concern | Primitive | Tool contract | Hook contract | Direct-build role |
@@ -307,7 +307,24 @@ they are not a substitute for execution.
   verify generated files, Angular build health, and required backend/frontend
   integration checks.
 - A run is successful only when every terminal validation command succeeds.
-- Specific integration acceptance criteria remain tracked in `TODO.md`.
+- Specific integration acceptance work remains tracked in `doc/plan/TODO.md`.
+
+### FR-10: Global generated-app acceptance
+
+- Local acceptance by an individual Skill session is necessary but not
+  sufficient for global generated-app acceptance.
+- After all selected deterministic commands and Skill sessions complete,
+  terminal validation must apply a global acceptance gate to the composed
+  application.
+- The gate must verify cross-Skill interface consistency, including the types
+  and signatures exchanged across generated API-client, data-service, and UI
+  boundaries.
+- The gate must verify that the generated Angular client remains aligned with
+  the exported OpenAPI contract.
+- The gate must include runtime smoke coverage proving that the composed
+  application starts and that its required main flows run.
+- A run must fail global acceptance when any global check fails, even when
+  every individual Skill passed its local acceptance criteria.
 
 ---
 
@@ -322,18 +339,7 @@ they are not a substitute for execution.
 
 ---
 
-## Glossary
+## Terminology
 
-For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
-
-| Term | Definition | See |
-|---|---|---|
-| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS. | `ARCHITECTURE.md` §2, `GENERATE_AI_AUTOMATIONS.md` |
-| **`djng`** | The `django-angular3` solution: this repository, Django package, and tool. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` management command that compares inputs, translates changes to commands, executes them, and validates the generated app. | §Purpose |
-| **SKILLS** | Bounded AI skills that guide selected agent sessions. | `ARCHITECTURE.md` §2.14 |
-| **TOOLS** | Deterministic callable capabilities for bounded operations. | `GENERATE_AI_AUTOMATIONS.md` |
-| **HOOKS / gates** | Deterministic lifecycle-triggered or blocking automations. | `GENERATE_AI_AUTOMATIONS.md` |
-| **ChangeSet** | Domain-specific atomic changes and a computed summary used to select change commands. Its canonical schema is in `REQUIREMENTS.md` §4.2.9. | `REQUIREMENTS.md` §4.2.9 |
-| **`app.openui.json`** | The generated app's OpenUI concrete UI document. | `ARCHITECTURE.md` §8.5 |
+Authoritative terminology is defined in `doc/ARCHITECTURE.md` §§2 and 19. The
+canonical `ChangeSet` boundary is defined in `doc/contracts/CONTRACTS.md` §2.3.

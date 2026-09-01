@@ -38,7 +38,8 @@ For the provider-neutral phase issues:
 
 - #156 is foundation decision work and contains no ngdj contract definition;
   its prior-input wording must follow the resolved current/previous
-  project-configuration pair in `doc/APP_BUILDER_REQUIREMENTS.md` rather than
+  project-configuration pair in
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md` rather than
   introduce a separate previous-OpenUI input;
 - #157–#161 implement and verify provider-neutral execution foundations
   without defining ngdj behavior;
@@ -82,5 +83,5 @@ remain authoritative.
    authoritative crosswalk, Tool catalog, builder mapping, and phased plan
    before #162 or #164 implements them.
 3. Keep future issue updates referential: upstream ngdj facts through §2.6,
-   djng Tool contracts through `doc/GENERATE_AI_AUTOMATIONS.md`, and direct
-   build behavior through `doc/APP_BUILDER_REQUIREMENTS.md`.
+  djng Tool contracts through `doc/contracts/AI_AUTOMATION_CONTRACTS.md`, and direct
+  build behavior through `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.

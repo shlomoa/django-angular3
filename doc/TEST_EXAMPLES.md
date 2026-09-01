@@ -4,14 +4,14 @@
 
 Each example defines a concrete scenario that build_app command can
 execute end-to-end. Together they cover the full range of use cases described
-in `APP_BUILDER_REQUIREMENTS.md`.
+in `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 Each example consists of:
 - A named scenario with a description
 - Input files: discovered project configuration, OpenAPI schema, OpenUI
   specification, and static tool configuration
 - Expected atomic changes from the builder; the canonical `ChangeSet` schema is
-  defined in `REQUIREMENTS.md` §4.2.9
+  defined in `CONTRACTS.md` §2.3
 
 ### Shared conventions across all examples
 
@@ -38,7 +38,7 @@ django-admin build_app \
 ```
 
 Without `--current-config`, `build_app` discovers
-`django-angular3-<project_name>.json` as defined in `REQUIREMENTS.md` §4.2.4.
+`django-angular3-<project_name>.json` as defined in `SPECIFICATIONS.md` §2.1.
 Without `--previous-config`, it derives the previous path by replacing the
 current filename's `.json` suffix with `.previous.json`; a missing file starts
 the build from scratch. Its planner remains unimplemented, so these are target
@@ -387,7 +387,7 @@ OpenAPI contract, and OpenUI document.
 
 ### Expected executed command sequence (ordered)
 
-Deterministic TOOL commands (see `GENERATE_AI_AUTOMATIONS.md` §Tool
+Deterministic TOOL commands (see `AI_AUTOMATION_CONTRACTS.md` §Tool
 Contracts Catalog) precede the SKILL sessions:
 
 1. `openapi_schema_export` *(tool)* — produce the current OpenAPI artifact at
@@ -414,7 +414,8 @@ Contracts Catalog) precede the SKILL sessions:
 16. `angular-page-composition` *(skill)* — generate `product-list` page
 17. `angular-site-composition` *(skill)* — assemble site with navigation
 18. *(verification)* — terminal verification command (per
-    `APP_BUILDER_REQUIREMENTS.md` FR-10) consuming the structured outputs of
+    `doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-10) consuming the
+    structured outputs of
     the TOOL commands above
 
 ---
@@ -545,7 +546,7 @@ modification rather than a project replacement.
 
 ### Input: current `django-angular3.json`
 
-The canonical static tool configuration from `REQUIREMENTS.md` §4.2.3, with
+The canonical static tool configuration from `SPECIFICATIONS.md` §2.1, with
 `angular.workspace.style` set to `css`.
 
 ### Input: previous `django-angular3.json`

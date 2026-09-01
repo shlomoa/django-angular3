@@ -12,7 +12,7 @@ assignees: []
 
 ## Proposed solution
 
-<!-- Describe the capability you'd like. Reference doc/ARCHITECTURE.md or doc/REQUIREMENTS.md sections if relevant. -->
+<!-- Describe the capability you'd like. Reference doc/ARCHITECTURE.md or the applicable file under doc/requirements/ if relevant. -->
 
 ## Affected area
 

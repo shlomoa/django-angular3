@@ -1,245 +1,21 @@
-# Generate AI automations
+# AI automation contract specification
 
-Design the AI automation subsystem used by `djng` to build and maintain
-Angular applications.
+This document specifies the canonical Skill, Tool, Hook, and Plugin contracts
+used by `djng` to build and maintain Angular applications. The automation
+subsystem architecture, primitive-selection policy, relationship cardinality,
+and naming crosswalk are defined in `ARCHITECTURE.md` §§2.22 and 3.6.
+Exact internal module organization, persistence, execution, adapter, and
+rendering realization are defined in
+`doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md`.
 
-This document defines how `djng` uses four automation primitives together:
-
-- **SKILLS** for AI-guided construction and integration work
-- **TOOLS** for deterministic callable operations
-- **HOOKS** for lifecycle enforcement and mandatory side effects
-- **PLUGINS** for packaging and distributing coherent capability bundles
-
-It also specifies the detailed SKILL catalog used for the AI-guided layer of
-Angular construction and integration.
-
----
-
-## Automation Naming Crosswalk
-
-All `ngdj` command, option, and behavior facts used by these djng automation
-contracts are governed by `ARCHITECTURE.md` §2.6 and its upstream sources.
-This document defines only djng-owned wrappers, Tool contracts, Skills, Hooks,
-and Plugins; it does not define the underlying `ngdj` schematic surface.
-
-This table is the single source of truth mapping every construction concern to
-its name in each of the four automation naming layers (see `ARCHITECTURE.md`
-§2.23). Use it when authoring command translations, hook contracts, plugin
-manifests, or skill files to ensure each layer uses the correct name.
-
-| Concern key | CLI wrapper | TOOL contract | SKILL name | HOOKs |
-|---|---|---|---|---|
-| `angular.workspace` | `ng_workspace` | `angular_workspace_scaffold` | `angular-workspace-foundation` | `pre-construction`, `post-generation` |
-| `angular.app` | `ng_gen_app` | `angular_app_scaffold` | `angular-app-composition` | `pre-construction`, `post-generation` |
-| `angular.api-client` | `ng_openapi_gen` | `angular_api_client_generate` | `angular-api-integration` | `pre-construction`, `post-generation` |
-| `angular.data-service` | — | — | `angular-data-service-composition` (optional refinement) | — |
-| `angular.field-component` | — | — | `angular-field-component-composition` (optional refinement) | — |
-| `angular.form-field` | — | — | `angular-form-field-composition` (optional refinement) | — |
-| `angular.component` | `ng_component` | — | `angular-component-composition` (optional refinement) | — |
-| `angular.complex-component` | `ng_complex_component` | — | `angular-complex-component-composition` (optional refinement) | — |
-| `angular.reactive-form` | `ng_reactive_form` | — | `angular-reactive-form-composition` (optional refinement) | — |
-| `angular.page` | `ng_page` | — | `angular-page-composition` (optional refinement) | — |
-| `angular.site` | `ng_site` | — | `angular-site-composition` (optional refinement) | — |
-| `contract.schema-export` | `export_schema` | `openapi_schema_export` | — | `migration-triggered` |
-| `contract.schema-validate` | — | `validate_openapi_schema` | — | `pre-construction` (wraps) |
-| `contract.schema-diff` | — | `oasdiff_diff` | — | — |
+All `ngdj` command, option, and behavior facts used by these contracts follow
+the upstream-source policy in `ARCHITECTURE.md` §2.6. This document defines
+only `djng`-owned contracts and does not redefine the underlying `ngdj`
+schematic surface.
 
 ---
 
-## AI Automation Architecture
-
-This document defines the automation subsystem at four primitive levels. Each
-primitive family carries both an architectural boundary (selection policy and
-responsibilities) and a per-capability contract catalog: SKILLS in the
-[Skills Catalog](#skills-catalog), TOOLS in the
-[Tool Contracts Catalog](#tool-contracts-catalog), HOOKS in the
-[Hook Contracts Catalog](#hook-contracts-catalog), and PLUGINS in the
-[Plugin Contracts Catalog](#plugin-contracts-catalog). The selection policy
-below governs which family a new capability belongs to before it is added to
-any catalog.
-
-### Provider portability and evidence
-
-The automation contracts in this document are provider-neutral. The TOOL
-contract shape, ordered `build_app` command execution, structured error
-objects, recorded acceptance evidence, and terminal validation define `djng`'s
-construction semantics independently of an AI provider, SDK, skill format, or
-plugin format. A provider integration MUST adapt to these semantics; it MUST
-NOT redefine them.
-
-A **provider adapter** is the boundary between `djng`'s provider-neutral
-construction model and a provider runtime. It owns the provider-specific work
-needed to:
-
-- create, configure, and close provider sessions;
-- load prompts and skills into the provider's supported representation;
-- dispatch the TOOL contracts that a session is permitted to call;
-- connect provider lifecycle events or local wrappers to HOOK enforcement and
-  normalize their outcomes;
-- normalize provider responses into the structured session result consumed by
-  `build_app`, including acceptance evidence, errors, and diagnostics;
-- request and report cancellation, timeouts, and context exhaustion; and
-- obtain provider credentials and apply provider-specific runtime
-  configuration without exposing credentials through contracts or logs.
-
-The adapter does not own command selection, dependency ordering, deterministic
-TOOL behavior, acceptance criteria, terminal validation, or the durable
-construction record. Those remain `djng` responsibilities. In particular, an
-adapter MUST report a provider-native hook or wrapper outcome in the normalized
-result, but it cannot turn a failed `djng` enforcement boundary into success.
-
-**Evidence and implementation status:** this section defines the required
-portable boundary; it does not claim that a provider adapter is implemented.
-The tested provider examples in `shlomoa/ai` are design evidence for future
-adapters. An adapter is implemented only when it satisfies its provider-
-independent contract tests and its credential- and runtime-gated provider
-integration suite.
-
-### Primitive families
-
-- **SKILLS** handle AI-guided generation, modification, and integration work
-  that requires judgment, iteration, or code authoring.
-- **TOOLS** handle deterministic commands, validations, file operations, and
-  other bounded capabilities that the agent can call directly.
-- **HOOKS** handle deterministic lifecycle enforcement points that must run
-  regardless of agent choice.
-- **PLUGINS** package coherent bundles of SKILLS, TOOLS, HOOKS, and related
-  agent capabilities for reuse and distribution.
-
-### Primitive-selection policy
-
-This section is the **normative selection rule** for the four primitive
-families. Every new capability added to the `djng`/`ngdj` automation subsystem
-**MUST** be classified through this policy before implementation begins, so
-that capabilities are categorized consistently and the boundaries between
-SKILLS, TOOLS, HOOKS, and PLUGINS remain stable as the system grows.
-
-This section is the authoritative primitive-selection policy.
-
-#### Contract identity and relationship cardinality
-
-This subsection is the single source of truth for relationships between
-automation contracts, their consumers, their implementations, and
-provider-specific representations.
-
-Each named SKILL, TOOL, HOOK, or PLUGIN has exactly one canonical normative
-contract in its matching catalog. A second contract for the same primitive
-identity would be a competing source of truth. This uniqueness applies to the
-primitive's definition, not to its use or packaging:
-
-| Relationship | Cardinality and meaning |
-|---|---|
-| Primitive identity → canonical contract | Exactly one. The matching catalog owns the primitive's normative definition. |
-| Commands ↔ primitive contracts | Many-to-many. A command may compose several contracts, and a contract may be selected by several commands or invocation contexts. |
-| HOOK contracts ↔ TOOL contracts | Many-to-many within each Hook's `Allowed wrapped tools`. A Hook may wrap several Tools, and a Tool may participate in several lifecycle boundaries. |
-| PLUGIN contracts ↔ primitive contracts | Many-to-many bundling or exposure, subject to the Plugin catalog's ownership and duplicate-Hook rules. A Plugin does not invoke a Tool merely by bundling it. |
-| Canonical SKILL or PLUGIN contract → provider rendering | One-to-many. Provider-native files and packages are derived representations that preserve the canonical contract. |
-| TOOL or HOOK contract → provider binding | One-to-many. Provider adapters may register or bind the same provider-neutral contract through different native APIs without redefining its semantics. |
-
-Use **implementation** for the concrete deterministic behavior backing a TOOL
-or HOOK. Use **binding** or **registration** for exposing TOOL and HOOK
-contracts through a provider adapter. Use **derived rendering** for
-provider-specific SKILL and PLUGIN artifacts. A provider binding or rendering
-is neither another canonical contract nor an independent implementation of the
-provider-neutral semantics.
-
-Catalog entries may therefore be reused and composed freely through the
-relationships above. Reuse MUST reference the canonical identity; consumers
-MUST NOT copy, redefine, or fork its contract inline.
-
-#### Decision axes
-
-Classify the candidate capability along the following four axes. The answers
-together determine the primitive (or composition of primitives).
-
-| Axis | Question | Implication |
-|---|---|---|
-| **Determinism** | Does the operation always produce the same structured result for the same inputs, with no AI judgment in its body? | Deterministic → **TOOL** or **HOOK**. Non-deterministic → **SKILL**. |
-| **AI involvement** | Does carrying out the work require interpreting intent, iterating on artifacts, or authoring/modifying code? | High AI involvement → **SKILL**. None → **TOOL** or **HOOK**. |
-| **Invocation binding** | Is the operation invoked on demand by `build_app` or an agent, or must it run automatically at a lifecycle event regardless of caller choice? | On-demand → **SKILL** or **TOOL**, according to the other axes. Lifecycle-bound and mandatory → **HOOK**. |
-| **Distribution** | Is the unit a single capability, or a coherent bundle of SKILLS / TOOLS / HOOKS intended for reuse across projects or teams? | Single capability → primitive itself. Bundle → **PLUGIN**. |
-
-A capability is a **SKILL** only if it scores non-deterministic on the first
-axis and high AI involvement on the second. A capability is a **HOOK** only if
-it must run at a defined lifecycle event without the agent choosing to invoke
-it. A **PLUGIN** is never a substitute for one of the other three primitives;
-it is a packaging unit that contains them.
-
-#### Selection table
-
-| If the work… | Use |
-|---|---|
-| Requires AI judgment, iteration, or multi-step code authoring | **SKILL** |
-| Is a single deterministic command, API call, validation, or file operation called on demand by `build_app` or an agent | **TOOL** |
-| Must always run at a lifecycle event regardless of agent choice | **HOOK** |
-| Is deterministic and must be guaranteed at a lifecycle event | **HOOK** wrapping a **TOOL** |
-| Is a reusable bundle of SKILLS, TOOLS, and/or HOOKS intended for distribution | **PLUGIN** |
-
-#### Application procedure for new capabilities
-
-When a new capability is proposed:
-
-1. State the capability as a single-sentence purpose, including its inputs,
-   its outputs, and the lifecycle stage at which it is needed.
-2. Answer the four decision-axis questions above. Record the answers in the
-   capability's design note or issue.
-3. Read the resulting primitive off the selection table.
-4. If the answers indicate a deterministic operation that must also be
-   guaranteed at a lifecycle event, apply the composite rule: implement the
-   deterministic body once as a **TOOL** (with a contract in the
-   [Tool Contracts Catalog](#tool-contracts-catalog)) and wrap it from a
-   **HOOK** (with a contract in the [Hook Contracts Catalog](#hook-contracts-catalog)).
-   Do not duplicate the deterministic body inside the hook script.
-5. If the capability is being introduced together with related capabilities
-   that are intended for cross-project reuse, also register the bundle as a
-   **PLUGIN** in the [Plugin Contracts Catalog](#plugin-contracts-catalog).
-   A PLUGIN never replaces the per-capability contracts of its contents.
-6. Author the per-capability contract in the matching catalog section using
-   the contract shape defined for that primitive (tool contract shape, hook
-   contract shape, plugin contract shape).
-
-#### Tie-breakers
-
-The following rules resolve common ambiguous cases:
-
-- **"It looks deterministic but currently relies on the agent to fill in
-  defaults."** If the defaults can be expressed as typed inputs and the body
-  is deterministic, classify it as a **TOOL** and lift the defaults into its
-  input contract. Do not classify it as a **SKILL** to preserve agent-supplied
-  defaults.
-- **"It is deterministic and we want it to always run before construction."**
-  Use a **HOOK** wrapping a **TOOL**. The deterministic logic lives in the
-  TOOL contract; the HOOK guarantees execution at the lifecycle event.
-- **"It is multi-step and partly deterministic, partly AI-guided."** Decompose
-  into a **SKILL** that orchestrates the AI-guided portion and one or more
-  **TOOLS** for the deterministic portions. Do not let a SKILL contain
-  deterministic logic that has a stable input/output contract — extract that
-  logic into a TOOL.
-- **"It is conceptually one bundle but has only one capability inside."** Do
-  not introduce a **PLUGIN** until at least two related primitives are bundled
-  together for reuse. A single SKILL or TOOL is not a PLUGIN.
-- **"It is a script we want to ship."** A standalone script is not a
-  primitive. Classify what it *does* using the axes above and register it as
-  the matching primitive (typically a **TOOL** or a **HOOK**).
-
-#### Worked examples
-
-The following classifications already follow this policy and serve as
-reference cases for new work.
-
-| Capability | Determinism | AI involvement | Lifecycle-bound | Primitive |
-|---|---|---|---|---|
-| `openapi_schema_export` (OpenAPI extraction) | Yes | None | No (agent-called) | **TOOL** — see [Tool Contracts Catalog](#tool-contracts-catalog) |
-| `oasdiff_diff` (schema diff) | Yes | None | No | **TOOL** |
-| `angular_api_client_generate` (typed Angular client generation) | Yes | None | No | **TOOL** wrapper |
-| `pre-construction` contract validation gate | Yes | None | Yes (must run before construction) | **HOOK** wrapping the `validate_openapi_schema` TOOL |
-| Generating an Angular page from a validated OpenUI concrete UI document | Yes | None | No | **TOOL** — contract around `angular-django2:page` not yet defined |
-| Generating a reactive form from a validated OpenUI concrete UI document | Yes | None | No | **TOOL** — contract around `angular-django2:reactive-form` not yet defined |
-| Interpreting underspecified intent or refining generated page/form behavior | No | High | No | **SKILL** (optional) |
-| `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** containing related SKILLS, TOOLS, and HOOKS |
-
-When classifying a new capability, prefer matching it to one of the rows
-above by analogy before proposing a new pattern.
+## Automation contract specification
 
 ### Tools
 
@@ -260,7 +36,7 @@ Every tool contract in this document **MUST** specify:
 
 | Field | Meaning |
 |---|---|
-| **Name** | The stable identifier the agent and `build_app` use to call the tool. Matches the deterministic tool contract selected during command translation (see `APP_BUILDER_REQUIREMENTS.md` §Change Command Translation and Execution). |
+| **Name** | The stable identifier the agent and `build_app` use to call the tool. Matches the deterministic tool contract selected during command translation (see `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change Command Translation and Execution). |
 | **Purpose** | One-sentence statement of what the tool does. Must be deterministic — no AI judgment inside the operation. |
 | **Inputs** | Typed table of input keys, required/optional status, type, default, and description. Inputs are passed as a single structured object. |
 | **Outputs** | Typed table of output keys returned on success. Outputs are returned as a single structured object so the agent and downstream tools can read them without parsing free-form text. |
@@ -295,7 +71,7 @@ umbrella documentation under `doc/`.
 ### Tool Contracts Catalog
 
 This catalog defines the deterministic tool contracts referenced from
-`APP_BUILDER_REQUIREMENTS.md` §Change-to-Automations Mapping. Each entry follows the
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change-to-Automations Mapping. Each entry follows the
 [tool contract shape](#tool-contract-shape) defined above.
 
 The contracts are grouped by lifecycle stage so the command execution order is
@@ -309,7 +85,7 @@ Tool contracts that operate on a generated app discover its
 path. The project configuration supplies the project identity and artifact
 locations, while static `django-angular3.json` supplies global `djng` tool
 settings. `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from the static
-tool configuration. See `REQUIREMENTS.md` §4.2 for the authoritative field and
+tool configuration. See `SPECIFICATIONS.md` §2 for the authoritative category and
 lifecycle definitions.
 
 #### Contract lifecycle tools
@@ -438,7 +214,7 @@ and return a structured diff result that `build_app` consumes to derive the
 
 `oasdiff_diff` does not classify changes into builder categories. `build_app`
 maps its structured entries into atomic OpenAPI changes according to the
-canonical Change Model in `REQUIREMENTS.md` §4.2.9.
+canonical Change Model in `CONTRACTS.md` §2.
 
 **Error behavior**: Non-zero exit / raised `ToolError` with `category` in
 `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
@@ -835,7 +611,7 @@ The seven fields describe the provider-neutral enforcement contract:
 ### Hook Contracts Catalog
 
 This catalog defines the lifecycle hook contracts referenced from
-`APP_BUILDER_REQUIREMENTS.md` §Change-to-Automations Mapping. Each entry follows the
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change-to-Automations Mapping. Each entry follows the
 [hook contract shape](#hook-contract-shape) defined above.
 
 The contracts use provider-neutral lifecycle families and are grouped by when
@@ -1116,8 +892,8 @@ responsibilities a plugin assumes in the `djng` architecture:
   [Hook Contracts Catalog](#hook-contracts-catalog)) so that the plugin's
   surface area can be audited without reading its source. This prevents two
   plugins from silently shipping divergent copies of the same SKILL or HOOK.
-- **Purpose** enforces the single-domain rule from the
-  [Primitive-selection policy](#primitive-selection-policy): a plugin that
+- **Purpose** enforces the single-domain rule from the primitive-selection
+  policy in `ARCHITECTURE.md` §3.6.3: a plugin that
   claims more than one domain has either accidentally taken on a second
   capability or should be split. Stating the purpose in one sentence forces
   that scoping decision into the contract.
@@ -1399,7 +1175,8 @@ its tools from
 - New plugin bundles added to `djng` MUST be documented here using the
   [plugin contract shape](#plugin-contract-shape) before they may be
   rendered for any provider, listed in this catalog, or recommended in
-  `doc/ARCHITECTURE.md` or `doc/APP_BUILDER_REQUIREMENTS.md`.
+  `doc/ARCHITECTURE.md` or
+  `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
 
 [Claude Plugins]: https://code.claude.com/docs/en/plugins
 
@@ -1482,7 +1259,7 @@ by the Claude adapter through the Claude Agent SDK
 field is honored by the CLI but **not** by the SDK — the Claude adapter must
 mirror the same tool list in its `query()` `allowedTools` option. The canonical
 tool list per skill in this document is the source of truth for both surfaces.
-See `ARCHITECTURE.md` §2.14 references to [Claude Code Skills] and [Claude
+See `ARCHITECTURE.md` §2.13 references to [Claude Code Skills] and [Claude
 Agent SDK Skills] for the authoritative field reference.
 
 ##### Field Definitions
@@ -1516,7 +1293,7 @@ Use standard markdown links from SKILL.md to point at supporting files. Keep ref
 
 ```markdown
 ### Conventions
-See [angular-conventions.md](../shared/angular-conventions.md) — read this before scaffolding.
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md) — read this before scaffolding.
 
 ### Templates
 Use the template at `templates/component.ts.tpl` — read and adapt for the output file.
@@ -1547,7 +1324,7 @@ guided agent sessions, not invoked by users directly:
 automation model. Multiple SKILLS may be enabled for a single guided agent
 session when a selected command composes capabilities from several skills.
 
-**Implementation note**: Higher-level documents (`APP_BUILDER_REQUIREMENTS.md`,
+**Implementation note**: Higher-level documents (`doc/requirements/APP_BUILDER_REQUIREMENTS.md`,
 `ARCHITECTURE.md`) use the provider-neutral term "provider adapter" for a
 guided agent session. The future Claude adapter implements its provider-specific
 session call through `query()`; this document uses `query()` only for that
@@ -1628,7 +1405,7 @@ Remove the artifact completely.
 
 ### Context Files
 
-- See [shared-context-file.md](../shared/shared-context-file.md) — replace with the actual filename when this skill needs the shared content.
+- See [shared-context-file.md](../../skill_creation/shared/shared-context-file.md) — replace with the actual filename when this skill needs the shared content.
 
 ### Templates
 
@@ -1666,7 +1443,7 @@ many skills in the skill layer of the broader automation model.
 Each skill references a shared file using a standard markdown link with a one-level-up relative path. From inside a skill directory at `.claude/skills/<skill-name>/SKILL.md`:
 
 ```markdown
-See [angular-conventions.md](../shared/angular-conventions.md) — when this skill needs shared Angular conventions.
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md) — when this skill needs shared Angular conventions.
 ```
 
 ### `angular-conventions.md`
@@ -1719,7 +1496,7 @@ See [angular-conventions.md](../shared/angular-conventions.md) — when this ski
 
 **Contents**:
 
-- **oasdiff — schema diff and change detection**: `oasdiff` is run by `build_app` during the Change Derivation phase, before any skill is invoked. Skills receive the resulting `ChangeSet` as command input (see `APP_BUILDER_REQUIREMENTS.md` §"Change Derivation"). Skills must **not** re-run `oasdiff`.
+- **oasdiff — schema diff and change detection**: `oasdiff` is run by `build_app` during the Change Derivation phase, before any skill is invoked. Skills receive the resulting `ChangeSet` as command input (see `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §"Change Derivation"). Skills must **not** re-run `oasdiff`.
 - **ng-openapi-gen output paths**: Generated files are placed in `src/app/api/` by default. The output directory is configured in `ng-openapi-gen.json` at the workspace root.
 - **Service naming**: Each OpenAPI tag produces one Angular service named `<Tag>ApiService` (e.g., tag `Users` → `UsersApiService`). Import from `src/app/api/services/<tag>-api.service.ts`.
 - **Import patterns**: Models are imported from `src/app/api/models/<model-name>.ts`. The barrel export at `src/app/api/models.ts` re-exports all models.
@@ -2435,7 +2212,7 @@ export class {{RESOURCE_NAME_PASCAL}}Service {
 > **Archived pre-cutover drafts:** The embedded skill drafts below preserve
 > historical authoring material. Their legacy combined-file field names and
 > configuration-path command examples are superseded and are not supported
-> public interfaces. Use `REQUIREMENTS.md` §4.2 for configuration ownership and
+> public interfaces. Use `SPECIFICATIONS.md` §2 for configuration ownership and
 > `docs/commands.md` for implemented command invocation. The separate
 > `skill_creation/` working copies are the active skill-authoring material.
 
@@ -2743,7 +2520,7 @@ Remove the workspace directory completely, typically when starting fresh is simp
 
 This skill references the following shared context files:
 
-- [angular-conventions.md](../shared/angular-conventions.md) — Conventions for standalone components, signals, SCSS theming, naming, imports, and testing patterns.
+- [angular-conventions.md](../../skill_creation/shared/angular-conventions.md) — Conventions for standalone components, signals, SCSS theming, naming, imports, and testing patterns.
 
 ##### Template Files
 
@@ -3164,9 +2941,9 @@ Remove an Angular Material application completely from the workspace, including 
 
 #### Context Files
 
-See [angular-conventions.md](../shared/angular-conventions.md)
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
 
-See [angular-material-patterns.md](../shared/angular-material-patterns.md)
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md)
 
 #### Templates
 
@@ -3444,7 +3221,7 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 
 #### Context Files
 
-See [openapi-integration.md](../shared/openapi-integration.md)
+See [openapi-integration.md](../../skill_creation/shared/openapi-integration.md)
 
 #### Supporting Files
 
@@ -3694,7 +3471,7 @@ Remove a handwritten Angular data service and its associated unit spec.
 
 #### Context Files
 
-See [openapi-integration.md](../shared/openapi-integration.md)
+See [openapi-integration.md](../../skill_creation/shared/openapi-integration.md)
 
 #### Supporting Files
 
@@ -4157,9 +3934,9 @@ Command-level inputs:
 
 #### Context Files
 
-See [angular-conventions.md](../shared/angular-conventions.md)
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
 
-See [angular-material-patterns.md](../shared/angular-material-patterns.md)
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md)
 
 #### Templates
 
@@ -4862,9 +4639,9 @@ Command-level inputs:
 
 #### Context Files
 
-See [angular-conventions.md](../shared/angular-conventions.md)
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
 
-See [angular-material-patterns.md](../shared/angular-material-patterns.md)
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md)
 
 #### Templates
 
@@ -5816,9 +5593,9 @@ composition compiles.
 
 #### Context Files
 
-See [angular-conventions.md](../shared/angular-conventions.md)
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
 
-See [angular-material-patterns.md](../shared/angular-material-patterns.md)
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md)
 
 #### Templates
 
@@ -6261,9 +6038,9 @@ Command-level inputs:
 
 #### Context Files
 
-See [angular-conventions.md](../shared/angular-conventions.md)
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
 
-See [angular-material-patterns.md](../shared/angular-material-patterns.md)
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md)
 
 #### Templates
 
@@ -6793,9 +6570,9 @@ Command-level inputs:
 
 #### Context Files
 
-See [angular-conventions.md](../shared/angular-conventions.md)
-See [angular-material-patterns.md](../shared/angular-material-patterns.md)
-See [openapi-integration.md](../shared/openapi-integration.md)
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md)
+See [openapi-integration.md](../../skill_creation/shared/openapi-integration.md)
 
 #### Supporting Files
 
@@ -7129,7 +6906,7 @@ Remove a page and clean up routing and navigation references.
 
 #### Context Files
 
-See [angular-material-patterns.md](../shared/angular-material-patterns.md) — Material design patterns for table pages, sidenav shells, card forms, dialogs, and snackbars.
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md) — Material design patterns for table pages, sidenav shells, card forms, dialogs, and snackbars.
 
 Each shared file is referenced by a standard markdown link with a one-level-up relative path (e.g. `../shared/angular-material-patterns.md`). The shared files live at `.claude/skills/shared/`, sibling to each skill directory.
 
@@ -7380,9 +7157,9 @@ Command-level inputs:
 
 #### Context Files
 
-See [angular-conventions.md](../shared/angular-conventions.md)
-See [angular-material-patterns.md](../shared/angular-material-patterns.md)
-See [openapi-integration.md](../shared/openapi-integration.md)
+See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
+See [angular-material-patterns.md](../../skill_creation/shared/angular-material-patterns.md)
+See [openapi-integration.md](../../skill_creation/shared/openapi-integration.md)
 
 #### Supporting Files
 
@@ -7504,7 +7281,7 @@ Free-form prose is fine; I'll ask follow-ups to fill the gaps.
 
 Whatever a competent practitioner would need to do the task by hand. Concretely: the input shape (file paths, schemas, structured data, free text), the output shape (exact format, extensions, naming, directory layout), conventions or style rules the output must follow, edge cases (missing input, conflicts, partial state), and dependencies on other skills or artifacts.
 
-The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `GENERATE_AI_AUTOMATIONS.md` is exactly this kind of input — a structured spec.
+The highest-bandwidth form here is a sample: an example input, a hand-written "good" output, or an existing spec doc. Much better than describing in prose. `AI_AUTOMATION_CONTRACTS.md` is exactly this kind of input — a structured spec.
 
 **3. Bundled resources — optional**
 
@@ -7522,15 +7299,15 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 
 | Term | Definition | See |
 |---|---|---|
-| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | This document, `ARCHITECTURE.md` |
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `ARCHITECTURE.md` §3.6 |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
-| **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14 |
+| **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `doc/requirements/APP_BUILDER_REQUIREMENTS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.11, §2.15 |
+| **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.13 |
 | **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | §Tools |
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | §Hooks |
 | **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §Plugins |
-| **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
-| **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
+| **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.12 |
+| **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.22 |
 | **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `phased_implementation_plan.md` Current state and Phase 5 |

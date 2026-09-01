@@ -19,5 +19,8 @@ api/index
 ## Quick links
 
 - [Architecture & design decisions](https://github.com/shlomoa/django-angular3/blob/main/doc/ARCHITECTURE.md)
-- [Product requirements](https://github.com/shlomoa/django-angular3/blob/main/doc/REQUIREMENTS.md)
+- [Requirements](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/REQUIREMENTS.md)
+- [Platform specifications](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md)
+- [AI automation specifications](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md)
+- [Shared contracts](https://github.com/shlomoa/django-angular3/blob/main/doc/contracts/CONTRACTS.md)
 - [Source repository](https://github.com/shlomoa/django-angular3)

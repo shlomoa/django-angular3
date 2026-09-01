@@ -8,6 +8,11 @@ Documentation: <https://django-angular3.readthedocs.io/>
 
 Related docs:
 - `doc/ARCHITECTURE.md` — architecture, integration boundaries, and design decisions
+- `doc/specifications/SPECIFICATIONS.md` — exact platform structures and
+  topology definitions
+- `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` — exact AI automation
+  module organization and realization
+- `doc/contracts/CONTRACTS.md` — shared normative data and interface boundaries
 - `TODO.md` — implementation sequencing, delivery roadmap, and open items
 
 It allows you to:
@@ -19,7 +24,8 @@ It allows you to:
 
 ## Requirements
 
-See [doc/REQUIREMENTS.md](doc/REQUIREMENTS.md) for the full requirements.
+See the [requirements corpus](doc/requirements/REQUIREMENTS.md) for product,
+generated-application, `build_app`, and AI automation requirements.
 
 ## Installation
 
@@ -74,7 +80,7 @@ including executable resolution and its command allowlist. `DJANGO_ANGULAR3`
 and `DjangoAngularSettings` are derived from that file; they are not independent
 configuration authorities. The generated app's identity and artifact locations
 are instead supplied by the project configuration defined in
-`doc/REQUIREMENTS.md` §4.2.4.
+`doc/specifications/SPECIFICATIONS.md` §2.1.
 
 Once installed, Django and the standalone CLI expose the same Angular command
 resolution flow. Use `--dry-run` only for diagnostic validation and debugging;
@@ -113,7 +119,7 @@ execute packages at runtime.
 > uses two separate layers with distinct names: **TOOL contracts** are deterministic
 > agent-callable operations (e.g. `angular_workspace_scaffold`, `openapi_schema_export`) and
 > **SKILL names** are AI-guided session identifiers (e.g. `angular-workspace-foundation`,
-> `angular-api-integration`). See `doc/ARCHITECTURE.md §2.23` for the authoritative definition.
+> `angular-api-integration`). See `doc/ARCHITECTURE.md §2.22` for the authoritative definition.
 
 To execute these commands, include the relevant commands in the static tool
 configuration's `tool.commandAllowlist`, then invoke them without `--dry-run`.
@@ -286,7 +292,10 @@ Current project documents:
 
 - [Contributing](CONTRIBUTING.md)
 - [Releasing](doc/RELEASING.md)
-- [Requirements](doc/REQUIREMENTS.md)
+- [Requirements](doc/requirements/REQUIREMENTS.md)
+- [Specifications](doc/specifications/SPECIFICATIONS.md)
+- [AI automation specifications](doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md)
+- [Contracts](doc/contracts/CONTRACTS.md)
 - [Architecture](doc/ARCHITECTURE.md)
 
 ## Status

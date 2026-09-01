@@ -23,7 +23,7 @@ Use these terms consistently in all code, docs, and skills:
 - **generated app** or **app**: the full-stack application produced by using
 	djng and ngdj together. This is not this repository.
 - **Automation naming layers**: four distinct naming layers in the djng/ngdj
-	 automation subsystem. Authoritative definition: `doc/ARCHITECTURE.md` §2.23.
+	 automation subsystem. Authoritative definition: `doc/ARCHITECTURE.md` §2.22.
 
 ### Config file convention
 
@@ -44,11 +44,25 @@ the authoritative description of djng's role in the toolchain.
 - `django_angular3/settings.py`: Django setting defaults and compatibility.
 - `tests/`: unittest test suite.
 - `tests/fixtures/artifacts/`: reusable OpenAPI, OpenUI, and generator-config fixtures.
-- `doc/REQUIREMENTS.md` and `doc/ARCHITECTURE.md`: target platform context.
+- `doc/requirements/REQUIREMENTS.md`: requirements corpus entry point,
+	product context, user journeys, and system acceptance.
+- `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md`: generated-app
+	functional requirements.
+- `doc/requirements/APPLICATION_QUALITY_REQUIREMENTS.md`: generated-app
+	quality requirements.
+- `doc/requirements/APP_BUILDER_REQUIREMENTS.md`: `build_app` requirements.
+- `doc/requirements/AI_AUTOMATION_REQUIREMENTS.md`: AI automation requirements.
+- `doc/specifications/SPECIFICATIONS.md`: exact platform structures and
+	topology definitions.
+- `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md`: exact AI automation
+	module organization, persistence, execution, adapter, and rendering
+	realization.
+- `doc/contracts/CONTRACTS.md`: shared normative data and interface boundaries.
+- `doc/ARCHITECTURE.md`: target architecture and design rationale.
 
 ### Django Project vs Django App
 
-See `doc/ARCHITECTURE.md` §2.21 for the authoritative definition.
+See `doc/ARCHITECTURE.md` §2.20 for the authoritative definition.
 
 ### Project principles
 
@@ -127,7 +141,10 @@ requirements for the generated app, use `django-admin <command>`.
 
 - Update `README.md` for user-facing workflow or command changes.
 - Update `CONTRIBUTING.md` for contributor workflow changes.
-- Update `doc/ARCHITECTURE.md` or `doc/REQUIREMENTS.md` only for intentional
-	changes to target architecture or product requirements.
+- Update `doc/ARCHITECTURE.md`, the applicable file under `doc/requirements/`,
+	the applicable file under `doc/specifications/`, or
+	`doc/contracts/CONTRACTS.md` only for intentional changes
+	to their respective architecture, requirement, specification, or contract
+	sources of truth.
 
 ---

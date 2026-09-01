@@ -24,7 +24,7 @@ references with the composite `ng_workspace` flow.
 
 ## 2. Finalize AI Automation Contracts
 
-`doc/GENERATE_AI_AUTOMATIONS.md` owns the canonical Skill, Tool, Hook, and
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns the canonical Skill, Tool, Hook, and
 Plugin contracts.
 
 ### 2.1 Resolve construction Tool contracts
@@ -45,7 +45,7 @@ contracts.
 ### 3.1 Reconcile oasdiff with the Change Model
 
 Replace the coarse change categories in `build_app.py` with the canonical
-Change Model from `doc/REQUIREMENTS.md` §4.2.9.
+Change Model from `doc/contracts/CONTRACTS.md` §2.
 
 ## 4. Complete djng Generation Entry Points
 
@@ -56,7 +56,8 @@ interface coverage.
 
 ## 5. Implement `build_app` Orchestration
 
-`doc/APP_BUILDER_REQUIREMENTS.md` owns the complete orchestration contract.
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md` owns the complete orchestration
+requirements.
 Implement its deterministic and AI-guided execution stages in the order owned
 by `doc/phased_implementation_plan.md`.
 
@@ -108,7 +109,8 @@ against the provider-neutral contract.
 ### 5.9 Implement terminal validation
 
 Use `ng_build` as the compile gate and add the integration and global
-acceptance checks required by `doc/APP_BUILDER_REQUIREMENTS.md` FR-9.
+acceptance checks required by
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-9.
 
 ## 6. Complete Automated Verification
 
@@ -127,7 +129,8 @@ real generated Angular workspace without duplicating ngdj's schematic tests.
 
 Verify cross-Skill interface consistency, backend-contract/Angular-client
 alignment, and runnable application flows according to
-`doc/REQUIREMENTS.md` §6.4 and `doc/ARCHITECTURE.md` §§7.2–7.3.
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-10 and
+`doc/ARCHITECTURE.md` §§7.2–7.3.
 
 ## 7. Build One Business Module End to End
 
@@ -148,7 +151,7 @@ Verify representative generated-app workflows in staging.
 
 ## 9. Package Automation Plugins
 
-`doc/GENERATE_AI_AUTOMATIONS.md` owns the canonical Plugin contracts.
+`doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns the canonical Plugin contracts.
 
 ### 9.1 Implement Plugin packaging and distribution
 
@@ -182,7 +185,7 @@ diagnostic.
 ## 12. Complete OpenUI Integration
 
 OpenUI artifact roles remain defined by the external artifact-role SSOT
-linked from `doc/ARCHITECTURE.md` §2.9.1.
+linked from `doc/ARCHITECTURE.md` §2.8.1.
 
 ### 12.1 Add invalid-input build coverage
 

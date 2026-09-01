@@ -1,6 +1,6 @@
 # Temporary Plan Extraction
 
-##  moved from `doc/REQUIREMENTS.md`.
+## Moved from the former `doc/REQUIREMENTS.md`
 
 ### Section map
 
@@ -260,7 +260,7 @@ boundaries, architectural control-loop, verification, and build-flow model.
   accepted state; work derivation must not assume a clean-slate context unless
   no previous state exists
 - The platform must support a contract-first backend origination mode (see
-  [ARCHITECTURE.md] §§ 2.22 and 11.2) alongside the model-first mode: when no
+  [ARCHITECTURE.md] §§ 2.21 and 11.2) alongside the model-first mode: when no
   Django data model exists yet, the Django data model must be generatable from
   an existing OpenAPI Schema using [datamodel-code-generator] with djng-owned
   custom Django templates, after which DRF elaboration and the model-first
@@ -493,8 +493,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > - `doc/ARCHITECTURE.md` §2.6 governs ngdj identity, ownership, and upstream sources. Resolve every ngdj command, option, schema, implementation, test, and status fact through that policy; this issue does not maintain an ngdj command inventory.
 > - `django_angular3/angular.py` (`_COMMAND_BUILDERS`) is the executable source for djng wrapper mappings.
 > - `docs/commands.md` owns djng wrapper arguments and interface availability.
-> - `doc/GENERATE_AI_AUTOMATIONS.md` owns canonical djng Tool contracts.
-> - `doc/APP_BUILDER_REQUIREMENTS.md` owns direct-build requirements and change-to-execution mappings.
+> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns canonical djng Tool contracts.
+> - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` owns direct-build requirements and change-to-execution mappings.
 > - `doc/phased_implementation_plan.md` owns implementation sequencing.
 > - `TODO.md` tracks remaining djng integration decisions and status.
 > 
@@ -530,8 +530,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > - [ ] Define the complete `create` / `update` / `delete` / `move` support matrix.
 > - [ ] Classify each operation as directly supported, supported by bounded composition, explicitly unsupported, or blocked on a required upstream change.
 > - [ ] Resolve one canonical djng Tool identity per concern; reuse or extend an existing contract where possible rather than introducing competing identities.
-> - [ ] Define structured inputs, source-derived change mapping, supported operations, outputs, ownership/idempotence behavior, structured errors, allowed invocation contexts, dependencies, implementation references, and terminal validation in `doc/GENERATE_AI_AUTOMATIONS.md`.
-> - [ ] Align `doc/APP_BUILDER_REQUIREMENTS.md`, `doc/phased_implementation_plan.md`, and `TODO.md` by reference to those canonical contracts without duplicating them.
+> - [ ] Define structured inputs, source-derived change mapping, supported operations, outputs, ownership/idempotence behavior, structured errors, allowed invocation contexts, dependencies, implementation references, and terminal validation in `doc/contracts/AI_AUTOMATION_CONTRACTS.md`.
+> - [ ] Align `doc/requirements/APP_BUILDER_REQUIREMENTS.md`, `doc/phased_implementation_plan.md`, and `doc/plan/TODO.md` by reference to those canonical contracts without duplicating them.
 > - [ ] Verify that implementation issues #162 and #164 can consume the completed contracts without redefining them.
 > 
 > ### Direct build integration
@@ -583,7 +583,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.2.2 — derive work by comparing the current contract, configuration, and structured inputs against their previously accepted state rather than assuming a clean slate
+>     - `doc/contracts/CONTRACTS.md` §2 — compare candidate normalized semantic state against its accepted baseline
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§7.2, 11.2, 17
@@ -616,9 +616,9 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.2.3 — fail fast when the OpenAPI contract is invalid or incompatible with generation
-> - `doc/REQUIREMENTS.md` §4.2.3 — deterministic validation/acceptance behavior for the same inputs
-> - `doc/REQUIREMENTS.md` §4.2.3 — identify whether failure happened in contract validation, code generation, OpenUI input validation, or final assembly
+>     - `doc/requirements/REQUIREMENTS.md` §3.5 — fail fast when the OpenAPI contract is invalid or incompatible with generation
+> - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-2 — deterministic command translation for the same inputs
+> - `doc/requirements/REQUIREMENTS.md` §3.5 — identify whether failure happened in contract validation, code generation, OpenUI input validation, or final assembly
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§7.1-7.4, 11.2, 17
@@ -651,8 +651,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.17.1 — generated backend structure (`common`, `accounts`, `access`, and domain apps)
-> - `doc/REQUIREMENTS.md` §4.2.1 — Django/DRF own backend data, auth, authorization, administration, and deployment-facing artifacts
+>     - `doc/specifications/SPECIFICATIONS.md` §4.1 — generated backend structure (`common`, `accounts`, `access`, and domain apps)
+> - `doc/ARCHITECTURE.md` §3.3 — Django/DRF ownership of backend responsibilities
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§4.1, 9.1-9.4, 17-18
@@ -685,7 +685,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.2.2 — any backend data-model change that produces a Django migration must trigger OpenAPI schema re-extraction before contract normalization proceeds
+>     - `doc/ARCHITECTURE.md` §11.2 — any backend data-model change that produces a Django migration must trigger OpenAPI schema re-extraction before contract normalization proceeds
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §11.2
@@ -718,7 +718,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.1 — API schema generation and browsable documentation should be available in non-production environments
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.1 — API schema generation and browsable documentation should be available in non-production environments
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§11.1-11.2, 16-17
@@ -762,9 +762,9 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ## Requirement and architecture references
 > 
-> - `doc/REQUIREMENTS.md` §4.18.2 — generated frontend structure.
+> - `doc/specifications/SPECIFICATIONS.md` §4.2 — generated frontend structure.
 > - `doc/ARCHITECTURE.md` §§2.6, 4.2–4.3, 10.1–10.3, 17–18.
-> - `doc/APP_BUILDER_REQUIREMENTS.md` — direct-build selection, ordering, execution, and acceptance.
+> - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` — direct-build selection, ordering, execution, and acceptance.
 > 
 > ## Remaining djng work
 > 
@@ -802,8 +802,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.17.3 — standardize and reuse patterns for tables, lists, detail views, forms, dialogs, snackbars, and confirmation flows
-> - `doc/REQUIREMENTS.md` §4.6 — global feedback patterns and Angular Material screens
+>     - `doc/specifications/SPECIFICATIONS.md` §4.3 — standardize and reuse patterns for tables, lists, detail views, forms, dialogs, snackbars, and confirmation flows
+> - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.7 — global feedback patterns and Angular Material screens
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§10.2, 10.5
@@ -836,7 +836,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.3 — secure sign in/sign out, password-based auth, future SSO readiness, password reset/account recovery, configurable expiration and idle timeout
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.4 — secure sign in/sign out, password-based auth, future SSO readiness, password reset/account recovery, configurable expiration and idle timeout
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§12.1-12.3, 15, 17
@@ -870,7 +870,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.4 — authenticated-by-default access, RBAC, permission enforcement on API and UI, and role/object-scope restrictions for sensitive actions
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.5 — authenticated-by-default access, RBAC, permission enforcement on API and UI, and role/object-scope restrictions for sensitive actions
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§4.1-4.3, 12.2-12.3, 15
@@ -903,7 +903,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.1 — API endpoints must support authenticated access, validation, and standard HTTP semantics
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.1 — API endpoints must support authenticated access, validation, and standard HTTP semantics
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§11.3, 12.2-12.3
@@ -936,9 +936,9 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.1 — list endpoints must support filtering, sorting, and pagination
-> - `doc/REQUIREMENTS.md` §4.7-§4.8 — list screens, filters, pagination, and deterministic default sorting
-> - `doc/REQUIREMENTS.md` §4.17.1 — `common` app provides reusable pagination/filtering helpers
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.1 — list endpoints must support filtering, sorting, and pagination
+> - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §§4.8–4.9 — list screens, filters, pagination, and deterministic default sorting
+> - `doc/specifications/SPECIFICATIONS.md` §4.1 — `common` app provides reusable pagination/filtering helpers
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§9.1, 11.3
@@ -971,8 +971,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.1 — predictable API error structure usable by Angular
-> - `doc/REQUIREMENTS.md` §4.14 — clear field/form validation errors and user-safe unexpected-error messages
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.1 — predictable API error structure usable by Angular
+> - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.15 — clear field/form validation errors and user-safe unexpected-error messages
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§8.4, 11.3, 13.1
@@ -1005,7 +1005,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.6 — consistent shell, client-side routing, permission-aware navigation, responsive layout, global loading/success/warning/error feedback, Angular Material user-facing screens
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.7 — consistent shell, client-side routing, permission-aware navigation, responsive layout, global loading/success/warning/error feedback, Angular Material user-facing screens
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§4.2-4.3, 10.3.1, 10.5, 12.2
@@ -1058,10 +1058,10 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ## Requirement and architecture references
 > 
-> - `doc/REQUIREMENTS.md` — separate, versioned OpenAPI and OpenUI inputs with distinct but composable roles.
+> - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.14 — separate, versioned OpenAPI and OpenUI inputs with distinct but composable roles.
 > - `doc/ARCHITECTURE.md` §§2.6, 8.2–8.5, 10.2, 11.1–11.2, 17.
 > - `TODO.md` §§14–15 — OpenUI integration and source-derived terminology work.
-> - `doc/APP_BUILDER_REQUIREMENTS.md` — input selection, change derivation, command mapping, and direct execution.
+> - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` — input selection, change derivation, command mapping, and direct execution.
 > 
 > ## Remaining djng integration work
 > 
@@ -1095,7 +1095,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.7 — modular feature areas, list/detail/create/update/deactivate-or-delete flows, list filtering/sorting/pagination, detail metadata/related records, client/server validation
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.8 — modular feature areas, list/detail/create/update/deactivate-or-delete flows, list filtering/sorting/pagination, detail metadata/related records, client/server validation
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§9, 10.2-10.5, 14.3
@@ -1129,7 +1129,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.8 — search by primary identifiers, common business filters, large-result pagination, deterministic sorting
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.9 — search by primary identifiers, common business filters, large-result pagination, deterministic sorting
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§11.3, 10.5
@@ -1162,7 +1162,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.9 — record important security/business events, capture who/when for sensitive changes, view audit history, and trace authentication events
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.10 — record important security/business events, capture who/when for sensitive changes, view audit history, and trace authentication events
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§4.1, 12.3, 13.1-13.2, 15
@@ -1195,7 +1195,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.5 — admin create/activate/deactivate/update users, assign roles/groups, self-service profile update, and account metadata tracking
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.6 — admin create/activate/deactivate/update users, assign roles/groups, self-service profile update, and account metadata tracking
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§9.2-9.3, 12.1-12.3
@@ -1228,8 +1228,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.12 — administrative screens for core configuration, centrally manageable reference data, and audited administrative changes
-> - `doc/REQUIREMENTS.md` §4.2.1 — Django/DRF own administrative capabilities
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.13 — administrative screens for core configuration, centrally manageable reference data, and audited administrative changes
+> - `doc/ARCHITECTURE.md` §3.3 — Django/DRF own administrative capabilities
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§4.1, 9.4, 12.3
@@ -1262,7 +1262,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.10 — system notifications, email delivery for account/workflow notifications, optional in-app notifications later
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.11 — system notifications, email delivery for account/workflow notifications, optional in-app notifications later
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§4.1, 6, 16-17
@@ -1295,7 +1295,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.11 — file attachments, file size/type validation, and permission-respecting downloads
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.12 — file attachments, file size/type validation, and permission-respecting downloads
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§4.1, 12.3, 15
@@ -1328,7 +1328,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.14 — clear field/form validation errors, logged unexpected server errors with safe user messages, and preserved unsaved form state for recoverable UI errors
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.15 — clear field/form validation errors, logged unexpected server errors with safe user messages, and preserved unsaved form state for recoverable UI errors
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§8.4, 10.5, 13.1
@@ -1361,8 +1361,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/REQUIREMENTS.md` §4.15 — generation failures must surface through Django's standard error reporting in `DEBUG=True`
-> - `doc/REQUIREMENTS.md` §4.15 — expose a gated `/ng/build` development page with Angular build/health details and retrigger control
+>     - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.16 — generation failures must surface through Django's standard error reporting in `DEBUG=True`
+> - `doc/specifications/SPECIFICATIONS.md` §3 — expose a gated `/ng/build` development page with Angular build/health details and retrigger control
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§7.3, 13.2, 16-17
@@ -1400,8 +1400,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ## Authority and ownership
 > 
-> - `doc/REQUIREMENTS.md` §§4.16 and 6.4 define verification categories and mandatory scenario classes.
-> - `doc/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9 define failure handling and terminal verification.
+> - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.17 and `doc/TEST_EXAMPLES.md` define verification categories and scenario classes.
+> - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9 define failure handling and terminal verification.
 > - `doc/TEST_EXAMPLES.md` defines scenario inputs and expected outcomes.
 > - `doc/ARCHITECTURE.md` §2.6 governs ngdj implementation and test facts.
 > 
@@ -1410,7 +1410,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > ## Current state
 > 
 > - All twelve documented scenario classes have input fixtures: the bundled simple CRM example plus scenarios under `tests/fixtures/scenarios/`.
-> - `doc/REQUIREMENTS.md` §6.4 now lists the mandatory acceptance scenario classes.
+> - `doc/TEST_EXAMPLES.md` lists the acceptance scenario classes.
 > - Upstream ngdj has schematic unit, integration, and generated-workspace E2E coverage.
 > - djng has wrapper contract/drift coverage.
 > - Direct `build_app` execution and scenario acceptance are not implemented, so the composed backend/frontend application is not yet verified end to end.
@@ -1433,7 +1433,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ### Global generated-app acceptance
 > 
-> - [ ] Execute all scenario classes in `doc/REQUIREMENTS.md` §6.4 and `doc/TEST_EXAMPLES.md`, including cold start, incremental single-lane changes, combined changes, removals, replacement, source selection, and command failure.
+> - [ ] Execute all scenario classes in `doc/TEST_EXAMPLES.md`, including cold start, incremental single-lane changes, combined changes, removals, replacement, source selection, and command failure.
 > - [ ] Prove local Skill success cannot override cross-Skill inconsistency or failed terminal validation.
 > - [ ] Add runtime smoke tests for representative authentication and business-module flows.
 > - [ ] Preserve dry-run non-modification and halt-on-first-failure behavior.
@@ -1663,7 +1663,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ## Authority and boundaries
 > 
-> - `doc/GENERATE_AI_AUTOMATIONS.md` owns canonical Skill identities, contracts, dependencies, and local acceptance criteria.
+> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns canonical Skill identities, contracts, dependencies, and local acceptance criteria.
 > - `doc/SKILL_AUTHORING_PLAN.md` owns the per-Skill authoring and verification cadence.
 > - `skill_creation/skills/` contains working copies, not a second canonical catalog.
 > - `doc/phased_implementation_plan.md` owns implementation sequencing.
@@ -1736,9 +1736,9 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > Define bounded inspection, repair, retry, and refinement for AI-guided construction without allowing a provider session to bypass `djng`'s deterministic TOOL execution, HOOK enforcement, terminal validation, or global generated-app acceptance.
 > 
 > ## Requirement references
-> - `doc/REQUIREMENTS.md` §4.2.2 — governed construction must surface failure when required outcomes cannot be established.
-> - `doc/REQUIREMENTS.md` §4.16 — construction-output and integration verification.
-> - `doc/GENERATE_AI_AUTOMATIONS.md` — canonical Skill acceptance criteria, normalized provider-adapter results, and the authority of direct TOOL/HOOK/terminal-validation boundaries.
+> - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9 — governed construction must surface failure when required outcomes cannot be established.
+> - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.17 — construction-output and integration verification.
+> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` — canonical Skill acceptance criteria, normalized provider-adapter results, and the authority of direct TOOL/HOOK/terminal-validation boundaries.
 > - `doc/phased_implementation_plan.md` — provider-neutral direct execution precedes adapter orchestration; local Skill acceptance is necessary but not sufficient for global acceptance.
 > - `doc/SKILL_AUTHORING_PLAN.md` — per-Skill authoring and verification cadence.
 > 
@@ -1809,8 +1809,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ## Authority and scope
 > 
-> - `doc/GENERATE_AI_AUTOMATIONS.md` owns canonical Tool, Hook, Plugin, and Skill contracts.
-> - `doc/APP_BUILDER_REQUIREMENTS.md` owns direct-build functional requirements, including FR-8 failure handling and FR-9 terminal validation.
+> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns canonical Tool, Hook, Plugin, and Skill contracts.
+> - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` owns direct-build functional requirements, including FR-8 failure handling and FR-9 terminal validation.
 > - `doc/phased_implementation_plan.md` owns sequencing; normative contracts and functional requirements win if they conflict with the plan.
 > - `doc/ARCHITECTURE.md` §2.6 governs every ngdj command, option, schema, implementation, test, and status fact. djng automation may wrap or orchestrate public ngdj contracts but must not redefine them.
 > - `doc/phased_implementation_plan.md` records provider research and portability evidence and owns implementation sequencing; it is not a runtime dependency.

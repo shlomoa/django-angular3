@@ -16,7 +16,8 @@ and available commands.
 ## Project configuration discovery
 
 Commands that operate on the generated app use the project-configuration
-discovery rules in `doc/REQUIREMENTS.md` §4.2.4.
+filename convention in `doc/specifications/SPECIFICATIONS.md` §2.1 and the discovery behavior
+in `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs.
 
 The static `djng` tool configuration, `django-angular3.json`, supplies derived
 tool settings and is likewise not a command argument. Document validation
@@ -94,6 +95,6 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one for future `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app` | Exposes the app-build command interface, but planning and execution are not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run` and `--force start-from-scratch`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/APP_BUILDER_REQUIREMENTS.md` §Inputs for discovery behavior. |
+| `build_app` | Exposes the app-build command interface, but planning and execution are not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run` and `--force start-from-scratch`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs for discovery behavior. |
 | `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |
 | `ng_workspace_delete` | Delete the discovered Angular workspace entirely. |
