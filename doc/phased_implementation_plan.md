@@ -4,7 +4,10 @@
 
 This document derives a phased implementation plan from the normative contracts
 in `doc/GENERATE_AI_AUTOMATIONS.md` into an ordered, acceptance-gated sequence
-of implementation work.
+of implementation work. It also incorporates the provider-portability research
+and code-level implementation details formerly maintained in a separate AI
+knowledge integration plan, making this document the single sequencing
+authority for that work.
 
 It fulfils the "phased implementation plan" deliverable of the
 *Architecture alignment — Phased implementation plan* issue and feeds the
@@ -65,6 +68,17 @@ for this plan:
 - **Skill working copies** under `skill_creation/skills/` (split copies of the
   `GENERATE_AI_AUTOMATIONS.md` Skills Catalog); the eleven Skills are not yet
   authored as runnable `SKILL.md` units (`TODO.md` item 7).
+- **Provider research evidence** in the private `shlomoa/ai` repository,
+  validated through authenticated access: Claude Agent SDK `query`, MCP tools,
+  native hooks, filesystem Skills, and `.claude-plugin`; OpenAI Responses API /
+  `openai-agents` with local function-tool guards and hook management; Gemini
+  `google-genai` function tools with decorator/wrapper hooks; and Copilot SDK
+  sessions, permission handlers, and pre-/post-tool handlers. This evidence
+  informs adapter mappings; it is not a runtime dependency or contract source.
+- **No provider orchestration implementation**: `django_angular3` has no
+  provider SDK import, session call, or adapter. The required
+  `claude-agent-sdk` dependency is transitional until a Claude adapter exists
+  and can own it as an optional extra.
 
 What is *not* yet implemented and is therefore scheduled below: the deterministic
 tool wrappers, the lifecycle hook scripts, the direct command translation and
@@ -103,15 +117,35 @@ changes in this phase.
 
 ---
 
-## Phase 1 — Deterministic tool contracts
+## Phase 1 — Provider-neutral foundation and deterministic tool contracts
 
-**Goal**: Implement the deterministic tool wrappers so the agent calls bounded
-operations and receives structured results, replacing raw CLI parsing.
+**Goal**: Establish provider-neutral result and evidence contracts, then
+implement deterministic tool wrappers so bounded operations return structured
+results instead of requiring raw CLI parsing.
 
 **Dependencies**: Phase 0.
 
 **Work items** (one per Tool contract in
 `doc/GENERATE_AI_AUTOMATIONS.md` §Tool Contracts Catalog):
+- Add a provider-free `django_angular3/automation/` package. Define immutable,
+  serializable contracts for structured errors, Tool invocations/results, Hook
+  outcomes, acceptance evidence, command outcomes, and run outcomes. Use
+  standard-library types, deterministic `to_dict()`/parsing behavior, and
+  execution-boundary injection for identifiers and timestamps.
+- Add an append-only, dependency-injected `EvidenceRecorder` that writes stable
+  UTF-8 JSON Lines below the selected build output. Record run metadata plus an
+  ordered stream of Tool, Hook, and acceptance events; flush completed events
+  so halted runs remain inspectable. Convert recorder failures into structured
+  direct-execution failures, and prohibit secrets, credentials, request headers,
+  and provider-native payloads from serialized evidence.
+- Define the future adapter-result hand-off as a provider-neutral protocol:
+  adapter results reference the run and canonical Skill/command but cannot
+  mutate `RunOutcome` or write directly to the evidence stream. `build_app`
+  remains responsible for normalization and recording after direct gates pass.
+- Implement these boundaries in `automation/contracts.py` and
+  `automation/evidence.py`, keeping `automation/__init__.py` free of SDK
+  imports. Cover them in `tests/test_automation_contracts.py` and
+  `tests/test_automation_evidence.py`.
 - `openapi_schema_export` — wrap `export_schema` to return schema path and a
   `schema_changed` flag.
 - `oasdiff_diff` — wrap the `ensure_oasdiff()` binary to return
@@ -134,6 +168,11 @@ structured outputs, and a structured error object whose `category` is one of
 `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
 
 **Acceptance criteria**:
+- The automation foundation imports no provider SDK and makes no network call.
+- Contract objects round-trip deterministically, reject invalid categories or
+  shapes, and serialize no secret-bearing fields.
+- Evidence remains ordered and machine-readable after success, failure, or a
+  halted run.
 - Each tool's return value validates against its contract's declared output
   shape.
 - Each tool surfaces failures through the structured error object — never as an
@@ -143,6 +182,9 @@ structured outputs, and a structured error object whose `category` is one of
   translation (FR-7).
 
 **Test / verification coverage**:
+- Contract serialization, validation, deterministic ID/timestamp injection,
+  redaction, ordered JSONL events, metadata finalization, malformed prior
+  events, and recorder-write failures.
 - Unit tests per tool: success path, each error `category`, and diagnostic
   dry-run output where applicable.
 - A contract-conformance test asserting each tool's output keys match its
@@ -159,6 +201,14 @@ and mandatory side effects always run, independent of agent choices.
 
 **Work items** (one per Hook contract in
 `doc/GENERATE_AI_AUTOMATIONS.md` §Hook Contracts Catalog):
+- Add a provider-neutral Hook registry keyed by canonical Hook name and
+  lifecycle family (`pre-tool`, `post-tool`, or `session-stop`). Definitions
+  declare Tool/command scope, block/halt/warn consequence, evidence payload,
+  and idempotency behavior; shared matching must not depend on raw shell strings
+  or provider event names.
+- Implement the registry and contract bindings in `automation/hooks.py`; keep
+  direct dispatch tests in `tests/test_hooks.py` and provider event-mapping
+  assertions in the adapter suites.
 - `pre-construction` — `Pre*` gate: schema exists, is valid OAS 3.1, and is at
   least as fresh as the latest migration before any Angular generation tool.
 - `migration-triggered` — `Post*`: re-export the schema when a new migration
@@ -169,6 +219,10 @@ and mandatory side effects always run, independent of agent choices.
   summary; MUST NOT change the session exit code (FR-8).
 
 **Acceptance criteria**:
+- Every Hook start, skip, outcome, and failure is correlated with its run,
+  command, and Tool invocation in the provider-independent evidence stream.
+- Duplicate lifecycle observations do not repeat destructive Hook work or emit
+  conflicting acceptance evidence.
 - `Pre*` hook non-zero exit blocks the wrapped tool and every dependent command
   (FR-8).
 - Hook failures return a distinct hook-failure exit code (FR-8).
@@ -179,6 +233,8 @@ and mandatory side effects always run, independent of agent choices.
 - Per-hook tests: trigger event fires the hook, blocking hook halts command execution,
   non-blocking `Post*` failure halts and records, `Stop` hook cannot change exit
   code.
+- Registry scope, event ordering, idempotency, exception normalization, and
+  equivalent normalized outcomes from provider-shaped lifecycle observations.
 - Exit-code distinctness tests for hook and tool failures.
 
 ---
@@ -191,6 +247,15 @@ each command through the right primitive.
 **Dependencies**: Phases 1–2.
 
 **Work items**:
+- Add a synchronous direct-execution controller in
+  `django_angular3/automation/execution.py`; the current Django command and
+  subprocess model does not require a new asynchronous framework. Its injected
+  context contains the validated project configuration, output path, run ID,
+  dry-run/acknowledgement flags, and evidence recorder.
+- Implement `run_tool` and pre-/post-/session-stop Hook boundaries that normalize
+  expected failures and unexpected exceptions, record outcomes, and enforce
+  block/halt/warn consequences. Only this controller may make dependency,
+  gate, terminal-validation, and final run-acceptance decisions.
 - Translate selected TOOL, HOOK, and SKILL contracts into ordered commands whose
   contract names match the documented surfaces (FR-7).
 - Execute in dependency order; TOOL commands call the Phase 1 tools and HOOK
@@ -200,8 +265,22 @@ each command through the right primitive.
   contract-specific code.
 - Keep `--dry-run` validating inputs, identifying changes, and reporting the
   ordered diagnostic command output without invoking automation (FR-3).
+- Integrate at `build_app` entry and error boundaries: create the execution
+  context after project-config validation, record validation and schema-diff
+  outcomes, and finalize evidence on every normal or error exit. Preserve the
+  current OpenUI-diff and `NotImplementedError` limitations until their owning
+  work lands; foundation wiring must not imply complete execution.
+- Keep existing validation functions authoritative and preserve their public
+  diagnostics, messages, and return types. They may receive an injected
+  recorder only after producing their normal result; they must not open ad-hoc
+  logs.
+- Keep controller coverage in `tests/test_automation_execution.py` and focused
+  command-boundary coverage in a dedicated `build_app` test module. Do not add
+  provider fixtures or adapter SDK stubs to this phase.
 
 **Acceptance criteria**:
+- A provider result cannot invoke direct gates, mark a command successful,
+  mutate the run outcome, or substitute for terminal validation.
 - A command never starts while a dependency it is blocked on is unsatisfied
   (FR-2, FR-7).
 - A failed tool or `Pre*`/`Post*` hook stops execution and produces the correct,
@@ -209,6 +288,11 @@ each command through the right primitive.
 - `--dry-run` output is deterministic and human-readable for the same inputs.
 
 **Test / verification coverage**:
+- Direct controller tests: successful evidence; pre-tool block without Tool
+  invocation; post-tool halt; warning-only session stop; wrapper-exception and
+  recorder-failure normalization; and absence of provider imports/network use.
+- Focused `build_app` tests assert invalid input and schema-diff exits finalize
+  evidence while preserving existing Django command errors and exit behavior.
 - Command-translation determinism tests (same inputs → same command sequence).
 - Execution tests: dependency ordering, halt-on-failure, dependent-skip,
   exit-code mapping.
@@ -228,8 +312,18 @@ skill content with per-skill acceptance criteria and provider-specific rendering
   implementation + tests, build_app command integration, verification).
 - Keep `skill_creation/skills/` working copies aligned with the authoritative
   `GENERATE_AI_AUTOMATIONS.md` Skills Catalog.
-- Define provider-specific skill renderings and packaging as derived artifacts;
-  no provider's native skill-file format is the canonical `djng` source.
+- Define an executable canonical Skill catalog containing each Skill's name,
+  purpose, inputs, outputs, dependencies, acceptance criteria, Tool/Hook
+  bindings, and version. Generate or validate it against the authoritative
+  catalog instead of parsing Markdown during `build_app` execution.
+- Add a provider-neutral Skill resolver. It rejects unknown Skills, incomplete
+  dependencies, and unknown Tool bindings before a session request can be
+  created. Provider-specific rendering remains derived work in Phase 8; no
+  provider's native skill-file format is the canonical `djng` source.
+- Implement the resolver and catalog in `automation/skills.py` and
+  `automation/skill_catalog.py`; cover catalog integrity in
+  `tests/test_skill_catalog.py`. A temporary fixture registry is acceptable
+  only until the executable catalog lands.
 - Define each Skill's local acceptance criteria during its Plan phase: the exact
   pass/fail conditions, the tools used to verify them, and what "done" means
   locally.
@@ -241,13 +335,15 @@ skill content with per-skill acceptance criteria and provider-specific rendering
   AI-guided commands (FR-2).
 - Canonical skill content has one source of truth, and each provider-specific
   rendering is verifiably derived from it.
+- Runtime Skill resolution consumes the executable catalog and does not parse
+  provider-native files or the planning documents.
 
 **Test / verification coverage**:
 - Per-skill component tests for the generated Angular artifacts.
 - Skill-catalog-alignment check between `skill_creation/skills/` and
   `GENERATE_AI_AUTOMATIONS.md`.
-- Provider-package conformance tests that verify each rendering preserves the
-  canonical skill's name, purpose, inputs, and acceptance criteria.
+- Catalog validation for unique identifiers, valid dependencies, known
+  Tool/Hook bindings, and complete acceptance criteria.
 
 ---
 
@@ -263,6 +359,29 @@ command-execution semantics owned by `djng`.
 - Define a provider-neutral adapter interface for session creation, canonical
   skill loading, tool dispatch, lifecycle-event normalization, structured
   results, cancellation, timeouts, and credential configuration.
+- Implement the interface in a provider-free adapter base package with
+  synchronous methods for session creation, Skill loading, command execution,
+  cancellation, and close. Use immutable session request/handle/result objects;
+  handles must not expose provider clients to `build_app`.
+- Normalize adapter failures into stable categories including
+  `unmet_acceptance`, `timeout`, `context_exhausted`, `tool_denied`,
+  `provider_unavailable`, `cancelled`, and `provider_protocol_error`, with
+  redacted details only.
+- Add a guided-session orchestrator injected with the adapter, Skill resolver,
+  direct execution context, and recorder. It validates dependencies, resolves
+  canonical Skills, creates a sanitized request, runs one guided command,
+  normalizes and records its result, requires contract-matching evidence, and
+  closes the session in a `finally` path. The first implementation performs no
+  implicit retries.
+- Add an internal adapter registry/factory. Every adapter declares immutable
+  capabilities for Skill loading, Tool calling, lifecycle observation,
+  structured results, cancellation/timeouts, and teardown, distinguishing
+  native support from a local mapping. Reject registrations or command requests
+  that lack required normalization capabilities.
+- Use `automation/adapters/base.py` for the SDK-free interface,
+  `automation/adapters/capabilities.py` for metadata, and
+  `automation/orchestrator.py` for guided sessions. Keep adapter registration in
+  the package boundary rather than branching on providers in `build_app`.
 - Implement adapters against that interface. The validated reference examples
   in `shlomoa/ai` are:
   - **Claude:** Agent SDK `query`, native hooks, filesystem skills, and plugins.
@@ -278,6 +397,26 @@ command-execution semantics owned by `djng`.
 - Specify and implement what `build_app` does when an agent session ends without
   evidence of success — halt, surface a structured error, and refuse to advance
   (no silent advance past unmet acceptance criteria).
+- Pass adapters only sanitized canonical command context and allowed Tool names,
+  never the mutable execution controller or `RunOutcome`. Provider permission,
+  Tool-use, and lifecycle events are correlated observations; the direct
+  controller decides and records their consequences.
+- Keep `build_app --dry-run` provider-free: resolve and render the planned
+  canonical selection without constructing an adapter, importing an SDK,
+  discovering credentials, opening a session, or writing provider artifacts.
+- Keep provider selection internal until the configuration taxonomy assigns its
+  public ownership. Deterministic-only runs require no adapter.
+- Isolate each implementation in its own module and optional dependency extra.
+  Move `claude-agent-sdk` out of required dependencies only when the Claude
+  adapter owns all consumers; add OpenAI, Gemini, and Copilot extras only with
+  their adapters. Importing one adapter must not import any other SDK.
+- Name implementation modules `automation/adapters/claude.py`, `openai.py`,
+  `gemini.py`, and `copilot.py`. Each module may import only its own optional
+  SDK; the factory maps an unavailable SDK to `missing_dependency` with
+  installation guidance naming the relevant extra.
+- Keep credential discovery inside the selected adapter and use only the
+  provider-approved runtime mechanism. Never store credentials in source,
+  fixtures, evidence, or command output.
 
 **Acceptance criteria**:
 - The adapter interface can be exercised with a stub without changing direct
@@ -287,6 +426,12 @@ command-execution semantics owned by `djng`.
 - Session failures are surfaced as structured errors consistent with FR-8.
 - Provider-native hook or wrapper behavior cannot bypass `djng` direct
   command-execution gates.
+- Every registered adapter exposes auditable capabilities consistent with the
+  architecture matrix; metadata alone is not proof that a capability works.
+- Session close runs on success, failure, and cancellation, and teardown
+  warnings do not mask an earlier result.
+- Each adapter is considered implemented only after both credential-free
+  contract tests and its explicitly opted-in runtime suite pass.
 
 **Test / verification coverage**:
 - Provider-independent adapter-contract tests with stubs: success advances,
@@ -297,6 +442,14 @@ command-execution semantics owned by `djng`.
   corresponding adapter against its provider SDK. These suites are separate from
   provider-independent unit tests and do not claim any adapter is implemented
   until it passes its own suite.
+- Skill resolution and dependency failures; close behavior on every path;
+  redaction; optional-SDK import isolation; capability registration/rejection;
+  local-vs-native lifecycle mappings; and proof that provider allow/deny or
+  success signals cannot bypass a direct Hook or terminal-validation failure.
+- Keep shared contract and capability coverage in
+  `tests/test_adapter_contracts.py` and `tests/test_adapter_capabilities.py`.
+  Put live suites under `tests/integration/adapters/`, one module per provider,
+  and centralize prerequisite/skip behavior in one helper.
 
 **Adapter-contract test matrix**:
 
@@ -333,6 +486,8 @@ on recorded construction results, not a separate filesystem rescan.
   `generated_files` array from `angular_api_client_generate`).
 - Cover the four verification categories in `doc/ARCHITECTURE.md` §7.3: contract,
   construction-output, integration, and test-based verification.
+- Record terminal outcomes as acceptance evidence through the same
+  provider-neutral recorder. Adapter-reported success remains insufficient.
 
 **Acceptance criteria**:
 - A run is reported successful only when every terminal validation command
@@ -408,17 +563,49 @@ Hooks.
 - Define each provider's packaging and installation artifact as a derived
   distribution representation. A Claude plugin, including `.claude-plugin`, is
   one provider-specific representation and is not the canonical plugin source.
+- Add provider-neutral Skill and package renderer interfaces that consume only
+  canonical catalog records. Renderers preserve canonical identity, purpose,
+  inputs, outputs, dependencies, acceptance criteria, Tool/Hook bindings, and
+  lifecycle families; provider-native metadata stays namespaced in derived
+  output.
+- Implement the interfaces in `automation/rendering.py`; cover canonical
+  preservation and provider derivation in `tests/test_provider_rendering.py`.
+- Define a generic package manifest with canonical plugin identity/version and
+  exact bundled Skills, Tools, and Hooks. Keep rendered output under ignored
+  build/distribution directories with source provenance and content hashes;
+  never write native frontmatter or manifests back into canonical sources.
+- Implement renderers incrementally with their adapters. Claude may emit
+  `SKILL.md` and `.claude-plugin`; other providers may use session/tool
+  registrations rather than an invented common filesystem format.
+- Make provider installation/discovery opt-in and absent from dry runs and
+  default tests.
+- Establish release controls: the credential-free Ruff/unittest/catalog
+  baseline remains required; optional import/conformance tests run for affected
+  adapters; live suites run only in approved secret-managed environments. Do
+  not advertise an adapter until its dependency bounds, shared matrix, live
+  runtime suite, capability metadata, and package conformance all pass.
 
 **Acceptance criteria**:
 - Each plugin bundles exactly the Skills / Tools / Hooks named in its contract.
 - Each provider-specific package is traceably derived from the canonical
   plugin contract and preserves its declared contents.
 - Each package installs and versions independently of the Python package.
+- Every generated artifact is traceable to canonical content and cannot add an
+  uncontracted capability.
+- Release status reflects verified provider support; a skipped live suite is
+  not implementation evidence.
 
 **Test / verification coverage**:
 - Plugin-manifest conformance tests (declared contents match the contract).
 - Provider-package conformance and install / smoke tests against a generated-app
   workspace.
+- Temporary-directory renderer tests proving canonical inputs are unchanged,
+  required fields are preserved, manifests match exactly, and stale artifacts
+  can be detected by provenance/hash.
+- Maintain one shared adapter contract matrix for stub and opted-in runtime
+  suites. Centralize prerequisite/skip checks, bound live Skills and Tool
+  allowlists, and record only provider/SDK version plus normalized redacted
+  outcomes—not prompts, conversations, headers, or credentials.
 
 ---
 
@@ -426,7 +613,7 @@ Hooks.
 
 ```mermaid
 flowchart TD
-    phase0["Phase 0: Design alignment"] --> phase1["Phase 1: Deterministic tool contracts"]
+    phase0["Phase 0: Design alignment"] --> phase1["Phase 1: Provider-neutral foundation and deterministic tool contracts"]
     phase1 --> phase2["Phase 2: Lifecycle hook contracts"]
     phase2 --> phase3["Phase 3: Command translation and execution"]
     phase3 --> phase4["Phase 4: Skills authoring"]
@@ -458,6 +645,22 @@ enforcement, test ownership moves with it:
 - **Terminal verification** (Phase 6) and the **global acceptance gate**
   (Phase 7) own cross-Skill and integration correctness — the properties no
   single primitive's tests can establish.
+- **Provider adapters** (Phase 5) first share a credential-free stub matrix;
+  each real adapter then runs that matrix plus provider-specific rendering and
+  lifecycle checks in an isolated, explicitly opted-in runtime suite. Missing
+  credentials or SDKs skip live tests without prompting or exposing values.
+
+The default verification path remains credential-free:
+
+1. `ruff format django_angular3 tests`
+2. `ruff check django_angular3 tests`
+3. focused tests for the affected automation/build boundaries
+4. `python -m unittest discover -s tests -p 'test*.py'`
+5. generated-app-compatible `django-admin build_app --dry-run` coverage
+
+Update implementation status, capability metadata, and the backlog only from
+actual test evidence. Provider-neutral stub success alone does not establish
+provider support.
 
 ## Related documents
 
@@ -467,4 +670,6 @@ enforcement, test ownership moves with it:
   terminal verification).
 - `doc/ARCHITECTURE.md` — §2 automation primitive definitions, §7 construction
   and verification flow.
+- `shlomoa/ai` — private, authenticated provider examples used as portability
+  research evidence only; not a runtime dependency or normative source.
 - `TODO.md` — open backlog items this plan sequences (notably items 6–9, 12).

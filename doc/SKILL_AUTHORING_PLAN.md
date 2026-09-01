@@ -2,272 +2,77 @@
 
 ## Scope
 
-This document captures the working plan for authoring the eleven optional
-AI-guided Angular skills described in `GENERATE_AI_AUTOMATIONS.md`. It records
-the decisions made during the planning conversation, the framework that will
-be applied uniformly to every skill, and the items that remain open or
-evolving. These skills do not own deterministic generation already defined by
-an `ngdj` schematic schema. All `ngdj` command, option, schema, and behavior
-facts follow the upstream-source policy in `ARCHITECTURE.md` §2.6.
+This document defines the per-Skill authoring and verification cadence for the eleven canonical guided Skills in `GENERATE_AI_AUTOMATIONS.md`. Use a Skill only for AI judgment, interpretation, iterative repair, or refinement; deterministic generation belongs to a Tool contract.
 
-This is a skills-only sub-plan. The broader AI automation model — including
-the roles of TOOLS, HOOKS, and PLUGINS alongside SKILLS — is defined in
-`GENERATE_AI_AUTOMATIONS.md`, `ARCHITECTURE.md`, `REQUIREMENTS.md`, and
-`APP_BUILDER_REQUIREMENTS.md`. This document covers only the authoring and
-verification plan for the SKILLS subset.
+It does not redefine automation contracts, repository-wide sequencing, or `build_app` behavior, which are owned by `GENERATE_AI_AUTOMATIONS.md`, `phased_implementation_plan.md`, and `APP_BUILDER_REQUIREMENTS.md`, respectively. `angular-django2` owns its public generation behavior; Skills use the upstream sources referenced by `ARCHITECTURE.md` §2.6 rather than restating them.
 
-The document is itself part of the planning record. It does not replace
-`GENERATE_AI_AUTOMATIONS.md`, which is the design specification, or `CLAUDE.md` and
-`.github/copilot-instructions.md`, which are the operating rules. Any conflict
-between this document and either of those is resolved in favor of the
-operating rules.
-
-## Project context
-
-`djng` (`django-angular3`) is the solution — this repository, the Django
-package, and the tool. It contains the agent, the AI automation subsystem,
-`build_app`, and all configuration files. It produces generated apps that combine Django REST
-Framework on the backend with Angular Material on the frontend, generated
-against a contract-first OpenAPI specification. This document is concerned
-only with the SKILLS subset of that automation subsystem. See §Glossary.
-
-There are two configuration files that skills must not conflate.
-
-`django-angular3.json` is the `djng` tool configuration. It tells the tool
-how to behave: package-manager, stylesheet, routing, application, build, and
-executable settings, plus global generator configuration. The generated app's
-`django-angular3-<project_name>.json` separately identifies its project name,
-OpenAPI schema, OpenUI concrete UI document, and Angular workspace. `build_app`
-must receive those locations through discovered project configuration rather
-than through a public configuration-file argument. The authoritative
-distinction is in `REQUIREMENTS.md` §4.2.
-
-`app.openui.json` is the generated app's OpenUI concrete UI document. It defines
-the UI description and is selected by
-`artifacts.openuiSpecification`. Its role, grammar, and catalog relationship
-are defined by the
-[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog).
-`build_app` compares current and previous `app.openui.json` documents to detect
-OpenUI document changes. Skills that depend on those changes receive them as
-part of the `ChangeSet` command input rather than reading `app.openui.json`
-directly.
-
-Either configuration file may legitimately contain pointers to other files
-that are not yet present. A pointer to a missing-but-promised file is a valid
-pipeline state, not an error: it represents work that an earlier skill in the
-orchestration is responsible for producing. Only invalid (malformed or
-unparseable) referenced files are hard errors.
+Skills preserve intentional contract-derived representations across backend models, OpenAPI, generated TypeScript models, and Angular validation; they must not introduce competing hand-maintained sources.
 
 ## Two-tier input model
 
-Two distinct kinds of "input" matter and they are kept separate when a skill
-is described.
+Two distinct kinds of input are kept separate when a Skill is described.
 
-Author-time input is what the skill author needs in order to write the skill.
-This includes the capability the skill provides, the conditions under which it
-should be invoked, the format of its output, and the format and constraints of
-the run-time input the skill must accept. Author-time input is a description,
-not an instance.
+**Authoring information** defines and verifies the Skill: purpose and selection conditions, canonical runtime input/output contracts, dependencies, permitted capabilities, acceptance criteria, test cases, expected evidence, and provider-neutral context requirements. It is planning metadata, not an invocation payload.
 
-Run-time input is the concrete values an orchestrator provides when invoking
-the skill. For these eleven optional skills, run-time input comes from two sources:
+**Runtime input** is the single validated structured object that `build_app` supplies for one selected guided command through the provider adapter. Depending on the canonical Skill contract, it may contain:
 
-- **Discovered configuration and artifact paths** — supplied by the
-  orchestrator from `django-angular3-<project_name>.json` and derived static tool
-  settings. Skills must not reinterpret either configuration file as the other
-  or accept their paths as public command inputs.
-- **Command-level inputs** — supplied by `build_app` as the prompt for each
-  selected guided agent session. These include resource names, component names,
-  form names, placement hints, and similar command-specific values.
+- validated static settings required by the selected command;
+- validated project identity and artifact locations;
+- command-specific values derived during translation, such as affected resource/component identities and placement hints;
+- the relevant atomic `ChangeSet` subset or affected identities; and
+- bounded prior-command outcomes or acceptance evidence required by a declared dependency.
 
-Run-time input is never typed in chat by a human end user.
+Skills consume these values without rereading configuration files, re-deriving changes, or parsing raw `oasdiff` output. Guided sessions receive runtime input from `build_app` through the provider adapter; interactive chat is not a canonical runtime-input source.
 
-Each skill's `Inputs` section in `GENERATE_AI_AUTOMATIONS.md` is best understood as a
-schema describing both layers: which keys are read directly from the generated
-app's `django-angular3.json`, and which are command-level values supplied by
-`build_app`. The authored SKILL.md will be explicit about the layer for every
-input.
+Each Skill's `Inputs` section in `GENERATE_AI_AUTOMATIONS.md` defines only its runtime schema. Authoring information belongs to this plan and the corresponding derived working copy, not to the runtime payload.
 
-## Skill format and output location
+## Skill sources and derived output
 
-The [Skills Catalog in `GENERATE_AI_AUTOMATIONS.md`](GENERATE_AI_AUTOMATIONS.md#skills-catalog)
-is the canonical `djng` Skill source. It defines each Skill's stable name,
-purpose, modes, inputs, outputs, dependencies, and acceptance criteria.
-The numbered files in `skill_creation/skills/` are derived authoring working
-copies; when they differ from the catalog, update the working copy rather than
-creating a competing source of truth.
+The [Skills Catalog in `GENERATE_AI_AUTOMATIONS.md`](GENERATE_AI_AUTOMATIONS.md#skills-catalog) is the canonical `djng` Skill source for stable name, purpose, modes, inputs, outputs, dependencies, and acceptance criteria. Numbered files in `skill_creation/skills/` are derived authoring working copies; when they differ, update the working copy rather than creating a competing source.
 
-Provider adapters render a completed canonical Skill into the provider's
-native representation. A Claude rendering may use an Anthropic Agent Skill
-`SKILL.md`, YAML frontmatter, a `.skill` archive, and a `.claude-plugin`
-package. Those formats, their fields, and Claude slash invocation do not apply
-unchanged to OpenAI, Gemini, or Copilot. Each provider rendering must preserve
-the canonical Skill contract and pass its provider-package conformance tests.
+The executable canonical catalog and provider-neutral Skill resolver planned in `phased_implementation_plan.md` Phase 4 will provide runtime metadata without parsing this plan, working copies, or provider-native files.
 
-Shared context is maintained with the canonical Skill material. A renderer may
-inline or otherwise package that context only when the target provider requires
-it; the rendered copy is an artifact, not an independent source. See
-`GENERATE_AI_AUTOMATIONS.md` §Canonical skill contract and provider renderings
-for the authoritative rendering rules.
+Provider adapters/renderers derive native prompts, tool registrations, Skill files, or packages from the canonical contract. Every rendering must preserve canonical identity, purpose, inputs, outputs, dependencies, acceptance criteria, and Tool/Hook bindings and pass provider-package conformance tests. Native metadata, filesystem layouts, invocation syntax, and permissions are derived concerns, not the cross-provider format.
+
+Shared context remains with canonical Skill material. A renderer may inline or package it only when required; the copy is an artifact, not an independent source. Rendered output belongs under the ignored build/distribution location planned in `phased_implementation_plan.md` Phase 8 and must not modify canonical sources. See `GENERATE_AI_AUTOMATIONS.md` §Canonical skill contract and provider renderings.
 
 ## Tooling boundary
 
-The integration toolchain for the generated project, per `README.md`,
-`ARCHITECTURE.md`, and `REQUIREMENTS.md`, is `drf-spectacular` for
-OpenAPI schema export from the consuming Django project, `oasdiff` for schema
-difference detection before downstream generation
-acknowledged), and `ng-openapi-gen` for Angular client generation. No
-alternative Angular client generator is in scope, and no alternative OpenAPI
-diff tool is in scope.
+The deterministic integration toolchain and contracts are owned by `GENERATE_AI_AUTOMATIONS.md`, `APP_BUILDER_REQUIREMENTS.md`, and their implementations: `drf-spectacular` for OpenAPI export, `oasdiff` for schema comparison, `ng-openapi-gen` for Angular client generation, and governed wrappers around public `angular-django2` schematics. This plan neither redefines them nor introduces alternative generators or diff tools.
 
-Skills do not call Angular CLI, `ng-openapi-gen`, or `oasdiff` directly, and
-they do not duplicate generation implemented by an `ngdj` schematic.
+A Skill must not invoke raw Angular CLI, `ng-openapi-gen`, or `oasdiff` binaries, bundle a wrapper, or recreate deterministic schematic logic in scripts. `build_app` derives changes before guided execution; a Skill consumes structured command input rather than rerunning the diff.
 
-This document does not redefine when those responsibilities should move to
-TOOLS, HOOKS, or PLUGINS in the broader automation model; it only defines how
-the authored SKILLS must behave within the current governed construction flow.
+When guided work needs a deterministic operation, the provider adapter may request only a canonical, allowed Tool. The direct execution controller validates and runs it, applies allowlisting and Hooks, records evidence, and determines failure consequences. A Skill/provider result cannot bypass those gates or mark a command/run successful.
 
-`oasdiff` is run by `build_app` during the Change Derivation phase, before
-any skill is invoked. Skills receive the resulting `ChangeSet` as command
-input. A skill must never re-run `oasdiff` itself.
-
-For Angular operations, deterministic `ngdj` schematics must be exposed through
-shared TOOL/wrapper contracts before `build_app` claims support for them. The
-exact contracts and invocations are not defined in this skills-only plan. A
-selected skill must not bundle a copy of a wrapper or recreate schematic logic
-in `scripts/`.
-
-The default settings surface for this repository (per `README.md`) is `pnpm`
-as the package manager, `scss` as the stylesheet format, routing enabled,
-`build_configuration` of `production`, and a command allowlist that defaults
-to only `ng_openapi_gen` — meaning only `ng_openapi_gen` actually executes
-unless the user explicitly broadens the allowlist. Other wrappers support
-`--dry-run` for diagnostic validation and debugging only. Skills must respect
-this surface and not assume executability of other commands.
+Executability follows the effective `tool.commandAllowlist` in static `django-angular3.json`: the library fallback permits only `ng_openapi_gen`, while repository/generated configurations may allow more wrappers. `--dry-run` is diagnostic and non-mutating; its support proves neither a canonical Tool contract nor a completed `build_app` mapping. Skills must not infer executability from wrapper availability or dry-run output.
 
 ## Per-skill cadence
 
-Every skill goes through three phases, in order, with explicit user approval
-between phases.
+Every Skill follows four ordered stages with explicit user approval between them:
 
-Plan. Capture intent, conduct the interview, and produce a sketch of the
-skill: its `name`, its `description`, the run-time inputs it accepts and which
-`django-angular3.json` keys feed them, the files it produces, the scripts and
-shared context it depends on, the open questions to be resolved during
-implementation, and the test prompts that will exercise it.
+1. **Plan** — capture intent, conduct the interview, and sketch `name`, `description`, runtime inputs and their sources, produced files, scripts/shared context, implementation questions, and test prompts.
+2. **Implementation and test generation** — update the canonical contract and derived working copy; create required scripts, references, assets, prompts, and assertions; render/test native artifacts only through the applicable adapter.
+3. **`build_app` command integration** — add the selected Skill command after the Skill exists.
+4. **Verification** — run and grade with-Skill versus baseline tests, render results, incorporate feedback, and after approval run provider-package conformance tests before publishing a derived artifact.
 
-Implementation including test generation. Update the canonical Skill contract
-and its derived authoring working copy, create required scripts, references,
-and assets, and author the test prompts and assertions agreed in Plan. Render
-and test provider-native artifacts only through the applicable provider adapter.
-
-build_app command integration: Once the skill is created, add the selected
-SKILL command that uses it into build_app.
-
-Verification. Run the tests (with-skill versus baseline), grade them, render
-the result for review, and incorporate feedback. Once Verification is
-approved, run the applicable provider-package conformance tests before
-publishing a derived provider artifact. A Claude `.skill` archive is one such
-derived artifact, not the universal completion format.
-
-Subagents may be used inside any phase where they are useful — for example,
-to run the with-skill and baseline test cases in parallel during Verification
-— provided their use does not collapse or cross phase boundaries.
+Subagents may work within any stage—for example, parallel with-Skill and baseline verification—but must not collapse or cross stage boundaries.
 
 ## Per-skill input validation
 
-Each skill validates its own inputs and is responsible for distinguishing
-three states that an indirect input can be in: present, promised but missing,
-and invalid. There is no shared validation helper. The cost of duplicating
-classification logic across eleven skills is accepted in exchange for keeping
-each skill self-contained and packageable.
+Each Skill validates its canonical runtime-input shape and Skill-specific semantic preconditions. Shared configuration, artifact, Tool, Hook, and dependency validation stays at the owning direct `build_app` boundaries and is not duplicated per Skill. Missing inputs have only the meanings in `APP_BUILDER_REQUIREMENTS.md`; Skills introduce no promised-artifact state.
 
-## Description optimization
+## Skill authoring order and working copies
 
-Even though the eleven skills are invoked by an outer orchestrator that knows
-them by name, the standard skill-creator description-optimization loop
-(`run_loop.py`) is run for each skill. The optimized description is committed
-and packaged. Redundant optimization is treated as low-cost insurance.
+Author Skills in canonical dependency order so declared dependencies' outputs are test ground truth. Select a Skill only for genuinely underspecified, interpretive, or post-generation refinement; validated structured inputs use deterministic Tools without a provider session.
 
-## Single-source-of-truth exception
+This is only Skill authoring/verification order; `APP_BUILDER_REQUIREMENTS.md` defines the complete mixed-automation execution order.
 
-The single-source-of-truth principle stated in
-`.github/copilot-instructions.md` continues to apply to this repository's own
-code, scripts, context, and templates. The chosen target architecture for
-generated projects — Django REST Framework, Angular Material, OpenAPI client
-generation — inherently duplicates contract definitions across layers (server
-models, OpenAPI schema, generated TypeScript models, form validators). That
-duplication is approved and is not eliminated.
+For focused authoring, use the matching `skill_creation/skills/<number>-<skill-name>.md` plus only needed `skill_creation/shared/` files. These are split working copies of `GENERATE_AI_AUTOMATIONS.md`; resolve incompleteness or inconsistency against the canonical catalog and update the split file.
 
-## The eleven optional skills
-
-The skills are authored in the dependency order suggested by
-`GENERATE_AI_AUTOMATIONS.md` so that earlier skills' outputs are available as ground
-truth when test cases for later skills are exercised. A skill is selected only
-for genuinely underspecified, interpretive, or post-generation refinement
-work. Validated structured inputs take the deterministic TOOL path and do not
-require a provider session.
-
-This ordering is the authoring and verification order for the skills subset.
-It is not, by itself, the complete statement of the mixed automation order for
-`build_app`; that broader execution model is defined in
-`APP_BUILDER_REQUIREMENTS.md`.
-
-`GENERATE_AI_AUTOMATIONS.md` has been split into smaller working files under
-`skill_creation/` to keep each phase focused. During authoring, read the
-matching `skill_creation/skills/<number>-<skill-name>.md` file plus only the
-needed files from `skill_creation/shared/`. `GENERATE_AI_AUTOMATIONS.md` remains the
-original design specification; if the split copy is incomplete or inconsistent,
-resolve against `GENERATE_AI_AUTOMATIONS.md` and update the split file.
-
-For the authoritative dependency chain and ordering, see
-`APP_BUILDER_REQUIREMENTS.md` §Execution order.
-
-## Ongoing and open items
-
-`django-angular3.json` is treated as evolving. Its schema is updated
-incrementally as each skill reveals what it actually needs to read; it is not
-refreshed up-front and not deferred to a separate post-skills task.
-
-The Angular workspace fixture used to verify generated skills end-to-end is
-created when the first skill that needs it (`angular-workspace-foundation`) reaches its
-Verification phase. There is no fixture today.
-
-Open questions that surface during a skill's Plan phase are recorded in this
-document under that skill's section, kept until resolved, and removed once the
-resolution is captured in the skill itself.
-
-## Status
-
-Document cascade complete. `APP_BUILDER_REQUIREMENTS.md`, `GENERATE_AI_AUTOMATIONS.md`,
-and this document have been revised and aligned. This document now serves as
-the skills-specific sub-plan under the broader AI automation model. The next
-action is to begin the Plan phase for `angular-workspace-foundation`.
-
----
+See `APP_BUILDER_REQUIREMENTS.md` §Execution order for the authoritative dependency chain.
 
 ## Glossary
 
 For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
-
-| Term | Definition | See |
-|---|---|---|
-| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. This document addresses only the SKILLS subset. | `ARCHITECTURE.md` §19, `GENERATE_AI_AUTOMATIONS.md` |
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. It compares inputs, translates changes to ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
-| **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14, `GENERATE_AI_AUTOMATIONS.md` |
-| **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
-
-## References
-
-| Term | Description | Link |
-|---|---|---|
-| Claude Code Skills Documentation | General documentation for SKILL development. |[Claude Code Skills Documentation]|
-| Claude Code SDK - creating skills | Documentation for creating skills using Claude Code SDK. |[Claude Code SDK - creating skills]|
-
-[Claude Code Skills Documentation]: https://code.claude.com/docs/en/skills
-[Claude Code SDK - creating skills]: https://code.claude.com/docs/en/agent-sdk/skills#creating-skills
 
 ---

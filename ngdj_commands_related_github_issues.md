@@ -1,45 +1,86 @@
 # ngdj command github issues
 
+## Review basis
+
+`doc/ARCHITECTURE.md` §2.6 is the django-angular3 authority for ngdj identity,
+ownership, and upstream-source resolution. This review records alignment only;
+it does not maintain an ngdj command, option, implementation, or test inventory.
+
 ## Direct ngdj issues
 
-| Issue | Verdict | Findings |
-|---|---|---|
-| [#56 — Track ngdj construction capabilities](https://github.com/shlomoa/django-angular3/issues/56) | **Not aligned** | Cites the obsolete §3.4 ownership statement instead of §2.6. Its unchecked dependencies include closed upstream issues #25 and #26. It relies on upstream #24, whose command/status inventory conflicts with current ngdj source. |
-| [#57 — Complete generation entry points and wrappers](https://github.com/shlomoa/django-angular3/issues/57) | **Not aligned** | Repeatedly cites deleted temporary file `doc/ngdj_commands.md`; maintains a competing ngdj command inventory; reports 12 wrapper builders when code has 17; incorrectly reports missing wrappers now implemented for `component` and `material-setup`, and omits the new `page`, `reactive-form`, and `site` wrappers. |
-| [#58 — Execute governed construction through Skills](https://github.com/shlomoa/django-angular3/issues/58) | **Partially aligned** | Correctly keeps deterministic execution under djng, but lacks §2.6 and depends on misaligned #56/#57. It does not itself redefine ngdj commands. |
-| [#66 — Consume ngdj frontend structure](https://github.com/shlomoa/django-angular3/issues/66) | **Partially aligned** | Correctly treats Angular implementation as upstream, but lacks §2.6 and has obsolete requirement references (`§4.17.2`, `§4.2.1`). Upstream #25 is closed, so this should now describe only remaining djng consumption work. |
-| [#74 — Assemble CRM/non-CRM streams](https://github.com/shlomoa/django-angular3/issues/74) | **Partially aligned** | Ownership boundary is conceptually correct, but §2.6 is absent. Upstream #26 is closed while #27 remains open; the tracker should distinguish delivered upstream behavior from remaining integration work. |
-| [#84 — Implement staged verification](https://github.com/shlomoa/django-angular3/issues/84) | **Not aligned** | Says djng should “specify the ngdj test surface.” Under §2.6, ngdj tests and implementation are upstream-owned. djng should specify only cross-repository integration and generated-app acceptance requirements, linking upstream test evidence. |
-| [#139 — Provider-neutral automation foundation](https://github.com/shlomoa/django-angular3/issues/139) | **Partially aligned** | Its “controlled ngdj invocation” is valid djng Tool behavior, but it lacks the mandatory §2.6 boundary. Child issues #156–#165 inherit this dependency when implementing invocation-related phases. |
+| Issue                                                                                                       | Verdict     | Findings                                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#56 — Track ngdj construction capabilities](https://github.com/shlomoa/django-angular3/issues/56)          | **Aligned** | Cites §2.6, marks upstream #24–#26 complete, leaves #27 open, and tracks only djng consumption and coordination.                                                                                                                                                        |
+| [#57 — Complete generation entry points and wrappers](https://github.com/shlomoa/django-angular3/issues/57) | **Aligned** | Separates the executable djng wrapper registry, djng command documentation, Tool catalog, builder requirements, and upstream ngdj authority. It correctly leaves the operation-support matrix, canonical Tool identities, and OpenUI atomic-change mappings unresolved. |
+| [#58 — Execute governed construction through Skills](https://github.com/shlomoa/django-angular3/issues/58)  | **Aligned** | Keeps canonical Skills and provider renderings under djng while resolving every ngdj-dependent fact through §2.6. It does not assign deterministic Tool or ngdj behavior to Skills.                                                                                     |
+| [#66 — Consume ngdj frontend structure](https://github.com/shlomoa/django-angular3/issues/66)               | **Aligned** | Uses current requirement references, records upstream #25 as complete, and limits remaining work to djng consumption and generated-app acceptance.                                                                                                                      |
+| [#74 — Assemble OpenAPI and OpenUI input streams](https://github.com/shlomoa/django-angular3/issues/74)     | **Aligned** | Preserves separate, composable source identities; distinguishes the package-local site assembly definition from canonical OpenUI; and separates upstream #26 delivery from the unresolved #27 boundary.                                                                 |
+| [#84 — Implement staged verification](https://github.com/shlomoa/django-angular3/issues/84)                 | **Aligned** | Assigns schematic verification to ngdj and wrapper, composition, cross-input, and generated-app acceptance to djng. It explicitly rejects a competing ngdj test surface.                                                                                                |
+| [#139 — Provider-neutral automation foundation](https://github.com/shlomoa/django-angular3/issues/139)      | **Aligned** | Cites §2.6, keeps controlled ngdj invocation within djng-owned validation and allowlisting, and preserves direct Tool/Hook/acceptance authority independently of provider adapters.                                                                                     |
 
 ## Remaining issues
 
-These generated-app Angular requirements do not define ngdj commands, options, schemas, or implementation and are therefore **aligned/not directly affected**:
+These generated-app requirements do not define ngdj commands, options,
+schemas, or implementation and are therefore **aligned/not directly
+affected**:
 
 - #67, #69, #72, #73, #75, #79, #83
 
-These contain no ngdj or Angular contract claims and are **not applicable**:
+These contain no material ngdj contract claims and are **not directly
+applicable**:
 
 - #60–#65
 - #68, #70–#71
 - #76–#78
 - #80–#82
-- #156–#165
 
-## Upstream conflicts found
+For the provider-neutral phase issues:
 
-The authoritative ngdj GitHub sources are themselves inconsistent:
+- #156 is foundation decision work and contains no ngdj contract definition;
+  its prior-input wording must follow the resolved current/previous
+  project-configuration pair in `doc/APP_BUILDER_REQUIREMENTS.md` rather than
+  introduce a separate previous-OpenUI input;
+- #157–#161 implement and verify provider-neutral execution foundations
+  without defining ngdj behavior;
+- #162 implements catalogued djng Tool contracts only after #57 resolves the
+  missing construction contracts and reconciles the existing generic/additive
+  contracts; every ngdj-dependent implementation fact must resolve through
+  §2.6;
+- #163 implements Hook contracts around Tools and must not duplicate their
+  ngdj invocation behavior;
+- #164 owns direct `build_app` selection and execution against the approved
+  wrapper/Tool boundaries; and
+- #165 owns guided-session adapters and correctly prohibits bypass of direct
+  Tool, Hook, and terminal-validation authority.
 
-- [`angular-django2#24`](https://github.com/shlomoa/angular-django2/issues/24) says five schematics remain missing, but current `collection.json` contains all five.
-- Upstream #25 and #26 are closed, while downstream #56 still shows them unchecked.
-- Upstream #27 says `site` has landed but retains unchecked delivery items.
+## Remaining upstream alignment
 
-Per §2.6, these conflicts must be corrected in `angular-django2`; djng issues should not invent a local replacement inventory.
+The earlier command/status conflicts are resolved:
 
-## Recommended correction order
+- [`angular-django2#24`](https://github.com/shlomoa/angular-django2/issues/24)
+  records all originally tracked construction targets as delivered and is
+  closed.
+- Upstream #25 and #26 are closed, and downstream #56 marks them complete.
+- Downstream issues now distinguish wrapper availability from Tool,
+  `build_app`, Skill, and generated-app acceptance work.
 
-1. Publish the currently uncommitted §2.6 documentation changes so GitHub issues can link to a public section.
-2. Rewrite #57, removing every `doc/ngdj_commands.md` reference and the upstream command inventory.
-3. Correct upstream `angular-django2` #24 and #27 status before synchronizing #56/#74.
-4. Update #56, #58, #66, #74, #84, and #139 to cite §2.6 and state only djng-owned integration behavior.
-5. Reframe #84’s “ngdj test surface” as djng integration/acceptance coverage backed by upstream ngdj tests.
+Upstream #27 remains open for the canonical OpenUI-to-construction-input
+transformation boundary. Its title and description now distinguish the
+canonical OpenUI concrete UI document selected by djng from ngdj's
+package-local site assembly definition and use the approved source and
+construction terminology. Current implementation and maintained documentation
+remain authoritative.
+
+## Next actions
+
+1. Resolve #27's deterministic transformation from validated canonical OpenUI
+   atomic changes to explicit ngdj construction inputs without treating the
+   package-local site assembly definition as a canonical OpenUI concrete UI
+   document.
+2. Complete #57's operation-support and canonical Tool-contract decisions,
+   reconcile the existing generic/additive Tool contracts, and align the
+   authoritative crosswalk, Tool catalog, builder mapping, and phased plan
+   before #162 or #164 implements them.
+3. Keep future issue updates referential: upstream ngdj facts through §2.6,
+   djng Tool contracts through `doc/GENERATE_AI_AUTOMATIONS.md`, and direct
+   build behavior through `doc/APP_BUILDER_REQUIREMENTS.md`.

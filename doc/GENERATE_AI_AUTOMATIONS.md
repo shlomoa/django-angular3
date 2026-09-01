@@ -13,25 +13,6 @@ This document defines how `djng` uses four automation primitives together:
 It also specifies the detailed SKILL catalog used for the AI-guided layer of
 Angular construction and integration.
 
-## Glossary
-
-For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
-
-| Term | Definition | See |
-|---|---|---|
-| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | This document, `ARCHITECTURE.md` |
-| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
-| **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
-| **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14 |
-| **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | §Tools |
-| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | §Hooks |
-| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §Plugins |
-| **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
-| **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
-| **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `ai_knowledge_integration.md` |
-
 ---
 
 ## Automation Naming Crosswalk
@@ -7534,3 +7515,22 @@ Anything that should live inside the skill folder so the skill doesn't reinvent 
 Two or three realistic test prompts (what a real user would actually type), any input files those prompts need, and a rough sense of what "right" looks like — I turn that into assertions. For subjective outputs (writing style, design feel) we skip assertions and rely on your review of the rendered results.
 
 ---
+
+## Glossary
+
+For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
+
+| Term | Definition | See |
+|---|---|---|
+| **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. The subject of this document. | This document, `ARCHITECTURE.md` |
+| **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
+| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
+| **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `APP_BUILDER_REQUIREMENTS.md` |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.12, §2.16 |
+| **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.14 |
+| **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | §Tools |
+| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | §Hooks |
+| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §Plugins |
+| **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.13 |
+| **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.23 |
+| **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `phased_implementation_plan.md` Current state and Phase 5 |
