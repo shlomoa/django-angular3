@@ -1664,7 +1664,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > ## Authority and boundaries
 > 
 > - `doc/GENERATE_AI_AUTOMATIONS.md` owns canonical Skill identities, contracts, dependencies, and local acceptance criteria.
-> - `doc/SKILL_AUTHORING_PLAN.md` owns the per-Skill authoring cadence.
+> - `doc/SKILL_AUTHORING_PLAN.md` owns the per-Skill authoring and verification cadence.
 > - `skill_creation/skills/` contains working copies, not a second canonical catalog.
 > - `doc/phased_implementation_plan.md` owns implementation sequencing.
 > - `doc/ARCHITECTURE.md` §2.6 governs every ngdj command, option, schema, implementation, test, and status fact used by a Skill.
@@ -1740,7 +1740,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > - `doc/REQUIREMENTS.md` §4.16 — construction-output and integration verification.
 > - `doc/GENERATE_AI_AUTOMATIONS.md` — canonical Skill acceptance criteria, normalized provider-adapter results, and the authority of direct TOOL/HOOK/terminal-validation boundaries.
 > - `doc/phased_implementation_plan.md` — provider-neutral direct execution precedes adapter orchestration; local Skill acceptance is necessary but not sufficient for global acceptance.
-> - `doc/SKILL_AUTHORING_PLAN.md` — per-Skill cadence and local acceptance-criteria guidance.
+> - `doc/SKILL_AUTHORING_PLAN.md` — per-Skill authoring and verification cadence.
 > 
 > ## Architecture boundary
 > 

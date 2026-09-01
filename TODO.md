@@ -36,8 +36,9 @@ implementing issues #162 or #164.
 
 ### 2.2 Keep Skill sources aligned
 
-Keep `skill_creation/` aligned with the canonical Skills catalog and
-`doc/SKILL_AUTHORING_PLAN.md` without duplicating normative contracts.
+Keep `skill_creation/` aligned with the canonical Skills catalog by following
+the cadence in `doc/SKILL_AUTHORING_PLAN.md` without duplicating normative
+contracts.
 
 ## 3. Complete OpenAPI Contract Processing
 

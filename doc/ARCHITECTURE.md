@@ -174,7 +174,7 @@ deterministic validation.
 ### 2.14 SKILLS
 Bounded AI skills that guide the agent within each guided agent session. Each SKILL encapsulates a constrained generation, modification, or integration capability used to create and glue application building blocks while remaining within architectural and contract-defined boundaries.
 
-SKILLS are one primitive family within the broader AI automation subsystem of `django-angular3`. That automation subsystem architecture is defined in `doc/GENERATE_AI_AUTOMATIONS.md`, and the implementation and authoring plan for the SKILLS subset is defined in `doc/SKILL_AUTHORING_PLAN.md`. This document defines the role of SKILLS in the overall architecture and does not restate their internal design.
+SKILLS are one primitive family within the broader AI automation subsystem of `django-angular3`. That automation subsystem architecture is defined in `doc/GENERATE_AI_AUTOMATIONS.md`, and the per-Skill authoring and verification cadence is defined in `doc/SKILL_AUTHORING_PLAN.md`. This document defines the role of SKILLS in the overall architecture and does not restate their internal design.
 
 ### 2.15 AI-automation-based construction
 A construction model in which bounded AI automations are the execution units for generating, modifying, validating, and integrating application building blocks. In this model, SKILLS provide AI-guided generation and integration behavior, TOOLS provide deterministic bounded operations, HOOKS enforce lifecycle gates and mandatory side effects, and PLUGINS package coherent capability bundles for reuse. This model allows controlled generative freedom while keeping construction within architectural, contract-defined, and validation-defined boundaries.

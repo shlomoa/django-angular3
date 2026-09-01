@@ -10,9 +10,9 @@ No sibling `tools_creation/` workspace is defined today. Tool candidates are
 still tracked at the design and analysis level in `doc/` rather than as a
 split, step-by-step authoring program comparable to the eleven skills.
 
-`doc/GENERATE_AI_AUTOMATIONS.md` remains the original design specification. These files are
-the operational source for planning, implementing, and verifying one skill at a
-time. If a split file appears incomplete or inconsistent with
+`doc/GENERATE_AI_AUTOMATIONS.md` remains the canonical Skill source. These files are
+derived working copies for planning, implementing, and verifying one Skill at a
+time through the cadence in `doc/SKILL_AUTHORING_PLAN.md`. If a split file appears incomplete or inconsistent with
 `doc/GENERATE_AI_AUTOMATIONS.md`, resolve the discrepancy against `doc/GENERATE_AI_AUTOMATIONS.md` and
 then update the split file.
 
@@ -62,6 +62,6 @@ skill_creation/
 ## Use
 
 For each skill phase, read the matching file from `skills/` plus only the
-shared files that the skill references or needs. Keep authored skills in
-`.claude/skills/<skill-name>/`; this folder is planning and source material,
-not the installed skill output.
+shared files that the skill references or needs. Render provider-native output
+through the applicable adapter; this folder is authoring material, not rendered
+or installed Skill output.

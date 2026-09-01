@@ -46,7 +46,8 @@ These requirements are derived from and must remain aligned with
 This document does not define the internal subsystem design or authoring
 process for AI automations; those subjects are covered separately in
 [GENERATE_AI_AUTOMATIONS.md]. `SKILL_AUTHORING_PLAN.md` remains the
-skills-specific authoring sub-plan within that broader automation model.
+per-Skill authoring and verification cadence within that broader automation
+model.
 
 This document also does not define the detailed build_app command contract,
 change-set structure, command translation, or scenario-by-scenario test
