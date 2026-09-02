@@ -10,10 +10,12 @@ topologies that satisfy the outcomes in
 product requirements, interface contracts, automation contracts, or
 implementation sequencing.
 
-Normative boundary contracts are defined in [CONTRACTS.md]. AI automation
-contracts are defined in [AI_AUTOMATION_CONTRACTS.md]. Architecture and design
+Normative Change Model contracts are defined in [CHANGE_MODEL_CONTRACTS.md]. AI automation
+contracts are defined in [TOOL_CONTRACTS.md], [HOOK_CONTRACTS.md],
+[PROVIDER_ADAPTER_CONTRACTS.md], [PLUGIN_CONTRACTS.md], and [SKILL_CONTRACTS.md]. Architecture and design
 rationale are defined in [ARCHITECTURE.md]. Exact AI automation realization is
-defined in [AI_AUTOMATION_SPECIFICATIONS.md].
+defined in [AI_AUTOMATION_SPECIFICATIONS.md]. Exact test-scenario-suite
+realization is defined in [TEST_SCENARIO_SPECIFICATIONS.md].
 
 ## 2. Configuration and inputs
 
@@ -55,7 +57,30 @@ Their ownership is:
 The table classifies sources and artifacts. Executable configuration models
 remain authoritative for supported fields and validation behavior.
 
-### 2.2. Configuration and tool relationships
+### 2.2. Project-configuration discovery and baseline resolution
+
+When no explicit current project-configuration path is supplied, `djng`
+discovers `django-angular3-<project_name>.json`. In a configured Django
+runtime, the file is resolved from `settings.BASE_DIR`; otherwise it is
+resolved from the current working directory. `<project_name>` is derived from
+the root component of `DJANGO_SETTINGS_MODULE`.
+
+When no explicit previous project-configuration path is supplied, `build_app`
+derives it from the current configuration path by replacing the `.json` suffix
+with `.previous.json`. A missing previous configuration selects a first-run
+build.
+
+Each project configuration resolves `artifacts.openapiSchema`,
+`artifacts.openuiSpecification`, and `artifacts.angularWorkspace` relative to
+its own containing directory. The current configuration therefore selects the
+candidate artifacts, while the previous configuration independently selects
+the accepted baseline artifacts.
+
+There is no separate previous-OpenUI argument or `.previous` OpenUI filename
+convention. A project-configuration selector change and a structural change in
+the selected OpenAPI or OpenUI content are compared and recorded separately.
+
+### 2.3. Configuration and tool relationships
 
 ```mermaid
 flowchart TB
@@ -175,7 +200,7 @@ flowchart TB
   linkStyle 40 stroke:#c62828,stroke-width:2px
 ```
 
-### 2.3. Configuration validation
+### 2.4. Configuration validation
 
 Configuration loading rejects missing required clauses, invalid field types,
 and invalid values before the affected command runs. The configuration model
@@ -265,9 +290,14 @@ The generated application uses this local-development topology:
 - Frontend routes and backend routes remain distinct in local and production
   configurations.
 
-[AI_AUTOMATION_CONTRACTS.md]: ../contracts/AI_AUTOMATION_CONTRACTS.md
+[HOOK_CONTRACTS.md]: ../contracts/HOOK_CONTRACTS.md
 [AI_AUTOMATION_SPECIFICATIONS.md]: AI_AUTOMATION_SPECIFICATIONS.md
 [APPLICATION_FUNCTIONAL_REQUIREMENTS.md]: ../requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md
 [APPLICATION_QUALITY_REQUIREMENTS.md]: ../requirements/APPLICATION_QUALITY_REQUIREMENTS.md
 [ARCHITECTURE.md]: ../ARCHITECTURE.md
-[CONTRACTS.md]: ../contracts/CONTRACTS.md
+[CHANGE_MODEL_CONTRACTS.md]: ../contracts/CHANGE_MODEL_CONTRACTS.md
+[PLUGIN_CONTRACTS.md]: ../contracts/PLUGIN_CONTRACTS.md
+[PROVIDER_ADAPTER_CONTRACTS.md]: ../contracts/PROVIDER_ADAPTER_CONTRACTS.md
+[SKILL_CONTRACTS.md]: ../contracts/SKILL_CONTRACTS.md
+[TEST_SCENARIO_SPECIFICATIONS.md]: TEST_SCENARIO_SPECIFICATIONS.md
+[TOOL_CONTRACTS.md]: ../contracts/TOOL_CONTRACTS.md

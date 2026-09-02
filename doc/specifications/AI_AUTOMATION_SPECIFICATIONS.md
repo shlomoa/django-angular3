@@ -10,8 +10,9 @@ provider-adapter isolation, and derived package rendering.
 This document does not define requirements, architecture, interface contracts,
 implementation sequencing, or test coverage. Those concerns are owned by
 [AI_AUTOMATION_REQUIREMENTS.md], [ARCHITECTURE.md],
-[AI_AUTOMATION_CONTRACTS.md], [APP_BUILDER_REQUIREMENTS.md], and
-[phased_implementation_plan.md], respectively.
+[TOOL_CONTRACTS.md], [HOOK_CONTRACTS.md], [PROVIDER_ADAPTER_CONTRACTS.md],
+[PLUGIN_CONTRACTS.md], [SKILL_CONTRACTS.md],
+[APP_BUILDER_REQUIREMENTS.md], and [PHASED_IMPLEMENTATION_PLAN.md], respectively.
 
 Tool, Hook, Plugin, Skill, and provider-adapter names, inputs, outputs,
 lifecycle families, failure categories, and caller/implementation boundaries
@@ -76,7 +77,7 @@ record fields and failure consequences.
 ## 4. Hook registry and dispatch
 
 The provider-neutral Hook registry is keyed by canonical Hook name and the
-provider-neutral lifecycle family defined by [AI_AUTOMATION_CONTRACTS.md]. Each
+provider-neutral lifecycle family defined by [HOOK_CONTRACTS.md]. Each
 registration associates the canonical contract with its Tool or command scope,
 consequence, evidence payload, and idempotency behavior.
 
@@ -134,7 +135,7 @@ discovering credentials, opening a session, or writing provider artifacts.
 The executable canonical Skill catalog is implemented in
 `django_angular3/automation/skill_catalog.py`. Its records are generated from,
 or validated against, the canonical Skill contracts in
-[AI_AUTOMATION_CONTRACTS.md]. Runtime execution does not parse planning
+[SKILL_CONTRACTS.md]. Runtime execution does not parse planning
 Markdown, authoring working copies, or provider-native Skill files.
 
 The provider-neutral resolver is implemented in
@@ -163,7 +164,7 @@ command creation reject adapters that lack a required normalization
 capability.
 
 The exact adapter inputs, outputs, capabilities, and normalized failure
-categories are interface contracts owned by [AI_AUTOMATION_CONTRACTS.md].
+categories are interface contracts owned by [PROVIDER_ADAPTER_CONTRACTS.md].
 
 ### 7.2. Guided-session algorithm
 
@@ -214,7 +215,7 @@ never written back into canonical contract or Skill sources.
 The generic package manifest carries canonical Plugin identity and version and
 the exact bundled Skill, Tool, and Hook identities. Its interface fields and
 content constraints are owned by the Plugin contracts in
-[AI_AUTOMATION_CONTRACTS.md]. Provider-native metadata remains namespaced in
+[PLUGIN_CONTRACTS.md]. Provider-native metadata remains namespaced in
 derived output.
 
 A Claude rendering may emit `SKILL.md` and `.claude-plugin` artifacts. Other
@@ -224,8 +225,12 @@ registration instead of a common filesystem representation.
 Provider installation and discovery are opt-in and do not run during dry runs
 or default tests.
 
-[AI_AUTOMATION_CONTRACTS.md]: ../contracts/AI_AUTOMATION_CONTRACTS.md
+[HOOK_CONTRACTS.md]: ../contracts/HOOK_CONTRACTS.md
 [AI_AUTOMATION_REQUIREMENTS.md]: ../requirements/AI_AUTOMATION_REQUIREMENTS.md
 [APP_BUILDER_REQUIREMENTS.md]: ../requirements/APP_BUILDER_REQUIREMENTS.md
 [ARCHITECTURE.md]: ../ARCHITECTURE.md
-[phased_implementation_plan.md]: ../phased_implementation_plan.md
+[PHASED_IMPLEMENTATION_PLAN.md]: ../plan/PHASED_IMPLEMENTATION_PLAN.md
+[PLUGIN_CONTRACTS.md]: ../contracts/PLUGIN_CONTRACTS.md
+[PROVIDER_ADAPTER_CONTRACTS.md]: ../contracts/PROVIDER_ADAPTER_CONTRACTS.md
+[SKILL_CONTRACTS.md]: ../contracts/SKILL_CONTRACTS.md
+[TOOL_CONTRACTS.md]: ../contracts/TOOL_CONTRACTS.md

@@ -8,9 +8,9 @@ Product context, actors, journeys, and system acceptance are defined in
 [REQUIREMENTS.md].
 
 This document defines required outcomes only. [SPECIFICATIONS.md] owns exact
-platform structures and technical behavior, [CONTRACTS.md] owns shared
-normative boundaries, [APP_BUILDER_REQUIREMENTS.md] owns detailed `build_app`
-behavior, and [AI_AUTOMATION_REQUIREMENTS.md] owns AI automation requirements.
+platform structures and technical behavior, [CHANGE_MODEL_CONTRACTS.md] owns
+the shared Change Model boundary, [APP_BUILDER_REQUIREMENTS.md] owns detailed
+`build_app` behavior, and [AI_AUTOMATION_REQUIREMENTS.md] owns AI automation requirements.
 Architectural terms and rationale are defined in [ARCHITECTURE.md].
 
 ## 4. Functional Requirements
@@ -46,7 +46,7 @@ These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
   selection and validation can consume them deterministically.
 
 [SPECIFICATIONS.md] §2 defines the exact configuration categories,
-relationships, and validation structure. [CONTRACTS.md] §2 defines the
+relationships, and validation structure. [CHANGE_MODEL_CONTRACTS.md] §2 defines the
 canonical Change Model contract.
 
 ### 4.4. Authentication and Identity
@@ -220,6 +220,6 @@ structure.
 [AI_AUTOMATION_REQUIREMENTS.md]: AI_AUTOMATION_REQUIREMENTS.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
 [ARCHITECTURE.md]: ../ARCHITECTURE.md
-[CONTRACTS.md]: ../contracts/CONTRACTS.md
+[CHANGE_MODEL_CONTRACTS.md]: ../contracts/CHANGE_MODEL_CONTRACTS.md
 [REQUIREMENTS.md]: REQUIREMENTS.md
 [SPECIFICATIONS.md]: ../specifications/SPECIFICATIONS.md

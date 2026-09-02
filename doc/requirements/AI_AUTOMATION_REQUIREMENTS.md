@@ -9,9 +9,11 @@ It does not define implementation sequencing, exact representations, or
 interface contracts.
 
 Implementation sequencing is owned by
-[phased_implementation_plan.md]. Automation architecture is owned by
+[PHASED_IMPLEMENTATION_PLAN.md]. Automation architecture is owned by
 [ARCHITECTURE.md]. Normative Tool, Hook, Plugin, Skill, and provider-adapter
-boundaries are owned by [AI_AUTOMATION_CONTRACTS.md]. Detailed `build_app`
+boundaries are owned by [TOOL_CONTRACTS.md], [HOOK_CONTRACTS.md],
+[PLUGIN_CONTRACTS.md], [SKILL_CONTRACTS.md], and
+[PROVIDER_ADAPTER_CONTRACTS.md]. Detailed `build_app`
 requirements are owned by [APP_BUILDER_REQUIREMENTS.md]. Exact automation
 realization is owned by [AI_AUTOMATION_SPECIFICATIONS.md].
 
@@ -144,8 +146,12 @@ Canonical automation definitions and direct correctness gates must remain
 provider-independent. Provider-specific capabilities may be mapped through
 adapters or derived packages without changing canonical semantics.
 
-[AI_AUTOMATION_CONTRACTS.md]: ../contracts/AI_AUTOMATION_CONTRACTS.md
+[HOOK_CONTRACTS.md]: ../contracts/HOOK_CONTRACTS.md
+[PLUGIN_CONTRACTS.md]: ../contracts/PLUGIN_CONTRACTS.md
+[PROVIDER_ADAPTER_CONTRACTS.md]: ../contracts/PROVIDER_ADAPTER_CONTRACTS.md
+[SKILL_CONTRACTS.md]: ../contracts/SKILL_CONTRACTS.md
+[TOOL_CONTRACTS.md]: ../contracts/TOOL_CONTRACTS.md
 [AI_AUTOMATION_SPECIFICATIONS.md]: ../specifications/AI_AUTOMATION_SPECIFICATIONS.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
 [ARCHITECTURE.md]: ../ARCHITECTURE.md
-[phased_implementation_plan.md]: ../phased_implementation_plan.md
+[PHASED_IMPLEMENTATION_PLAN.md]: ../plan/PHASED_IMPLEMENTATION_PLAN.md

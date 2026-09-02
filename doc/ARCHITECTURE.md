@@ -193,7 +193,7 @@ Bounded AI skills that guide the agent within each guided agent session. Each SK
 
 SKILLS are one primitive family within the broader AI automation subsystem of
 `django-angular3`. The subsystem architecture is defined in §3.6, canonical
-Skill contracts are specified in `doc/contracts/AI_AUTOMATION_CONTRACTS.md`, and the
+Skill contracts are specified in `doc/contracts/SKILL_CONTRACTS.md`, and the
 per-Skill authoring and verification cadence is defined in
 `doc/SKILL_AUTHORING_PLAN.md`.
 
@@ -310,10 +310,10 @@ the AI-guided session API.
   without a deprecation cycle.
 - **TOOL contract** — The deterministic operation name exposed to the agent and
   to deterministic automation execution. Defined in
-  `doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Tool Contracts Catalog. Every selected
+  `doc/contracts/TOOL_CONTRACTS.md` §Tool Contracts Catalog. Every selected
   deterministic operation MUST use one of these names.
 - **SKILL name** — The AI-guided session identifier selected by the agentic
-  orchestrator. Defined in `doc/contracts/AI_AUTOMATION_CONTRACTS.md` §Skills Catalog.
+  orchestrator. Defined in `doc/contracts/SKILL_CONTRACTS.md` §Skills Catalog.
   Every selected AI-guided operation MUST use one of these names.
 
 #### 2.22.1 Automation naming crosswalk
@@ -326,7 +326,7 @@ not define the underlying `ngdj` schematic surface.
 This table is the single source of truth mapping every construction concern to
 its name in each of the four automation naming layers. Hook lifecycle mappings
 are defined separately in the
-[Hook Contracts Catalog](contracts/AI_AUTOMATION_CONTRACTS.md#hook-contracts-catalog).
+[Hook Contracts Catalog](contracts/HOOK_CONTRACTS.md#hook-contracts-catalog).
 Because relationships are not one-to-one, a cell may list multiple canonical
 identifiers for the same concern. `—` means that no canonical identifier exists
 for that concern in that layer; it does not mean planned or unknown. The
@@ -448,7 +448,10 @@ The automation subsystem has four primitive families:
   agent capabilities for reuse and distribution.
 
 Each family has an architectural boundary defined here and per-capability
-contracts in `doc/contracts/AI_AUTOMATION_CONTRACTS.md`. The selection policy below
+contracts in `doc/contracts/TOOL_CONTRACTS.md`,
+`doc/contracts/HOOK_CONTRACTS.md`, `doc/contracts/PLUGIN_CONTRACTS.md`,
+`doc/contracts/SKILL_CONTRACTS.md`, and
+`doc/contracts/PROVIDER_ADAPTER_CONTRACTS.md`. The selection policy below
 governs which family a new capability belongs to before it is added to a
 contract catalog.
 
@@ -530,11 +533,11 @@ When a new capability is proposed:
 2. Answer the four decision-axis questions in its design note or issue.
 3. Select the resulting primitive from the selection table.
 4. If deterministic work must also be lifecycle-guaranteed, implement the body
-  once under a [Tool contract](contracts/AI_AUTOMATION_CONTRACTS.md#tool-contracts-catalog)
+  once under a [Tool contract](contracts/TOOL_CONTRACTS.md#tool-contracts-catalog)
    and wrap it with a
-  [Hook contract](contracts/AI_AUTOMATION_CONTRACTS.md#hook-contracts-catalog).
+  [Hook contract](contracts/HOOK_CONTRACTS.md#hook-contracts-catalog).
 5. If related capabilities form a cross-project distribution unit, register a
-  [Plugin contract](contracts/AI_AUTOMATION_CONTRACTS.md#plugin-contracts-catalog).
+  [Plugin contract](contracts/PLUGIN_CONTRACTS.md#plugin-contracts-catalog).
    A Plugin never replaces its contents' contracts.
 6. Author the per-capability contract in the matching catalog using that
    primitive's contract shape.
@@ -1064,7 +1067,9 @@ switch environments.
 
 ## 18. Implementation Roadmap
 
-Implementation sequencing is documented in `TODO.md`.
+Implementation sequencing is documented in
+`doc/plan/PHASED_IMPLEMENTATION_PLAN.md`. Open backlog items are tracked in
+`doc/plan/TODO.md`.
 
 ## 19. Glossary
 
@@ -1079,10 +1084,10 @@ Key actors and terms. Full definitions are in §2.
 | **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.15 |
 | **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.15.1 |
 | **provider adapter** | The portability boundary between an agent executor and a compatible AI runtime. | §2.11 |
-| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | §2.13, §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
-| **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
-| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
-| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §3.6; contracts: `doc/contracts/AI_AUTOMATION_CONTRACTS.md` |
+| **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | §2.13, §3.6; contracts: `doc/contracts/SKILL_CONTRACTS.md` |
+| **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | §3.6; contracts: `doc/contracts/TOOL_CONTRACTS.md` |
+| **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | §3.6; contracts: `doc/contracts/HOOK_CONTRACTS.md` |
+| **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | §3.6; contracts: `doc/contracts/PLUGIN_CONTRACTS.md` |
 | **guided agent session** | A bounded session in which an agent executor carries out AI-guided work. | §2.12, §2.15.1 |
 
 ## 20. References

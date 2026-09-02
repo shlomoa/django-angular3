@@ -83,5 +83,5 @@ remain authoritative.
    authoritative crosswalk, Tool catalog, builder mapping, and phased plan
    before #162 or #164 implements them.
 3. Keep future issue updates referential: upstream ngdj facts through §2.6,
-  djng Tool contracts through `doc/contracts/AI_AUTOMATION_CONTRACTS.md`, and direct
+  djng Tool contracts through `doc/contracts/TOOL_CONTRACTS.md`, and direct
   build behavior through `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.

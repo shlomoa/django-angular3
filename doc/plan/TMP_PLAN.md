@@ -493,9 +493,9 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > - `doc/ARCHITECTURE.md` §2.6 governs ngdj identity, ownership, and upstream sources. Resolve every ngdj command, option, schema, implementation, test, and status fact through that policy; this issue does not maintain an ngdj command inventory.
 > - `django_angular3/angular.py` (`_COMMAND_BUILDERS`) is the executable source for djng wrapper mappings.
 > - `docs/commands.md` owns djng wrapper arguments and interface availability.
-> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns canonical djng Tool contracts.
+> - `doc/contracts/TOOL_CONTRACTS.md` owns canonical djng Tool contracts.
 > - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` owns direct-build requirements and change-to-execution mappings.
-> - `doc/phased_implementation_plan.md` owns implementation sequencing.
+> - `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` owns implementation sequencing.
 > - `TODO.md` tracks remaining djng integration decisions and status.
 > 
 > Upstream schematic contracts are not substitutes for djng Tool contracts. Conversely, djng wrappers and Tools must not redefine upstream ngdj behavior.
@@ -530,8 +530,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > - [ ] Define the complete `create` / `update` / `delete` / `move` support matrix.
 > - [ ] Classify each operation as directly supported, supported by bounded composition, explicitly unsupported, or blocked on a required upstream change.
 > - [ ] Resolve one canonical djng Tool identity per concern; reuse or extend an existing contract where possible rather than introducing competing identities.
-> - [ ] Define structured inputs, source-derived change mapping, supported operations, outputs, ownership/idempotence behavior, structured errors, allowed invocation contexts, dependencies, implementation references, and terminal validation in `doc/contracts/AI_AUTOMATION_CONTRACTS.md`.
-> - [ ] Align `doc/requirements/APP_BUILDER_REQUIREMENTS.md`, `doc/phased_implementation_plan.md`, and `doc/plan/TODO.md` by reference to those canonical contracts without duplicating them.
+> - [ ] Define structured inputs, source-derived change mapping, supported operations, outputs, ownership/idempotence behavior, structured errors, allowed invocation contexts, dependencies, implementation references, and terminal validation in `doc/contracts/TOOL_CONTRACTS.md`.
+> - [ ] Align `doc/requirements/APP_BUILDER_REQUIREMENTS.md`, `doc/plan/PHASED_IMPLEMENTATION_PLAN.md`, and `doc/plan/TODO.md` by reference to those canonical contracts without duplicating them.
 > - [ ] Verify that implementation issues #162 and #164 can consume the completed contracts without redefining them.
 > 
 > ### Direct build integration
@@ -583,7 +583,7 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 #### Full issue details
 
 > ## Requirement references
->     - `doc/contracts/CONTRACTS.md` §2 — compare candidate normalized semantic state against its accepted baseline
+>     - `doc/contracts/CHANGE_MODEL_CONTRACTS.md` §2 — compare candidate normalized semantic state against its accepted baseline
 > 
 >     ## Architecture references
 >     - `doc/ARCHITECTURE.md` §§7.2, 11.2, 17
@@ -1663,12 +1663,12 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ## Authority and boundaries
 > 
-> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns canonical Skill identities, contracts, dependencies, and local acceptance criteria.
+> - `doc/contracts/SKILL_CONTRACTS.md` owns canonical Skill identities, contracts, dependencies, and local acceptance criteria.
 > - `doc/SKILL_AUTHORING_PLAN.md` owns the per-Skill authoring and verification cadence.
 > - `skill_creation/skills/` contains working copies, not a second canonical catalog.
-> - `doc/phased_implementation_plan.md` owns implementation sequencing.
+> - `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` owns implementation sequencing.
 > - `doc/ARCHITECTURE.md` §2.6 governs every ngdj command, option, schema, implementation, test, and status fact used by a Skill.
-> - `doc/phased_implementation_plan.md` records provider research evidence and owns implementation sequencing; it is not a runtime dependency or contract authority.
+> - `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` records provider research evidence and owns implementation sequencing; it is not a runtime dependency or contract authority.
 > 
 > Provider-native Skill files are derived renderings. Their filesystem layout, invocation syntax, and permission configuration must not become cross-provider djng contracts. A provider adapter may return normalized evidence but cannot accept a run or bypass direct Tool/Hook/terminal gates.
 > 
@@ -1738,8 +1738,8 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > ## Requirement references
 > - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-8 and FR-9 — governed construction must surface failure when required outcomes cannot be established.
 > - `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md` §4.17 — construction-output and integration verification.
-> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` — canonical Skill acceptance criteria, normalized provider-adapter results, and the authority of direct TOOL/HOOK/terminal-validation boundaries.
-> - `doc/phased_implementation_plan.md` — provider-neutral direct execution precedes adapter orchestration; local Skill acceptance is necessary but not sufficient for global acceptance.
+> - `doc/contracts/SKILL_CONTRACTS.md` and `doc/contracts/PROVIDER_ADAPTER_CONTRACTS.md` — canonical Skill acceptance criteria, normalized provider-adapter results, and the authority of direct TOOL/HOOK/terminal-validation boundaries.
+> - `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` — provider-neutral direct execution precedes adapter orchestration; local Skill acceptance is necessary but not sufficient for global acceptance.
 > - `doc/SKILL_AUTHORING_PLAN.md` — per-Skill authoring and verification cadence.
 > 
 > ## Architecture boundary
@@ -1809,11 +1809,11 @@ Snapshot dated 2026-08-31: all **39 open issues** are ordered topologically so e
 > 
 > ## Authority and scope
 > 
-> - `doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns canonical Tool, Hook, Plugin, and Skill contracts.
+> - `doc/contracts/TOOL_CONTRACTS.md`, `doc/contracts/HOOK_CONTRACTS.md`, `doc/contracts/PLUGIN_CONTRACTS.md`, and `doc/contracts/SKILL_CONTRACTS.md` own canonical Tool, Hook, Plugin, and Skill contracts.
 > - `doc/requirements/APP_BUILDER_REQUIREMENTS.md` owns direct-build functional requirements, including FR-8 failure handling and FR-9 terminal validation.
-> - `doc/phased_implementation_plan.md` owns sequencing; normative contracts and functional requirements win if they conflict with the plan.
+> - `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` owns sequencing; normative contracts and functional requirements win if they conflict with the plan.
 > - `doc/ARCHITECTURE.md` §2.6 governs every ngdj command, option, schema, implementation, test, and status fact. djng automation may wrap or orchestrate public ngdj contracts but must not redefine them.
-> - `doc/phased_implementation_plan.md` records provider research and portability evidence and owns implementation sequencing; it is not a runtime dependency.
+> - `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` records provider research and portability evidence and owns implementation sequencing; it is not a runtime dependency.
 > 
 > ## Current baseline
 > 

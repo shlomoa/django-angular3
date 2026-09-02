@@ -24,8 +24,9 @@ references with the composite `ng_workspace` flow.
 
 ## 2. Finalize AI Automation Contracts
 
-`doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns the canonical Skill, Tool, Hook, and
-Plugin contracts.
+`doc/contracts/SKILL_CONTRACTS.md`, `doc/contracts/TOOL_CONTRACTS.md`,
+`doc/contracts/HOOK_CONTRACTS.md`, and `doc/contracts/PLUGIN_CONTRACTS.md` own
+the canonical Skill, Tool, Hook, and Plugin contracts.
 
 ### 2.1 Resolve construction Tool contracts
 
@@ -45,7 +46,7 @@ contracts.
 ### 3.1 Reconcile oasdiff with the Change Model
 
 Replace the coarse change categories in `build_app.py` with the canonical
-Change Model from `doc/contracts/CONTRACTS.md` §2.
+Change Model from `doc/contracts/CHANGE_MODEL_CONTRACTS.md` §2.
 
 ## 4. Complete djng Generation Entry Points
 
@@ -59,7 +60,7 @@ interface coverage.
 `doc/requirements/APP_BUILDER_REQUIREMENTS.md` owns the complete orchestration
 requirements.
 Implement its deterministic and AI-guided execution stages in the order owned
-by `doc/phased_implementation_plan.md`.
+by `doc/plan/PHASED_IMPLEMENTATION_PLAN.md`.
 
 ### 5.1 Implement previous-input handling
 
@@ -151,12 +152,12 @@ Verify representative generated-app workflows in staging.
 
 ## 9. Package Automation Plugins
 
-`doc/contracts/AI_AUTOMATION_CONTRACTS.md` owns the canonical Plugin contracts.
+`doc/contracts/PLUGIN_CONTRACTS.md` owns the canonical Plugin contracts.
 
 ### 9.1 Implement Plugin packaging and distribution
 
 Implement and verify the provider-specific derived packages according to
-`doc/phased_implementation_plan.md` Phase 8.
+`doc/plan/PHASED_IMPLEMENTATION_PLAN.md` Phase 8.
 
 ## 10. Make Command Execution Cross-Platform
 

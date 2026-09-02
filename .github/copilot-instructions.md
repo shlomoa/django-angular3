@@ -57,7 +57,18 @@ the authoritative description of djng's role in the toolchain.
 - `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md`: exact AI automation
 	module organization, persistence, execution, adapter, and rendering
 	realization.
-- `doc/contracts/CONTRACTS.md`: shared normative data and interface boundaries.
+- `doc/specifications/TEST_SCENARIO_SPECIFICATIONS.md`: exact build-scenario
+	suite organization, invocation, shared fixtures, and coverage axes.
+- `doc/contracts/CHANGE_MODEL_CONTRACTS.md`: shared Change Model and interface boundaries.
+- `doc/contracts/TOOL_CONTRACTS.md`: deterministic Tool contracts.
+- `doc/contracts/HOOK_CONTRACTS.md`: lifecycle Hook contracts.
+- `doc/contracts/PROVIDER_ADAPTER_CONTRACTS.md`: provider-adapter contracts.
+- `doc/contracts/PLUGIN_CONTRACTS.md`: Plugin packaging contracts.
+- `doc/contracts/SKILL_CONTRACTS.md`: Skill contracts and catalog ownership.
+- `doc/contracts/TEST_SCENARIO_CONTRACTS.md`: build-scenario identity, input,
+	and expected-oracle boundaries.
+- `doc/plan/PHASED_IMPLEMENTATION_PLAN.md`: automation implementation
+	sequencing, phase dependencies, acceptance gates, and test migration.
 - `doc/ARCHITECTURE.md`: target architecture and design rationale.
 
 ### Django Project vs Django App
@@ -143,7 +154,7 @@ requirements for the generated app, use `django-admin <command>`.
 - Update `CONTRIBUTING.md` for contributor workflow changes.
 - Update `doc/ARCHITECTURE.md`, the applicable file under `doc/requirements/`,
 	the applicable file under `doc/specifications/`, or
-	`doc/contracts/CONTRACTS.md` only for intentional changes
+	`doc/contracts/CHANGE_MODEL_CONTRACTS.md` only for intentional changes
 	to their respective architecture, requirement, specification, or contract
 	sources of truth.
 

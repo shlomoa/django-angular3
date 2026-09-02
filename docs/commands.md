@@ -16,8 +16,8 @@ and available commands.
 ## Project configuration discovery
 
 Commands that operate on the generated app use the project-configuration
-filename convention in `doc/specifications/SPECIFICATIONS.md` §2.1 and the discovery behavior
-in `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs.
+discovery, filename, and baseline-resolution behavior in
+`doc/specifications/SPECIFICATIONS.md` §2.2.
 
 The static `djng` tool configuration, `django-angular3.json`, supplies derived
 tool settings and is likewise not a command argument. Document validation

@@ -2,7 +2,7 @@
 
 > **Rendering note:** This historical authoring guide describes the planned
 > Claude Agent Skills rendering. The canonical Skill contract is defined in
-> `doc/contracts/AI_AUTOMATION_CONTRACTS.md`; provider adapters render that contract into
+> `doc/contracts/SKILL_CONTRACTS.md`; provider adapters render that contract into
 > native formats. The `.claude/` layout and YAML fields below are not canonical
 > requirements for OpenAI, Gemini, or Copilot renderings.
 
@@ -12,7 +12,8 @@ designed to be auto-invoked by the Claude adapter.
 This file describes the architecture of the SKILLS primitive only. It does not
 define TOOLS, HOOKS, or PLUGINS as automation primitives; those belong to the
 broader AI automation model defined in `doc/ARCHITECTURE.md` §3.6. Their
-canonical contracts remain in `doc/contracts/AI_AUTOMATION_CONTRACTS.md`.
+canonical contracts remain in `doc/contracts/TOOL_CONTRACTS.md`,
+`doc/contracts/HOOK_CONTRACTS.md`, and `doc/contracts/PLUGIN_CONTRACTS.md`.
 
 ## Directory Structure
 

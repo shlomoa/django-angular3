@@ -46,14 +46,17 @@ These requirements are derived from and must remain aligned with
 This document defines requirements only. It does not define architecture,
 specifications, contracts, authoring processes, implementation plans, or test
 examples. [ARCHITECTURE.md] owns architecture and design rationale,
-[SPECIFICATIONS.md] owns exact platform structures, and [CONTRACTS.md] owns
-shared normative interface boundaries. [AI_AUTOMATION_CONTRACTS.md] owns AI
-automation contracts, [AI_AUTOMATION_REQUIREMENTS.md] owns AI automation
+[SPECIFICATIONS.md] owns exact platform structures, and [CHANGE_MODEL_CONTRACTS.md] owns
+shared Change Model boundaries. [TOOL_CONTRACTS.md], [HOOK_CONTRACTS.md],
+[PROVIDER_ADAPTER_CONTRACTS.md], [PLUGIN_CONTRACTS.md], and
+[SKILL_CONTRACTS.md] own AI automation contracts, [AI_AUTOMATION_REQUIREMENTS.md] owns AI automation
 product and quality requirements, and [SKILL_AUTHORING_PLAN.md] owns the
 per-Skill authoring and verification cadence.
 
 [APP_BUILDER_REQUIREMENTS.md] owns detailed `build_app` requirements and
-command translation. [TEST_EXAMPLES.md] owns scenario-by-scenario examples.
+command translation. [TEST_SCENARIO_CONTRACTS.md] owns the scenario-case input
+and oracle boundary, [TEST_SCENARIO_SPECIFICATIONS.md] owns exact scenario-suite
+realization, and [TEST_EXAMPLES.md] owns scenario-by-scenario examples.
 
 **Out of initial release scope:**
 
@@ -519,6 +522,10 @@ competing glossary.
 
 ### B. Examples
 
+- [TEST_SCENARIO_CONTRACTS.md] — scenario-case identity, input, and expected
+  oracle boundary.
+- [TEST_SCENARIO_SPECIFICATIONS.md] — scenario-suite layout, invocation, shared
+  fixtures, and coverage axes.
 - [TEST_EXAMPLES.md] — scenario definitions and expected outputs.
 - [django_angular3/examples/01_simple_crm/] — runnable example workspace with schema,
   UI, and build artifacts.
@@ -534,12 +541,18 @@ Labels used in this document are defined in the link-definitions block at the en
 [APPLICATION_FUNCTIONAL_REQUIREMENTS.md]: APPLICATION_FUNCTIONAL_REQUIREMENTS.md
 [APPLICATION_QUALITY_REQUIREMENTS.md]: APPLICATION_QUALITY_REQUIREMENTS.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
-[AI_AUTOMATION_CONTRACTS.md]: ../contracts/AI_AUTOMATION_CONTRACTS.md
+[HOOK_CONTRACTS.md]: ../contracts/HOOK_CONTRACTS.md
+[PLUGIN_CONTRACTS.md]: ../contracts/PLUGIN_CONTRACTS.md
+[PROVIDER_ADAPTER_CONTRACTS.md]: ../contracts/PROVIDER_ADAPTER_CONTRACTS.md
+[SKILL_CONTRACTS.md]: ../contracts/SKILL_CONTRACTS.md
+[TOOL_CONTRACTS.md]: ../contracts/TOOL_CONTRACTS.md
 [AI_AUTOMATION_REQUIREMENTS.md]: AI_AUTOMATION_REQUIREMENTS.md
 [AI_AUTOMATION_SPECIFICATIONS.md]: ../specifications/AI_AUTOMATION_SPECIFICATIONS.md
-[CONTRACTS.md]: ../contracts/CONTRACTS.md
+[CHANGE_MODEL_CONTRACTS.md]: ../contracts/CHANGE_MODEL_CONTRACTS.md
 [SKILL_AUTHORING_PLAN.md]: ../SKILL_AUTHORING_PLAN.md
 [SPECIFICATIONS.md]: ../specifications/SPECIFICATIONS.md
+[TEST_SCENARIO_CONTRACTS.md]: ../contracts/TEST_SCENARIO_CONTRACTS.md
+[TEST_SCENARIO_SPECIFICATIONS.md]: ../specifications/TEST_SCENARIO_SPECIFICATIONS.md
 [TEST_EXAMPLES.md]: ../TEST_EXAMPLES.md
 [django_angular3/examples/01_simple_crm/]: ../../django_angular3/examples/01_simple_crm/
 [tests/fixtures/artifacts/openapi/example.openapi.json]: ../../tests/fixtures/artifacts/openapi/example.openapi.json

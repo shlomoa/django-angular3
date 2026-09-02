@@ -12,8 +12,18 @@ Related docs:
   topology definitions
 - `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md` — exact AI automation
   module organization and realization
-- `doc/contracts/CONTRACTS.md` — shared normative data and interface boundaries
-- `TODO.md` — implementation sequencing, delivery roadmap, and open items
+- `doc/specifications/TEST_SCENARIO_SPECIFICATIONS.md` — exact build-scenario
+  suite realization and coverage
+- `doc/contracts/CHANGE_MODEL_CONTRACTS.md` — shared Change Model and interface boundaries
+- `doc/contracts/TOOL_CONTRACTS.md` — deterministic Tool contracts
+- `doc/contracts/HOOK_CONTRACTS.md` — lifecycle Hook contracts
+- `doc/contracts/PROVIDER_ADAPTER_CONTRACTS.md` — provider-adapter contracts
+- `doc/contracts/PLUGIN_CONTRACTS.md` — Plugin packaging contracts
+- `doc/contracts/SKILL_CONTRACTS.md` — Skill contracts and catalog ownership
+- `doc/contracts/TEST_SCENARIO_CONTRACTS.md` — build-scenario input and expected
+  oracle boundaries
+- `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` — phased implementation sequencing
+- `doc/plan/TODO.md` — delivery roadmap and open items
 
 It allows you to:
 - Keep Django responsible for data, authentication, and administration.
@@ -295,8 +305,17 @@ Current project documents:
 - [Requirements](doc/requirements/REQUIREMENTS.md)
 - [Specifications](doc/specifications/SPECIFICATIONS.md)
 - [AI automation specifications](doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md)
-- [Contracts](doc/contracts/CONTRACTS.md)
+- [Test scenario specifications](doc/specifications/TEST_SCENARIO_SPECIFICATIONS.md)
+- [Change model contracts](doc/contracts/CHANGE_MODEL_CONTRACTS.md)
+- [Tool contracts](doc/contracts/TOOL_CONTRACTS.md)
+- [Hook contracts](doc/contracts/HOOK_CONTRACTS.md)
+- [Provider adapter contracts](doc/contracts/PROVIDER_ADAPTER_CONTRACTS.md)
+- [Plugin contracts](doc/contracts/PLUGIN_CONTRACTS.md)
+- [Skill contracts](doc/contracts/SKILL_CONTRACTS.md)
+- [Test scenario contracts](doc/contracts/TEST_SCENARIO_CONTRACTS.md)
 - [Architecture](doc/ARCHITECTURE.md)
+- [Phased implementation plan](doc/plan/PHASED_IMPLEMENTATION_PLAN.md)
+- [Open items](doc/plan/TODO.md)
 
 ## Status
 

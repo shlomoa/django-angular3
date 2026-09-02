@@ -2,70 +2,24 @@
 
 ## Overview
 
-Each example defines a concrete scenario that build_app command can
-execute end-to-end. Together they cover the full range of use cases described
-in `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
+Each example defines a concrete end-to-end `build_app` scenario and its
+expected outcomes. Together they cover the full range of use cases described
+in [APP_BUILDER_REQUIREMENTS.md].
 
-Each example consists of:
-- A named scenario with a description
-- Input files: discovered project configuration, OpenAPI schema, OpenUI
-  specification, and static tool configuration
-- Expected atomic changes from the builder; the canonical `ChangeSet` schema is
-  defined in `CONTRACTS.md` §2.3
+Every example conforms to [TEST_SCENARIO_CONTRACTS.md]. Input blocks are
+concrete contract instances, and expected atomic changes and command sequences
+are test oracles; this document does not define schemas, operations, domains,
+command modes, or automation identities.
 
-### Shared conventions across all examples
+The exact suite layout, shared fixture conventions, invocation model, static
+snapshots, provider-adapter boundary, and coverage axes are defined in
+[TEST_SCENARIO_SPECIFICATIONS.md]. Project-configuration discovery and baseline
+resolution are defined in [SPECIFICATIONS.md] §2.2. The examples below retain
+only scenario inputs and expected outcomes.
 
-- **Django project name**: varies per example (e.g. `simple_crm`)
-- **Django app name / Angular app name**: `shop` — all twelve examples use the same
-  primary app. None of the schema, project-configuration, or OpenUI changes
-  replace the app itself; they evolve the generated app within the same `shop`
-  app.
-- The expected executed command sequence
-- The aspect of the solution it demonstrates
-
-Example 1 is bundled in the package under
-`django_angular3/examples/01_simple_crm/` and can be installed locally via
-`django-angular3 install-tutorial`. Examples 2–12 are development-only test
-fixtures under `tests/fixtures/scenarios/<example-name>/`. Once the planner is
-implemented, a scenario can be exercised from its fixture directory via:
-
-```bash
-cd tests/fixtures/scenarios/<example-name>
-django-admin build_app \
-  [--current-config current-project-configuration.json] \
-  [--previous-config previous-project-configuration.json] \
-  --dry-run
-```
-
-Without `--current-config`, `build_app` discovers
-`django-angular3-<project_name>.json` as defined in `SPECIFICATIONS.md` §2.1.
-Without `--previous-config`, it derives the previous path by replacing the
-current filename's `.json` suffix with `.previous.json`; a missing file starts
-the build from scratch. Its planner remains unimplemented, so these are target
-scenario examples rather than runnable current behavior.
-
-Each current or previous project configuration resolves its own
-`artifacts.openapiSchema` and `artifacts.openuiSpecification` paths. The
-current configuration therefore selects the candidate documents and the
-previous configuration selects their baselines; examples do not use a separate
-previous-OpenUI argument or `.previous` OpenUI filename convention.
-
-Examples 4, 10, 11, and 12 use the shared static-configuration snapshots
-selected by `tests/fixtures/scenarios/scenario-matrix.json`. The SCSS snapshot
-is the accepted baseline and the CSS snapshot is the candidate. These
-development fixtures exercise `compare_static_config()` directly; they do not
-define a public static-configuration path argument or the pending `build_app`
-accepted-state persistence mechanism.
-
-### Provider-adapter verification boundary
-
-These generated-app scenarios verify change derivation and construction
-behavior; they do not replace provider-adapter tests. The provider-neutral
-adapter-contract matrix and the separate credential/runtime-gated provider
-integration suites are defined in `phased_implementation_plan.md` Phase 5.
-Scenario tests use provider-independent stubs when an adapter boundary must be
-exercised; real provider credentials are required only by that provider's
-runtime integration suite.
+Implementation sequencing and scenario-test work are owned by
+[PHASED_IMPLEMENTATION_PLAN.md] and [TODO.md] §6; this document contains no
+planning tasks.
 
 ---
 
@@ -387,7 +341,7 @@ OpenAPI contract, and OpenUI document.
 
 ### Expected executed command sequence (ordered)
 
-Deterministic TOOL commands (see `AI_AUTOMATION_CONTRACTS.md` §Tool
+Deterministic TOOL commands (see `TOOL_CONTRACTS.md` §Tool
 Contracts Catalog) precede the SKILL sessions:
 
 1. `openapi_schema_export` *(tool)* — produce the current OpenAPI artifact at
@@ -518,7 +472,8 @@ Example 1's schema with `email` removed from `Customer.required` and
 ### Expected atomic changes
 
 The OpenAPI domain emits `delete` changes for `Customer.email` and its
-requiredness membership. No other domain emits an atomic change.
+membership in the schema's `required` array. No other domain emits an atomic
+change.
 
 ### Expected executed command sequence
 
@@ -565,7 +520,7 @@ The `static_config` domain emits an `update` change for
 2. *(verification)* — validate the resulting workspace configuration and
    generated application
 
-Schema-derived and OpenUI-derived commands must not run.
+The expected sequence contains no schema-derived or OpenUI-derived command.
 
 ---
 
@@ -595,9 +550,8 @@ so the `openui` domain emits no atomic change.
 1. *(verification)* — validate the newly selected OpenUI document and record
    it as the source for subsequent OpenUI comparisons
 
-The builder must not infer a document-tree change solely from a source-path
-change. Schema-derived and OpenUI-derived construction commands must not run
-when the selected document has no structural diff.
+This expected result applies the selector/content separation defined in
+[CHANGE_MODEL_CONTRACTS.md] §2.2 and [SPECIFICATIONS.md] §2.2.
 
 ---
 
@@ -700,7 +654,7 @@ No domain emits an atomic change.
 1. *(verification)* — validate the configured inputs and confirm the existing
    generated app remains valid
 
-No construction command may run.
+The expected sequence contains no construction command.
 
 ---
 
@@ -731,7 +685,7 @@ for the `Order` contract subjects.
    service
 4. *(verification)* — validate the workspace and generated application
 
-OpenUI-derived construction commands must not run.
+The expected sequence contains no OpenUI-derived construction command.
 
 ---
 
@@ -763,7 +717,7 @@ The `static_config` domain emits an `update` for
 4. `angular-page-composition` *(create)* — generate the `dashboard` page
 5. *(verification)* — validate the workspace and generated application
 
-Schema-derived construction commands must not run.
+The expected sequence contains no schema-derived construction command.
 
 ---
 
@@ -797,61 +751,18 @@ change for `invoiceListPage`.
 5. `angular-page-composition` *(create)* — generate the `invoice-list` page
 6. *(verification)* — validate the workspace and generated application
 
-The configuration command runs before dependent construction. Schema-derived
-commands run before the dependent OpenUI page command.
+The expected order demonstrates the dependency and cross-domain ordering in
+[APP_BUILDER_REQUIREMENTS.md] §Change Command Translation and Execution.
 
 ---
 
-## Running the Examples
+Suite invocation and the required coverage matrix are specified in
+[TEST_SCENARIO_SPECIFICATIONS.md] §§3 and 6.
 
-Once the `build_app` command is implemented, all examples can be run
-sequentially to verify each use case:
-
-```bash
-# Start from scratch, from an example project root
-django-admin build_app --dry-run
-
-# Run an incremental scenario with explicit project-configuration inputs
-django-admin build_app \
-  --current-config <current-project-configuration.json> \
-  --previous-config <previous-project-configuration.json> \
-  --dry-run
-
-```
-
-The current project configurations for Examples 2–12 and the current/previous
-fixture pairs needed by Examples 3 and 5 are present under
-`tests/fixtures/scenarios/`. The matrix validation test checks their selected
-inputs, including the shared static-configuration snapshots used by Examples 4
-and 10–12.
-
----
-
-## Three-Axis Scenario Matrix
-
-The following matrix covers every Boolean combination of incremental changes
-in the project/static-configuration, OpenAPI, and OpenUI scenario axes. These
-axes are not the five canonical Change Model domains. A check mark means that
-scenario input changes; a blank means it is unchanged. Examples 1, 3, 5, and 8 provide
-additional coverage for first-run, removal, source-selection, and replacement
-semantics respectively.
-
-| Config change | OpenAPI change | OpenUI change | Required example |
-|:---:|:---:|:---:|---|
-| | | | 9 No Change |
-| ✓ | | | 4 Workspace Configuration |
-| | ✓ | | 2 Add Resource |
-| | | ✓ | 6 OpenUI Change |
-| ✓ | ✓ | | 10 Configuration + OpenAPI |
-| ✓ | | ✓ | 11 Configuration + OpenUI |
-| | ✓ | ✓ | 7 OpenAPI + OpenUI |
-| ✓ | ✓ | ✓ | 12 Configuration + OpenAPI + OpenUI |
-
-### Additional scenario coverage
-
-| Concern | Example |
-|---|---|
-| Start from scratch | 1 Simple CRM |
-| OpenAPI removal | 3 Schema Removal |
-| `openui.source` selection without structural OpenUI change | 5 OpenUI-Source Configuration |
-| OpenAPI replacement | 8 Full Replacement |
+[APP_BUILDER_REQUIREMENTS.md]: requirements/APP_BUILDER_REQUIREMENTS.md
+[CHANGE_MODEL_CONTRACTS.md]: contracts/CHANGE_MODEL_CONTRACTS.md
+[PHASED_IMPLEMENTATION_PLAN.md]: plan/PHASED_IMPLEMENTATION_PLAN.md
+[SPECIFICATIONS.md]: specifications/SPECIFICATIONS.md
+[TEST_SCENARIO_SPECIFICATIONS.md]: specifications/TEST_SCENARIO_SPECIFICATIONS.md
+[TEST_SCENARIO_CONTRACTS.md]: contracts/TEST_SCENARIO_CONTRACTS.md
+[TODO.md]: plan/TODO.md

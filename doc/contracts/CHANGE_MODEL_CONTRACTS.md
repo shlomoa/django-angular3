@@ -1,19 +1,28 @@
-# Contracts
+# Change Model Contracts
 
 ## 1. Purpose and scope
 
 This document defines normative data and interface boundaries shared by
-`djng` components. It does not define product requirements, platform
-structure, architecture, automation contracts, or implementation sequencing.
+`djng` components for change modeling.
+It does not define product requirements, platform structure, architecture,
+automation contracts, or implementation sequencing.
 
 The requirements corpus is indexed by [REQUIREMENTS.md]. Exact platform
-structures are defined in [SPECIFICATIONS.md]. AI automation Tool, Hook,
-Plugin, and Skill contracts are defined in [AI_AUTOMATION_CONTRACTS.md]. The
-`build_app` command requirements and command translation behavior are defined
-in [APP_BUILDER_REQUIREMENTS.md].
+structures are defined in [SPECIFICATIONS.md]. Tool, Hook, Provider Adapter,
+Plugin, and Skill contracts are defined in:
 
+- [TOOL_CONTRACTS.md]
+- [HOOK_CONTRACTS.md]
+- [PROVIDER_ADAPTER_CONTRACTS.md]
+- [PLUGIN_CONTRACTS.md]
+- [SKILL_CONTRACTS.md]
+
+The `build_app` command requirements and command translation behavior are
+defined in [APP_BUILDER_REQUIREMENTS.md].
 Exact AI automation realization is defined in
 [AI_AUTOMATION_SPECIFICATIONS.md].
+The documented build-scenario case boundary is defined in
+[TEST_SCENARIO_CONTRACTS.md].
 
 OpenAPI and OpenUI are external input contracts governed by their own
 specifications; this document does not redefine them.
@@ -96,9 +105,14 @@ A `ChangeSet` carries domain-specific atomic changes and a computed summary:
 }
 ```
 
-[AI_AUTOMATION_CONTRACTS.md]: AI_AUTOMATION_CONTRACTS.md
 [AI_AUTOMATION_SPECIFICATIONS.md]: ../specifications/AI_AUTOMATION_SPECIFICATIONS.md
 [APP_BUILDER_REQUIREMENTS.md]: ../requirements/APP_BUILDER_REQUIREMENTS.md
+[HOOK_CONTRACTS.md]: HOOK_CONTRACTS.md
 [OpenUI comparison]: https://openui-spec.readthedocs.io/en/latest/tooling/comparison/
+[PLUGIN_CONTRACTS.md]: PLUGIN_CONTRACTS.md
+[PROVIDER_ADAPTER_CONTRACTS.md]: PROVIDER_ADAPTER_CONTRACTS.md
 [REQUIREMENTS.md]: ../requirements/REQUIREMENTS.md
+[SKILL_CONTRACTS.md]: SKILL_CONTRACTS.md
 [SPECIFICATIONS.md]: ../specifications/SPECIFICATIONS.md
+[TEST_SCENARIO_CONTRACTS.md]: TEST_SCENARIO_CONTRACTS.md
+[TOOL_CONTRACTS.md]: TOOL_CONTRACTS.md

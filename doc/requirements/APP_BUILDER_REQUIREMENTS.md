@@ -63,7 +63,7 @@ provider used by an agent session.
 | Input | Source | Format | Notes |
 |---|---|---|---|
 | `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. |
-| Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | The filename convention is defined in `doc/specifications/SPECIFICATIONS.md` §2.1. |
+| Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | Discovery and filename realization are defined in `doc/specifications/SPECIFICATIONS.md` §2.2. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | Resolves its own artifact selectors independently of the current configuration. A missing previous configuration starts a build from scratch. |
 | Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Baseline contract selected by the previous configuration. Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. |
@@ -96,8 +96,8 @@ djng owns only the configured input path and its build-stage handling. See
 
 The project configuration supplies the locations used by the builder. Static
 tool settings remain in `django-angular3.json`. The authoritative project
-configuration definition is in `doc/specifications/SPECIFICATIONS.md` §2.1; discovery behavior is
-defined in §Inputs above.
+configuration categories are in `doc/specifications/SPECIFICATIONS.md` §2.1;
+discovery and baseline-path realization are defined in §2.2.
 
 ---
 
@@ -105,7 +105,7 @@ defined in §Inputs above.
 
 The canonical Change Model, including `Change`, the four domains, identity
 rules, baseline/candidate semantics, and the complete `ChangeSet` schema, is
-defined in `doc/contracts/CONTRACTS.md` §2. This section defines how `build_app`
+defined in `doc/contracts/CHANGE_MODEL_CONTRACTS.md` §2. This section defines how `build_app`
 applies that model.
 
 For every run, the builder must compare the accepted baseline and candidate
@@ -342,4 +342,4 @@ they are not a substitute for execution.
 ## Terminology
 
 Authoritative terminology is defined in `doc/ARCHITECTURE.md` §§2 and 19. The
-canonical `ChangeSet` boundary is defined in `doc/contracts/CONTRACTS.md` §2.3.
+canonical `ChangeSet` boundary is defined in `doc/contracts/CHANGE_MODEL_CONTRACTS.md` §2.3.
