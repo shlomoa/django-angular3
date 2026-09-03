@@ -44,8 +44,7 @@ python manage.py validate_project
 ```
 
 `validate_project` uses the project-configuration discovery rules in
-`doc/specifications/SPECIFICATIONS.md` §2.1
-<a href="https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories" target="_blank" rel="noopener noreferrer" aria-label="Open Configuration and input categories in the source documentation in a new tab">↗</a>.
+`doc/specifications/SPECIFICATIONS.md` §2.1 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories){.modal-link}
 See [Command reference](commands.md) for the command interface.
 
 ## 5. Scaffold the Angular workspace
