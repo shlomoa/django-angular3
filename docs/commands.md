@@ -17,7 +17,8 @@ and available commands.
 
 Commands that operate on the generated app use the project-configuration
 discovery, filename, and baseline-resolution behavior in
-`doc/specifications/SPECIFICATIONS.md` §2.2.
+`doc/specifications/SPECIFICATIONS.md` §2.2
+<a href="https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#22-project-configuration-discovery-and-baseline-resolution" target="_blank" rel="noopener noreferrer" aria-label="Open Project-configuration discovery and baseline resolution in the source documentation in a new tab">↗</a>.
 
 The static `djng` tool configuration, `django-angular3.json`, supplies derived
 tool settings and is likewise not a command argument. Document validation
@@ -41,7 +42,9 @@ not application configuration.
 ## Command ownership
 
 - **ngdj schematics** use the identity, ownership, and upstream-source policy in
-	`doc/ARCHITECTURE.md` §2.6. Follow the CLI reference linked there for
+	`doc/ARCHITECTURE.md` §2.6
+	<a href="https://github.com/shlomoa/django-angular3/blob/main/doc/ARCHITECTURE.md#26-ngdj" target="_blank" rel="noopener noreferrer" aria-label="Open ngdj in the source documentation in a new tab">↗</a>.
+	Follow the CLI reference linked there for
 	schematic behavior, options, prerequisites, and examples.
 - **djng wrappers** are the `ng_*` commands defined by this repository. Their
 	executable mappings are defined by `_COMMAND_BUILDERS` in
@@ -95,6 +98,6 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one for future `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app` | Exposes the app-build command interface, but planning and execution are not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run` and `--force start-from-scratch`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs for discovery behavior. |
+| `build_app` | Exposes the app-build command interface, but planning and execution are not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run` and `--force start-from-scratch`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs <a href="https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs" target="_blank" rel="noopener noreferrer" aria-label="Open Inputs in the source documentation in a new tab">↗</a> for discovery behavior. |
 | `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |
 | `ng_workspace_delete` | Delete the discovered Angular workspace entirely. |
