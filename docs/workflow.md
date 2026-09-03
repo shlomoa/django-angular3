@@ -5,7 +5,7 @@ schema describes the API contract, while the OpenUI concrete UI document
 describes the UI; both may concern complementary aspects of the same feature.
 This page describes the end-to-end cycle for your own project. For a guided
 run-through using a ready-made sample, start with
-[Getting started](getting-started.md).
+[the tutorial](index.md).
 
 ## Responsibilities
 
@@ -106,7 +106,8 @@ implementation discovers and validates the project inputs, but its planning and
 execution workflow is not implemented yet. Do not rely on it to build or
 validate a generated app; use the individual wrappers below while the planner
 is completed. Its target requirements are documented in
-`doc/requirements/APP_BUILDER_REQUIREMENTS.md`.
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md`
+[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md){.modal-link}
 
 ### 5. Run individual Angular wrappers when needed
 

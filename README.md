@@ -291,7 +291,7 @@ For the contributor workflow around local validation, see
 User-facing usage documentation is published at
 <https://django-angular3.readthedocs.io/>:
 
-- [Getting started](https://django-angular3.readthedocs.io/en/latest/getting-started.html) — install, run the bundled tutorial, and complete the workflow end to end.
+- [Tutorial](https://django-angular3.readthedocs.io/en/latest/) — install, run the bundled tutorial, and complete the workflow end to end.
 - [Configuration](https://django-angular3.readthedocs.io/en/latest/configuration.html) — configuration guidance and references.
 - [Usage workflow](https://django-angular3.readthedocs.io/en/latest/workflow.html) — the contract-first cycle for your own project.
 - [Command reference](https://django-angular3.readthedocs.io/en/latest/commands.html) — every command in both the standalone CLI and management-command form.

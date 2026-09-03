@@ -1,42 +1,11 @@
-# Getting started
+# Tutorial: Install the tutorial project
 
-This walkthrough takes you from an empty machine to a running tutorial project
-in a few minutes. It uses the bundled `simple_crm` tutorial — a small Django +
-DRF project that already ships an OpenAPI schema, a UI definition, and a
-`django-angular3.json` tool configuration and a
-`django-angular3-<project_name>.json` project configuration — so you can see the full
-contract-first workflow without writing a backend from scratch.
-
-## Prerequisites
-
-- **Python 3.10+** with `pip`.
-- **Node.js** and **pnpm** — only needed once you generate or build the Angular
-  workspace. Validation works without them.
-
-You do not need a Django project to try the validation commands: the
-[standalone CLI](commands.md) runs them directly.
-
-## 1. Install the package
-
-```bash
-pip install django-angular3
-```
-
-To work from a local clone instead:
-
-```bash
-pip install -e /path/to/django-angular3/
-```
-
-Verify the standalone CLI is available:
-
-```bash
-django-angular3 --help
-```
+The bundled `simple_crm` project lets you continue from the installed `djng`
+package to a running Django backend and Angular workspace.
 
 ## 2. Install the tutorial project
 
-The package bundles a ready-made tutorial. Copy it into a working directory:
+Copy the bundled project into a working directory:
 
 ```bash
 django-angular3 install-tutorial simple_crm
@@ -49,6 +18,7 @@ This creates:
 - `app.openui.json` containing the OpenUI requirements.
 - `django-angular3.json` static tool configuration file.
 - `django-angular3-<project_name>.json` generated-app project configuration file.
+
 The command prints the next steps on success.
 
 ## 3. Run the Django backend
@@ -74,8 +44,8 @@ python manage.py validate_project
 ```
 
 `validate_project` uses the project-configuration discovery rules in
-`doc/specifications/SPECIFICATIONS.md` §2.1. See [Command reference](commands.md) for the
-command interface.
+`doc/specifications/SPECIFICATIONS.md` §2.1 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories){.modal-link}
+See [Command reference](commands.md) for the command interface.
 
 ## 5. Scaffold the Angular workspace
 
@@ -101,6 +71,11 @@ python manage.py ng_build
 Angular Material application inside the workspace, `ng_openapi_gen` generates
 Angular API client artifacts from the OpenAPI schema, and `ng_build` builds the
 configured Angular application.
+
+## Tutorial navigation
+
+- **Parent:** [Overview](index.md)
+- **Previous:** [Overview](index.md)
 
 ## Next steps
 

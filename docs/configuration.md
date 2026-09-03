@@ -3,14 +3,15 @@
 `djng` keeps tool behavior separate from generated-app identity and inputs.
 The authoritative definitions, fields, defaults, ownership, and lifecycle are
 in the executable configuration models; their categories and relationships
-are specified in `doc/specifications/SPECIFICATIONS.md` §2.
+are specified in `doc/specifications/SPECIFICATIONS.md` §2
+[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#2-configuration-and-inputs){.modal-link}
 
 ## Configuration and inputs
 
 | Item | Owner | Purpose |
 |---|---|---|
 | `django-angular3.json` | `djng` | Static tool configuration: Angular execution settings, global `ng-openapi-gen` settings, and `drf-spectacular` settings. |
-| Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/specifications/SPECIFICATIONS.md` §2.1. |
+| Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/specifications/SPECIFICATIONS.md` §2.1 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories){.modal-link} |
 | OpenAPI schema | generated-app user | API-contract input or the artifact exported from Django/DRF. |
 | OpenUI concrete UI document | generated-app user | Structured UI-description input. |
 
@@ -36,7 +37,9 @@ static configuration; they do not accept its path as an argument.
 The project configuration identifies a generated app and names the paths that
 a command uses for its OpenAPI schema, OpenUI concrete UI document, and Angular
 workspace. Its filename, discovery, ownership, and field requirements are
-specified in `doc/specifications/SPECIFICATIONS.md` §2.1 and implemented by the executable
+specified in `doc/specifications/SPECIFICATIONS.md` §2.1
+[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories){.modal-link}
+and implemented by the executable
 configuration model.
 
 Use `django-angular3 validate-project` or `python manage.py validate_project`

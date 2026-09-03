@@ -59,6 +59,7 @@ source_suffix = {
 myst_enable_extensions = [
     "colon_fence",
     "deflist",
+    "attrs_inline",
 ]
 
 # ---------------------------------------------------------------------------
@@ -76,3 +77,8 @@ autodoc_default_options = {
     "show-inheritance": True,
 }
 autodoc_typehints = "description"
+
+
+def setup(app):
+    app.add_css_file("custom.css")
+    app.add_js_file("modal_links.js")

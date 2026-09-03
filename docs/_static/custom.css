@@ -1,0 +1,82 @@
+#sphinx-modal {
+    width: min(72rem, 90vw);
+    height: min(52rem, 90vh);
+    padding: 0;
+    color: var(--color-foreground-primary);
+    background: var(--color-background-primary);
+    border: 1px solid var(--color-background-border);
+    border-radius: 0.5rem;
+    box-shadow: 0 1rem 3rem rgb(0 0 0 / 35%);
+}
+
+#sphinx-modal::backdrop {
+    background: rgb(0 0 0 / 55%);
+}
+
+#sphinx-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-background-border);
+}
+
+#sphinx-modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+#sphinx-modal-close {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+#sphinx-modal-close:hover,
+#sphinx-modal-close:focus-visible {
+    background: var(--color-background-hover);
+}
+
+#sphinx-modal-body {
+    height: calc(100% - 3.75rem);
+    padding: 1rem 1.5rem;
+    overflow: auto;
+}
+
+#sphinx-modal-body h1,
+#sphinx-modal-body h2,
+#sphinx-modal-body h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--color-background-border);
+    padding-bottom: 5px;
+}
+
+#sphinx-modal-body code {
+    background-color: var(--color-background-secondary);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+#sphinx-modal-body pre {
+    background-color: var(--color-background-secondary);
+    padding: 15px;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+#sphinx-modal-body ul,
+#sphinx-modal-body ol {
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
