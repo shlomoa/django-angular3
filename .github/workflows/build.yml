@@ -56,7 +56,15 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "22"
     - name: Install docs dependencies
       run: pip install -e ".[docs]"
     - name: Build docs
       run: python -m sphinx docs docs/_build/html -W --keep-going
+    - name: Test docs integration
+      run: python -m unittest tests.test_docs
+    - name: Test modal links
+      run: node --test tests/modal_links.test.mjs
