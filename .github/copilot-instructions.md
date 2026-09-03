@@ -67,8 +67,15 @@ the authoritative description of djng's role in the toolchain.
 - `doc/contracts/SKILL_CONTRACTS.md`: Skill contracts and catalog ownership.
 - `doc/contracts/TEST_SCENARIO_CONTRACTS.md`: build-scenario identity, input,
 	and expected-oracle boundaries.
-- `doc/plan/PHASED_IMPLEMENTATION_PLAN.md`: automation implementation
-	sequencing, phase dependencies, acceptance gates, and test migration.
+- `doc/plan/CONFIGURATION_PLAN.md`: configuration planning and implementation
+	work.
+- `doc/plan/CONSTRUCTION_PLAN.md`: governed construction sequencing and
+	backlog.
+- `doc/plan/AUTOMATION_PLAN.md`: automation implementation sequencing and
+	phase dependencies.
+- `doc/plan/APPLICATION_DELIVERY_PLAN.md`: generated-application delivery and
+	operational backlog.
+- `doc/plan/VERIFICATION_PLAN.md`: acceptance gates and test migration.
 - `doc/ARCHITECTURE.md`: target architecture and design rationale.
 
 ### Django Project vs Django App

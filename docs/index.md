@@ -7,6 +7,14 @@ between a DRF backend and an Angular Material frontend.
 For the full description see the
 [project README](https://github.com/shlomoa/django-angular3#readme).
 
+Repository planning is organized by domain:
+
+- [Configuration](https://github.com/shlomoa/django-angular3/blob/main/doc/plan/CONFIGURATION_PLAN.md)
+- [Construction](https://github.com/shlomoa/django-angular3/blob/main/doc/plan/CONSTRUCTION_PLAN.md)
+- [Automation](https://github.com/shlomoa/django-angular3/blob/main/doc/plan/AUTOMATION_PLAN.md)
+- [Application delivery](https://github.com/shlomoa/django-angular3/blob/main/doc/plan/APPLICATION_DELIVERY_PLAN.md)
+- [Verification](https://github.com/shlomoa/django-angular3/blob/main/doc/plan/VERIFICATION_PLAN.md)
+
 ## Prerequisites
 
 - **Python 3.10+** with `pip`.

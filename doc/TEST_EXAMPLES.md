@@ -17,9 +17,9 @@ snapshots, provider-adapter boundary, and coverage axes are defined in
 resolution are defined in [SPECIFICATIONS.md] §2.2. The examples below retain
 only scenario inputs and expected outcomes.
 
-Implementation sequencing and scenario-test work are owned by
-[PHASED_IMPLEMENTATION_PLAN.md] and [TODO.md] §6; this document contains no
-planning tasks.
+Automation sequencing is owned by the [Automation Plan]. Scenario-test work
+and acceptance coverage are owned by the [Verification Plan]; this document
+contains no planning tasks.
 
 ---
 
@@ -761,8 +761,8 @@ Suite invocation and the required coverage matrix are specified in
 
 [APP_BUILDER_REQUIREMENTS.md]: requirements/APP_BUILDER_REQUIREMENTS.md
 [CHANGE_MODEL_CONTRACTS.md]: contracts/CHANGE_MODEL_CONTRACTS.md
-[PHASED_IMPLEMENTATION_PLAN.md]: plan/PHASED_IMPLEMENTATION_PLAN.md
+[Automation Plan]: plan/AUTOMATION_PLAN.md#dependency-ordered-implementation-phases
 [SPECIFICATIONS.md]: specifications/SPECIFICATIONS.md
 [TEST_SCENARIO_SPECIFICATIONS.md]: specifications/TEST_SCENARIO_SPECIFICATIONS.md
 [TEST_SCENARIO_CONTRACTS.md]: contracts/TEST_SCENARIO_CONTRACTS.md
-[TODO.md]: plan/TODO.md
+[Verification Plan]: plan/VERIFICATION_PLAN.md#scenario-coverage

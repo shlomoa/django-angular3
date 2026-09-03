@@ -1067,9 +1067,12 @@ switch environments.
 
 ## 18. Implementation Roadmap
 
-Implementation sequencing is documented in
-`doc/plan/PHASED_IMPLEMENTATION_PLAN.md`. Open backlog items are tracked in
-`doc/plan/TODO.md`.
+Implementation sequencing and open backlog items are organized by domain in
+the [Configuration Plan](plan/CONFIGURATION_PLAN.md),
+[Construction Plan](plan/CONSTRUCTION_PLAN.md),
+[Automation Plan](plan/AUTOMATION_PLAN.md),
+[Application Delivery Plan](plan/APPLICATION_DELIVERY_PLAN.md), and
+[Verification Plan](plan/VERIFICATION_PLAN.md).
 
 ## 19. Glossary
 

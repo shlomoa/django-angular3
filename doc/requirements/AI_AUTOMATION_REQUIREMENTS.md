@@ -8,8 +8,7 @@ lifecycle enforcement, Skill resolution, provider adapters, and distribution.
 It does not define implementation sequencing, exact representations, or
 interface contracts.
 
-Implementation sequencing is owned by
-[PHASED_IMPLEMENTATION_PLAN.md]. Automation architecture is owned by
+Implementation sequencing is owned by the [Automation Plan]. Automation architecture is owned by
 [ARCHITECTURE.md]. Normative Tool, Hook, Plugin, Skill, and provider-adapter
 boundaries are owned by [TOOL_CONTRACTS.md], [HOOK_CONTRACTS.md],
 [PLUGIN_CONTRACTS.md], [SKILL_CONTRACTS.md], and
@@ -154,4 +153,4 @@ adapters or derived packages without changing canonical semantics.
 [AI_AUTOMATION_SPECIFICATIONS.md]: ../specifications/AI_AUTOMATION_SPECIFICATIONS.md
 [APP_BUILDER_REQUIREMENTS.md]: APP_BUILDER_REQUIREMENTS.md
 [ARCHITECTURE.md]: ../ARCHITECTURE.md
-[PHASED_IMPLEMENTATION_PLAN.md]: ../plan/PHASED_IMPLEMENTATION_PLAN.md
+[Automation Plan]: ../plan/AUTOMATION_PLAN.md#dependency-ordered-implementation-phases

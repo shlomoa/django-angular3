@@ -13,8 +13,7 @@ expected test oracles is defined in [TEST_SCENARIO_CONTRACTS.md].
 This document does not define product behavior, the Change Model, command
 translation, automation contracts, or implementation sequencing. Those are
 owned by [APP_BUILDER_REQUIREMENTS.md], [CHANGE_MODEL_CONTRACTS.md], the
-automation contract owners under `doc/contracts/`, and
-[PHASED_IMPLEMENTATION_PLAN.md].
+automation contract owners under `doc/contracts/`, and the [Automation Plan].
 
 ## 2. Scenario organization
 
@@ -84,7 +83,7 @@ When a scenario crosses an adapter boundary, it uses a provider-independent
 stub. Real credentials are used only by the selected provider's opted-in
 runtime integration suite. The provider-neutral behavior is defined in
 [PROVIDER_ADAPTER_CONTRACTS.md] §Provider adapter contracts, and its test
-sequencing is defined in [PHASED_IMPLEMENTATION_PLAN.md] Phase 5.
+sequencing is defined in the [Automation Plan].
 
 ## 6. Three-axis coverage matrix
 
@@ -114,7 +113,7 @@ Additional scenario coverage is:
 
 [APP_BUILDER_REQUIREMENTS.md]: ../requirements/APP_BUILDER_REQUIREMENTS.md
 [CHANGE_MODEL_CONTRACTS.md]: ../contracts/CHANGE_MODEL_CONTRACTS.md
-[PHASED_IMPLEMENTATION_PLAN.md]: ../plan/PHASED_IMPLEMENTATION_PLAN.md
+[Automation Plan]: ../plan/AUTOMATION_PLAN.md#dependency-ordered-implementation-phases
 [PROVIDER_ADAPTER_CONTRACTS.md]: ../contracts/PROVIDER_ADAPTER_CONTRACTS.md
 [SPECIFICATIONS.md]: SPECIFICATIONS.md
 [TEST_EXAMPLES.md]: ../TEST_EXAMPLES.md

@@ -4,7 +4,7 @@
 
 This document defines the per-Skill authoring and verification cadence for the eleven canonical guided Skills in `doc/contracts/SKILL_CONTRACTS.md`. Use a Skill only for AI judgment, interpretation, iterative repair, or refinement; deterministic generation belongs to a Tool contract.
 
-It does not redefine Skill contracts, repository-wide sequencing, or `build_app` behavior, which are owned by `doc/contracts/SKILL_CONTRACTS.md`, `doc/plan/PHASED_IMPLEMENTATION_PLAN.md`, and `doc/requirements/APP_BUILDER_REQUIREMENTS.md`, respectively. `angular-django2` owns its public generation behavior; Skills use the upstream sources referenced by `ARCHITECTURE.md` §2.6 rather than restating them.
+It does not redefine Skill contracts, repository-wide sequencing, or `build_app` behavior, which are owned by `doc/contracts/SKILL_CONTRACTS.md`, the [Automation Plan](plan/AUTOMATION_PLAN.md#dependency-ordered-implementation-phases), and `doc/requirements/APP_BUILDER_REQUIREMENTS.md`, respectively. `angular-django2` owns its public generation behavior; Skills use the upstream sources referenced by `ARCHITECTURE.md` §2.6 rather than restating them.
 
 Skills preserve intentional contract-derived representations across backend models, OpenAPI, generated TypeScript models, and Angular validation; they must not introduce competing hand-maintained sources.
 
@@ -30,11 +30,11 @@ Each Skill's `Inputs` section in `doc/contracts/SKILL_CONTRACTS.md` defines only
 
 The [Skills Catalog in `SKILL_CONTRACTS.md`](contracts/SKILL_CONTRACTS.md#skills-catalog) is the canonical `djng` Skill source for stable name, purpose, modes, inputs, outputs, dependencies, and acceptance criteria. Numbered files in `skill_creation/skills/` are derived authoring working copies; when they differ, update the working copy rather than creating a competing source.
 
-The executable canonical catalog and provider-neutral Skill resolver planned in `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` Phase 4 will provide runtime metadata without parsing this plan, working copies, or provider-native files.
+The executable canonical catalog and provider-neutral Skill resolver planned in the [Automation Plan](plan/AUTOMATION_PLAN.md#tools-hooks-skills-adapters-and-plugins) will provide runtime metadata without parsing this plan, working copies, or provider-native files.
 
 Provider adapters/renderers derive native prompts, tool registrations, Skill files, or packages from the canonical contract. Every rendering must preserve canonical identity, purpose, inputs, outputs, dependencies, acceptance criteria, and Tool/Hook bindings and pass provider-package conformance tests. Native metadata, filesystem layouts, invocation syntax, and permissions are derived concerns, not the cross-provider format.
 
-Shared context remains with canonical Skill material. A renderer may inline or package it only when required; the copy is an artifact, not an independent source. Rendered output belongs under the ignored build/distribution location planned in `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` Phase 8 and must not modify canonical sources. See `doc/contracts/SKILL_CONTRACTS.md` §Canonical skill contract and provider renderings.
+Shared context remains with canonical Skill material. A renderer may inline or package it only when required; the copy is an artifact, not an independent source. Rendered output belongs under the ignored build/distribution location planned in the [Automation Plan](plan/AUTOMATION_PLAN.md#tools-hooks-skills-adapters-and-plugins) and must not modify canonical sources. See `doc/contracts/SKILL_CONTRACTS.md` §Canonical skill contract and provider renderings.
 
 ## Tooling boundary
 

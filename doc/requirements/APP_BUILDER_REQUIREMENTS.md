@@ -307,7 +307,8 @@ they are not a substitute for execution.
   verify generated files, Angular build health, and required backend/frontend
   integration checks.
 - A run is successful only when every terminal validation command succeeds.
-- Specific integration acceptance work remains tracked in `doc/plan/TODO.md`.
+- Specific integration acceptance work remains tracked in the
+  [Verification Plan](../plan/VERIFICATION_PLAN.md#terminal-and-global-acceptance).
 
 ### FR-10: Global generated-app acceptance
 

@@ -22,8 +22,11 @@ Related docs:
 - `doc/contracts/SKILL_CONTRACTS.md` — Skill contracts and catalog ownership
 - `doc/contracts/TEST_SCENARIO_CONTRACTS.md` — build-scenario input and expected
   oracle boundaries
-- `doc/plan/PHASED_IMPLEMENTATION_PLAN.md` — phased implementation sequencing
-- `doc/plan/TODO.md` — delivery roadmap and open items
+- `doc/plan/CONFIGURATION_PLAN.md` — configuration planning
+- `doc/plan/CONSTRUCTION_PLAN.md` — construction sequencing and backlog
+- `doc/plan/AUTOMATION_PLAN.md` — automation sequencing and backlog
+- `doc/plan/APPLICATION_DELIVERY_PLAN.md` — generated-application delivery
+- `doc/plan/VERIFICATION_PLAN.md` — verification sequencing and backlog
 
 It allows you to:
 - Keep Django responsible for data, authentication, and administration.
@@ -314,8 +317,11 @@ Current project documents:
 - [Skill contracts](doc/contracts/SKILL_CONTRACTS.md)
 - [Test scenario contracts](doc/contracts/TEST_SCENARIO_CONTRACTS.md)
 - [Architecture](doc/ARCHITECTURE.md)
-- [Phased implementation plan](doc/plan/PHASED_IMPLEMENTATION_PLAN.md)
-- [Open items](doc/plan/TODO.md)
+- [Configuration plan](doc/plan/CONFIGURATION_PLAN.md)
+- [Construction plan](doc/plan/CONSTRUCTION_PLAN.md)
+- [Automation plan](doc/plan/AUTOMATION_PLAN.md)
+- [Application delivery plan](doc/plan/APPLICATION_DELIVERY_PLAN.md)
+- [Verification plan](doc/plan/VERIFICATION_PLAN.md)
 
 ## Status
 

@@ -12,7 +12,7 @@ implementation sequencing, or test coverage. Those concerns are owned by
 [AI_AUTOMATION_REQUIREMENTS.md], [ARCHITECTURE.md],
 [TOOL_CONTRACTS.md], [HOOK_CONTRACTS.md], [PROVIDER_ADAPTER_CONTRACTS.md],
 [PLUGIN_CONTRACTS.md], [SKILL_CONTRACTS.md],
-[APP_BUILDER_REQUIREMENTS.md], and [PHASED_IMPLEMENTATION_PLAN.md], respectively.
+[APP_BUILDER_REQUIREMENTS.md], and the [Automation Plan], respectively.
 
 Tool, Hook, Plugin, Skill, and provider-adapter names, inputs, outputs,
 lifecycle families, failure categories, and caller/implementation boundaries
@@ -229,7 +229,7 @@ or default tests.
 [AI_AUTOMATION_REQUIREMENTS.md]: ../requirements/AI_AUTOMATION_REQUIREMENTS.md
 [APP_BUILDER_REQUIREMENTS.md]: ../requirements/APP_BUILDER_REQUIREMENTS.md
 [ARCHITECTURE.md]: ../ARCHITECTURE.md
-[PHASED_IMPLEMENTATION_PLAN.md]: ../plan/PHASED_IMPLEMENTATION_PLAN.md
+[Automation Plan]: ../plan/AUTOMATION_PLAN.md#dependency-ordered-implementation-phases
 [PLUGIN_CONTRACTS.md]: ../contracts/PLUGIN_CONTRACTS.md
 [PROVIDER_ADAPTER_CONTRACTS.md]: ../contracts/PROVIDER_ADAPTER_CONTRACTS.md
 [SKILL_CONTRACTS.md]: ../contracts/SKILL_CONTRACTS.md
