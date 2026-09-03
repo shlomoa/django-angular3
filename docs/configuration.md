@@ -4,14 +4,14 @@
 The authoritative definitions, fields, defaults, ownership, and lifecycle are
 in the executable configuration models; their categories and relationships
 are specified in `doc/specifications/SPECIFICATIONS.md` §2
-<a href="https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#2-configuration-and-inputs" target="_blank" rel="noopener noreferrer" aria-label="Open Configuration and inputs in the source documentation in a new tab">↗</a>.
+[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#2-configuration-and-inputs){.modal-link}
 
 ## Configuration and inputs
 
 | Item | Owner | Purpose |
 |---|---|---|
 | `django-angular3.json` | `djng` | Static tool configuration: Angular execution settings, global `ng-openapi-gen` settings, and `drf-spectacular` settings. |
-| Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/specifications/SPECIFICATIONS.md` §2.1 <a href="https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories" target="_blank" rel="noopener noreferrer" aria-label="Open Configuration and input categories in the source documentation in a new tab">↗</a>. |
+| Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/specifications/SPECIFICATIONS.md` §2.1 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories){.modal-link} |
 | OpenAPI schema | generated-app user | API-contract input or the artifact exported from Django/DRF. |
 | OpenUI concrete UI document | generated-app user | Structured UI-description input. |
 
@@ -38,7 +38,7 @@ The project configuration identifies a generated app and names the paths that
 a command uses for its OpenAPI schema, OpenUI concrete UI document, and Angular
 workspace. Its filename, discovery, ownership, and field requirements are
 specified in `doc/specifications/SPECIFICATIONS.md` §2.1
-<a href="https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories" target="_blank" rel="noopener noreferrer" aria-label="Open Configuration and input categories in the source documentation in a new tab">↗</a>
+[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories){.modal-link}
 and implemented by the executable
 configuration model.
 

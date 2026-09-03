@@ -107,7 +107,7 @@ execution workflow is not implemented yet. Do not rely on it to build or
 validate a generated app; use the individual wrappers below while the planner
 is completed. Its target requirements are documented in
 `doc/requirements/APP_BUILDER_REQUIREMENTS.md`
-<a href="https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md" target="_blank" rel="noopener noreferrer" aria-label="Open App Builder Requirements in the source documentation in a new tab">↗</a>.
+[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md){.modal-link}
 
 ### 5. Run individual Angular wrappers when needed
 
