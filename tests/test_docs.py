@@ -2,7 +2,6 @@ from html.parser import HTMLParser
 from pathlib import Path
 from unittest import SkipTest, TestCase
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TUTORIAL_HTML = REPO_ROOT / "docs" / "_build" / "html" / "tutorial.html"
 TARGET_URL = (
@@ -39,7 +38,8 @@ class TutorialModalLinkDocsTest(TestCase):
         super().setUpClass()
         if not TUTORIAL_HTML.exists():
             raise SkipTest(
-                "Build the Sphinx documentation before running the docs integration test."
+                "Build the Sphinx documentation before running the docs "
+                "integration test."
             )
 
         cls.parser = _TutorialHtmlParser()
@@ -55,17 +55,17 @@ class TutorialModalLinkDocsTest(TestCase):
         self.assertEqual([link.get("href") for link in modal_links], [TARGET_URL])
         self.assertTrue(
             any(
-                (script.get("src") or "").split("?", 1)[0].endswith(
-                    "_static/modal_links.js"
-                )
+                (script.get("src") or "")
+                .split("?", 1)[0]
+                .endswith("_static/modal_links.js")
                 for script in self.parser.scripts
             )
         )
         self.assertTrue(
             any(
-                (stylesheet.get("href") or "").split("?", 1)[0].endswith(
-                    "_static/custom.css"
-                )
+                (stylesheet.get("href") or "")
+                .split("?", 1)[0]
+                .endswith("_static/custom.css")
                 for stylesheet in self.parser.stylesheets
             )
         )
