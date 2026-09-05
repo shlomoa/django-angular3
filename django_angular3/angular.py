@@ -19,17 +19,32 @@ from .settings import (
 
 @dataclass(frozen=True)
 class AngularInvocation:
-    """A single Angular CLI invocation and the directory it should run from."""
+    """A single Angular CLI invocation with kebab-case long flags."""
 
     command_name: str
     argv: tuple[str, ...]
     cwd: Path
+
+    def __post_init__(self) -> None:
+        normalized_argv = tuple(_to_kebab_flag(arg) for arg in self.argv)
+        object.__setattr__(self, "argv", normalized_argv)
 
     def to_dict(self) -> dict[str, object]:
         return {"argv": list(self.argv), "cwd": str(self.cwd)}
 
 
 AngularInvocationBuilder = Callable[..., list[AngularInvocation]]
+
+
+def _to_kebab_flag(arg: str) -> str:
+    """Normalize a long Angular CLI flag while preserving its value."""
+    if not arg.startswith("--"):
+        return arg
+
+    flag, separator, value = arg.partition("=")
+    normalized_flag = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", flag)
+    normalized_flag = normalized_flag.replace("_", "-").lower()
+    return f"{normalized_flag}{separator}{value}" if separator else normalized_flag
 
 
 def resolve_angular_command(
@@ -302,13 +317,13 @@ def build_ng_page_invocations(
     if project:
         argv.append(f"--project={project}")
     if route_path:
-        argv.append(f"--routePath={route_path}")
+        argv.append(f"--route-path={route_path}")
     if access == "protected":
-        argv.append(f"--authGuard={auth_guard}")
+        argv.append(f"--auth-guard={auth_guard}")
     if navigation_label:
-        argv.append(f"--navigationLabel={navigation_label}")
+        argv.append(f"--navigation-label={navigation_label}")
     if navigation_icon:
-        argv.append(f"--navigationIcon={navigation_icon}")
+        argv.append(f"--navigation-icon={navigation_icon}")
 
     return [
         AngularInvocation(
@@ -385,7 +400,7 @@ def build_ng_reactive_form_invocations(
     if project:
         argv.append(f"--project={project}")
     if primitives_path:
-        argv.append(f"--primitivesPath={primitives_path}")
+        argv.append(f"--primitives-path={primitives_path}")
 
     return [
         AngularInvocation(
@@ -436,9 +451,9 @@ def build_ng_site_invocations(
         "generate",
         "angular-django2:site",
         f"--operation={operation}",
-        f"--authGuard={auth_guard}",
-        f"--csrfCookieName={csrf_cookie_name}",
-        f"--csrfHeaderName={csrf_header_name}",
+        f"--auth-guard={auth_guard}",
+        f"--csrf-cookie-name={csrf_cookie_name}",
+        f"--csrf-header-name={csrf_header_name}",
     ]
     if source:
         argv.append(f"--source={source}")
@@ -447,7 +462,7 @@ def build_ng_site_invocations(
     if project:
         argv.append(f"--project={project}")
     if operation == "delete":
-        argv.append("--confirmDelete=true")
+        argv.append("--confirm-delete=true")
 
     return [
         AngularInvocation(
@@ -493,15 +508,15 @@ def build_ng_openapi_setup_invocations(
         settings.ng_executable,
         "generate",
         "angular-django2:openapi-setup",
-        f"--openapi_spec_file={config.openapi_schema}",
-        f"--outputPath={output_path}",
+        f"--openapi-spec-file={config.openapi_schema}",
+        f"--output-path={output_path}",
     ]
     if helpers_path:
-        argv.append(f"--helpersPath={helpers_path}")
+        argv.append(f"--helpers-path={helpers_path}")
     if skip_helpers:
-        argv.append("--skipHelpers=true")
+        argv.append("--skip-helpers=true")
     if skip_tests:
-        argv.append("--skipTests=true")
+        argv.append("--skip-tests=true")
 
     return [
         AngularInvocation(
