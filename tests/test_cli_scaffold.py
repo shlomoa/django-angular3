@@ -99,7 +99,7 @@ class ScaffoldTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     static_config["tool"]["ngAddPackage"],
-                    "angular-django2@0.4.2",
+                    "angular-django2@0.4.4",
                 )
 
     def test_project_config_resolves_paths(self) -> None:

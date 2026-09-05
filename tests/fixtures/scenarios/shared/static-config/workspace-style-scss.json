@@ -49,6 +49,6 @@
       "ng_reactive_form",
       "ng_site"
     ],
-    "ngAddPackage": "angular-django2@0.4.2"
+    "ngAddPackage": "angular-django2@0.4.4"
   }
 }
