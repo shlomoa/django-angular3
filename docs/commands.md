@@ -51,6 +51,9 @@ not application configuration.
 	`django_angular3/angular.py`.
 - This page owns djng wrapper arguments and interface availability. It does not
 	redefine ngdj schematic contracts.
+- djng emits every multiword Angular CLI option in kebab-case (for example,
+	`--auth-guard` and `--openapi-spec-file`) so Angular CLI accepts the resolved
+	invocation.
 
 ## Standalone-only commands
 

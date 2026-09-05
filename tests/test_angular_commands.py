@@ -413,10 +413,10 @@ class AngularCliCommandTests(unittest.TestCase):
                 "--path=src/app/features/orders",
                 "--access=protected",
                 "--project=portal",
-                "--routePath=sales/orders",
-                "--authGuard=portalGuard",
-                "--navigationLabel=Orders",
-                "--navigationIcon=shopping_cart",
+                "--route-path=sales/orders",
+                "--auth-guard=portalGuard",
+                "--navigation-label=Orders",
+                "--navigation-icon=shopping_cart",
             ],
         )
 
@@ -502,7 +502,7 @@ class AngularCliCommandTests(unittest.TestCase):
                 "--definition=forms/contact.json",
                 "--path=src/app/features/contact",
                 "--project=portal",
-                "--primitivesPath=src/app/shared/form-helpers",
+                "--primitives-path=src/app/shared/form-helpers",
             ],
         )
 
@@ -549,9 +549,9 @@ class AngularCliCommandTests(unittest.TestCase):
                 "generate",
                 "angular-django2:site",
                 "--operation=modify",
-                "--authGuard=portalGuard",
-                "--csrfCookieName=portalcsrftoken",
-                "--csrfHeaderName=X-Portal-CSRFToken",
+                "--auth-guard=portalGuard",
+                "--csrf-cookie-name=portalcsrftoken",
+                "--csrf-header-name=X-Portal-CSRFToken",
                 "--source=app.openui.json",
                 "--project=portal",
             ],
@@ -587,7 +587,7 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(stderr, "")
         argv = json.loads(stdout)["invocations"][0]["argv"]
         self.assertIn("--operation=delete", argv)
-        self.assertIn("--confirmDelete=true", argv)
+        self.assertIn("--confirm-delete=true", argv)
         self.assertFalse(any(value.startswith("--source=") for value in argv))
         self.assertNotIn("--defaults=true", argv)
 
@@ -641,8 +641,8 @@ class AngularCliCommandTests(unittest.TestCase):
                 ng,
                 "generate",
                 "angular-django2:openapi-setup",
-                f"--openapi_spec_file={schema_path}",
-                "--outputPath=src/app/api",
+                f"--openapi-spec-file={schema_path}",
+                "--output-path=src/app/api",
             ],
         )
 
@@ -659,9 +659,35 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         argv = json.loads(stdout)["invocations"][0]["argv"]
-        self.assertIn("--helpersPath=src/app/api-integration", argv)
-        self.assertIn("--skipHelpers=true", argv)
-        self.assertIn("--skipTests=true", argv)
+        self.assertIn("--helpers-path=src/app/api-integration", argv)
+        self.assertIn("--skip-helpers=true", argv)
+        self.assertIn("--skip-tests=true", argv)
+
+    def test_angular_invocation_normalizes_long_flags(self) -> None:
+        invocation = AngularInvocation(
+            command_name="ng_test",
+            argv=(
+                "ng",
+                "generate",
+                "angular-django2:site",
+                "--authGuard=portalGuard",
+                "--openapi_spec_file=openapi.json",
+                "--skipTests",
+            ),
+            cwd=ROOT,
+        )
+
+        self.assertEqual(
+            invocation.argv,
+            (
+                "ng",
+                "generate",
+                "angular-django2:site",
+                "--auth-guard=portalGuard",
+                "--openapi-spec-file=openapi.json",
+                "--skip-tests",
+            ),
+        )
 
     def test_ng_data_service_dry_run_resolves_data_service_schematic(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
