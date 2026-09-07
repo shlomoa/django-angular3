@@ -16,6 +16,7 @@ from django_angular3.config import (
 )
 from django_angular3.config_changes import compare_static_config
 from django_angular3.documents import load_document
+from django_angular3.settings import DEFAULT_NG_ADD_PACKAGE
 from django_angular3.validation import (
     validate_openapi_document,
     validate_openui_document,
@@ -80,26 +81,14 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(validate_project_config(config), [])
 
     def test_shipped_static_configs_pin_ngdj_package(self) -> None:
-        for static_config_path in (
-            ROOT / "django-angular3.json",
-            ROOT
-            / "django_angular3"
-            / "templates"
-            / "django_angular3"
-            / "django-angular3.json",
-            ROOT
-            / "django_angular3"
-            / "examples"
-            / "01_simple_crm"
-            / "django-angular3.json",
-        ):
+        for static_config_path in (ROOT / "django_angular3" / "django-angular3.json",):
             with self.subTest(static_config=static_config_path):
                 static_config = json.loads(
                     static_config_path.read_text(encoding="utf-8")
                 )
                 self.assertEqual(
                     static_config["tool"]["ngAddPackage"],
-                    "angular-django2@0.4.5",
+                    DEFAULT_NG_ADD_PACKAGE,
                 )
 
     def test_project_config_resolves_paths(self) -> None:

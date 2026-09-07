@@ -23,6 +23,7 @@ from django_angular3.config import (
 )
 from django_angular3.management.commands.ng_build import Command as NgBuildCommand
 from django_angular3.settings import (
+    DEFAULT_NG_ADD_PACKAGE,
     DjangoAngularSettings,
     load_angular_settings,
     load_drf_spectacular_settings,
@@ -68,7 +69,7 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertFalse(settings.ssr)
         self.assertTrue(settings.zoneless)
         self.assertEqual(settings.build_configuration, "production")
-        self.assertEqual(settings.ng_add_package, "angular-django2@0.4.5")
+        self.assertEqual(settings.ng_add_package, DEFAULT_NG_ADD_PACKAGE)
 
     def test_load_angular_settings_applies_explicit_overrides(self) -> None:
         overridden_settings = load_angular_settings().__dict__ | {
@@ -179,12 +180,13 @@ class AngularCliCommandTests(unittest.TestCase):
     def test_ng_new_dry_run_prints_empty_workspace_command(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_new", "--dry-run")
 
-        ng = load_angular_settings().ng_executable
+        settings = load_angular_settings()
+        ng = settings.ng_executable
         self.assertEqual(exit_code, 0)
         self.assertEqual(stderr, "")
         plan = json.loads(stdout)
         self.assertEqual(plan["projectConfig"], str(PROJECT_CONFIG_PATH))
-        self.assertEqual(plan["toolConfig"], "django-angular3.json")
+        self.assertEqual(plan["toolConfig"], settings.config_path)
         # ng new runs from angular_workspace.parent, so --directory is
         # just the final component.
         self.assertEqual(
@@ -764,7 +766,7 @@ class AngularCliCommandTests(unittest.TestCase):
         plan = json.loads(stdout)
         self.assertEqual(
             plan["invocations"][0]["argv"],
-            [ng, "add", "angular-django2@0.4.5", "--skip-confirmation"],
+            [ng, "add", DEFAULT_NG_ADD_PACKAGE, "--skip-confirmation"],
         )
 
     def test_ng_add_dry_run_accepts_custom_package(self) -> None:

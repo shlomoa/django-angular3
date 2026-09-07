@@ -14,6 +14,28 @@ class AngularCommandError(RuntimeError):
 
 _is_win = os.name == "nt"
 
+PACKAGE_DEFAULT_CONFIG_PATH = Path(__file__).parent / "django-angular3.json"
+
+
+def _package_default_tool_config() -> Mapping[str, Any]:
+    if PACKAGE_DEFAULT_CONFIG_PATH.is_file():
+        try:
+            doc = load_document(PACKAGE_DEFAULT_CONFIG_PATH)
+            if isinstance(doc, Mapping):
+                return doc
+        except Exception:
+            pass
+    return {}
+
+
+_pkg_defaults = _package_default_tool_config()
+_pkg_tool = _pkg_defaults.get("tool", {}) if isinstance(_pkg_defaults, Mapping) else {}
+DEFAULT_NG_ADD_PACKAGE: str = (
+    _pkg_tool.get("ngAddPackage", "angular-django2")
+    if isinstance(_pkg_tool, Mapping)
+    else "angular-django2"
+)
+
 DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
     "config_path": "django-angular3.json",
     "node_executable": "node.exe" if _is_win else "node",
@@ -26,8 +48,17 @@ DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
     "routing": True,
     "ssr": False,
     "zoneless": True,
-    "ng_add_package": "angular-django2",
+    "ng_add_package": DEFAULT_NG_ADD_PACKAGE,
 }
+
+
+def _resolve_tool_config_path(config_path: str | Path | None) -> Path:
+    if config_path:
+        return Path(config_path)
+    default_path = Path(DEFAULT_ANGULAR_SETTINGS["config_path"])
+    if default_path.is_file():
+        return default_path
+    return PACKAGE_DEFAULT_CONFIG_PATH
 
 
 class DjangoAngularSettings(SimpleNamespace):
@@ -69,7 +100,7 @@ def load_angular_settings(
 def _load_tool_configuration(
     config_path: str | Path | None,
 ) -> dict[str, object]:
-    path = Path(config_path or DEFAULT_ANGULAR_SETTINGS["config_path"])
+    path = _resolve_tool_config_path(config_path)
     if not path.is_file():
         return {}
 
@@ -104,7 +135,7 @@ def _load_tool_configuration(
         "zoneless": application.get("zoneless", True),
         "build_configuration": build.get("configuration", "production"),
         "command_allowlist": tool.get("commandAllowlist", ("ng_openapi_gen",)),
-        "ng_add_package": tool.get("ngAddPackage", "angular-django2"),
+        "ng_add_package": tool.get("ngAddPackage", DEFAULT_NG_ADD_PACKAGE),
     }
     for config_key, setting_key in (
         ("node", "node_executable"),
@@ -174,7 +205,8 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
         errors.append("tool.commandAllowlist must be a sequence of strings.")
     elif not all(isinstance(command, str) and command.strip() for command in allowlist):
         errors.append("tool.commandAllowlist must contain only non-empty strings.")
-    _require_string(tool, "ngAddPackage", "tool", errors)
+    if "ngAddPackage" in tool:
+        _require_string(tool, "ngAddPackage", "tool", errors)
     return errors
 
 
@@ -245,7 +277,7 @@ def load_ng_openapi_gen_settings(
     config_path: str | Path | None = None,
 ) -> dict[str, object]:
     """Load global ng-openapi-gen settings from django-angular3.json."""
-    path = Path(config_path or DEFAULT_ANGULAR_SETTINGS["config_path"])
+    path = _resolve_tool_config_path(config_path)
     if not path.is_file():
         return {}
     try:
@@ -288,7 +320,7 @@ def load_drf_spectacular_settings(
     config_path: str | Path | None = None,
 ) -> dict[str, object]:
     """Load global drf-spectacular settings from django-angular3.json."""
-    path = Path(config_path or DEFAULT_ANGULAR_SETTINGS["config_path"])
+    path = _resolve_tool_config_path(config_path)
     if not path.is_file():
         return {}
     try:

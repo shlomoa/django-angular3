@@ -503,6 +503,10 @@ def _run_install_tutorial(dest: str) -> int:
         dest_path,
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
     )
+    shutil.copy2(
+        Path(__file__).parent / "django-angular3.json",
+        dest_path / "django-angular3.json",
+    )
     print(f"Tutorial project installed to '{dest_path}'.")
     print()
     print("Next steps:")
