@@ -411,68 +411,6 @@ def build_ng_reactive_form_invocations(
     ]
 
 
-def build_ng_site_invocations(
-    config: ProjectConfig,
-    settings: DjangoAngularSettings,
-    *,
-    source: str | None = None,
-    defaults: bool = False,
-    project: str | None = None,
-    operation: str = "create",
-    confirm_delete: bool = False,
-    auth_guard: str = "authGuard",
-    csrf_cookie_name: str = "csrftoken",
-    csrf_header_name: str = "X-CSRFToken",
-    **_: Any,
-) -> list[AngularInvocation]:
-    """Build the ngdj site schematic invocation."""
-    if operation not in {"create", "modify", "delete"}:
-        raise AngularCommandError("Site operation must be create, modify, or delete.")
-    if operation == "delete" and (source or defaults):
-        raise AngularCommandError(
-            "Site deletion uses the ownership manifest; omit --source and --defaults."
-        )
-    if operation != "delete" and bool(source) == defaults:
-        raise AngularCommandError(
-            "Site requires exactly one of --source or --defaults."
-        )
-    if source:
-        _validate_relative_path(source, "Site source")
-    if operation == "delete" and not confirm_delete:
-        raise AngularCommandError("Site deletion requires --confirm-delete.")
-    _validate_identifier(auth_guard, "Site auth guard")
-    if not csrf_cookie_name:
-        raise AngularCommandError("Site CSRF cookie name must not be empty.")
-    if not csrf_header_name:
-        raise AngularCommandError("Site CSRF header name must not be empty.")
-
-    argv: list[str] = [
-        settings.ng_executable,
-        "generate",
-        "angular-django2:site",
-        f"--operation={operation}",
-        f"--auth-guard={auth_guard}",
-        f"--csrf-cookie-name={csrf_cookie_name}",
-        f"--csrf-header-name={csrf_header_name}",
-    ]
-    if source:
-        argv.append(f"--source={source}")
-    elif defaults:
-        argv.append("--defaults=true")
-    if project:
-        argv.append(f"--project={project}")
-    if operation == "delete":
-        argv.append("--confirm-delete=true")
-
-    return [
-        AngularInvocation(
-            command_name="ng_site",
-            argv=tuple(argv),
-            cwd=config.angular_workspace,
-        )
-    ]
-
-
 def build_ng_openapi_gen_invocations(
     config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:
@@ -706,7 +644,6 @@ _COMMAND_BUILDERS: dict[str, AngularInvocationBuilder] = {
     "ng_component": build_ng_component_invocations,
     "ng_complex_component": build_ng_complex_component_invocations,
     "ng_reactive_form": build_ng_reactive_form_invocations,
-    "ng_site": build_ng_site_invocations,
     "ng_openapi_gen": build_ng_openapi_gen_invocations,
     "ng_openapi_setup": build_ng_openapi_setup_invocations,
     "ng_data_service": build_ng_data_service_invocations,

@@ -84,7 +84,6 @@ These commands are available through both interfaces. Invoke them as either
 | `ng_component` | Generate a standalone OnPush component. Requires `--name`; accepts `--target-path` and `--project`. |
 | `ng_complex_component` | Generate, modify, or delete an advanced Material component. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and delete confirmation via `--confirm`. |
 | `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
-| `ng_site` | Assemble or maintain a site. Create/modify requires exactly one of `--source` or `--defaults`; delete uses the ownership manifest and requires `--confirm-delete`. Accepts `--project`, `--operation`, `--auth-guard`, and CSRF-name options. |
 | `ng_openapi_gen` | Run the workspace-local `ng-openapi-gen` via `pnpm exec` for the discovered OpenAPI artifact. |
 | `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
 | `ng_data_service` | Generate a typed data-service wrapper. Requires `--resource`; accepts `--project`. |

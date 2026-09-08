@@ -166,22 +166,6 @@ def build_parser() -> argparse.ArgumentParser:
     ng_reactive_form.add_argument("--primitives-path", default=None)
     _add_dry_run_argument(ng_reactive_form)
 
-    ng_site = subparsers.add_parser(
-        "ng_site", help="Assemble or maintain an OpenUI-defined Material site."
-    )
-    site_source = ng_site.add_mutually_exclusive_group()
-    site_source.add_argument("--source", default=None)
-    site_source.add_argument("--defaults", action="store_true")
-    ng_site.add_argument("--project", default=None)
-    ng_site.add_argument(
-        "--operation", choices=["create", "modify", "delete"], default="create"
-    )
-    ng_site.add_argument("--confirm-delete", action="store_true")
-    ng_site.add_argument("--auth-guard", default="authGuard")
-    ng_site.add_argument("--csrf-cookie-name", default="csrftoken")
-    ng_site.add_argument("--csrf-header-name", default="X-CSRFToken")
-    _add_dry_run_argument(ng_site)
-
     ng_openapi_gen = subparsers.add_parser(
         "ng_openapi_gen", help="Run ng-openapi-gen for the configured OpenAPI source."
     )
@@ -359,7 +343,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         "ng_component",
         "ng_complex_component",
         "ng_reactive_form",
-        "ng_site",
         "ng_openapi_gen",
         "ng_openapi_setup",
         "ng_data_service",
@@ -423,17 +406,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "target_path": args.target_path,
                 "project": args.project,
                 "primitives_path": args.primitives_path,
-            }
-        if args.command == "ng_site":
-            plan_options = {
-                "source": args.source,
-                "defaults": args.defaults,
-                "project": args.project,
-                "operation": args.operation,
-                "confirm_delete": args.confirm_delete,
-                "auth_guard": args.auth_guard,
-                "csrf_cookie_name": args.csrf_cookie_name,
-                "csrf_header_name": args.csrf_header_name,
             }
         return _run_angular_command(args.command, dry_run=args.dry_run, **plan_options)
 

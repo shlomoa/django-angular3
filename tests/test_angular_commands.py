@@ -523,76 +523,6 @@ class AngularCliCommandTests(unittest.TestCase):
             "Reactive form definition must be a non-empty relative path", stderr
         )
 
-    def test_ng_site_dry_run_resolves_ngdj_schematic(self) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_site",
-            "--source",
-            "app.openui.json",
-            "--project",
-            "portal",
-            "--operation",
-            "modify",
-            "--auth-guard",
-            "portalGuard",
-            "--csrf-cookie-name",
-            "portalcsrftoken",
-            "--csrf-header-name",
-            "X-Portal-CSRFToken",
-            "--dry-run",
-        )
-
-        ng = load_angular_settings().ng_executable
-        self.assertEqual(exit_code, 0)
-        self.assertEqual(stderr, "")
-        self.assertEqual(
-            json.loads(stdout)["invocations"][0]["argv"],
-            [
-                ng,
-                "generate",
-                "angular-django2:site",
-                "--operation=modify",
-                "--auth-guard=portalGuard",
-                "--csrf-cookie-name=portalcsrftoken",
-                "--csrf-header-name=X-Portal-CSRFToken",
-                "--source=app.openui.json",
-                "--project=portal",
-            ],
-        )
-
-    def test_ng_site_create_requires_source_or_defaults(self) -> None:
-        exit_code, _stdout, stderr = self.run_cli("ng_site", "--dry-run")
-
-        self.assertEqual(exit_code, 1)
-        self.assertIn("Site requires exactly one of --source or --defaults.", stderr)
-
-    def test_ng_site_delete_requires_confirmation(self) -> None:
-        exit_code, _stdout, stderr = self.run_cli(
-            "ng_site",
-            "--operation",
-            "delete",
-            "--dry-run",
-        )
-
-        self.assertEqual(exit_code, 1)
-        self.assertIn("Site deletion requires --confirm-delete.", stderr)
-
-    def test_ng_site_delete_uses_manifest_without_source(self) -> None:
-        exit_code, stdout, stderr = self.run_cli(
-            "ng_site",
-            "--operation",
-            "delete",
-            "--confirm-delete",
-            "--dry-run",
-        )
-
-        self.assertEqual(exit_code, 0)
-        self.assertEqual(stderr, "")
-        argv = json.loads(stdout)["invocations"][0]["argv"]
-        self.assertIn("--operation=delete", argv)
-        self.assertIn("--confirm-delete=true", argv)
-        self.assertFalse(any(value.startswith("--source=") for value in argv))
-        self.assertNotIn("--defaults=true", argv)
-
     def test_ng_openapi_gen_dry_run_uses_derived_configuration_file(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_openapi_gen", "--dry-run")
 
@@ -881,7 +811,6 @@ class AngularManagementCommandTests(unittest.TestCase):
                 "ng_reactive_form",
                 {"name": "contact", "definition": "forms/contact.json"},
             ),
-            ("ng_site", {"defaults": True}),
             ("ng_openapi_gen", {}),
             ("ng_add", {}),
         )

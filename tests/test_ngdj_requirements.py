@@ -39,7 +39,6 @@ class NgdjRequirementsContractTests(unittest.TestCase):
             "component",
             "complex-component",
             "reactive-form",
-            "site",
         ):
             with self.subTest(schematic=name):
                 self.assertIn(name, schematics)
@@ -244,7 +243,6 @@ class DjngNgdjIntegrationContractTests(unittest.TestCase):
                 {"name": "contact", "definition": "forms/contact.json"},
                 "reactive-form",
             ),
-            "ng_site": ({"defaults": True}, "site"),
         }
 
         for wrapper, (options, schematic) in cases.items():
