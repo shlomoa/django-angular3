@@ -69,17 +69,12 @@ shows the accepted concrete-document structure.
 
 OpenUI change semantics are owned by the upstream
 [OpenUI JSON comparison tool](https://openui-spec.readthedocs.io/en/latest/tooling/comparison/),
-not by `djng`. Until `build_app` integrates this planned comparison step, run
-the tool from an `openui-spec` checkout with its repository-local interpreter,
-passing the accepted reference document first and the candidate document
-second:
-
-```powershell
-.\.venv\Scripts\python bin\compare_openui_json.py reference.json new.json
-```
+not by `djng`. Until `build_app` integrates this planned comparison step, use
+the `compare_openui_spec` console script installed by `openui-spec`, passing
+the accepted reference document first and the candidate document second:
 
 ```bash
-./.venv/bin/python bin/compare_openui_json.py reference.json new.json
+compare_openui_spec reference.json new.json
 ```
 
 Use `--output changelog.json` (or `-o changelog.json`) to write the
