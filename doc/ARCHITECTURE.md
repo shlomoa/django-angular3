@@ -89,8 +89,7 @@ features.
 
 #### 2.8.1 [OpenUI]
 A technology-independent UI-description specification maintained by
-[shlomoa/openui-spec][openui-spec]. `djng` consumes version 0.1.1. Its purpose
-and vocabulary are defined by
+[shlomoa/openui-spec][openui-spec]. Its purpose and vocabulary are defined by
 the [OpenUI specification][openui-spec], and the roles of its schema, catalog,
 and concrete UI document are defined by the
 [OpenUI artifact-role SSOT][openui-artifacts]. `djng` consumes that external

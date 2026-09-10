@@ -43,7 +43,7 @@ class OpenUiValidationTests(unittest.TestCase):
             ("statusIndicator", "StatusIndicator"),
         )
         document = {
-            "version": "0.1.0",
+            "version": "0.1.1",
             "id": "root",
             "type": "Application",
             "children": [
@@ -67,7 +67,7 @@ class OpenUiValidationTests(unittest.TestCase):
             with self.subTest(object_type=singular_type):
                 plural_type = f"{singular_type}s"
                 document = {
-                    "version": "0.1.0",
+                    "version": "0.1.1",
                     "id": "root",
                     "type": "Application",
                     "children": [{"id": "legacy", "type": plural_type}],
