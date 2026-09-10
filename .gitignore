@@ -49,3 +49,6 @@ schema.yml
 
 .claude/worktrees/
 /.vs
+
+# ruff temporary directory
+.ruff_cache
