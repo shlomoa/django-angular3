@@ -8,7 +8,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import cast
 
-from bin.compare_openui_json import compare as compare_openui_json
+from bin.compare_openui_spec import compare as compare_openui_spec
 
 from .changes import Change, ChangeDomain, ChangeEvidence, ChangeOperation
 from .documents import DocumentError, load_document
@@ -54,7 +54,7 @@ def compare_openui_files(reference: Path, candidate: Path) -> tuple[Change, ...]
     """Load, validate, and compare OpenUI JSON files through openui-spec."""
     reference_document = _load_openui_document(reference)
     candidate_document = _load_openui_document(candidate)
-    changelog = compare_openui_json(reference_document, candidate_document)
+    changelog = compare_openui_spec(reference_document, candidate_document)
     return translate_openui_changelog(changelog, source=str(candidate))
 
 
