@@ -2,7 +2,8 @@
 
 ## Purpose and boundary
 
-Scenario, construction, integration, terminal, global, cross-platform, and staging verification.
+Scenario, construction, integration, visual, interactive, terminal, global,
+cross-platform, and staging verification.
 
 Normative behavior remains owned by the referenced requirements,
 specifications, contracts, architecture, and executable/configuration sources.
@@ -66,6 +67,68 @@ GitHub owns issue scope and tracking.
 - generated-app-compatible `django-admin build_app --dry-run` coverage <!-- STEP7-b9002c79c218 -->
 - Update implementation status, capability metadata, and the backlog only from actual test evidence. Provider-neutral stub success alone does not establish provider support. <!-- STEP7-be20b23163a3 -->
 
+## Visual and interactive verification
+
+### Scope and repository surfaces
+
+Every user-facing artifact type introduced by a Skill, schematic, OpenUI
+scope, or `ng_*` command must gain a reproducible visual demonstration when
+that artifact type is first introduced. This is an artifact-type gate, not a
+per-PR screenshot requirement.
+
+Each repository retains its own verification surface:
+
+| Repository | Visual verification surface | Tracking |
+|---|---|---|
+| `openui-spec` | Generated-examples application | `openui-spec#149` |
+| `angular-django2` (`ngdj`) | `/ui` reference application and generated Angular application | `angular-django2#27`; parser dependencies `#98` and `#103` |
+| `django-angular3` (`djng`) | Runnable generated application and gated `/ng/build` diagnostics | Application-delivery issues and `django-angular3#84` |
+
+The cross-repository build order is `openui-spec` → `angular-django2` →
+`django-angular3`. A single unified demo site is not required.
+
+### Capture and reproduction gate
+
+For each registered user-facing artifact type, verification must:
+
+1. Boot the relevant generated or reference application against seeded fixture
+	data.
+2. Capture at least one full-page screenshot that demonstrates the artifact
+	and upload it as a CI build artifact.
+3. Fail when the application cannot boot or screenshot capture fails.
+4. Never fail on visual difference; this plan does not require screenshot
+	baselines, pixel diffing, or a flakiness budget.
+5. Keep the result interactive through a checked-in `DEMO.md` that records the
+	exact local server command, fixture setup, URL, and actions needed to
+	reproduce each capture.
+
+### Lifecycle enforcement
+
+The planned deterministic `demo-capture` Tool and Hook are tracked by issues
+#162 and #163. Before implementation, the normative Hook contract must be
+added to `doc/contracts/HOOK_CONTRACTS.md` using its canonical seven-field
+shape. This plan constrains that future contract as follows:
+
+| Field | Planning constraint |
+|---|---|
+| Name | `demo-capture` |
+| Purpose | Prove that a user-facing construction output renders and remains locally reproducible. |
+| Trigger event | `post-tool`, after `post-generation` succeeds for a Tool that produces a user-facing artifact. |
+| Deterministic action | Boot the application with seeded data, capture registered full-page screenshots, upload or record their artifact paths, and verify the corresponding `DEMO.md` reproduction entry. |
+| Failure behavior | Halt on boot or capture failure using the Hook contract's structured failure and exit-code rules; never compare pixels or invoke AI judgment. |
+| Allowed wrapped tools | The catalogued generation Tools that produce user-facing artifacts, plus catalogued dev-server and headless-browser Tools defined by #162. |
+| Implementation reference | The implementation delivered through #162 and #163. |
+
+Until the Hook exists, repository CI provides the same deterministic boot,
+capture, artifact-upload, and reproduction-documentation gate. The Hook later
+absorbs that enforcement without changing its acceptance semantics.
+
+### Explicit exclusions
+
+- A unified cross-repository demo site.
+- Visual-regression or pixel-difference testing.
+- Persistent demo hosting such as GitHub Pages or preview environments.
+
 ## Terminal and global acceptance
 
 ### Planning details
@@ -127,11 +190,12 @@ and global acceptance. This section sequences their E2E implementation.
 
 | Repository | Responsibility | Validation source |
 |---|---|---|
+| `openui-spec` | Validate specification-derived generated examples and their registered visual demonstrations. | Generated-examples validation and `openui-spec#149` |
 | `angular-django2` (`ngdj`) | Validate schematics and supported compositions in real Angular workspaces. | `docs/INTEGRATION_TESTING.md`, `tests/schematics.e2e.spec.ts`, and `npm run test:e2e` |
 | `django-angular3` (`djng`) | Validate `build_app` orchestration and final acceptance of the composed Django–Angular application. | This plan and the django-angular3 E2E harness |
 
-A released ngdj package that has passed its repository validation is the
-Angular-generation input to the django-angular3 E2E suite.
+A released OpenUI package and ngdj package that have passed their respective
+repository validation are inputs to the django-angular3 E2E suite.
 
 ### Implementation dependencies
 
@@ -146,6 +210,8 @@ The E2E implementation depends on:
 	select Skills.
 6. Structured execution evidence required by FR-8 and FR-9.
 7. A released ngdj package containing the required schematic surface.
+8. Registered visual demo targets and local reproduction instructions for
+	every user-facing artifact type included in a scenario.
 
 The scenario-invocation specification records the current implementation
 status.
@@ -165,7 +231,10 @@ The django-angular3 E2E harness will:
 - use bounded readiness and execution timeouts;
 - stop backend, frontend, browser, and child processes during teardown;
 - remove successful test areas; and
-- preserve a failed test area when explicit debug retention is enabled.
+- preserve a failed test area when explicit debug retention is enabled;
+- register visual capture targets by generated artifact type; and
+- verify each target has a corresponding checked-in `DEMO.md` reproduction
+	entry.
 
 The E2E implementation issue will select and configure the browser-automation
 runner used for user-facing flows.
@@ -226,6 +295,10 @@ owned by `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md`:
 - filtering, sorting, pagination, and deterministic ordering; and
 - user-safe handling of validation and server failures.
 
+Run each registered `demo-capture` target against the seeded application and
+upload its screenshots as CI artifacts. A boot or capture failure fails global
+acceptance; screenshot differences do not.
+
 Verify the local-development topology from
 `doc/specifications/SPECIFICATIONS.md` §5.2 and the production-like topology
 from §5.1. Apply the FR-10 global acceptance gate after construction,
@@ -268,6 +341,8 @@ Each run will record:
 - generated-output checks;
 - compilation and terminal results;
 - runtime-flow results;
+- visual target identities, screenshot artifact paths, and capture results;
+- the `DEMO.md` reproduction entry associated with each visual target;
 - timestamps; and
 - the final acceptance decision.
 
@@ -294,13 +369,24 @@ then follow the governing requirement order:
 6. The local-development and production-like application topologies pass their
 	runtime flows.
 7. Recorded evidence explains every acceptance decision.
-8. Issue #84 is closed from execution evidence.
+8. Every registered user-facing artifact type boots, captures successfully,
+   uploads its evidence, and has reproducible local instructions.
+9. Issue #84 is closed from execution evidence.
 
 ## Tracked GitHub issues
 
 - [#84 — Implement staged verification across contract, construction, integration, and tests](https://github.com/shlomoa/django-angular3/issues/84) <!-- STEP7-dda276a46eaf -->
+- [#162 — Phase 7: implement deterministic TOOL contracts](https://github.com/shlomoa/django-angular3/issues/162)
+- [#163 — Phase 8: implement direct lifecycle HOOK contracts](https://github.com/shlomoa/django-angular3/issues/163)
 - [#160 — Phase 5: add credential-free provider-neutral automation tests](https://github.com/shlomoa/django-angular3/issues/160) <!-- STEP7-33102fa31a8b -->
 - [#161 — Phase 6: verify and document the foundation boundary](https://github.com/shlomoa/django-angular3/issues/161) <!-- STEP7-295acb362ccd -->
 
 Issue bodies, status, timestamps, relationships, dependency lists, and
 acceptance criteria are intentionally not copied into this plan.
+
+### Cross-repository visibility dependencies
+
+- [angular-django2#27 — Assemble UI-description-derived content into the generated Angular application](https://github.com/shlomoa/angular-django2/issues/27)
+- [angular-django2#98 — Integrate the canonical TypeScript OpenUI parser/validator package](https://github.com/shlomoa/angular-django2/issues/98)
+- [angular-django2#103 — Wire the canonical parser into the schematics pipeline](https://github.com/shlomoa/angular-django2/issues/103)
+- [openui-spec#149 — Align generators with the specification](https://github.com/shlomoa/openui-spec/issues/149)
