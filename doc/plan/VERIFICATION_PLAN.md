@@ -35,7 +35,7 @@ GitHub owns issue scope and tracking.
 
 ### Open backlog
 
-- [ ] Use `doc/TEST_EXAMPLES.md` fixtures to cover all configuration, OpenAPI, and OpenUI scenario-axis combinations, plus first-run, source-selection, mixed create/delete, deletion, and command-failure cases. <!-- STEP7-b03bd33e95b1 -->
+- [ ] Use the canonical scenario fixtures to cover all configuration, OpenAPI, and OpenUI scenario-axis combinations, plus first-run, source-selection, mixed create/delete, deletion, and command-failure cases. <!-- STEP7-b03bd33e95b1 -->
 
 ### Authoritative references
 
@@ -108,6 +108,193 @@ coverage blocks. Their substantive claims are rendered in this plan.
 ## Cross-platform and staging verification
 
 No current verification work is assigned exclusively to this domain section.
+
+## E2E validation
+
+### Purpose and authority
+
+E2E validation determines whether `djng` and `ngdj` produce an accepted,
+runnable Django–Angular generated application. The flow begins with current
+and previous generated-app inputs and finishes after contract,
+construction-output, integration, compilation, and runtime acceptance.
+
+`doc/TEST_EXAMPLES.md` owns the canonical scenarios and expected outcomes,
+`doc/specifications/TEST_SCENARIO_SPECIFICATIONS.md` owns their realization,
+and `doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-9 and FR-10 own terminal
+and global acceptance. This section sequences their E2E implementation.
+
+### Repository responsibilities
+
+| Repository | Responsibility | Validation source |
+|---|---|---|
+| `angular-django2` (`ngdj`) | Validate schematics and supported compositions in real Angular workspaces. | `docs/INTEGRATION_TESTING.md`, `tests/schematics.e2e.spec.ts`, and `npm run test:e2e` |
+| `django-angular3` (`djng`) | Validate `build_app` orchestration and final acceptance of the composed Django–Angular application. | This plan and the django-angular3 E2E harness |
+
+A released ngdj package that has passed its repository validation is the
+Angular-generation input to the django-angular3 E2E suite.
+
+### Implementation dependencies
+
+The E2E implementation depends on:
+
+1. Project-configuration discovery and baseline resolution from
+	`doc/specifications/SPECIFICATIONS.md` §2.2.
+2. Deterministic wrappers and Tool contracts for every scenario operation.
+3. Operation-support decisions tracked by issues #57 and #162.
+4. Direct `build_app` planning and execution tracked by issue #164.
+5. Guided Skill execution tracked by issues #58 and #165 for scenarios that
+	select Skills.
+6. Structured execution evidence required by FR-8 and FR-9.
+7. A released ngdj package containing the required schematic surface.
+
+The scenario-invocation specification records the current implementation
+status.
+
+### Harness structure
+
+The django-angular3 E2E harness will:
+
+- use Example 1 from `django_angular3/examples/01_simple_crm/`;
+- use Examples 2–12 from `tests/fixtures/scenarios/`;
+- derive scenario selection from
+  `tests/fixtures/scenarios/scenario-matrix.json`;
+- keep runner code and runtime-flow definitions separate from fixture data;
+- create generated applications under `tmparea/e2e/<run-id>/`;
+- store reports, traces, screenshots, and logs under `e2e/test-output/`;
+- allocate service ports dynamically;
+- use bounded readiness and execution timeouts;
+- stop backend, frontend, browser, and child processes during teardown;
+- remove successful test areas; and
+- preserve a failed test area when explicit debug retention is enabled.
+
+The E2E implementation issue will select and configure the browser-automation
+runner used for user-facing flows.
+
+### Implementation sequence
+
+#### 1. Harness foundation
+
+- Add the E2E runner entry point and configuration.
+- Add generated-app test-area creation, cleanup, and debug retention.
+- Add process lifecycle, dynamic port allocation, readiness checks, and
+  diagnostic collection.
+- Add fixture loading through normal project-configuration discovery.
+- Record the django-angular3 and ngdj versions for each run.
+
+#### 2. Scenario dry-run coverage
+
+- Execute `build_app --dry-run` for the canonical scenario suite.
+- Assert the canonical atomic changes and ordered commands.
+- Verify command identity, mode, inputs, reason, and dependency order.
+- Verify that each dry run preserves the generated workspace and accepted
+  state.
+- Cover the full scenario matrix from the scenario-invocation specification.
+
+#### 3. Generated-application construction
+
+- Execute each scenario against a real generated Angular workspace.
+- Run selected wrappers, Tools, Hooks, and Skills in dependency order.
+- Verify generated-output ownership and idempotence.
+- Verify preservation of unaffected output during incremental scenarios.
+- Verify deletion-before-creation ordering for replacement scenarios.
+- Verify omission of commands unrelated to the detected changes.
+
+#### 4. Integration and terminal validation
+
+- Verify the generated Angular client against the exported OpenAPI contract.
+- Verify types and signatures across API-client, data-service, form,
+  component, page, route, and site boundaries.
+- Verify composition of OpenAPI- and OpenUI-derived output.
+- Run `ng_build`.
+- Run generated-workspace type, lint, and test checks when configured.
+- Apply the terminal acceptance requirements in FR-9.
+
+#### 5. Runtime and global acceptance
+
+Start the generated backend and frontend and verify the representative flows
+owned by `doc/requirements/APPLICATION_FUNCTIONAL_REQUIREMENTS.md`:
+
+- application startup and Angular routing;
+- sign-in and sign-out;
+- Django session handling;
+- CSRF-protected mutations;
+- authentication and authorization enforcement;
+- permission-aware navigation;
+- representative business-module list, detail, create, update, and deactivate
+  or delete flows;
+- client-side and server-side validation;
+- filtering, sorting, pagination, and deterministic ordering; and
+- user-safe handling of validation and server failures.
+
+Verify the local-development topology from
+`doc/specifications/SPECIFICATIONS.md` §5.2 and the production-like topology
+from §5.1. Apply the FR-10 global acceptance gate after construction,
+integration, compilation, and runtime validation.
+
+#### 6. Failure and recovery coverage
+
+Add cases for:
+
+- invalid static configuration;
+- invalid project configuration;
+- invalid OpenAPI input;
+- invalid OpenUI input;
+- unsupported atomic changes;
+- wrapper or Tool failure;
+- blocking Hook failure;
+- unmet Skill acceptance;
+- terminal-validation failure;
+- service-start failure; and
+- runtime-flow failure.
+
+Each case will verify:
+
+- halt at the failing boundary;
+- suppression of dependent commands;
+- a non-zero result;
+- preservation of the previous accepted state; and
+- failure attribution by scenario, gate, command, and contract.
+
+### Evidence
+
+Each run will record:
+
+- scenario and run identity;
+- django-angular3 and ngdj versions;
+- sanitized input hashes;
+- derived atomic changes;
+- ordered command results;
+- Tool and Hook results;
+- generated-output checks;
+- compilation and terminal results;
+- runtime-flow results;
+- timestamps; and
+- the final acceptance decision.
+
+Evidence serialization and redaction follow the automation contracts
+referenced by `doc/plan/AUTOMATION_PLAN.md`.
+
+### Completion criteria
+
+Completion requires execution of the canonical scenario suite and its required
+failure variants through real `build_app` boundaries. The acceptance criteria
+then follow the governing requirement order:
+
+1. **FR-2 and FR-3:** dry-run and direct execution are deterministic, and dry
+	run preserves the generated workspace and accepted state.
+2. **FR-5 and FR-6:** single-source and combined-change scenarios select and
+	order only their required work while preserving unaffected output.
+3. **FR-8:** failures stop at the responsible boundary, suppress dependent
+	commands, preserve the previous accepted state, and provide actionable
+	attribution.
+4. **FR-9:** contract, construction-output, integration, compilation, and
+	terminal validation succeed.
+5. **FR-10:** global acceptance verifies cross-Skill consistency,
+	backend/OpenAPI/client/UI alignment, and the required runtime flows.
+6. The local-development and production-like application topologies pass their
+	runtime flows.
+7. Recorded evidence explains every acceptance decision.
+8. Issue #84 is closed from execution evidence.
 
 ## Tracked GitHub issues
 
