@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from bin.openui_json import OpenUiJson, OpenUiJsonError
+from bin.openui_spec import OpenUiJson, OpenUiJsonError
 from openapi_spec_validator import validate as validate_openapi_spec
 from openapi_spec_validator.validation.exceptions import (
     OpenAPISpecValidatorError,

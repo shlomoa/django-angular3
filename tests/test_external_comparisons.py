@@ -93,6 +93,7 @@ class OpenUiComparisonTranslationTests(unittest.TestCase):
                 / "example.openui.json"
             ).read_text(encoding="utf-8")
         )
+        reference["children"].append({"id": "customerList", "type": "List"})
         candidate = json.loads(json.dumps(reference))
         candidate["children"].reverse()
 

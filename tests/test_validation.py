@@ -32,6 +32,52 @@ class OpenUiValidationTests(unittest.TestCase):
             ["unsupported object type: UnknownType"],
         )
 
+    def test_uses_singular_catalog_scope_types_from_openui_spec(self) -> None:
+        singular_types = (
+            ("list", "List"),
+            ("chart", "Chart"),
+            ("form", "Form"),
+            ("report", "Report"),
+            ("pickerControl", "PickerControl"),
+            ("rangeControl", "RangeControl"),
+            ("statusIndicator", "StatusIndicator"),
+        )
+        document = {
+            "version": "0.1.1",
+            "id": "root",
+            "type": "Application",
+            "children": [
+                {"id": identifier, "type": object_type}
+                for identifier, object_type in singular_types
+            ],
+        }
+
+        self.assertEqual(validate_openui_document(document), [])
+
+    def test_rejects_plural_catalog_scope_types_from_openui_spec(self) -> None:
+        for singular_type in (
+            "List",
+            "Chart",
+            "Form",
+            "Report",
+            "PickerControl",
+            "RangeControl",
+            "StatusIndicator",
+        ):
+            with self.subTest(object_type=singular_type):
+                plural_type = f"{singular_type}s"
+                document = {
+                    "version": "0.1.1",
+                    "id": "root",
+                    "type": "Application",
+                    "children": [{"id": "legacy", "type": plural_type}],
+                }
+
+                self.assertEqual(
+                    validate_openui_document(document),
+                    [f"unsupported object type: {plural_type}"],
+                )
+
     def test_reports_duplicate_ids_from_openui_spec(self) -> None:
         document = {
             "version": "0.0.1",

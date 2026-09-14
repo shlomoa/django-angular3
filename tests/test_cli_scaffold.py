@@ -443,7 +443,7 @@ class ScaffoldTests(unittest.TestCase):
             "django-filter",
             "drf-spectacular",
             "claude-agent-sdk",
-            "openui-spec==0.0.2",
+            "openui-spec==0.1.1",
             "openapi-spec-validator>=0.7",
         }
         self.assertEqual(dependencies, expected_runtime_dependencies)
