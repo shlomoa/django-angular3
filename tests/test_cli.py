@@ -31,7 +31,7 @@ class ValidationCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             path = Path(tmp) / "app.openui.json"
             path.write_text(
-                json.dumps({"version": "0.0.1", "id": "root", "type": "Application"}),
+                json.dumps({"version": "0.2.0", "id": "root", "type": "Application"}),
                 encoding="utf-8",
             )
 
@@ -45,7 +45,7 @@ class ValidationCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             path = Path(tmp) / "invalid.openui.json"
             path.write_text(
-                json.dumps({"version": "0.0.1", "id": "root", "type": "UnknownType"}),
+                json.dumps({"version": "0.2.0", "id": "root", "type": "UnknownType"}),
                 encoding="utf-8",
             )
 
@@ -54,7 +54,7 @@ class ValidationCliTests(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertEqual(stdout, "")
         self.assertIn(f"UI document {path} is invalid.", stderr)
-        self.assertIn("unsupported object type: UnknownType", stderr)
+        self.assertIn("unknown OpenUI object type: UnknownType", stderr)
 
     def test_validate_project_accepts_valid_configured_openui_document(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
@@ -64,7 +64,7 @@ class ValidationCliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
-                json.dumps({"version": "0.0.1", "id": "root", "type": "Application"}),
+                json.dumps({"version": "0.2.0", "id": "root", "type": "Application"}),
                 encoding="utf-8",
             )
             config_path = root / TEST_CONFIG_FILENAME
@@ -100,7 +100,7 @@ class ValidationCliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
-                json.dumps({"version": "0.0.1", "id": "root", "type": "UnknownType"}),
+                json.dumps({"version": "0.2.0", "id": "root", "type": "UnknownType"}),
                 encoding="utf-8",
             )
             config_path = root / TEST_CONFIG_FILENAME
@@ -126,7 +126,7 @@ class ValidationCliTests(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertEqual(stdout, "")
         self.assertIn("Project configuration", stderr)
-        self.assertIn("unsupported object type: UnknownType", stderr)
+        self.assertIn("unknown OpenUI object type: UnknownType", stderr)
 
 
 if __name__ == "__main__":

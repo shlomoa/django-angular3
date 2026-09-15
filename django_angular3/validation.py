@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
@@ -81,6 +82,14 @@ def validate_openui_document(document: Any) -> list[str]:
         OpenUiJson(document).validate()
     except OpenUiJsonError as exc:
         return str(exc).splitlines()
+    document_version = document["version"]
+    expected_version = version("openui-spec")
+    if document_version != expected_version:
+        return [
+            "OpenUI document version "
+            f"'{document_version}' must match the installed openui-spec version "
+            f"'{expected_version}'."
+        ]
     return []
 
 
