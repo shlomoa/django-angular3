@@ -80,6 +80,19 @@ GitHub owns issue scope and tracking.
 
 ### Planning details
 
+- The OpenUI path selected by `artifacts.openuiSpecification` is an Option A
+  document-driven, JSON-first compiler input for ngdj. `openui-spec` validation
+  must succeed before djng compares the document or selects construction work.
+  <!-- STEP7-77ef6a7d0dd0 -->
+- ngdj compiles the accepted canonical document through the Native Web
+  (semantic HTML, ARIA, CSS), Design System (Angular Material 3, schematics,
+  MDC), and Full-stack integration (DRF pagination, CSRF, OpenAPI
+  `data-service`, signals, and standalone OnPush) layers. The layers and
+  upstream ownership are defined in `ARCHITECTURE.md` §2.8.3.
+  <!-- STEP7-cd20a6c7a9d1 -->
+- djng remains at the Python validation and wrapper boundary. It does not add a
+  Node.js/TypeScript parser, custom selector, or competing OpenUI grammar,
+  schema, or catalog. <!-- STEP7-8aa1d1cfd531 -->
 - OpenAPI schema re-extraction before the contract normalization stage proceeds <!-- STEP7-f17a5eee63ab -->
 - A user designs or updates the OpenAPI specification using SmartBear's <!-- STEP7-7791373b593e -->
 - OpenAPI authoring tools (Swagger Studio or SwaggerHub) <!-- STEP7-b58ecfa88943 -->
@@ -98,8 +111,8 @@ GitHub owns issue scope and tracking.
 - [ ] Add `django-admin validate_openui <path>` as a thin wrapper around `validate_openui_file(path)`. Propagate upstream diagnostics without copying OpenUI grammar, catalog, or duplicate-ID validation logic. <!-- STEP7-46540e6cb004 -->
 - [ ] Cover a valid document and propagation of an upstream `openui-spec` diagnostic. <!-- STEP7-32db7a941e4f -->
 - [ ] OpenUI artifact roles remain defined by the external artifact-role SSOT linked from `doc/ARCHITECTURE.md` §2.8.1. <!-- STEP7-00ed43aacb33 -->
-- [ ] Verify that `build_app` rejects an invalid OpenUI document before change derivation. <!-- STEP7-1d1137e2fc1f -->
-- [ ] Transform validated canonical OpenUI atomic changes into explicit ngdj construction inputs without treating ngdj's package-local site assembly definition as a canonical OpenUI document. <!-- STEP7-42249912b4b3 -->
+- [ ] Verify that `build_app` rejects an invalid OpenUI document before change derivation, selector resolution, or wrapper selection. <!-- STEP7-1d1137e2fc1f -->
+- [ ] Transform validated canonical OpenUI atomic changes into explicit ngdj construction inputs without treating ngdj's package-local site assembly definition as a canonical OpenUI document; pass only spec-defined selectors, component types, and attributes. <!-- STEP7-42249912b4b3 -->
 - [ ] Cover the transformation contract, unsupported changes, command ordering, dry-run non-modification, and composed generated-app output. <!-- STEP7-7a7c9fc8bc13 -->
 
 ### Corrected current identities

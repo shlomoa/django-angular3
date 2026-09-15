@@ -83,6 +83,13 @@ defined by the
 djng owns only the configured input path and its build-stage handling. See
 `doc/ARCHITECTURE.md` §2.8.1 and §8.5.
 
+The OpenUI stage gate validates each configured canonical JSON document through
+`openui-spec` before comparison, selector resolution, or wrapper selection.
+The accepted document is the deterministic JSON-first input to the upstream
+ngdj compiler, which applies the three-layer construction model defined in
+`doc/ARCHITECTURE.md` §2.8.3. `djng` owns Python-side validation and wrapper
+selection, not OpenUI parsing rules, selectors, or ngdj compiler behavior.
+
 ### Optional
 
 | Input | Flag | Notes |
@@ -144,6 +151,9 @@ Tool and hook names remain distinct from CLI wrapper command names, as defined
 by the automation naming layers in `doc/ARCHITECTURE.md` §2.22. Contract identity
 and command-composition cardinalities are defined in `doc/ARCHITECTURE.md` §3.6.2;
 this document selects and composes those contracts but does not redefine them.
+In particular, an OpenUI wrapper may receive only a validated canonical
+document and spec-defined selectors, component types, and attributes; it must
+not introduce custom behavioral selectors or a duplicate parser.
 
 | Construction concern | Primitive | Tool contract | Hook contract | Direct-build role |
 |---|---|---|---|---|
