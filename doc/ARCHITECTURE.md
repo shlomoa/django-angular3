@@ -71,6 +71,12 @@ They must be clearly identified as integration behavior rather than `ngdj`
 behavior. If upstream sources conflict, report the conflict and resolve it
 upstream instead of selecting or inventing a local definition.
 
+For OpenUI construction, `ngdj` is an Option A (document-driven, JSON-first)
+compiler: it deterministically consumes a concrete canonical OpenUI document
+and workspace state. It does not use runtime AI or out-of-band heuristics to
+interpret that document. Its canonical TypeScript parser and validator are
+owned upstream by `openui-spec`; see [openui-spec#135][openui-spec-135].
+
 #### 2.6.1 djangoangular
 
 `djangoangular` is the code name for the tight Django–Angular integration
@@ -120,6 +126,34 @@ architectural classification for a source, input, stream, artifact, ownership
 boundary, or construction operation. `Simple CRM` and `simple_crm` remain valid
 names for the bundled customer-relationship-management tutorial, and explicit
 references to that business domain may use CRM.
+
+#### 2.8.3 OpenUI three-layer construction and parser boundary
+
+`ngdj` implements Option A as a document-driven JSON-first compiler. It
+consumes a concrete canonical OpenUI JSON document (`input.json` or the
+generated-app convention `app.openui.json`) deterministically; runtime AI and
+out-of-band heuristics are not inputs to generation.
+
+For each OpenUI element, construction composes these layers:
+
+1. **Native Web**: HTML5 semantic elements, W3C ARIA roles, and CSS layout.
+2. **Design System**: Angular Material 3 tokens, official automated CLI
+   schematics, and MDC templates.
+3. **Full-stack ngdj integration**: DRF pagination responses
+   (`{count, next, previous, results}`), CSRF handling, OpenAPI
+   `data-service` integration, and standalone OnPush components using signals.
+
+All selectors, component types, and attribute contracts that `ngdj` consumes
+or generates must be defined by `openui-spec`. It must not add custom
+behavioral selectors, such as `[ngdjSwipe]`. `openui-spec` owns the grammar,
+schema, catalog, and `SCHEMA_VERSION` bump enforcement.
+
+The parser boundary is intentionally asymmetric. `djng` is pure Python 3.12+
+and validates OpenUI through the installed `openui-spec` Python `OpenUiJson`
+tooling; it does not require or implement a Node.js or TypeScript parser.
+`ngdj` consumes the canonical TypeScript parser and AST package maintained by
+`openui-spec` ([openui-spec#135][openui-spec-135]). Neither downstream package
+may fork the grammar, schema, catalog, or parser behavior.
 
 ### 2.9 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for API-contract-derived functionality and the basis for generating Angular integration artifacts.
@@ -680,8 +714,10 @@ criteria.
 3. Angular integration artifacts generation stage: the OpenAPI contract produces typed
    clients, resource adapters, and reusable Angular Material-oriented
    integration helpers
-4. UI-description stage: the `app.openui.json` OpenUI concrete UI document
-  provides reactive forms, standalone pages, and workflow definitions
+4. UI-description stage: `openui-spec` validates the concrete
+  `app.openui.json` document before `ngdj` deterministically compiles its
+  spec-defined elements and attributes through the Native Web, Design System,
+  and Full-stack ngdj integration layers
 5. Application assembly stage: the Angular app composes generated integration
   artifacts with outputs derived from the UI description
 6. Verification stage: generated artifacts, contracts, and app integration are
@@ -689,6 +725,12 @@ criteria.
 
 Each stage should produce durable artifacts that can be inspected, tested, and
 reused across iterations without hidden assumptions.
+
+OpenUI validation and parsing precede selector resolution and Angular
+construction. `djng` validates the configured document at its Python boundary;
+the `ngdj` compiler then consumes the canonical document through its
+upstream-owned TypeScript parser. This separation preserves a single
+specification authority and does not introduce a second parser in `djng`.
 
 ### 7.2 Repair and refinement loop
 
@@ -1107,6 +1149,7 @@ Key actors and terms. Full definitions are in §2.
 [openui-examples]: https://openui-spec.readthedocs.io/en/latest/examples/
 [OpenUI comparison]: https://openui-spec.readthedocs.io/en/latest/tooling/comparison/
 [openui-spec]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md
+[openui-spec-135]: https://github.com/shlomoa/openui-spec/issues/135
 [openui-artifacts]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/

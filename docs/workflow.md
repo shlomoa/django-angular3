@@ -65,6 +65,13 @@ when authoring the OpenUI concrete UI document. The repository fixture at
 [`tests/fixtures/artifacts/openui/example.openui.json`](https://github.com/shlomoa/django-angular3/blob/main/tests/fixtures/artifacts/openui/example.openui.json)
 shows the accepted concrete-document structure.
 
+This document is the deterministic JSON-first input to ngdj; generation does
+not use runtime AI or out-of-band heuristics. Use only selectors, component
+types, and attribute contracts defined by `openui-spec`—do not add custom
+behavioral selectors. After validation, ngdj constructs the generated UI using
+the Native Web, Angular Material 3 design-system, and Django/Angular
+full-stack integration layers described in `doc/ARCHITECTURE.md` §2.8.3.
+
 #### Compare OpenUI versions
 
 OpenUI change semantics are owned by the upstream
@@ -93,6 +100,11 @@ django-angular3 validate-project
 django-angular3 validate-openapi schema.yaml
 django-angular3 validate-openui openui.json
 ```
+
+`validate-openui` is a Python-only boundary: it delegates to installed
+`openui-spec` `OpenUiJson` tooling and does not need Node.js. The separate ngdj
+TypeScript parser is upstream-owned by `openui-spec`; djng does not implement a
+second parser.
 
 ### 4. Build and validate the generated app
 

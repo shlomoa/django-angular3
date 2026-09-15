@@ -72,12 +72,20 @@ package-local site assembly definition and use the approved source and
 construction terminology. Current implementation and maintained documentation
 remain authoritative.
 
+`angular-django2` is aligned to the Option A document-driven JSON-first
+direction: it deterministically consumes canonical OpenUI JSON and must use
+only `openui-spec` selectors, component types, and attribute contracts. The
+canonical TypeScript OpenUI JSON parser/validator parity work in
+[openui-spec#135](https://github.com/shlomoa/openui-spec/issues/135) is closed;
+ngdj integration remains tracked upstream rather than implemented or
+redefined in djng.
+
 ## Next actions
 
 1. Resolve #27's deterministic transformation from validated canonical OpenUI
-   atomic changes to explicit ngdj construction inputs without treating the
-   package-local site assembly definition as a canonical OpenUI concrete UI
-   document.
+   atomic changes to explicit ngdj construction inputs using the canonical
+   TypeScript parser, without treating the package-local site assembly
+   definition as a canonical OpenUI concrete UI document.
 2. Complete #57's operation-support and canonical Tool-contract decisions,
    reconcile the existing generic/additive Tool contracts, and align the
    authoritative crosswalk, Tool catalog, builder mapping, and phased plan

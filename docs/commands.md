@@ -51,6 +51,11 @@ not application configuration.
 	`django_angular3/angular.py`.
 - This page owns djng wrapper arguments and interface availability. It does not
 	redefine ngdj schematic contracts.
+- `djng` validates OpenUI through the installed Python `openui-spec` tooling;
+	it does not require a Node.js or TypeScript parser. `ngdj` owns consumption
+	of the canonical OpenUI TypeScript parser. Both boundaries use only
+	selectors, component types, and attribute contracts defined by
+	`openui-spec`; see `doc/ARCHITECTURE.md` §2.8.3.
 - djng emits every multiword Angular CLI option in kebab-case (for example,
 	`--auth-guard` and `--openapi-spec-file`) so Angular CLI accepts the resolved
 	invocation.
@@ -62,7 +67,7 @@ Invoked as `django-angular3 <command> [args]`.
 | Command | Description |
 |---|---|
 | `validate-openapi <path>` | Validate an OpenAPI source document. |
-| `validate-openui <path>` | Validate a UI definition document. |
+| `validate-openui <path>` | Validate a canonical OpenUI JSON UI-definition document through `openui-spec`. |
 | `validate-project` | Validate the discovered project configuration. |
 | `install-tutorial [dest]` | Copy the bundled `simple_crm` tutorial project to `dest` (default: `simple_crm`). Prints migration and run steps on success. |
 

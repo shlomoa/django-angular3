@@ -13,7 +13,7 @@ are specified in `doc/specifications/SPECIFICATIONS.md` §2
 | `django-angular3.json` | `djng` | Static tool configuration: Angular execution settings, global `ng-openapi-gen` settings, and `drf-spectacular` settings. |
 | Project configuration | generated-app user | Generated-app identity and artifact locations. See `doc/specifications/SPECIFICATIONS.md` §2.1 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#21-configuration-and-input-categories){.modal-link} |
 | OpenAPI schema | generated-app user | API-contract input or the artifact exported from Django/DRF. |
-| OpenUI concrete UI document | generated-app user | Structured UI-description input. |
+| OpenUI concrete UI document | generated-app user | Canonical JSON-first UI-description input, selected by the project configuration and validated through `openui-spec`. |
 
 `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from the static tool
 configuration; they are not independent configuration authorities. Likewise,

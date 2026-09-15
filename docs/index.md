@@ -17,7 +17,7 @@ Repository planning is organized by domain:
 
 ## Prerequisites
 
-- **Python 3.10+** with `pip`.
+- **Python 3.12+** with `pip`.
 - **Node.js** and **pnpm** — only needed once you generate or build the Angular
   workspace. Validation works without them.
 
