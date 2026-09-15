@@ -187,7 +187,7 @@ class ScaffoldTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
-                json.dumps({"version": "0.0.1", "id": "root", "type": "UnknownType"}),
+                json.dumps({"version": "0.2.0", "id": "root", "type": "UnknownType"}),
                 encoding="utf-8",
             )
             config_path = root / TEST_PROJECT_CONFIG_FILENAME
@@ -207,7 +207,7 @@ class ScaffoldTests(unittest.TestCase):
 
             errors = validate_project_config(load_project_config(config_path))
 
-        self.assertEqual(errors, ["unsupported object type: UnknownType"])
+        self.assertEqual(errors, ["unknown OpenUI object type: UnknownType"])
 
     def test_consumer_project_template_uses_project_relative_artifact_paths(
         self,
@@ -443,7 +443,7 @@ class ScaffoldTests(unittest.TestCase):
             "django-filter",
             "drf-spectacular",
             "claude-agent-sdk",
-            "openui-spec==0.1.1",
+            "openui-spec==0.2.0",
             "openapi-spec-validator>=0.7",
         }
         self.assertEqual(dependencies, expected_runtime_dependencies)
