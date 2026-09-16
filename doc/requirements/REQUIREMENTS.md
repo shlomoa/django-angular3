@@ -24,8 +24,7 @@ Related architectural context: see `ARCHITECTURE.md` §§ 1, 3, and 7.
 
 ### 1.2. Business Problem Being Solved
 
-Organizations need a repeatable way to connect [Django], [DRF - Django REST Framework]
-(DRF), and [Angular Material] into a single full-stack application without
+Organizations need a repeatable way to connect [Django], [DRF - Django REST Framework], and [Angular Material] into a single full-stack application without
 manual glue work between backend contracts, frontend generation, and
 user-facing UI assembly.
 
@@ -139,8 +138,8 @@ External dependencies and services include:
   by the project configuration's `artifacts.openapiSchema` path. OAS 3.1 is
   the pinned version; the toolchain ([drf-spectacular], [oasdiff],
   [ng-openapi-gen]) does not yet support OAS 3.2.
-- project-owned OpenUI concrete UI documents selected through
-  `artifacts.openuiSpecification`
+- [openui-spec] for the canonical OpenUI definitions, grammar, catalog,
+  document APIs, validation, and structural comparison utilities
 - [oasdiff] for OpenAPI schema diffing and change detection
 - [ng-openapi-gen] (source: [ng-openapi-gen-github]) where Angular-native client generation is required
 - [datamodel-code-generator] (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]) for the contract-first use case: generating the Django data model from an existing OpenAPI Schema, using djng-owned custom Django templates, when no Django model exists yet (see [ARCHITECTURE.md] §§ 2.21 and 11.2)
@@ -162,8 +161,8 @@ At a high level, the platform must provide:
 - contract-driven integration between backend and frontend through durable
   OpenAPI artifacts, generated Angular integration artifacts, and governed
   change handling
-- support for UI-description-driven pages, reactive forms, navigation, and
-  workflows through an OpenUI concrete UI document
+- UI-description-derived pages, reactive forms, navigation, and workflows from
+  a validated [openui-spec] concrete UI document
 - baseline health, error-handling, observability, automated-testing, and
   deployment-readiness capabilities suitable for local development and staged
   delivery
@@ -487,9 +486,9 @@ linked source documents.
 [SPECIFICATIONS.md] owns generated-platform realization, and
 [AI_AUTOMATION_SPECIFICATIONS.md] owns AI automation realization.
 
-## 6. Acceptance Criteria
+## 5. Acceptance Criteria
 
-### 6.1. System Acceptance Requirements
+### 5.1. System Acceptance Requirements
 
 See `ARCHITECTURE.md` §§ 7.3, 14, and 17 for the related verification,
 testing, and architectural decision model.
@@ -562,6 +561,7 @@ Labels used in this document are defined in the link-definitions block at the en
 [Angular]: https://angular.dev/
 [Angular Material]: https://material.angular.dev/
 [OpenAPI 3.1 Specification]: https://spec.openapis.org/oas/v3.1.0.html
+[openui-spec]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md
 [OpenUI comparison]: https://openui-spec.readthedocs.io/en/latest/tooling/comparison/
 [oasdiff]: https://www.oasdiff.com/
 [oasdiff-github]: https://github.com/oasdiff/oasdiff
