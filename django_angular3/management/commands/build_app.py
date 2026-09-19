@@ -9,20 +9,44 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from bin.openui_spec import (  # type: ignore[import-untyped]
+    OpenUiJson,
+    OpenUiJsonError,
+)
 from django.core.management.base import BaseCommand, CommandError
 
+from django_angular3.changes import Change, ChangeDomain, ChangeDomainResult, ChangeSet
+from django_angular3.command_translation import (
+    CommandSelection,
+    CommandTranslationError,
+    translate_changes,
+)
 from django_angular3.config import ProjectConfig
+from django_angular3.config_changes import compare_project_config
+from django_angular3.external_comparisons import (
+    ExternalComparisonError,
+    compare_openui_files,
+)
+from django_angular3.openapi_changes import (
+    OpenApiComparisonError,
+    compare_openapi_files,
+)
 
 from ...config import ConfigError, load_project_config
 
 
 class OpenAPIConfiguration:
     """
-    @TODO: generate docstring for OpenAPIConfiguration
+    Responsible for managing the OpenAPI configuration.
     """
 
     def __init__(self, openapi_path: Path):
         self._openapi_path = openapi_path
+
+    @property
+    def openapi_path(self) -> Path:
+        """Return the OpenAPI schema path."""
+        return self._openapi_path
 
     def load(self):
         """
@@ -37,7 +61,7 @@ class OpenAPIConfiguration:
 
 class OpenUIConfiguration:
     """
-    @TODO: generate docstring for OpenUIConfiguration
+    Responsible for managing the OpenUI configuration.
     """
 
     def __init__(self, openui_path: Path):
@@ -47,14 +71,12 @@ class OpenUIConfiguration:
     def load(self):
         """
         Load the OpenUI specification from the specified path.
-        Raises ConfigError if loading fails.
+        Raises CommandError if loading fails.
         """
         try:
-            raise NotImplementedError(
-                "Loading OpenUI specification is not implemented."
-            )
-        except ConfigError as e:
-            raise CommandError(f"Failed to load OpenUI specification: {e}") from e
+            self.openui_spec = OpenUiJson.load(self.openui_path).document
+        except OpenUiJsonError as exc:
+            raise CommandError(f"Failed to load OpenUI specification: {exc}") from exc
 
 
 class Configuration:
@@ -71,8 +93,8 @@ class Configuration:
     var output: loaded configuration objects for each type.
     """
 
-    def __init__(self, project_config_path: str | None = None):
-        self._project_config_path: str | None = project_config_path
+    def __init__(self, project_config_path: str | Path | None = None):
+        self._project_config_path: str | Path | None = project_config_path
         self._openapi_config: OpenAPIConfiguration | None = None
         self._openui_config: OpenUIConfiguration | None = None
         self._load()
@@ -94,10 +116,24 @@ class Configuration:
             self._project_config.openui_specification
         )
 
+    @property
+    def openapi_config(self) -> OpenAPIConfiguration | None:
+        """Return the loaded OpenAPI configuration."""
+        return self._openapi_config
+
+    @property
+    def openui_config(self) -> OpenUIConfiguration | None:
+        """Return the loaded OpenUI configuration."""
+        return self._openui_config
+
+    @property
+    def project_config(self) -> ProjectConfig:
+        """Return the loaded project configuration."""
+        return self._project_config
+
 
 class ChangeDetector:
     """
-    Docstring for ChangeDetector
 
     ChangeDetector class responsible for:
     * Comparing current and previous configurations to detect changes.
@@ -107,29 +143,72 @@ class ChangeDetector:
 
     def __init__(
         self,
-        current_config: OpenAPIConfiguration,
-        previous_config: OpenAPIConfiguration,
+        current_config: Configuration,
+        previous_config: Configuration,
     ):
-        self._current_config: OpenAPIConfiguration = current_config
-        self._previous_config: OpenAPIConfiguration = previous_config
+        self._current_config: Configuration = current_config
+        self._previous_config: Configuration = previous_config
 
-    def _diff_openapi_schemas(self) -> dict[str, Any]:
-        # oasdiff_exe = ensure_oasdiff()
+    def _diff_openui_specifications(self) -> tuple[Change, ...]:
+        current_openui = self._current_config.openui_config
+        previous_openui = self._previous_config.openui_config
+        if current_openui is None or previous_openui is None:
+            raise CommandError("OpenUI configurations must be loaded before diffing.")
         try:
-            raise NotImplementedError("OpenAPI schema diffing is not implemented yet.")
-        except ConfigError as e:
-            raise CommandError(f"Config load failed: {e}") from e
+            return compare_openui_files(
+                previous_openui.openui_path,
+                current_openui.openui_path,
+            )
+        except (ExternalComparisonError, OSError) as exc:
+            raise CommandError(f"Failed to diff OpenUI specifications: {exc}") from exc
 
-    def detect_changes(self) -> dict[str, Any]:
-        """
-        Detect changes between the current and previous configurations.
-
-        :return: A dictionary summarizing the detected changes.
-        """
+    def _diff_openapi_schemas(self) -> tuple[Change, ...]:
+        current_openapi = self._current_config.openapi_config
+        previous_openapi = self._previous_config.openapi_config
+        if current_openapi is None or previous_openapi is None:
+            raise CommandError("OpenAPI configurations must be loaded before diffing.")
         try:
-            raise NotImplementedError("Change detection is not implemented.")
-        except ConfigError as e:
-            raise CommandError(f"Failed to detect changes: {e}") from e
+            return compare_openapi_files(
+                previous_openapi.openapi_path,
+                current_openapi.openapi_path,
+            )
+        except (ExternalComparisonError, OpenApiComparisonError, OSError) as exc:
+            raise CommandError(f"Failed to diff OpenAPI schemas: {exc}") from exc
+
+    def detect_changes(self) -> ChangeSet:
+        """Derive the canonical ChangeSet for the current configuration pair."""
+        try:
+            project_changes = compare_project_config(
+                self._previous_config.project_config,
+                self._current_config.project_config,
+            )
+            openapi_changes = self._diff_openapi_schemas()
+            openui_changes = self._diff_openui_specifications()
+        except (ExternalComparisonError, OpenApiComparisonError, OSError) as exc:
+            raise CommandError(f"Failed to detect changes: {exc}") from exc
+
+        return ChangeSet(
+            baseline={
+                "projectConfig": str(self._previous_config.project_config.config_path)
+            },
+            candidate={
+                "projectConfig": str(self._current_config.project_config.config_path)
+            },
+            domains={
+                ChangeDomain.STATIC_CONFIG: ChangeDomainResult(
+                    ChangeDomain.STATIC_CONFIG
+                ),
+                ChangeDomain.PROJECT_CONFIG: ChangeDomainResult(
+                    ChangeDomain.PROJECT_CONFIG, project_changes
+                ),
+                ChangeDomain.OPENAPI: ChangeDomainResult(
+                    ChangeDomain.OPENAPI, openapi_changes
+                ),
+                ChangeDomain.OPENUI: ChangeDomainResult(
+                    ChangeDomain.OPENUI, openui_changes
+                ),
+            },
+        )
 
 
 class ChangeExecution:
@@ -142,8 +221,20 @@ class ChangeExecution:
     * Rolling back changes in case of failures.
     """
 
-    def __init__(self, change_set: dict[str, Any]):
-        self._change_set = change_set
+    def __init__(self, change_set: ChangeSet):
+        self._change_set: ChangeSet = change_set
+
+    def translate_change_set(self) -> tuple[CommandSelection, ...]:
+        """Translate the ChangeSet into an ordered command plan."""
+        changes = tuple(
+            change
+            for domain in ChangeDomain
+            for change in self._change_set.domains[domain].changes
+        )
+        try:
+            return translate_changes(changes)
+        except CommandTranslationError as exc:
+            raise CommandError(f"Failed to translate changes: {exc}") from exc
 
     def execute(self):
         """
@@ -222,6 +313,11 @@ class Command(BaseCommand):
                 absent, or ``oasdiff`` cannot be prepared or used.
         """
         try:
-            raise NotImplementedError("build_app planning is not implemented.")
+            current_config = Configuration(options["current_config"])
+            previous_config = Configuration(options["previous_config"])
+            detector = ChangeDetector(current_config, previous_config)
+            change_set: ChangeSet = detector.detect_changes()
+            executor = ChangeExecution(change_set)
+            executor.execute()
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
