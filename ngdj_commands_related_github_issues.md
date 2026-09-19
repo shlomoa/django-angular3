@@ -66,11 +66,10 @@ The earlier command/status conflicts are resolved:
   `build_app`, Skill, and generated-app acceptance work.
 
 Upstream #27 remains open for the canonical OpenUI-to-construction-input
-transformation boundary. Its title and description now distinguish the
-canonical OpenUI concrete UI document selected by djng from ngdj's
-package-local site assembly definition and use the approved source and
-construction terminology. Current implementation and maintained documentation
-remain authoritative.
+transformation boundary. Downstream #74 distinguishes the canonical OpenUI
+concrete UI document selected by djng from ngdj's package-local site assembly
+definition; #27 defines the corresponding upstream orchestration boundary.
+Current implementation and maintained documentation remain authoritative.
 
 `angular-django2` is aligned to the Option A document-driven JSON-first
 direction: it deterministically consumes canonical OpenUI JSON and must use

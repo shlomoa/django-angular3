@@ -127,21 +127,19 @@ boundary, or construction operation. `Simple CRM` and `simple_crm` remain valid
 names for the bundled customer-relationship-management tutorial, and explicit
 references to that business domain may use CRM.
 
-#### 2.8.3 OpenUI three-layer construction and parser boundary
+#### 2.8.3 Frontend three-layer structure
 
-`ngdj` implements Option A as a document-driven JSON-first compiler. It
-consumes a concrete canonical OpenUI JSON document (`input.json` or the
-generated-app convention `app.openui.json`) deterministically; runtime AI and
-out-of-band heuristics are not inputs to generation.
+`ngdj` is responsible for implementing integrable frontend by 
+generating openui-based Angular components and integration artifacts.
+For each OpenUI element, each OpenUI element is composed from the following layers:
 
-For each OpenUI element, construction composes these layers:
-
-1. **Native Web**: HTML5 semantic elements, W3C ARIA roles, and CSS layout.
+1. **Native Web building blocks**: HTML5 semantic elements, W3C ARIA roles, and CSS layout.
+  For example, a button element would be constructed using a native `<button>` element, styled with CSS, and enhanced with ARIA roles for accessibility.
 2. **Design System**: Angular Material 3 tokens, official automated CLI
    schematics, and MDC templates.
-3. **Full-stack ngdj integration**: DRF pagination responses
-   (`{count, next, previous, results}`), CSRF handling, OpenAPI
-   `data-service` integration, and standalone OnPush components using signals.
+  For example, date picker component which is a native Angular Material component written in TypeScript and comprised of Angular Material building blocks, TypeScript, native HTML5 and CSS.
+3. **Full-stack solution**: OpenAPI based DRF integration (data service, OpenAPI data model), CSRF handling, 
+  components and compound UI artifacts comprised from basic building blocks, upto app / site / page level composition.
 
 All selectors, component types, and attribute contracts that `ngdj` consumes
 or generates must be defined by `openui-spec`. It must not add custom
