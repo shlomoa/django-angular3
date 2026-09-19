@@ -129,29 +129,23 @@ references to that business domain may use CRM.
 
 #### 2.8.3 Frontend three-layer structure
 
-`ngdj` is responsible for implementing integrable frontend by 
-generating openui-based Angular components and integration artifacts.
-For each OpenUI element, each OpenUI element is composed from the following layers:
+Each OpenUI element is composed through the following frontend layers:
 
 1. **Native Web building blocks**: HTML5 semantic elements, W3C ARIA roles, and CSS layout.
   For example, a button element would be constructed using a native `<button>` element, styled with CSS, and enhanced with ARIA roles for accessibility.
 2. **Design System**: Angular Material 3 tokens, official automated CLI
    schematics, and MDC templates.
   For example, date picker component which is a native Angular Material component written in TypeScript and comprised of Angular Material building blocks, TypeScript, native HTML5 and CSS.
-3. **Full-stack solution**: OpenAPI based DRF integration (data service, OpenAPI data model), CSRF handling, 
-  components and compound UI artifacts comprised from basic building blocks, upto app / site / page level composition.
+3. **Full-stack solution**: OpenAPI based DRF integration (data service, OpenAPI data model), CSRF handling,
+  components and compound UI artifacts comprised from basic building blocks, everything between an Angular Material componenet and an Angular Material app integrated to Django via DRF.
+  For example, a complex form component might combine multiple Angular Material input components, custom validation logic, and DRF-backed data services to create a fully integrated user interface element.
 
 All selectors, component types, and attribute contracts that `ngdj` consumes
 or generates must be defined by `openui-spec`. It must not add custom
 behavioral selectors, such as `[ngdjSwipe]`. `openui-spec` owns the grammar,
 schema, catalog, and `SCHEMA_VERSION` bump enforcement.
 
-The parser boundary is intentionally asymmetric. `djng` is pure Python 3.12+
-and validates OpenUI through the installed `openui-spec` Python `OpenUiJson`
-tooling; it does not require or implement a Node.js or TypeScript parser.
-`ngdj` consumes the canonical TypeScript parser and AST package maintained by
-`openui-spec` ([openui-spec#135][openui-spec-135]). Neither downstream package
-may fork the grammar, schema, catalog, or parser behavior.
+The compiler and parser ownership defined in §2.6 applies to these layers.
 
 ### 2.9 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for API-contract-derived functionality and the basis for generating Angular integration artifacts.
@@ -160,56 +154,11 @@ The versioned OpenAPI schema exported from the DRF layer, serving as the source 
 Generated Angular outputs derived from the OpenAPI contract and related tooling, including typed API clients, resource adapters, transport helpers, reusable Angular Material-oriented integration helpers, and supporting metadata.
 
 ### 2.11 provider adapter
-A portability boundary that connects an agent executor to a compatible AI
-runtime. It isolates provider-specific session, tool-dispatch, lifecycle, and
-cancellation concerns from the architecture's construction and acceptance
-model. Provider bindings, derived renderings, and their relationship to the
-canonical automation contracts are defined in §3.6.2.
-
-A provider adapter owns the provider-specific work needed to:
-
-- create, configure, and close provider sessions;
-- load prompts and Skills into the provider's supported representation;
-- dispatch the Tool contracts that a session may call;
-- connect provider lifecycle events or local wrappers to Hook enforcement and
-  normalize their outcomes;
-- normalize provider responses into the structured session result consumed by
-  `build_app`, including acceptance evidence, errors, and diagnostics;
-- request and report cancellation, timeouts, and context exhaustion; and
-- obtain provider credentials and apply provider-specific runtime
-  configuration without exposing credentials through contracts or logs.
-
-The adapter does not own command selection, dependency ordering,
-deterministic Tool behavior, acceptance criteria, terminal validation, or the
-durable construction record. Those remain `djng` responsibilities. An adapter
-must report provider-native hook or wrapper outcomes in its normalized result,
-but it cannot turn a failed `djng` enforcement boundary into success.
-
-#### 2.11.1 Provider-adapter capability matrix
-
-This matrix is the authoritative architecture reference for the capabilities a
-provider adapter must map into the provider-neutral `djng` automation contract.
-It records validated reference patterns from `shlomoa/ai`; it does not claim
-that any adapter is implemented in `djng`.
-
-| Capability | Claude Agent SDK | OpenAI Agents / Responses | Gemini SDK / Antigravity | Copilot SDK |
-|---|---|---|---|---|
-| Canonical skill loading | Filesystem skills | Explicit skill-bundle loading | Adapter-provided skill loading | Adapter-provided skill loading |
-| Tool calling | MCP tools | Function tools | Function tools | Session tools |
-| Pre-tool gate | Native hooks | Local function-tool guard / hook manager | Decorator or wrapper | `on_pre_tool_use` / permission handler |
-| Post-tool observation | Native hooks | Local hook manager | Decorator or wrapper | `on_post_tool_use` |
-| Stop / session teardown | Native stop hook | Adapter-managed session teardown | Adapter-managed session teardown | Adapter-managed session teardown |
-| Structured result | Adapter normalizes Agent SDK result | Adapter normalizes Responses / agent result | Adapter normalizes SDK result | Adapter normalizes session result |
-| Timeout / cancellation | Adapter maps SDK controls and outcomes | Adapter maps API / agent controls and outcomes | Adapter maps SDK controls and outcomes | Adapter maps session controls and outcomes |
-
-Provider-native hooks, handlers, and wrappers are adapter mechanisms only.
-They report and normalize provider-runtime events; they do not independently
-decide construction correctness. `djng` command-execution gates and terminal
-validation remain the authoritative enforcement boundaries for every provider.
-
-No provider adapter is implemented in `djng`. A future adapter must satisfy
-provider-independent adapter-contract tests and its credential- and
-runtime-gated provider integration suite before being treated as implemented.
+A provider adapter is the integration layer that lets `djng` use a particular
+AI provider without giving that provider authority over construction
+correctness. It translates provider-specific sessions, Tool calls, lifecycle
+events, and results into the provider-neutral automation model. Its operational
+boundary and capability matrix are defined in §3.6.1.1.
 
 ### 2.12 agentic orchestration
 An orchestration model in which an agentic orchestrator derives construction
@@ -495,11 +444,57 @@ and terminal validation define `djng` construction semantics independently of
 an AI provider, SDK, Skill format, or Plugin format. Provider integrations MUST
 adapt to these semantics and MUST NOT redefine them.
 
-The provider-adapter boundary and capability matrix are defined in §2.11. An
-adapter is implemented only when it satisfies provider-independent contract
-tests and its credential- and runtime-gated provider integration suite. The
-tested provider examples in `shlomoa/ai` are design evidence for future
-adapters; they are not evidence that an adapter is implemented in `djng`.
+Provider-specific work is isolated through the provider-adapter boundary below.
+
+##### 3.6.1.1 Provider-adapter boundary and capability matrix
+
+A provider adapter translates one provider's sessions, Skill representation,
+Tool dispatch, lifecycle events, and results into the provider-neutral `djng`
+automation model. It does not decide which commands run or whether a
+construction run is correct.
+
+A provider adapter owns the provider-specific work needed to:
+
+- create, configure, and close provider sessions;
+- load prompts and Skills into the provider's supported representation;
+- dispatch the Tool contracts that a session may call;
+- connect provider lifecycle events or local wrappers to Hook enforcement and
+  normalize their outcomes;
+- normalize provider responses into the structured session result consumed by
+  `build_app`, including acceptance evidence, errors, and diagnostics;
+- request and report cancellation, timeouts, and context exhaustion; and
+- obtain provider credentials and apply provider-specific runtime
+  configuration without exposing credentials through contracts or logs.
+
+The adapter does not own command selection, dependency ordering,
+deterministic Tool behavior, acceptance criteria, terminal validation, or the
+durable construction record. Those remain `djng` responsibilities. An adapter
+must report provider-native hook or wrapper outcomes in its normalized result,
+but it cannot turn a failed `djng` enforcement boundary into success.
+
+This matrix is the authoritative architecture reference for the capabilities a
+provider adapter must map into the provider-neutral `djng` automation contract.
+It records validated reference patterns from `shlomoa/ai`; it does not claim
+that any adapter is implemented in `djng`.
+
+| Capability | Claude Agent SDK | OpenAI Agents / Responses | Gemini SDK / Antigravity | Copilot SDK |
+|---|---|---|---|---|
+| Canonical skill loading | Filesystem skills | Explicit skill-bundle loading | Adapter-provided skill loading | Adapter-provided skill loading |
+| Tool calling | MCP tools | Function tools | Function tools | Session tools |
+| Pre-tool gate | Native hooks | Local function-tool guard / hook manager | Decorator or wrapper | `on_pre_tool_use` / permission handler |
+| Post-tool observation | Native hooks | Local hook manager | Decorator or wrapper | `on_post_tool_use` |
+| Stop / session teardown | Native stop hook | Adapter-managed session teardown | Adapter-managed session teardown | Adapter-managed session teardown |
+| Structured result | Adapter normalizes Agent SDK result | Adapter normalizes Responses / agent result | Adapter normalizes SDK result | Adapter normalizes session result |
+| Timeout / cancellation | Adapter maps SDK controls and outcomes | Adapter maps API / agent controls and outcomes | Adapter maps SDK controls and outcomes | Adapter maps session controls and outcomes |
+
+Provider-native hooks, handlers, and wrappers are adapter mechanisms only.
+They report and normalize provider-runtime events; they do not independently
+decide construction correctness. `djng` command-execution gates and terminal
+validation remain the authoritative enforcement boundaries for every provider.
+
+No provider adapter is implemented in `djng`. A future adapter must satisfy
+provider-independent adapter-contract tests and its credential- and
+runtime-gated provider integration suite before being treated as implemented.
 
 #### 3.6.2 Contract identity and relationship cardinality
 
@@ -1126,7 +1121,7 @@ Key actors and terms. Full definitions are in §2.
 | **`djangoangular`** | See the canonical code-name definition for the combined `djng` and `ngdj` integration architecture. | §2.6.1 |
 | **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.15 |
 | **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.15.1 |
-| **provider adapter** | The portability boundary between an agent executor and a compatible AI runtime. | §2.11 |
+| **provider adapter** | The integration layer that translates provider-specific runtime behavior into the provider-neutral automation model. | §2.11, §3.6.1.1 |
 | **SKILLS** | Bounded AI skills (`SKILL.md` files) bundled in `djng` that guide the agent within each guided agent session. | §2.13, §3.6; contracts: `doc/contracts/SKILL_CONTRACTS.md` |
 | **TOOLS** | Deterministic callable capabilities used for bounded operations without requiring AI judgment inside the operation itself. | §3.6; contracts: `doc/contracts/TOOL_CONTRACTS.md` |
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects. | §3.6; contracts: `doc/contracts/HOOK_CONTRACTS.md` |

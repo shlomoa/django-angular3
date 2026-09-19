@@ -6142,7 +6142,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
 | **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
 | **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `doc/requirements/APP_BUILDER_REQUIREMENTS.md` |
-| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §2.11, §2.15 |
+| **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §3.6.1.1, §2.15 |
 | **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.13 |
 | **TOOLS** | Deterministic callable capabilities that expose bounded operations to the agent without requiring AI judgment inside the operation itself. | [TOOL_CONTRACTS.md] §Tools |
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | [HOOK_CONTRACTS.md] §Hooks |

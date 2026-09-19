@@ -46,7 +46,7 @@ normal command error reporting.
 
 ### Provider adapters and enforcement ownership
 
-`doc/ARCHITECTURE.md` §2.11.1 is the authoritative provider-adapter capability
+`doc/ARCHITECTURE.md` §3.6.1.1 is the authoritative provider-adapter capability
 matrix. Provider-native hooks, handlers, and wrappers may map provider events
 into the adapter interface, but they are not independent correctness gates.
 During direct `build_app` execution, `djng` applies the selected TOOL and HOOK
