@@ -135,7 +135,7 @@ execute packages at runtime.
 > uses two separate layers with distinct names: **TOOL contracts** are deterministic
 > agent-callable operations (e.g. `angular_workspace_scaffold`, `openapi_schema_export`) and
 > **SKILL names** are AI-guided session identifiers (e.g. `angular-workspace-foundation`,
-> `angular-api-integration`). See `doc/ARCHITECTURE.md §2.22` for the authoritative definition.
+> `angular-api-integration`). See `doc/ARCHITECTURE.md §3.6.4` for the authoritative definition.
 
 To execute these commands, include the relevant commands in the static tool
 configuration's `tool.commandAllowlist`, then invoke them without `--dry-run`.

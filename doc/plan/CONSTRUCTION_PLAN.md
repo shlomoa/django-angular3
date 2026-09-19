@@ -45,12 +45,12 @@ GitHub owns issue scope and tracking.
 
 ### Planning details
 
-- schematics, templates, and assembly behavior defined by the authoritative `ngdj` sources in `ARCHITECTURE.md` §2.6. A missing capability is an upstream dependency, not a locally defined `ngdj` requirement. <!-- STEP7-dbf7c05c029c -->
+- schematics, templates, and assembly behavior defined by the authoritative `ngdj` sources in `ARCHITECTURE.md` §3.4. A missing capability is an upstream dependency, not a locally defined `ngdj` requirement. <!-- STEP7-dbf7c05c029c -->
 - including `ngdj` schematics, through TOOL/wrapper contracts without requiring an agent or provider session. Optional AI-guided work may run through the agent using SKILLS only when the selected task is genuinely underspecified or non-deterministic. HOOKS provide lifecycle gates or mandatory side effects independently of either execution path. <!-- STEP7-c8c133d8e199 -->
 
 ### Open backlog
 
-- [ ] Resolve ngdj facts through `doc/ARCHITECTURE.md` §2.6. The executable djng wrapper registry is `django_angular3/angular.py::_COMMAND_BUILDERS`, and `docs/commands.md` owns its public interface documentation. <!-- STEP7-3b6c35a1bc86 -->
+- [ ] Resolve ngdj facts through `doc/ARCHITECTURE.md` §3.4. The executable djng wrapper registry is `django_angular3/angular.py::_COMMAND_BUILDERS`, and `docs/commands.md` owns its public interface documentation. <!-- STEP7-3b6c35a1bc86 -->
 - [ ] Decide whether service, class, field-component, form-field, application, project-structure, embed-component, and app-shell require dedicated wrappers, bounded composition, or explicit unsupported status. <!-- STEP7-b145635d5021 -->
 - [ ] Add only wrappers justified by approved djng requirements; do not mirror the complete upstream schematic surface. <!-- STEP7-a3209638072a -->
 - [ ] Label direct upstream usage as ngdj invocation and align workspace creation references with the composite `ng_workspace` flow. <!-- STEP7-ff3f7c36e73c -->
@@ -88,7 +88,7 @@ GitHub owns issue scope and tracking.
   (semantic HTML, ARIA, CSS), Design System (Angular Material 3, schematics,
   MDC), and Full-stack integration (DRF pagination, CSRF, OpenAPI
   `data-service`, signals, and standalone OnPush) layers. The layers and
-  upstream ownership are defined in `ARCHITECTURE.md` §2.8.3.
+  upstream ownership are defined in `ARCHITECTURE.md` §3.4.1.
   <!-- STEP7-cd20a6c7a9d1 -->
 - djng remains at the Python validation and wrapper boundary. It does not add a
   Node.js/TypeScript parser, custom selector, or competing OpenUI grammar,

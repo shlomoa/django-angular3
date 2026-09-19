@@ -22,7 +22,7 @@ automation contracts. Use this folder only when the task is specifically about
 authoring, reviewing, or verifying a skill.
 
 All ngdj-dependent Skill work in this folder follows the identity, ownership,
-and upstream-source policy in `doc/ARCHITECTURE.md` §2.6. Command examples in
+and upstream-source policy in `doc/ARCHITECTURE.md` §3.4. Command examples in
 the split files describe djng integration use; they do not define ngdj command
 names, options, schemas, or behavior and must be revalidated against the
 applicable upstream source when changed.

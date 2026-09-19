@@ -27,7 +27,7 @@ GitHub owns issue scope and tracking.
 - This plan applies the primitive-selection policy defined in `doc/ARCHITECTURE.md` §3.6.3. <!-- STEP7-cd7cb510c282 -->
 - The following already exist in the current workspace and are the starting point for this plan: <!-- STEP7-244b22b96a76 -->
 - **CLI wrappers** (Django management commands): `export_schema`, `build_app`, <!-- STEP7-cfdbfe1ff3c4 -->
-- `ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`, `ng_reactive_form`, `ng_site`, `ng_openapi_gen`, `ng_build`, `ng_workspace`, `ng_workspace_delete`, `ng_workspace_modify` (`django_angular3/management/commands/`). <!-- STEP7-3afcd0c47340 -->
+- `ng_new`, `ng_add`, `ng_config`, `ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`, `ng_reactive_form`, `ng_openapi_gen`, `ng_build`, `ng_workspace`, `ng_workspace_delete`, `ng_workspace_modify` (`django_angular3/management/commands/`). <!-- STEP7-3afcd0c47340 -->
 - **oasdiff acquisition**: `django_angular3/tools.py:ensure_oasdiff()`. <!-- STEP7-616b278f5674 -->
 - **Normative contract catalogs** for Tools, Hooks, and Plugins <!-- STEP7-3553167fc57e -->
 - **build_app functional requirements** for traversal, failure handling, and <!-- STEP7-ba292c49b963 -->

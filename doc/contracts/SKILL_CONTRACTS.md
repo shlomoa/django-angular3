@@ -3,12 +3,12 @@
 This document specifies the canonical Skill contracts used by `djng` to build
 and maintain Angular applications. The automation subsystem architecture,
 primitive-selection policy, relationship cardinality, and naming crosswalk are
-defined in `ARCHITECTURE.md` §§2.22 and 3.6. Exact internal module
+defined in `ARCHITECTURE.md` §3.6. Exact internal module
 organization, persistence, execution, adapter, and rendering realization are
 defined in `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md`.
 
 All `ngdj` command, option, and behavior facts used by these contracts follow
-the upstream-source policy in `ARCHITECTURE.md` §2.6. This document defines
+the upstream-source policy in `ARCHITECTURE.md` §3.4. This document defines
 only `djng`-owned Skill contracts and does not redefine the underlying `ngdj`
 schematic surface.
 
@@ -6140,7 +6140,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | `ARCHITECTURE.md` §3.6 |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agent, the AI automation subsystem, `build_app`, and all configuration files. | `ARCHITECTURE.md` §2.5 |
-| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §2.6 |
+| **`ngdj`** | See the canonical identity and upstream-source policy. | `ARCHITECTURE.md` §§2.6, 3.4 |
 | **`build_app`** | The `djng` Django management command. It translates detected changes into ordered commands, executes them, and validates the generated app. | `doc/requirements/APP_BUILDER_REQUIREMENTS.md` |
 | **the agent** | The agentic orchestrator bundled in `djng`. At implementation level, it delegates provider-specific guided-session work through a provider adapter. | `ARCHITECTURE.md` §3.6.1.1, §2.15 |
 | **SKILLS** | Bounded canonical AI skills that guide the agent within each guided agent session. Provider-specific forms, including Claude `SKILL.md` files, are derived renderings. | `ARCHITECTURE.md` §2.13 |
@@ -6148,7 +6148,7 @@ For authoritative definitions see `ARCHITECTURE.md` §2 and §19.
 | **HOOKS** | Deterministic lifecycle-triggered automations that enforce gates, logging, cleanup, and other mandatory side effects outside the agent context window. | [HOOK_CONTRACTS.md] §Hooks |
 | **PLUGINS** | Packaging and distribution bundles that group coherent SKILLS, TOOLS, HOOKS, and related agent capabilities for reuse across projects or teams. | [PLUGIN_CONTRACTS.md] §Plugins |
 | **guided agent session** | A single agent session in which the agent carries out one selected AI-guided SKILL command. | `ARCHITECTURE.md` §2.12 |
-| **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §2.22 |
+| **automation naming layers** | Four distinct naming layers in the subsystem: concern keys, CLI wrapper commands, TOOL contracts, and SKILL names. Each has a different stability contract and purpose. | `ARCHITECTURE.md` §3.6.4 |
 | **`shlomoa/ai`** | Private reference repository containing tested provider-specific examples used to inform `djng`'s provider-neutral adapter design: Claude Agent SDK `query`, MCP tools, native hooks, filesystem skills, and plugins; OpenAI Responses API / `openai-agents`, function-tool guards, and hook management; Gemini `google-genai`, function tools, and decorator/wrapper hooks; and Copilot SDK sessions, permission handlers, and pre-/post-tool hooks. It is design evidence, not a `djng` runtime dependency or implementation. | `doc/plan/AUTOMATION_PLAN.md` — Provider-neutral foundation and dependency-ordered implementation phases |
 
 [CHANGE_MODEL_CONTRACTS.md]: CHANGE_MODEL_CONTRACTS.md

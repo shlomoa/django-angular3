@@ -17,13 +17,13 @@ Use these terms consistently in all code, docs, and skills:
 
 - **djng**: the `django-angular3` meta-tool — this repository. See `doc/ARCHITECTURE.md` §2.5.
 - **ngdj**: use the canonical identity and upstream-source policy in
-	`doc/ARCHITECTURE.md` §2.6; do not redefine its commands or options in djng.
+	`doc/ARCHITECTURE.md` §3.4; do not redefine its commands or options in djng.
 - **djangoangular**: the code name for the tight Django–Angular integration
 	formed by djng and ngdj; see `doc/ARCHITECTURE.md` §2.6.1.
 - **generated app** or **app**: the full-stack application produced by using
 	djng and ngdj together. This is not this repository.
 - **Automation naming layers**: four distinct naming layers in the djng/ngdj
-	 automation subsystem. Authoritative definition: `doc/ARCHITECTURE.md` §2.22.
+	 automation subsystem. Authoritative definition: `doc/ARCHITECTURE.md` §3.6.4.
 
 ### Config file convention
 
@@ -87,7 +87,7 @@ See `doc/ARCHITECTURE.md` §2.20 for the authoritative definition.
 - Prefer existing patterns and best-known methods in this repository.
 - Do not assume that existing implementations in djng or ngdj are complete or
 	correct. Verify djng behavior locally and resolve ngdj facts through
-	`doc/ARCHITECTURE.md` §2.6 and its upstream sources. Define required ngdj
+	`doc/ARCHITECTURE.md` §3.4 and its upstream sources. Define required ngdj
 	changes in the upstream project rather than creating a competing djng
 	definition.
 - Keep Django and DRF responsible for backend data, authentication,

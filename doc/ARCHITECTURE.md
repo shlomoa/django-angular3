@@ -45,37 +45,8 @@ Glossary.
 ### 2.6 ngdj
 
 `ngdj` is the short name for the `angular-django2` companion Angular npm
-package consumed by `djng`.
-
-This section is the single `djng` source of truth for the identity and
-ownership of `ngdj`. The authoritative upstream sources are:
-
-- [npm package][angular-django2] — published package identity, version, and
-  distribution;
-- [GitHub repository][angular-django2-github] — source code, schematic schemas,
-  implementation, and tests; and
-- [Read the Docs][angular-django2-docs] — published usage and command
-  documentation, including the [CLI reference][angular-django2-cli].
-
-`ngdj` owns its package behavior, public schematics, command names, options,
-templates, and documentation. `djng` may define wrappers, Tool contracts, and
-orchestration that invoke those public contracts, but it does not redefine
-them. Every `djng` requirement, implementation task, issue, test, Skill, Tool,
-and document that depends on an `ngdj` fact must resolve that fact through this
-section and the applicable upstream source. `djng` documents must not maintain
-a competing inventory of `ngdj` commands or options.
-
-Facts owned by `djng`, such as wrapper names, argument translation, allowlist
-behavior, and interface availability, remain defined and tested in `djng`.
-They must be clearly identified as integration behavior rather than `ngdj`
-behavior. If upstream sources conflict, report the conflict and resolve it
-upstream instead of selecting or inventing a local definition.
-
-For OpenUI construction, `ngdj` is an Option A (document-driven, JSON-first)
-compiler: it deterministically consumes a concrete canonical OpenUI document
-and workspace state. It does not use runtime AI or out-of-band heuristics to
-interpret that document. Its canonical TypeScript parser and validator are
-owned upstream by `openui-spec`; see [openui-spec#135][openui-spec-135].
+package consumed by `djng`. Its integration boundary, upstream-source policy,
+and OpenUI construction model are defined in §3.4.
 
 #### 2.6.1 djangoangular
 
@@ -126,26 +97,6 @@ architectural classification for a source, input, stream, artifact, ownership
 boundary, or construction operation. `Simple CRM` and `simple_crm` remain valid
 names for the bundled customer-relationship-management tutorial, and explicit
 references to that business domain may use CRM.
-
-#### 2.8.3 Frontend three-layer structure
-
-Each OpenUI element is composed through the following frontend layers:
-
-1. **Native Web building blocks**: HTML5 semantic elements, W3C ARIA roles, and CSS layout.
-  For example, a button element would be constructed using a native `<button>` element, styled with CSS, and enhanced with ARIA roles for accessibility.
-2. **Design System**: Angular Material 3 tokens, official automated CLI
-   schematics, and MDC templates.
-  For example, date picker component which is a native Angular Material component written in TypeScript and comprised of Angular Material building blocks, TypeScript, native HTML5 and CSS.
-3. **Full-stack solution**: OpenAPI based DRF integration (data service, OpenAPI data model), CSRF handling,
-  components and compound UI artifacts comprised from basic building blocks, everything between an Angular Material componenet and an Angular Material app integrated to Django via DRF.
-  For example, a complex form component might combine multiple Angular Material input components, custom validation logic, and DRF-backed data services to create a fully integrated user interface element.
-
-All selectors, component types, and attribute contracts that `ngdj` consumes
-or generates must be defined by `openui-spec`. It must not add custom
-behavioral selectors, such as `[ngdjSwipe]`. `openui-spec` owns the grammar,
-schema, catalog, and `SCHEMA_VERSION` bump enforcement.
-
-The compiler and parser ownership defined in §2.6 applies to these layers.
 
 ### 2.9 [OpenAPI contract - Schema][OpenAPI 3.1 Specification]
 The versioned OpenAPI schema exported from the DRF layer, serving as the source of truth for API-contract-derived functionality and the basis for generating Angular integration artifacts.
@@ -229,113 +180,6 @@ apps remain domain modules selected by the generated application. The static
 `django-angular3.json` configures `djng` tooling, not generated-app identity.
 See `SPECIFICATIONS.md` §2 for the authoritative configuration structure.
 
-### 2.21 model-first and contract-first backend origination
-
-Two distinct ways the backend data model and its OpenAPI contract come into
-existence. They are alternative origination paths, not competing sources of
-truth.
-
-- **Model-first (DRF-first):** a Django data model already exists. DRF
-  elaboration produces the API, and the OpenAPI contract is *exported from* the
-  DRF layer via [drf-spectacular]. This is the steady-state mode once a backend
-  exists.
-- **Contract-first (OpenAPI-first):** no Django data model exists yet. An
-  existing [OpenAPI contract][OpenAPI 3.1 Specification] is the origination
-  input, and the Django data model is *generated from* it using
-  [datamodel-code-generator] driven by djng-owned custom Django templates. DRF
-  elaboration (serializers, views, authentication, permissions) is then layered
-  on the generated model.
-
-Both modes converge on the same invariant: once a backend exists, the OpenAPI
-contract is the source of truth for API-contract-derived functionality (§11.1). See §11.2
-for the generation toolchain and §17 for the corresponding decision.
-
-### 2.22 Automation naming layers
-
-Four distinct naming layers appear in the `djng`/`ngdj` automation subsystem.
-Each layer has a different owner, stability contract, and purpose. Keeping them
-separate prevents name collision between the CLI surface, the agent API, and
-the AI-guided session API.
-
-- **Concern key** — A stable, dot-namespaced semantic identifier for a
-  construction concern. Used in documentation and command selection only; never appears
-  in filenames, code identifiers, or command names. The canonical concern keys
-  are:
-
-  *Angular construction:*
-
-  | Concern key | Construction concern |
-  |---|---|
-  | `angular.workspace` | Workspace scaffold and configuration |
-  | `angular.app` | Application scaffold |
-  | `angular.feature` | Feature area, initial page, and route scaffold |
-  | `angular.api-client` | Typed API client generation from OpenAPI |
-  | `angular.data-service` | Data service layer |
-  | `angular.field-component` | Reusable form field components |
-  | `angular.form-field` | CVA-backed form field boilerplate |
-  | `angular.component` | Standalone components |
-  | `angular.complex-component` | Composite/complex components |
-  | `angular.reactive-form` | Typed reactive forms |
-  | `angular.page` | Routed page components |
-  | `angular.site` | Site shell and route tree |
-
-  *Contract lifecycle:*
-
-  | Concern key | Construction concern |
-  |---|---|
-  | `contract.schema-export` | OpenAPI schema extraction from DRF |
-  | `contract.schema-validate` | Schema validation (OAS 3.1 conformance) |
-  | `contract.schema-diff` | Schema diff and change detection |
-- **Operator wrapper identifier** — The stable public identifier for a `djng`
-  wrapper. It forms part of the operator interface and MUST NOT be renamed
-  without a deprecation cycle.
-- **TOOL contract** — The deterministic operation name exposed to the agent and
-  to deterministic automation execution. Defined in
-  `doc/contracts/TOOL_CONTRACTS.md` §Tool Contracts Catalog. Every selected
-  deterministic operation MUST use one of these names.
-- **SKILL name** — The AI-guided session identifier selected by the agentic
-  orchestrator. Defined in `doc/contracts/SKILL_CONTRACTS.md` §Skills Catalog.
-  Every selected AI-guided operation MUST use one of these names.
-
-#### 2.22.1 Automation naming crosswalk
-
-All `ngdj` command, option, and behavior facts used by `djng` automation
-contracts are governed by §2.6 and its upstream sources. The crosswalk defines
-only `djng`-owned wrappers, Tool contracts, Skills, Hooks, and Plugins; it does
-not define the underlying `ngdj` schematic surface.
-
-This table is the single source of truth mapping every construction concern to
-its name in each of the four automation naming layers. Hook lifecycle mappings
-are defined separately in the
-[Hook Contracts Catalog](contracts/HOOK_CONTRACTS.md#hook-contracts-catalog).
-Because relationships are not one-to-one, a cell may list multiple canonical
-identifiers for the same concern. `—` means that no canonical identifier exists
-for that concern in that layer; it does not mean planned or unknown. The
-cross-cutting `ngdj_run_schematic` Tool is intentionally omitted because it can
-execute allowlisted schematics for multiple concerns rather than naming one
-construction concern.
-
-| Concern key | Operator wrapper identifier | Tool contract | Skill name |
-|---|---|---|---|
-| `angular.workspace` | `ng_new`, `ng_workspace`, `ng_workspace_modify`, `ng_workspace_delete` | `angular_workspace_scaffold` | `angular-workspace-foundation` |
-| `angular.app` | `ng_gen_app` | `angular_app_scaffold` | `angular-app-composition` |
-| `angular.feature` | — | `ngdj_add_feature` | — |
-| `angular.api-client` | `ng_openapi_gen` | `angular_api_client_generate` | `angular-api-integration` |
-| `angular.data-service` | `ng_data_service` | — | `angular-data-service-composition` |
-| `angular.field-component` | — | — | `angular-field-component-composition` |
-| `angular.form-field` | — | — | `angular-form-field-composition` |
-| `angular.component` | `ng_component` | `ngdj_add_component` | `angular-component-composition` |
-| `angular.complex-component` | `ng_complex_component` | — | `angular-complex-component-composition` |
-| `angular.reactive-form` | `ng_reactive_form` | — | `angular-reactive-form-composition` |
-| `angular.page` | `ng_page` | — | `angular-page-composition` |
-| `angular.site` | `ng_site` | — | `angular-site-composition` |
-| `contract.schema-export` | `export_schema` | `openapi_schema_export` | — |
-| `contract.schema-validate` | — | `validate_openapi_schema` | — |
-| `contract.schema-diff` | — | `oasdiff_diff`, `oasdiff_changelog` | — |
-
-Contract uniqueness, composition, bundling, and provider-binding
-cardinalities are defined in §3.6.2.
-
 ---
 
 ## 3. Toolchain Design
@@ -344,8 +188,8 @@ cardinalities are defined in §3.6.2.
 
 |Input|Description|
 |:-|:-|
-|DRF model (model-first)|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions. Origination input in the model-first mode (§2.21)|
-|OpenAPI Schema (contract-first)|An existing OpenAPI Schema used as the backend origination input when no Django model exists yet; the Django data model is generated from it (§2.21, §11.2)|
+|DRF model (model-first)|A Django model with DRF elaboration including endpoints, at least: serializers, views, authentication, and permissions. Origination input in the model-first mode (§11.2)|
+|OpenAPI Schema (contract-first)|An existing OpenAPI Schema used as the backend origination input when no Django model exists yet; the Django data model is generated from it (§11.2)|
 |Project configuration|A json file describing the project, apps, UI parts, and other configuration details|
 |OpenUI concrete UI document|The versioned UI-description input for pages, forms, navigation, layouts, workflows, and related UI concerns|
 
@@ -390,9 +234,21 @@ and construction configuration. See §2.5 and §19 Glossary.
 
 ### 3.4 ngdj
 
-The authoritative `ngdj` identity, ownership, implementation, and documentation
-sources are defined once in §2.6. This section defines only the integration
-boundary within the `djng` architecture.
+The authoritative upstream sources for `ngdj` identity, ownership,
+implementation, and documentation are:
+
+- [npm package][angular-django2] — published package identity, version, and
+  distribution;
+- [GitHub repository][angular-django2-github] — source code, schematic schemas,
+  implementation, and tests; and
+- [Read the Docs][angular-django2-docs] — published usage and command
+  documentation, including the [CLI reference][angular-django2-cli].
+
+`ngdj` owns its package behavior, public schematics, command names, options,
+templates, and documentation. Every `djng` requirement, implementation task,
+issue, test, Skill, Tool, and document that depends on an `ngdj` fact must
+resolve that fact through the applicable upstream source. `djng` documents must
+not maintain a competing inventory of `ngdj` commands or options.
 
 `djng` consumes installed `ngdj` public contracts to materialize Angular-side
 outputs. It may invoke them directly through wrappers or compose them through
@@ -401,6 +257,38 @@ upstream command, option, behavior, output, or error contracts. Required
 changes to those contracts belong in the upstream `angular-django2` project;
 `djng` records only its dependency on and use of them.
 
+Facts owned by `djng`, such as wrapper names, argument translation, allowlist
+behavior, and interface availability, remain defined and tested in `djng`.
+They must be clearly identified as integration behavior rather than `ngdj`
+behavior. If upstream sources conflict, report the conflict and resolve it
+upstream instead of selecting or inventing a local definition.
+
+For OpenUI construction, `ngdj` is an Option A (document-driven, JSON-first)
+compiler: it deterministically consumes a concrete canonical OpenUI document
+and workspace state. It does not use runtime AI or out-of-band heuristics to
+interpret that document. Its canonical TypeScript parser and validator are
+owned upstream by `openui-spec`; see [openui-spec#135][openui-spec-135].
+
+#### 3.4.1 OpenUI construction layers
+
+Each OpenUI element is composed through the following frontend layers:
+
+1. **Native Web building blocks**: HTML5 semantic elements, W3C ARIA roles,
+  and CSS layout. For example, a button uses a native `<button>` element,
+  CSS styling, and appropriate ARIA attributes.
+2. **Design System**: Angular Material 3 tokens, official CLI schematics, and
+  MDC templates. For example, a date-picker component combines Angular
+  Material building blocks with TypeScript, native HTML, and CSS.
+3. **Full-stack solution**: OpenAPI-based DRF integration, including data
+  services, OpenAPI data models, CSRF handling, and compound UI artifacts that
+  connect Angular Material components to Django through DRF. For example, a
+  complex form may combine Material input components, custom validation, and
+  DRF-backed data services.
+
+All selectors, component types, and attribute contracts that `ngdj` consumes
+or generates must be defined by `openui-spec`. It must not add custom
+behavioral selectors, such as `[ngdjSwipe]`. `openui-spec` owns the grammar,
+schema, catalog, and `SCHEMA_VERSION` bump enforcement.
 
 ### 3.5 Toolchain components
 
@@ -412,7 +300,7 @@ changes to those contracts belong in the upstream `angular-django2` project;
 - An OpenAPI TypeScript generation process - in `ngdj`.
 - A structured UI definition management system - in `djng`.
 - `djng` integration requirements must be validated against the `ngdj` sources
-  in §2.6; required upstream changes are defined and implemented in
+  in §3.4; required upstream changes are defined and implemented in
   `angular-django2`.
 
 ### 3.6 AI automation subsystem
@@ -596,6 +484,90 @@ When a new capability is proposed:
 
 When classifying a new capability, prefer an analogous existing classification
 before introducing a new pattern.
+
+#### 3.6.4 Automation naming layers
+
+Four distinct naming layers appear in the `djng`/`ngdj` automation subsystem.
+Each layer has a different owner, stability contract, and purpose. Keeping them
+separate prevents name collision between the CLI surface, the agent API, and
+the AI-guided session API.
+
+- **Concern key** — A stable, dot-namespaced semantic identifier for a
+  construction concern. Used in documentation and command selection only; never
+  appears in filenames, code identifiers, or command names. The canonical
+  concern keys are:
+
+  *Angular construction:*
+
+  | Concern key | Construction concern |
+  |---|---|
+  | `angular.workspace` | Workspace scaffold and configuration |
+  | `angular.app` | Application scaffold |
+  | `angular.feature` | Feature area, initial page, and route scaffold |
+  | `angular.api-client` | Typed API client generation from OpenAPI |
+  | `angular.data-service` | Data service layer |
+  | `angular.field-component` | Reusable form field components |
+  | `angular.form-field` | CVA-backed form field boilerplate |
+  | `angular.component` | Standalone components |
+  | `angular.complex-component` | Composite/complex components |
+  | `angular.reactive-form` | Typed reactive forms |
+  | `angular.page` | Routed page components |
+
+  *Contract lifecycle:*
+
+  | Concern key | Construction concern |
+  |---|---|
+  | `contract.schema-export` | OpenAPI schema extraction from DRF |
+  | `contract.schema-validate` | Schema validation (OAS 3.1 conformance) |
+  | `contract.schema-diff` | Schema diff and change detection |
+- **Operator wrapper identifier** — The stable public identifier for a `djng`
+  wrapper. It forms part of the operator interface and MUST NOT be renamed
+  without a deprecation cycle.
+- **TOOL contract** — The deterministic operation name exposed to the agent and
+  to deterministic automation execution. Defined in
+  `doc/contracts/TOOL_CONTRACTS.md` §Tool Contracts Catalog. Every selected
+  deterministic operation MUST use one of these names.
+- **SKILL name** — The AI-guided session identifier selected by the agentic
+  orchestrator. Defined in `doc/contracts/SKILL_CONTRACTS.md` §Skills Catalog.
+  Every selected AI-guided operation MUST use one of these names.
+
+##### 3.6.4.1 Automation naming crosswalk
+
+All `ngdj` command, option, and behavior facts used by `djng` automation
+contracts are governed by §3.4 and its upstream sources. The crosswalk defines
+only `djng`-owned wrappers, Tool contracts, Skills, Hooks, and Plugins; it does
+not define the underlying `ngdj` schematic surface.
+
+This table is the single source of truth mapping every construction concern to
+its name in each of the four automation naming layers. Hook lifecycle mappings
+are defined separately in the
+[Hook Contracts Catalog](contracts/HOOK_CONTRACTS.md#hook-contracts-catalog).
+Because relationships are not one-to-one, a cell may list multiple canonical
+identifiers for the same concern. `—` means that no canonical identifier exists
+for that concern in that layer; it does not mean planned or unknown. The
+cross-cutting `ngdj_run_schematic` Tool is intentionally omitted because it can
+execute allowlisted schematics for multiple concerns rather than naming one
+construction concern.
+
+| Concern key | Operator wrapper identifier | Tool contract | Skill name |
+|---|---|---|---|
+| `angular.workspace` | `ng_new`, `ng_workspace`, `ng_workspace_modify`, `ng_workspace_delete` | `angular_workspace_scaffold` | `angular-workspace-foundation` |
+| `angular.app` | `ng_gen_app` | `angular_app_scaffold` | `angular-app-composition` |
+| `angular.feature` | — | `ngdj_add_feature` | — |
+| `angular.api-client` | `ng_openapi_gen` | `angular_api_client_generate` | `angular-api-integration` |
+| `angular.data-service` | `ng_data_service` | — | `angular-data-service-composition` |
+| `angular.field-component` | — | — | `angular-field-component-composition` |
+| `angular.form-field` | — | — | `angular-form-field-composition` |
+| `angular.component` | `ng_component` | `ngdj_add_component` | `angular-component-composition` |
+| `angular.complex-component` | `ng_complex_component` | — | `angular-complex-component-composition` |
+| `angular.reactive-form` | `ng_reactive_form` | — | `angular-reactive-form-composition` |
+| `angular.page` | `ng_page` | — | `angular-page-composition` |
+| `contract.schema-export` | `export_schema` | `openapi_schema_export` | — |
+| `contract.schema-validate` | — | `validate_openapi_schema` | — |
+| `contract.schema-diff` | — | `oasdiff_diff`, `oasdiff_changelog` | — |
+
+Contract uniqueness, composition, bundling, and provider-binding
+cardinalities are defined in §3.6.2.
 
 ---
 
@@ -816,7 +788,7 @@ it owns before applying a deterministic mutation. It does not independently
 interpret the generated application's canonical OpenUI document or derive the
 application-wide change plan. Validation by `openui-spec`, `djng`, and `ngdj`
 therefore applies at distinct, complementary boundaries; validation at one
-boundary does not replace validation at another. See §2.6 for the canonical
+boundary does not replace validation at another. See §3.4 for the canonical
 `ngdj` ownership policy and §2.8.2 for source and construction terminology.
 
 ### 8.3 Contract Rules
@@ -966,7 +938,8 @@ It should not own:
 
 ### 11.2 Generation Toolchain
 
-- Backend origination follows one of two modes (see §2.21):
+- Backend origination follows one of two alternative paths, not competing
+  sources of truth:
   - **Model-first:** an existing Django model is the starting point; the OpenAPI
     contract is exported from DRF via [drf-spectacular].
   - **Contract-first:** no Django model exists yet; the Django data model is
@@ -977,7 +950,8 @@ It should not own:
     custom-template capability owned and maintained by djng. DRF elaboration
     (serializers, views, authentication, permissions) is layered on the
     generated model, after which the backend proceeds in model-first steady
-    state with the OpenAPI contract as the source of truth (§11.1).
+    state. Once a backend exists, the OpenAPI contract is the source of truth
+    for API-contract-derived functionality (§11.1).
 - Any datamodel change creating a Django database migration file (after makemigrations) will force an OpenAPI schema extraction via [drf-spectacular].
 - Run the schema diff and change detection tool:
   - Run it after exporting the OpenAPI schema from DRF.
@@ -1093,7 +1067,7 @@ switch environments.
   Documents are validated against the full OpenAPI specification.  No external
   toolchain (such as Go) is required.
 - [ng-openapi-gen] is the Angular client OpenAPI code-generation tool (source: [ng-openapi-gen-github]).
-- [datamodel-code-generator] is the contract-first backend generator (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]). For the use case where no Django model exists yet, it generates the Django data model from an existing OpenAPI Schema using djng-owned custom Django templates. This is the inverse origination path to the model-first [drf-spectacular] export; see §2.21.
+- [datamodel-code-generator] is the contract-first backend generator (source: [datamodel-code-generator-github]; online playground: [datamodel-code-generator-playground]). For the use case where no Django model exists yet, it generates the Django data model from an existing OpenAPI Schema using djng-owned custom Django templates. This is the inverse origination path to the model-first [drf-spectacular] export; see §11.2.
 - Verification occurs throughout construction and integration using contract checks, construction-output checks, integration checks, and automated tests.
 - Generated Angular integration artifacts are the boundary for reusable
   Angular/Django integration code in the current scaffold
@@ -1117,7 +1091,7 @@ Key actors and terms. Full definitions are in §2.
 |---|---|---|
 | **AI automations** | The full automation model used by `djng`: SKILLS, TOOLS, HOOKS, and PLUGINS working together for bounded construction and integration. | §3.6 |
 | **`djng`** | The `django-angular3` solution — this repository, the Django package, and the tool. Contains the agentic orchestrator, the AI automation subsystem, and construction configuration. | §2.5 |
-| **`ngdj`** | See the canonical identity and upstream-source policy. | §2.6 |
+| **`ngdj`** | The `angular-django2` companion Angular npm package consumed by `djng`. | §§2.6, 3.4 |
 | **`djangoangular`** | See the canonical code-name definition for the combined `djng` and `ngdj` integration architecture. | §2.6.1 |
 | **agentic orchestrator** | The architectural actor that coordinates change-driven construction, automation selection, lifecycle boundaries, and deterministic acceptance. | §2.15 |
 | **agent executor** | The capability that carries out one bounded AI-guided task under orchestrator constraints. | §2.15.1 |

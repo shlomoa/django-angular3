@@ -12,7 +12,7 @@ The terms `djng` and `ngdj` use the definitions in [ARCHITECTURE.md]
 
 This document defines `djng` integration requirements; it does not define
 `ngdj` commands, options, or behavior. All such facts use the upstream-source
-policy in `ARCHITECTURE.md` §2.6.
+policy in `ARCHITECTURE.md` §3.4.
 
 The terms `AI automations`, `SKILLS`, `TOOLS`, `HOOKS`, `PLUGINS`, and
 `AI-automation-based construction` use the definitions in

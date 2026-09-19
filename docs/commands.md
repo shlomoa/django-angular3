@@ -42,8 +42,8 @@ not application configuration.
 ## Command ownership
 
 - **ngdj schematics** use the identity, ownership, and upstream-source policy in
-	`doc/ARCHITECTURE.md` §2.6
-	[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/ARCHITECTURE.md#26-ngdj){.modal-link}
+	`doc/ARCHITECTURE.md` §3.4
+	[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/ARCHITECTURE.md#34-ngdj){.modal-link}
 	Follow the CLI reference linked there for
 	schematic behavior, options, prerequisites, and examples.
 - **djng wrappers** are the `ng_*` commands defined by this repository. Their
@@ -55,7 +55,7 @@ not application configuration.
 	it does not require a Node.js or TypeScript parser. `ngdj` owns consumption
 	of the canonical OpenUI TypeScript parser. Both boundaries use only
 	selectors, component types, and attribute contracts defined by
-	`openui-spec`; see `doc/ARCHITECTURE.md` §2.8.3.
+	`openui-spec`; see `doc/ARCHITECTURE.md` §3.4.1.
 - djng emits every multiword Angular CLI option in kebab-case (for example,
 	`--auth-guard` and `--openapi-spec-file`) so Angular CLI accepts the resolved
 	invocation.

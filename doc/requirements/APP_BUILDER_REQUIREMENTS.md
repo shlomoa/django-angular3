@@ -87,7 +87,7 @@ The OpenUI stage gate validates each configured canonical JSON document through
 `openui-spec` before comparison, selector resolution, or wrapper selection.
 The accepted document is the deterministic JSON-first input to the upstream
 ngdj compiler, which applies the three-layer construction model defined in
-`doc/ARCHITECTURE.md` §2.8.3. `djng` owns Python-side validation and wrapper
+`doc/ARCHITECTURE.md` §3.4.1. `djng` owns Python-side validation and wrapper
 selection, not OpenUI parsing rules, selectors, or ngdj compiler behavior.
 
 ### Optional
@@ -145,10 +145,10 @@ previous inputs; commands not selected by either change set are omitted.
 
 The selected commands invoke the following documented automation contracts.
 All underlying `ngdj` command and behavior facts follow the upstream-source
-policy in `doc/ARCHITECTURE.md` §2.6; this document defines only djng command
+policy in `doc/ARCHITECTURE.md` §3.4; this document defines only djng command
 selection and composition.
 Tool and hook names remain distinct from CLI wrapper command names, as defined
-by the automation naming layers in `doc/ARCHITECTURE.md` §2.22. Contract identity
+by the automation naming layers in `doc/ARCHITECTURE.md` §3.6.4. Contract identity
 and command-composition cardinalities are defined in `doc/ARCHITECTURE.md` §3.6.2;
 this document selects and composes those contracts but does not redefine them.
 In particular, an OpenUI wrapper may receive only a validated canonical
@@ -182,7 +182,7 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `openui` standalone component `create`, `update`, `delete`, or `move` | `ng_component` wraps `angular-django2:component` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
 | `openui` complex component `create`, `update`, `delete`, or `move` | `ng_complex_component` wraps `angular-django2:complex-component`; deterministic TOOL contract and complete atomic-operation mapping are not yet defined | Not yet defined for `build_app` |
 | `openui` reactive form `create`, `update`, `delete`, or `move` | `ng_reactive_form` wraps `angular-django2:reactive-form` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` navigation `update` or `move` | `ng_site` wraps `angular-django2:site` for its bounded create, modify, and delete operations; deterministic TOOL contract and navigation-move composition are not yet defined | Not yet defined for `build_app` |
+| `openui` navigation `update` or `move` | `angular-site-composition` handles site-level navigation composition; deterministic TOOL contract and navigation-move composition are not yet defined | Not yet defined for `build_app` |
 
 The direct wrappers define precise invocations for the ngdj operations they
 support, but `build_app` must still define the deterministic TOOL contract and

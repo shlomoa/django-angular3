@@ -8,7 +8,7 @@ assignees: []
 
 ## Schematic / command
 
-<!-- e.g. angular-django2:page, angular-django2:reactive-form, angular-django2:site -->
+<!-- e.g. angular-django2:page, angular-django2:reactive-form -->
 
 ## Current djng status
 
@@ -30,7 +30,7 @@ assignees: []
 
 ## ngdj reference
 
-Use `doc/ARCHITECTURE.md` §2.6 and its upstream sources. Do not define or copy
+Use `doc/ARCHITECTURE.md` §3.4 and its upstream sources. Do not define or copy
 an ngdj command inventory in this issue.
 
 - Target ngdj version: `angular-django2@<version>`

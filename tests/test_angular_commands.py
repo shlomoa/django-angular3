@@ -601,7 +601,7 @@ class AngularCliCommandTests(unittest.TestCase):
             argv=(
                 "ng",
                 "generate",
-                "angular-django2:site",
+                "angular-django2:reactive-form",
                 "--authGuard=portalGuard",
                 "--openapi_spec_file=openapi.json",
                 "--skipTests",
@@ -614,7 +614,7 @@ class AngularCliCommandTests(unittest.TestCase):
             (
                 "ng",
                 "generate",
-                "angular-django2:site",
+                "angular-django2:reactive-form",
                 "--auth-guard=portalGuard",
                 "--openapi-spec-file=openapi.json",
                 "--skip-tests",

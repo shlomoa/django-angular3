@@ -2,7 +2,7 @@
 
 ## Review basis
 
-`doc/ARCHITECTURE.md` §2.6 is the django-angular3 authority for ngdj identity,
+`doc/ARCHITECTURE.md` §3.4 is the django-angular3 authority for ngdj identity,
 ownership, and upstream-source resolution. This review records alignment only;
 it does not maintain an ngdj command, option, implementation, or test inventory.
 
@@ -10,13 +10,13 @@ it does not maintain an ngdj command, option, implementation, or test inventory.
 
 | Issue                                                                                                       | Verdict     | Findings                                                                                                                                                                                                                                                                |
 | ----------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [#56 — Track ngdj construction capabilities](https://github.com/shlomoa/django-angular3/issues/56)          | **Aligned** | Cites §2.6, marks upstream #24–#26 complete, leaves #27 open, and tracks only djng consumption and coordination.                                                                                                                                                        |
+| [#56 — Track ngdj construction capabilities](https://github.com/shlomoa/django-angular3/issues/56)          | **Aligned** | Cites §3.4, marks upstream #24–#26 complete, leaves #27 open, and tracks only djng consumption and coordination.                                                                                                                                                        |
 | [#57 — Complete generation entry points and wrappers](https://github.com/shlomoa/django-angular3/issues/57) | **Aligned** | Separates the executable djng wrapper registry, djng command documentation, Tool catalog, builder requirements, and upstream ngdj authority. It correctly leaves the operation-support matrix, canonical Tool identities, and OpenUI atomic-change mappings unresolved. |
-| [#58 — Execute governed construction through Skills](https://github.com/shlomoa/django-angular3/issues/58)  | **Aligned** | Keeps canonical Skills and provider renderings under djng while resolving every ngdj-dependent fact through §2.6. It does not assign deterministic Tool or ngdj behavior to Skills.                                                                                     |
+| [#58 — Execute governed construction through Skills](https://github.com/shlomoa/django-angular3/issues/58)  | **Aligned** | Keeps canonical Skills and provider renderings under djng while resolving every ngdj-dependent fact through §3.4. It does not assign deterministic Tool or ngdj behavior to Skills.                                                                                     |
 | [#66 — Consume ngdj frontend structure](https://github.com/shlomoa/django-angular3/issues/66)               | **Aligned** | Uses current requirement references, records upstream #25 as complete, and limits remaining work to djng consumption and generated-app acceptance.                                                                                                                      |
 | [#74 — Assemble OpenAPI and OpenUI input streams](https://github.com/shlomoa/django-angular3/issues/74)     | **Aligned** | Preserves separate, composable source identities; distinguishes the package-local site assembly definition from canonical OpenUI; and separates upstream #26 delivery from the unresolved #27 boundary.                                                                 |
 | [#84 — Implement staged verification](https://github.com/shlomoa/django-angular3/issues/84)                 | **Aligned** | Assigns schematic verification to ngdj and wrapper, composition, cross-input, and generated-app acceptance to djng. It explicitly rejects a competing ngdj test surface.                                                                                                |
-| [#139 — Provider-neutral automation foundation](https://github.com/shlomoa/django-angular3/issues/139)      | **Aligned** | Cites §2.6, keeps controlled ngdj invocation within djng-owned validation and allowlisting, and preserves direct Tool/Hook/acceptance authority independently of provider adapters.                                                                                     |
+| [#139 — Provider-neutral automation foundation](https://github.com/shlomoa/django-angular3/issues/139)      | **Aligned** | Cites §3.4, keeps controlled ngdj invocation within djng-owned validation and allowlisting, and preserves direct Tool/Hook/acceptance authority independently of provider adapters.                                                                                     |
 
 ## Remaining issues
 
@@ -46,7 +46,7 @@ For the provider-neutral phase issues:
 - #162 implements catalogued djng Tool contracts only after #57 resolves the
   missing construction contracts and reconciles the existing generic/additive
   contracts; every ngdj-dependent implementation fact must resolve through
-  §2.6;
+  §3.4;
 - #163 implements Hook contracts around Tools and must not duplicate their
   ngdj invocation behavior;
 - #164 owns direct `build_app` selection and execution against the approved
@@ -89,6 +89,6 @@ redefined in djng.
    reconcile the existing generic/additive Tool contracts, and align the
    authoritative crosswalk, Tool catalog, builder mapping, and phased plan
    before #162 or #164 implements them.
-3. Keep future issue updates referential: upstream ngdj facts through §2.6,
+3. Keep future issue updates referential: upstream ngdj facts through §3.4,
   djng Tool contracts through `doc/contracts/TOOL_CONTRACTS.md`, and direct
   build behavior through `doc/requirements/APP_BUILDER_REQUIREMENTS.md`.

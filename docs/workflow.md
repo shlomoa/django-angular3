@@ -70,7 +70,7 @@ not use runtime AI or out-of-band heuristics. Use only selectors, component
 types, and attribute contracts defined by `openui-spec`—do not add custom
 behavioral selectors. After validation, ngdj constructs the generated UI using
 the Native Web, Angular Material 3 design-system, and Django/Angular
-full-stack integration layers described in `doc/ARCHITECTURE.md` §2.8.3.
+full-stack integration layers described in `doc/ARCHITECTURE.md` §3.4.1.
 
 #### Compare OpenUI versions
 

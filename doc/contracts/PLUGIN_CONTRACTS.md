@@ -3,13 +3,13 @@
 This document specifies the canonical Plugin contracts used by `djng` to
 package coherent bundles of SKILLS, TOOLS, and HOOKS. The automation subsystem
 architecture, primitive-selection policy, relationship cardinality, and naming
-crosswalk are defined in `ARCHITECTURE.md` §§2.22 and 3.6. Exact internal
+crosswalk are defined in `ARCHITECTURE.md` §3.6. Exact internal
 module organization, persistence, execution, adapter, and rendering
 realization are defined in
 `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md`.
 
 All `ngdj` command, option, and behavior facts used by these contracts follow
-the upstream-source policy in `ARCHITECTURE.md` §2.6. This document defines
+the upstream-source policy in `ARCHITECTURE.md` §3.4. This document defines
 only `djng`-owned Plugin contracts and does not redefine the underlying `ngdj`
 schematic surface.
 

@@ -4,7 +4,7 @@
 
 This document defines the per-Skill authoring and verification cadence for the eleven canonical guided Skills in `doc/contracts/SKILL_CONTRACTS.md`. Use a Skill only for AI judgment, interpretation, iterative repair, or refinement; deterministic generation belongs to a Tool contract.
 
-It does not redefine Skill contracts, repository-wide sequencing, or `build_app` behavior, which are owned by `doc/contracts/SKILL_CONTRACTS.md`, the [Automation Plan](plan/AUTOMATION_PLAN.md#dependency-ordered-implementation-phases), and `doc/requirements/APP_BUILDER_REQUIREMENTS.md`, respectively. `angular-django2` owns its public generation behavior; Skills use the upstream sources referenced by `ARCHITECTURE.md` §2.6 rather than restating them.
+It does not redefine Skill contracts, repository-wide sequencing, or `build_app` behavior, which are owned by `doc/contracts/SKILL_CONTRACTS.md`, the [Automation Plan](plan/AUTOMATION_PLAN.md#dependency-ordered-implementation-phases), and `doc/requirements/APP_BUILDER_REQUIREMENTS.md`, respectively. `angular-django2` owns its public generation behavior; Skills use the upstream sources referenced by `ARCHITECTURE.md` §3.4 rather than restating them.
 
 Skills preserve intentional contract-derived representations across backend models, OpenAPI, generated TypeScript models, and Angular validation; they must not introduce competing hand-maintained sources.
 

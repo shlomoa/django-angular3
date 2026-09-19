@@ -4,8 +4,8 @@ This document specifies the canonical provider-adapter contracts used by `djng`
 to run automation primitives on a provider runtime, including the provider
 lifecycle mappings for the Hook contracts defined in [HOOK_CONTRACTS.md]. The
 automation subsystem architecture, primitive-selection policy, relationship
-cardinality, and naming crosswalk are defined in `ARCHITECTURE.md` §§2.22 and
-3.6. Exact internal module organization, persistence, execution, adapter, and
+cardinality, and naming crosswalk are defined in `ARCHITECTURE.md` §3.6. Exact
+internal module organization, persistence, execution, adapter, and
 rendering realization are defined in
 `doc/specifications/AI_AUTOMATION_SPECIFICATIONS.md`.
 
