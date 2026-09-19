@@ -127,7 +127,7 @@ SKILLS are one primitive family within the broader AI automation subsystem of
 `django-angular3`. The subsystem architecture is defined in §3.6, canonical
 Skill contracts are specified in `doc/contracts/SKILL_CONTRACTS.md`, and the
 per-Skill authoring and verification cadence is defined in
-`doc/SKILL_AUTHORING_PLAN.md`.
+[Automation Plan](plan/AUTOMATION_PLAN.md#skill-authoring-and-derived-working-copies).
 
 ### 2.14 AI-automation-based construction
 A construction model in which bounded AI automations are the execution units for generating, modifying, validating, and integrating application building blocks. In this model, SKILLS provide AI-guided generation and integration behavior, TOOLS provide deterministic bounded operations, HOOKS enforce lifecycle gates and mandatory side effects, and PLUGINS package coherent capability bundles for reuse. This model allows controlled generative freedom while keeping construction within architectural, contract-defined, and validation-defined boundaries.

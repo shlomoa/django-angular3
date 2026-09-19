@@ -1,7 +1,9 @@
 # Skill Creation Working Set
 
 This folder splits `doc/contracts/SKILL_CONTRACTS.md` into smaller working files for the
-skill authoring cadence described in `doc/SKILL_AUTHORING_PLAN.md`.
+skill authoring cadence described in
+`doc/plan/AUTOMATION_PLAN.md`'s `Skill authoring and derived working copies`
+section.
 
 This folder is intentionally skill-specific. It is the working set for the
 SKILLS subset of the broader AI automation model; it is not the execution workspace for TOOLS, HOOKS, or PLUGINS.
@@ -12,7 +14,7 @@ split, step-by-step authoring program comparable to the eleven skills.
 
 `doc/contracts/SKILL_CONTRACTS.md` remains the canonical Skill source. These files are
 derived working copies for planning, implementing, and verifying one Skill at a
-time through the cadence in `doc/SKILL_AUTHORING_PLAN.md`. If a split file appears incomplete or inconsistent with
+time through the cadence in `doc/plan/AUTOMATION_PLAN.md`. If a split file appears incomplete or inconsistent with
 `doc/contracts/SKILL_CONTRACTS.md`, resolve the discrepancy against `doc/contracts/SKILL_CONTRACTS.md` and
 then update the split file.
 

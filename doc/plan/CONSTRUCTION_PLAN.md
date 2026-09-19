@@ -57,7 +57,7 @@ GitHub owns issue scope and tracking.
 - [ ] Implement the decisions from §1 with dry-run, command-contract, and public interface coverage. <!-- STEP7-043f48e9ec7d -->
 - [ ] `doc/requirements/APP_BUILDER_REQUIREMENTS.md` owns the complete orchestration requirements. Implement direct execution in the Construction plan, AI-guided sequencing in the Automation plan, and terminal acceptance in the Verification plan. <!-- STEP7-a6aa4bcf9d32 -->
 - [ ] Execute wrappers, Tools, and Hooks in dependency order, halt on the first failure, and surface it through Django error handling. Keep `--dry-run` diagnostic-only and non-mutating. <!-- STEP7-583c06f32c9b -->
-- [ ] Follow `doc/SKILL_AUTHORING_PLAN.md` for each Skill: plan, implement, test, integrate with `build_app`, and verify explicit acceptance criteria. <!-- STEP7-410358c1d7e3 -->
+- [ ] Follow the [Automation Plan's per-Skill cadence](AUTOMATION_PLAN.md#skill-authoring-and-derived-working-copies) for each Skill: plan, implement, test, integrate with `build_app`, and verify explicit acceptance criteria. <!-- STEP7-410358c1d7e3 -->
 - [ ] Implement session lifecycle, Skill loading, Tool dispatch, Hook normalization, structured results, cancellation, timeouts, and credential handling without changing direct-execution semantics. <!-- STEP7-d26a5bebdbc7 -->
 - [ ] Cover success, unmet acceptance, timeout or context exhaustion, Tool denial, Hook failure, evidence handling, and teardown with provider-independent stubs. <!-- STEP7-9e8985db4390 -->
 - [ ] Implement and runtime-gate the Claude, OpenAI, Gemini, and Copilot adapters against the provider-neutral contract. <!-- STEP7-7494bc12219c -->
@@ -131,7 +131,7 @@ GitHub owns issue scope and tracking.
 
 ### Authoritative references
 
-- Skill authority: SKILL_CONTRACTS.md and SKILL_AUTHORING_PLAN.md. <!-- STEP7-b2088701b5a7 -->
+- Skill authority: `SKILL_CONTRACTS.md`; authoring cadence: [Automation Plan](AUTOMATION_PLAN.md#skill-authoring-and-derived-working-copies). <!-- STEP7-b2088701b5a7 -->
 
 ## Tracked GitHub issues
 

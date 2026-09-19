@@ -49,7 +49,7 @@ examples. [ARCHITECTURE.md] owns architecture and design rationale,
 shared Change Model boundaries. [TOOL_CONTRACTS.md], [HOOK_CONTRACTS.md],
 [PROVIDER_ADAPTER_CONTRACTS.md], [PLUGIN_CONTRACTS.md], and
 [SKILL_CONTRACTS.md] own AI automation contracts, [AI_AUTOMATION_REQUIREMENTS.md] owns AI automation
-product and quality requirements, and [SKILL_AUTHORING_PLAN.md] owns the
+product and quality requirements, and [AUTOMATION_PLAN.md] owns the
 per-Skill authoring and verification cadence.
 
 [APP_BUILDER_REQUIREMENTS.md] owns detailed `build_app` requirements and
@@ -547,8 +547,8 @@ Labels used in this document are defined in the link-definitions block at the en
 [TOOL_CONTRACTS.md]: ../contracts/TOOL_CONTRACTS.md
 [AI_AUTOMATION_REQUIREMENTS.md]: AI_AUTOMATION_REQUIREMENTS.md
 [AI_AUTOMATION_SPECIFICATIONS.md]: ../specifications/AI_AUTOMATION_SPECIFICATIONS.md
+[AUTOMATION_PLAN.md]: ../plan/AUTOMATION_PLAN.md#skill-authoring-and-derived-working-copies
 [CHANGE_MODEL_CONTRACTS.md]: ../contracts/CHANGE_MODEL_CONTRACTS.md
-[SKILL_AUTHORING_PLAN.md]: ../SKILL_AUTHORING_PLAN.md
 [SPECIFICATIONS.md]: ../specifications/SPECIFICATIONS.md
 [TEST_SCENARIO_CONTRACTS.md]: ../contracts/TEST_SCENARIO_CONTRACTS.md
 [TEST_SCENARIO_SPECIFICATIONS.md]: ../specifications/TEST_SCENARIO_SPECIFICATIONS.md

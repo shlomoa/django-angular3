@@ -13,9 +13,9 @@ the shared Change Model boundary, [APP_BUILDER_REQUIREMENTS.md] owns detailed
 `build_app` behavior, and [AI_AUTOMATION_REQUIREMENTS.md] owns AI automation requirements.
 Architectural terms and rationale are defined in [ARCHITECTURE.md].
 
-## 4. Functional Requirements
+## 1. Functional Requirements
 
-### 4.1. API Requirements
+### 1.1. API Requirements
 
 These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 
@@ -34,7 +34,7 @@ These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 - API schema generation and browsable documentation should be available in
   non-production environments
 
-### 4.2. Configuration and change handling
+### 1.2. Configuration and change handling
 
 - The platform must distinguish tool configuration, generated-app project
   configuration, OpenAPI input, and OpenUI input.
@@ -49,7 +49,7 @@ These requirements elaborate `ARCHITECTURE.md` §§ 8.3 and 11.1-11.4.
 relationships, and validation structure. [CHANGE_MODEL_CONTRACTS.md] §2 defines the
 canonical Change Model contract.
 
-### 4.4. Authentication and Identity
+### 1.3. Authentication and Identity
 
 - Users must be able to sign in and sign out securely
 - The system must support password-based authentication at minimum
@@ -57,7 +57,7 @@ canonical Change Model contract.
 - Password reset and account recovery flows must be supported
 - Session expiration and idle timeout behavior must be configurable
 
-### 4.5. Authorization
+### 1.4. Authorization
 
 - Access must be restricted to authenticated users unless a route is explicitly
   public
@@ -66,7 +66,7 @@ canonical Change Model contract.
 - Sensitive actions must be restricted by role and, where needed, object-level
   ownership or scope
 
-### 4.6. User Management
+### 1.5. User Management
 
 - Administrators must be able to create, activate, deactivate, and update users
 - Administrators must be able to assign roles or permission groups
@@ -74,7 +74,7 @@ canonical Change Model contract.
 - The system must track basic account status metadata such as creation date,
   last login, and active state
 
-### 4.7. Application Shell and Navigation
+### 1.6. Application Shell and Navigation
 
 - The frontend must provide a consistent shell with top-level navigation,
   breadcrumbs, and page titles
@@ -86,7 +86,7 @@ canonical Change Model contract.
   states
 - User-facing product screens should be implemented in Angular Material
 
-### 4.8. Business Module Pattern
+### 1.7. Business Module Pattern
 
 - The platform must support modular feature areas with isolated backend apps and
   frontend feature modules
@@ -96,39 +96,39 @@ canonical Change Model contract.
 - Detail views must show key metadata and related records where relevant
 - Forms must include client-side and server-side validation
 
-### 4.9. Search and Data Discovery
+### 1.8. Search and Data Discovery
 
 - Users must be able to search records by primary identifying fields
 - Filters must support common business cases such as status, owner, date range and free text
 - Large result sets must be paginated
 - Default sorting must be deterministic
 
-### 4.10. Auditability
+### 1.9. Auditability
 
 - The application must record important security and business events
 - Changes to sensitive data should capture who made the change and when
 - Audit history must be viewable by authorized users
 - Authentication events such as login, logout, failed login, and password reset should be traceable
 
-### 4.11. Notifications
+### 1.10. Notifications
 
 - The platform should support system notifications for important events
 - Email delivery should be supported for account and workflow notifications
 - In-app notifications are desirable but not required for the first release
 
-### 4.12. File Handling
+### 1.11. File Handling
 
 - The platform should support file attachments for business records where needed
 - File upload validation must enforce size and type restrictions
 - Download access must respect record-level permissions
 
-### 4.13. Administration and Reference Data
+### 1.12. Administration and Reference Data
 
 - The system must provide administrative screens for core configuration
 - Reference data used across business modules must be centrally manageable
 - Administrative changes must be audited
 
-### 4.14. Input Artifact Strategy
+### 1.13. Input Artifact Strategy
 
 See `ARCHITECTURE.md` §§ 8.2-8.5 and 10.2 for the related architectural
 content-boundary and generated-artifact model.
@@ -161,13 +161,13 @@ content-boundary and generated-artifact model.
   that belongs to the main frontend application, or backend data administration
   concerns that belong to Django and DRF
 
-### 4.15. Error Handling and Recovery
+### 1.14. Error Handling and Recovery
 
 - Validation errors must be presented clearly at field and form level
 - Unexpected server errors must be logged and surfaced with user-safe messages
 - Users must not lose unsaved form state because of recoverable UI errors
 
-### 4.16. Development Experience and Tooling
+### 1.15. Development Experience and Tooling
 
 - When the generated app's Django server runs with `DEBUG=True`, any failure
   during app generation must surface through Django's standard error reporting
@@ -179,7 +179,7 @@ content-boundary and generated-artifact model.
 [SPECIFICATIONS.md] §3 defines the exact development error-reporting and build-
 diagnostics behavior.
 
-### 4.17. Verification Requirements
+### 1.16. Verification Requirements
 
 See `ARCHITECTURE.md` §7.3 for the architectural verification model.
 
@@ -201,7 +201,7 @@ final check. The platform must support the following verification categories:
   and composed application flows and must be linked to the staged verification
   model rather than treated as a separate final phase.
 
-### 4.18. Generated Application Structure
+### 1.17. Generated Application Structure
 
 See `ARCHITECTURE.md` §§ 9-10 for the architectural structure model.
 
