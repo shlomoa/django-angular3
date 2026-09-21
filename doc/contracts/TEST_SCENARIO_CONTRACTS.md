@@ -4,9 +4,8 @@
 
 This document defines the canonical boundary between a documented `build_app`
 scenario, its fixture inputs, and its expected test oracles. It does not define
-scenario storage, invocation, or coverage topology; those realization details
-are specified in [TEST_SCENARIO_SPECIFICATIONS.md]. Concrete scenario values
-and expected outcomes are documented in [TEST_EXAMPLES.md].
+scenario storage, invocation, coverage topology, canonical scenario values, or
+expected outcomes; those are owned by [TEST_SCENARIO_SPECIFICATIONS.md].
 
 This contract does not redefine the `Change`, `ChangeSet`, automation, OpenAPI,
 or OpenUI contracts. Scenario records consume those contracts from
@@ -48,5 +47,4 @@ scenario may use it as an expected result.
 [SKILL_CONTRACTS.md]: SKILL_CONTRACTS.md
 [TOOL_CONTRACTS.md]: TOOL_CONTRACTS.md
 [APP_BUILDER_REQUIREMENTS.md]: ../requirements/APP_BUILDER_REQUIREMENTS.md
-[TEST_EXAMPLES.md]: ../TEST_EXAMPLES.md
 [TEST_SCENARIO_SPECIFICATIONS.md]: ../specifications/TEST_SCENARIO_SPECIFICATIONS.md

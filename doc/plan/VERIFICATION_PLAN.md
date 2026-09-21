@@ -20,7 +20,7 @@ GitHub owns issue scope and tracking.
 
 ### Planning details
 
-- See `TEST_EXAMPLES.md` for the scenario definitions and expected outputs. <!-- STEP7-73e2b2d89da4 -->
+- See `doc/specifications/TEST_SCENARIO_SPECIFICATIONS.md` §7 for the canonical scenario definitions and expected outputs. <!-- STEP7-73e2b2d89da4 -->
 - **Start from scratch**: a cold-start build with no previous state, invoking <!-- STEP7-aa63b920ffdb -->
 - the full automation chain from workspace creation through app assembly and verification <!-- STEP7-25bece09a65e -->
 - **Schema evolution — add**: an incremental schema change that adds a <!-- STEP7-0ac616eb7046 -->
@@ -181,9 +181,9 @@ runnable Django–Angular generated application. The flow begins with current
 and previous generated-app inputs and finishes after contract,
 construction-output, integration, compilation, and runtime acceptance.
 
-`doc/TEST_EXAMPLES.md` owns the canonical scenarios and expected outcomes,
-`doc/specifications/TEST_SCENARIO_SPECIFICATIONS.md` owns their realization,
-and `doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-9 and FR-10 own terminal
+`doc/specifications/TEST_SCENARIO_SPECIFICATIONS.md` owns the canonical
+scenarios, inputs, expected outcomes, and their realization, and
+`doc/requirements/APP_BUILDER_REQUIREMENTS.md` FR-9 and FR-10 own terminal
 and global acceptance. This section sequences their E2E implementation.
 
 ### Repository responsibilities

@@ -54,8 +54,9 @@ per-Skill authoring and verification cadence.
 
 [APP_BUILDER_REQUIREMENTS.md] owns detailed `build_app` requirements and
 command translation. [TEST_SCENARIO_CONTRACTS.md] owns the scenario-case input
-and oracle boundary, [TEST_SCENARIO_SPECIFICATIONS.md] owns exact scenario-suite
-realization, and [TEST_EXAMPLES.md] owns scenario-by-scenario examples.
+and oracle boundary, and [TEST_SCENARIO_SPECIFICATIONS.md] owns exact
+scenario-suite realization together with canonical scenario definitions,
+inputs, and expected oracles.
 
 **Out of initial release scope:**
 
@@ -523,9 +524,9 @@ competing glossary.
 
 - [TEST_SCENARIO_CONTRACTS.md] — scenario-case identity, input, and expected
   oracle boundary.
-- [TEST_SCENARIO_SPECIFICATIONS.md] — scenario-suite layout, invocation, shared
-  fixtures, and coverage axes.
-- [TEST_EXAMPLES.md] — scenario definitions and expected outputs.
+- [TEST_SCENARIO_SPECIFICATIONS.md] — scenario-suite layout, invocation,
+  shared fixtures, coverage axes, and canonical scenario definitions, inputs,
+  and expected oracles.
 - [django_angular3/examples/01_simple_crm/] — runnable example workspace with schema,
   UI, and build artifacts.
 - [tests/fixtures/artifacts/openapi/example.openapi.json] — example OpenAPI source input.
@@ -552,7 +553,6 @@ Labels used in this document are defined in the link-definitions block at the en
 [SPECIFICATIONS.md]: ../specifications/SPECIFICATIONS.md
 [TEST_SCENARIO_CONTRACTS.md]: ../contracts/TEST_SCENARIO_CONTRACTS.md
 [TEST_SCENARIO_SPECIFICATIONS.md]: ../specifications/TEST_SCENARIO_SPECIFICATIONS.md
-[TEST_EXAMPLES.md]: ../TEST_EXAMPLES.md
 [django_angular3/examples/01_simple_crm/]: ../../django_angular3/examples/01_simple_crm/
 [tests/fixtures/artifacts/openapi/example.openapi.json]: ../../tests/fixtures/artifacts/openapi/example.openapi.json
 [tests/fixtures/artifacts/openui/example.openui.json]: ../../tests/fixtures/artifacts/openui/example.openui.json
