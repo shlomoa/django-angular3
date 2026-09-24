@@ -33,6 +33,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
             "application",
             "workspace-setup",
             "material-app",
+            "material-setup",
             "openapi-setup",
             "data-service",
             "page",
