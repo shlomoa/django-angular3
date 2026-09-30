@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from django_angular3.cli import main
 from tests.openapi_fixtures import valid_openapi_document
+from tests.openui_spec_version import OPENUI_SPEC_VERSION
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 TEST_CONFIG_FILENAME = "project.json"
@@ -31,7 +32,13 @@ class ValidationCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             path = Path(tmp) / "app.openui.json"
             path.write_text(
-                json.dumps({"version": "0.2.0", "id": "root", "type": "Application"}),
+                json.dumps(
+                    {
+                        "version": OPENUI_SPEC_VERSION,
+                        "id": "root",
+                        "type": "Application",
+                    }
+                ),
                 encoding="utf-8",
             )
 
@@ -45,7 +52,13 @@ class ValidationCliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             path = Path(tmp) / "invalid.openui.json"
             path.write_text(
-                json.dumps({"version": "0.2.0", "id": "root", "type": "UnknownType"}),
+                json.dumps(
+                    {
+                        "version": OPENUI_SPEC_VERSION,
+                        "id": "root",
+                        "type": "UnknownType",
+                    }
+                ),
                 encoding="utf-8",
             )
 
@@ -64,7 +77,13 @@ class ValidationCliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
-                json.dumps({"version": "0.2.0", "id": "root", "type": "Application"}),
+                json.dumps(
+                    {
+                        "version": OPENUI_SPEC_VERSION,
+                        "id": "root",
+                        "type": "Application",
+                    }
+                ),
                 encoding="utf-8",
             )
             config_path = root / TEST_CONFIG_FILENAME
@@ -100,7 +119,13 @@ class ValidationCliTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
-                json.dumps({"version": "0.2.0", "id": "root", "type": "UnknownType"}),
+                json.dumps(
+                    {
+                        "version": OPENUI_SPEC_VERSION,
+                        "id": "root",
+                        "type": "UnknownType",
+                    }
+                ),
                 encoding="utf-8",
             )
             config_path = root / TEST_CONFIG_FILENAME

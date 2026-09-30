@@ -79,7 +79,7 @@ is defined. `artifacts.openuiSpecification` does not name the document format
 or the ChangeSet domain. `app.openui.json` is the generated-app filename
 convention. Its concrete-document role, grammar, and catalog relationship are
 defined by the
-[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
+[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#41-specification-artifacts);
 djng owns only the configured input path and its build-stage handling. See
 `doc/ARCHITECTURE.md` §2.8.1 and §8.5.
 

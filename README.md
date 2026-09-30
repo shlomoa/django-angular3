@@ -62,10 +62,16 @@ required.
 
 OpenAPI documents are validated against the full OpenAPI specification using
 `openapi-spec-validator`; OpenUI documents are validated through
-`openui-spec`. The bundled 0.2.0 integration requires each OpenUI document's
-`version` to match `0.2.0` and every `type` to be an exact, case-sensitive
-literal from its canonical catalog. Use `id` for instance identity and `attrs`
-for configuration rather than aliases, selectors, or implementation names.
+`openui-spec`, pinned in `pyproject.toml`. The package version equals the
+spec version it implements, so the validator requires each OpenUI document's
+`version` to equal the installed package version and every `type` to be an
+exact, case-sensitive literal from its canonical catalog. Use `id` for instance
+identity and `attrs` for configuration rather than aliases, selectors, or
+implementation names. Attributes are typed: keys are `uses.<name>`,
+`produces.<name>` and `behaves.<name>`, string literals are quoted inside the
+string (`"\"customers\""`), and booleans and numbers are JSON values. Bracket
+keys such as `[path]` and `(submit)` are rejected. Validation diagnostics are
+`path: code: message` lines.
 
 [openapi-spec-validator]: https://openapi-spec-validator.readthedocs.io/
 [openui-spec]: https://github.com/shlomoa/openui-spec
@@ -119,7 +125,8 @@ it resolves commands without executing Angular tooling:
 - `ng_workspace` runs the upstream-aligned workspace bootstrap flow: `ng new`, workspace defaults, `ng add angular-django2`, and `ng generate angular-django2:workspace-setup`
 - `ng_config` applies workspace defaults such as package manager, style, and routing
 - `ng_add` installs and registers the configured `angular-django2` package (pinned via `tool.ngAddPackage`), whose OpenUI
-  integration requires validated 0.2.0 canonical-catalog documents
+  integration requires validated canonical-catalog documents of the pinned
+  `openui-spec` version
 - `ng_gen_app` generates an Angular application inside the configured workspace via the `angular-django2:material-app` schematic, forwarding `--ssr`, `--zoneless`, and `--defaults` to align with the Angular CLI `ng new` defaults
 - `ng_material_setup` configures Angular Material in an existing project via the `angular-django2:material-setup` schematic, forwarding optional `--theme`, `--typography`, and `--animations`
 - `ng_page`, `ng_component`, and `ng_reactive_form` wrap the matching `angular-django2` schematics without changing their deterministic behavior
@@ -260,7 +267,7 @@ project-root `app.openui.json` selected by
 `artifacts.openuiSpecification`. The OpenUI concrete UI document may
 complement or reference API-contract-derived content. Its role, grammar, and
 catalog relationship are defined by the
-[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
+[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#41-specification-artifacts);
 see the [OpenUI examples](https://openui-spec.readthedocs.io/en/latest/examples/)
 for the per-scope vocabulary.
 
@@ -269,7 +276,7 @@ For example:
 ```json
 {
   "id": "root",
-  "version": "0.2.0",
+  "version": "0.11.0",
   "type": "Application",
   "children": [
     {
@@ -278,10 +285,10 @@ For example:
     },
     {
       "id": "inviteUserForm",
-      "type": "FormView",
+      "type": "Form",
       "attrs": {
         "title": "\"Invite user\"",
-        "(submit)": "createUser(form.value)"
+        "behaves.submit": "createUser(form.value)"
       }
     }
   ]

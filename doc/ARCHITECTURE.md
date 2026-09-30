@@ -290,6 +290,15 @@ or generates must be defined by `openui-spec`. It must not add custom
 behavioral selectors, such as `[ngdjSwipe]`. `openui-spec` owns the grammar,
 schema, catalog, and `SCHEMA_VERSION` bump enforcement.
 
+**Version alignment.** `djng` and `ngdj` must implement the same `openui-spec`
+version, or a document one accepts the other rejects. The package version equals
+the spec version it implements. `djng` validates and compares documents with the
+Python package `openui-spec`, pinned once in `pyproject.toml`; tests read that
+version from the installed package. `ngdj` consumes `@shlomoa/openui-spec`
+through the `angular-django2` release set as `ngAddPackage` in
+`django_angular3/django-angular3.json`; that release's dependency must match the
+`djng` pin.
+
 ### 3.5 Toolchain components
 
 - A contract-governing, work-deriving component - in `djng`.
@@ -1117,7 +1126,7 @@ Key actors and terms. Full definitions are in §2.
 [OpenUI comparison]: https://openui-spec.readthedocs.io/en/latest/tooling/comparison/
 [openui-spec]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md
 [openui-spec-135]: https://github.com/shlomoa/openui-spec/issues/135
-[openui-artifacts]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog
+[openui-artifacts]: https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#41-specification-artifacts
 [ng-openapi-gen-github]: https://github.com/cyclosproject/ng-openapi-gen
 [datamodel-code-generator]: https://pypi.org/project/datamodel-code-generator/
 [datamodel-code-generator-github]: https://github.com/koxudaxi/datamodel-code-generator
