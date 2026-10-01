@@ -62,10 +62,17 @@ required.
 
 OpenAPI documents are validated against the full OpenAPI specification using
 `openapi-spec-validator`; OpenUI documents are validated through
-`openui-spec`. The bundled 0.2.0 integration requires each OpenUI document's
-`version` to match `0.2.0` and every `type` to be an exact, case-sensitive
+`openui-spec`. The bundled 0.12.0 integration requires each OpenUI document's
+`version` to match `0.12.0` and every `type` to be an exact, case-sensitive
 literal from its canonical catalog. Use `id` for instance identity and `attrs`
 for configuration rather than aliases, selectors, or implementation names.
+
+An attribute key is categorized: `uses.<name>` configures the element,
+`produces.<name>` is an event it emits, and `behaves.<name>` is a behavior it
+applies. An attribute value is a string or `null`, or a list of strings and
+`null`: `null` indicates no value, and `"null"` is the string `null`. A JSON
+number or Boolean is not a value; write it as a string, such as `"true"` or
+`"25"`. A string literal is quoted inside the string, such as `"\"Users\""`.
 
 [openapi-spec-validator]: https://openapi-spec-validator.readthedocs.io/
 [openui-spec]: https://github.com/shlomoa/openui-spec
@@ -124,7 +131,7 @@ it resolves commands without executing Angular tooling:
 - `ng_workspace` runs the upstream-aligned workspace bootstrap flow: `ng new`, workspace defaults, `ng add angular-django2`, and `ng generate angular-django2:workspace-setup`
 - `ng_config` applies workspace defaults such as package manager, style, and routing
 - `ng_add` installs and registers the configured `angular-django2` package (pinned via `tool.ngAddPackage`), whose OpenUI
-  integration requires validated 0.2.0 canonical-catalog documents
+  integration requires validated 0.12.0 canonical-catalog documents
 - `ng_gen_app` generates an Angular application inside the configured workspace via the `angular-django2:material-app` schematic, forwarding `--ssr`, `--zoneless`, and `--defaults` to align with the Angular CLI `ng new` defaults
 - `ng_material_setup` configures Angular Material in an existing project via the `angular-django2:material-setup` schematic, forwarding optional `--theme`, `--typography`, and `--animations`
 - `ng_page`, `ng_component`, and `ng_reactive_form` wrap the matching `angular-django2` schematics without changing their deterministic behavior
@@ -274,7 +281,7 @@ For example:
 ```json
 {
   "id": "root",
-  "version": "0.2.0",
+  "version": "0.12.0",
   "type": "Application",
   "children": [
     {
@@ -283,10 +290,10 @@ For example:
     },
     {
       "id": "inviteUserForm",
-      "type": "FormView",
+      "type": "Form",
       "attrs": {
         "title": "\"Invite user\"",
-        "(submit)": "createUser(form.value)"
+        "behaves.submit": "createUser(form.value)"
       }
     }
   ]
