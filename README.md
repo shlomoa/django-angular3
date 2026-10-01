@@ -98,6 +98,11 @@ configuration authorities. The generated app's identity and artifact locations
 are instead supplied by the project configuration defined in
 `doc/specifications/SPECIFICATIONS.md` §2.1.
 
+To reset a generated app's build artifacts, run `django-admin clean`. To remove
+all untracked files and directories from its Git worktree, run
+`django-admin distclean`; use `--dry-run` with either command to inspect its
+effect first.
+
 Once installed, Django and the standalone CLI expose the same Angular command
 resolution flow. Use `--dry-run` only for diagnostic validation and debugging;
 it resolves commands without executing Angular tooling:
