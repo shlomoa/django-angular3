@@ -30,7 +30,7 @@ dependencies = [
   "django-filter",
   "drf-spectacular",
   "claude-agent-sdk",
-  "openui-spec==0.2.0",
+  "openui-spec==0.12.0",
   "openapi-spec-validator>=0.7",
 ]
 

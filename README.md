@@ -62,10 +62,17 @@ required.
 
 OpenAPI documents are validated against the full OpenAPI specification using
 `openapi-spec-validator`; OpenUI documents are validated through
-`openui-spec`. The bundled 0.2.0 integration requires each OpenUI document's
-`version` to match `0.2.0` and every `type` to be an exact, case-sensitive
+`openui-spec`. The bundled 0.12.0 integration requires each OpenUI document's
+`version` to match `0.12.0` and every `type` to be an exact, case-sensitive
 literal from its canonical catalog. Use `id` for instance identity and `attrs`
 for configuration rather than aliases, selectors, or implementation names.
+
+An attribute key is categorized: `uses.<name>` configures the element,
+`produces.<name>` is an event it emits, and `behaves.<name>` is a behavior it
+applies. An attribute value is a string or `null`, or a list of strings and
+`null`: `null` indicates no value, and `"null"` is the string `null`. A JSON
+number or Boolean is not a value; write it as a string, such as `"true"` or
+`"25"`. A string literal is quoted inside the string, such as `"\"Users\""`.
 
 [openapi-spec-validator]: https://openapi-spec-validator.readthedocs.io/
 [openui-spec]: https://github.com/shlomoa/openui-spec
@@ -274,7 +281,7 @@ For example:
 ```json
 {
   "id": "root",
-  "version": "0.2.0",
+  "version": "0.12.0",
   "type": "Application",
   "children": [
     {
@@ -283,10 +290,10 @@ For example:
     },
     {
       "id": "inviteUserForm",
-      "type": "FormView",
+      "type": "Form",
       "attrs": {
         "title": "\"Invite user\"",
-        "(submit)": "createUser(form.value)"
+        "behaves.submit": "createUser(form.value)"
       }
     }
   ]

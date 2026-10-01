@@ -1,6 +1,6 @@
 {
   "id": "root",
-  "version": "0.2.0",
+  "version": "0.12.0",
   "type": "Application",
   "children": [
     {
@@ -11,16 +11,16 @@
           "id": "customersRoute",
           "type": "Route",
           "attrs": {
-            "[path]": "\"customers\"",
-            "[target]": "\"customersPage\""
+            "uses.path": "\"customers\"",
+            "uses.target": "\"customersPage\""
           }
         },
         {
           "id": "productsRoute",
           "type": "Route",
           "attrs": {
-            "[path]": "\"products\"",
-            "[target]": "\"productsPage\""
+            "uses.path": "\"products\"",
+            "uses.target": "\"productsPage\""
           }
         }
       ]

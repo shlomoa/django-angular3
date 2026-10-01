@@ -25,7 +25,7 @@ from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 class OpenUIConfigurationTests(unittest.TestCase):
     def test_load_stores_the_openui_document(self) -> None:
-        document = {"version": "0.2.0", "id": "root", "type": "Application"}
+        document = {"version": "0.12.0", "id": "root", "type": "Application"}
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as temporary_directory:
             path = Path(temporary_directory) / "document.openui.json"
             path.write_text(json.dumps(document), encoding="utf-8")
