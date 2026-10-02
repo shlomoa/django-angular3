@@ -537,10 +537,10 @@ class AngularCliCommandTests(unittest.TestCase):
                 "exec",
                 "ng-openapi-gen",
                 "-c",
-                str(ROOT / "tmparea" / "angular" / "ng-openapi-gen.json"),
+                str(ROOT / "scratch" / "angular" / "ng-openapi-gen.json"),
             ],
         )
-        generated_config = ROOT / "tmparea" / "angular" / "ng-openapi-gen.json"
+        generated_config = ROOT / "scratch" / "angular" / "ng-openapi-gen.json"
         document = json.loads(generated_config.read_text(encoding="utf-8"))
         self.assertEqual(
             document["$schema"],
@@ -555,7 +555,7 @@ class AngularCliCommandTests(unittest.TestCase):
         )
         self.assertEqual(
             document["output"],
-            str(ROOT / "tmparea" / "angular" / "generated" / "ng-openapi-gen"),
+            str(ROOT / "scratch" / "angular" / "generated" / "ng-openapi-gen"),
         )
         generated_config.unlink()
 
