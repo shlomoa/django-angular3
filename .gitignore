@@ -39,6 +39,7 @@ db.sqlite3
 
 # Local build output
 build/
+scratch/
 dist/
 .bin/
 docs/_build/

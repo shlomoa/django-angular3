@@ -5,6 +5,6 @@
   "artifacts": {
     "openapiSchema": "artifacts/openapi/example.openapi.json",
     "openuiSpecification": "artifacts/openui/example.openui.json",
-    "angularWorkspace": "build/angular"
+    "angularWorkspace": "../../scratch/angular"
   }
 }

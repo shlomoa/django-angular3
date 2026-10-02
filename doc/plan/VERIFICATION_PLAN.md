@@ -225,8 +225,7 @@ The django-angular3 E2E harness will:
 - derive scenario selection from
   `tests/fixtures/scenarios/scenario-matrix.json`;
 - keep runner code and runtime-flow definitions separate from fixture data;
-- create generated applications in a per-run directory under the operating
-  system's temporary directory and remove it during teardown;
+- create generated applications under `scratch/e2e/<run-id>/`;
 - store reports, traces, screenshots, and logs under `e2e/test-output/`;
 - allocate service ports dynamically;
 - use bounded readiness and execution timeouts;
