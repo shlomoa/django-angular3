@@ -97,7 +97,7 @@ class ScaffoldTests(unittest.TestCase):
         )
         self.assertTrue(config.openapi_schema.is_file())
         self.assertTrue(config.openui_specification.is_file())
-        self.assertEqual(config.angular_workspace, ROOT / "tmparea" / "angular")
+        self.assertEqual(config.angular_workspace, ROOT / "tests" / "fixtures" / "build" / "angular")
         self.assertEqual(validate_project_config(config), [])
 
     def test_project_config_loads_separate_project_configuration(self) -> None:
@@ -418,7 +418,7 @@ class ScaffoldTests(unittest.TestCase):
                     "master/ng-openapi-gen-schema.json"
                 ),
                 "input": "../openapi/example.openapi.json",
-                "output": "../../../../tmparea/angular/generated/ng-openapi-gen",
+                "output": "../../build/angular/generated/ng-openapi-gen",
                 "serviceSuffix": "Api",
                 "modelIndex": True,
             },

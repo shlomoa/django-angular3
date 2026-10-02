@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
@@ -38,6 +39,8 @@ PROJECT_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.jso
 EXAMPLE_OPENAPI = (
     ROOT / "tests" / "fixtures" / "artifacts" / "openapi" / "example.openapi.json"
 )
+
+FIXTURE_ANGULAR_WORKSPACE = ROOT / "tests" / "fixtures" / "build" / "angular"
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
 django.setup()
@@ -537,10 +540,10 @@ class AngularCliCommandTests(unittest.TestCase):
                 "exec",
                 "ng-openapi-gen",
                 "-c",
-                str(ROOT / "tmparea" / "angular" / "ng-openapi-gen.json"),
+                str(FIXTURE_ANGULAR_WORKSPACE / "ng-openapi-gen.json"),
             ],
         )
-        generated_config = ROOT / "tmparea" / "angular" / "ng-openapi-gen.json"
+        generated_config = FIXTURE_ANGULAR_WORKSPACE / "ng-openapi-gen.json"
         document = json.loads(generated_config.read_text(encoding="utf-8"))
         self.assertEqual(
             document["$schema"],
@@ -555,9 +558,10 @@ class AngularCliCommandTests(unittest.TestCase):
         )
         self.assertEqual(
             document["output"],
-            str(ROOT / "tmparea" / "angular" / "generated" / "ng-openapi-gen"),
+            str(FIXTURE_ANGULAR_WORKSPACE / "generated" / "ng-openapi-gen"),
         )
         generated_config.unlink()
+        shutil.rmtree(ROOT / "tests" / "fixtures" / "build", ignore_errors=True)
 
     def test_ng_openapi_setup_dry_run_resolves_openapi_setup_schematic(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_openapi_setup", "--dry-run")

@@ -1,7 +1,6 @@
 # Angular specific
 /dist/
 /out-tsc/
-/tmp/
 /coverage/
 /e2e/test-output/
 /.angular/
@@ -42,7 +41,6 @@ db.sqlite3
 build/
 dist/
 .bin/
-tmparea/
 docs/_build/
 schema.yaml
 schema.yml
