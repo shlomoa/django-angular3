@@ -17,8 +17,14 @@ python manage.py build_app [options]
 ```
 
 > **Implementation status:** the current command exposes its documented
-> argument interface, then raises `NotImplementedError` because planning and
-> execution are not implemented. This document specifies the target behavior;
+> argument interface. Project-configuration loading, OpenAPI and OpenUI change
+> derivation (`ChangeDetector`), and change-to-command selection
+> (`translate_changes`) exist as separate components, but the command does not
+> yet compose them: `handle()` neither translates the detected changes nor honors
+> `--dry-run`, `--force`, or `--output`, and change execution raises
+> `NotImplementedError`. Previous-configuration discovery, the static-configuration
+> change lane, the deterministic TOOL command contracts, hooks, and terminal
+> validation are not implemented. This document specifies the target behavior;
 > it must not be read as a claim that those target behaviors are already
 > available.
 
@@ -66,7 +72,7 @@ provider used by an agent session.
 | Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | Discovery and filename realization are defined in `doc/specifications/SPECIFICATIONS.md` §2.2. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | Resolves its own artifact selectors independently of the current configuration. A missing previous configuration starts a build from scratch. |
-| Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Baseline contract selected by the previous configuration. Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. |
+| Previous OpenAPI schema | `artifacts.openapiSchema` from the previous project configuration | YAML or JSON (OAS 3.x) | Baseline contract selected by the previous configuration. Absent on a first run; the OpenAPI domain emits `create` changes for the candidate contract. `export_schema` produces the baseline file by rotating the current schema to its `.previous` counterpart (`api.json` → `api.previous.json`) before it writes the new one; the previous project configuration selects that rotated file through its own `artifacts.openapiSchema`. `build_app` does not discover the rotated file by naming convention. |
 | Current `app.openui.json` | `artifacts.openuiSpecification` | JSON (`openui.schema.json`) | OpenUI concrete UI document selected for the candidate build. |
 | Previous `app.openui.json` | `artifacts.openuiSpecification` from the previous project configuration | JSON (`openui.schema.json`) | Baseline OpenUI document selected by the previous configuration. Absent on a first run; the OpenUI domain emits `create` changes for the candidate document. |
 
@@ -79,7 +85,7 @@ is defined. `artifacts.openuiSpecification` does not name the document format
 or the ChangeSet domain. `app.openui.json` is the generated-app filename
 convention. Its concrete-document role, grammar, and catalog relationship are
 defined by the
-[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
+[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#41-specification-artifacts);
 djng owns only the configured input path and its build-stage handling. See
 `doc/ARCHITECTURE.md` §2.8.1 and §8.5.
 
