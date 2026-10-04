@@ -17,8 +17,14 @@ python manage.py build_app [options]
 ```
 
 > **Implementation status:** the current command exposes its documented
-> argument interface, then raises `NotImplementedError` because planning and
-> execution are not implemented. This document specifies the target behavior;
+> argument interface. Project-configuration loading, OpenAPI and OpenUI change
+> derivation (`ChangeDetector`), and change-to-command selection
+> (`translate_changes`) exist as separate components, but the command does not
+> yet compose them: `handle()` neither translates the detected changes nor honors
+> `--dry-run`, `--force`, or `--output`, and change execution raises
+> `NotImplementedError`. Previous-configuration discovery, the static-configuration
+> change lane, the deterministic TOOL command contracts, hooks, and terminal
+> validation are not implemented. This document specifies the target behavior;
 > it must not be read as a claim that those target behaviors are already
 > available.
 
@@ -79,7 +85,7 @@ is defined. `artifacts.openuiSpecification` does not name the document format
 or the ChangeSet domain. `app.openui.json` is the generated-app filename
 convention. Its concrete-document role, grammar, and catalog relationship are
 defined by the
-[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#specification-artifacts-grammar-vs-catalog);
+[OpenUI artifact-role SSOT](https://github.com/shlomoa/openui-spec/blob/main/spec/README.md#41-specification-artifacts);
 djng owns only the configured input path and its build-stage handling. See
 `doc/ARCHITECTURE.md` §2.8.1 and §8.5.
 
