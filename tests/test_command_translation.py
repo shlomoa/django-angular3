@@ -24,7 +24,7 @@ class CommandTranslationTests(unittest.TestCase):
             (
                 _change(
                     ChangeDomain.OPENUI,
-                    "openui:page:dashboard",
+                    "openui:/children/dashboard",
                     ChangeOperation.CREATE,
                 ),
                 _change(ChangeDomain.OPENAPI, "schema:Pet", ChangeOperation.UPDATE),
@@ -41,17 +41,17 @@ class CommandTranslationTests(unittest.TestCase):
                 "angular-page-composition",
             ],
         )
-        self.assertEqual(commands[-2].change_target, "openui:page:dashboard")
+        self.assertEqual(commands[-2].change_target, "openui:/children/dashboard")
 
     @unittest.expectedFailure
     def test_deletes_precede_creates_at_the_same_dependency_level(self) -> None:
         commands = translate_changes(
             (
                 _change(
-                    ChangeDomain.OPENUI, "openui:component:old", ChangeOperation.CREATE
+                    ChangeDomain.OPENUI, "openui:/children/old", ChangeOperation.CREATE
                 ),
                 _change(
-                    ChangeDomain.OPENUI, "openui:component:new", ChangeOperation.DELETE
+                    ChangeDomain.OPENUI, "openui:/children/new", ChangeOperation.DELETE
                 ),
             )
         )
@@ -119,15 +119,16 @@ class CommandTranslationTests(unittest.TestCase):
             ],
         )
 
-    @unittest.expectedFailure
-    def test_openui_move_selects_targeted_page_composition(self) -> None:
-        commands = translate_changes(
-            (
-                _change(
-                    ChangeDomain.OPENUI, "openui:page:dashboard", ChangeOperation.MOVE
-                ),
+    def test_rejects_openui_move_explicitly(self) -> None:
+        # `move` is reserved: the OpenUI comparison emits no `move`, and no
+        # translation exists for it, so it must fail rather than be omitted.
+        with self.assertRaisesRegex(CommandTranslationError, "Unsupported Change"):
+            translate_changes(
+                (
+                    _change(
+                        ChangeDomain.OPENUI,
+                        "openui:/children/dashboard",
+                        ChangeOperation.MOVE,
+                    ),
+                )
             )
-        )
-
-        self.assertEqual(commands[0].name_id, "angular-page-composition")
-        self.assertEqual(commands[0].change_op, "move")
