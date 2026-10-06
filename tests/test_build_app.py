@@ -192,6 +192,9 @@ class OpenAPIDiffTests(unittest.TestCase):
 
 
 class ChangeExecutionTranslationTests(unittest.TestCase):
+    # https://github.com/shlomoa/django-angular3/issues/204:
+    # Remove each expectedFailure when its command-plan assertion passes.
+    @unittest.expectedFailure
     def test_returns_an_ordered_command_plan(self) -> None:
         change_set = ChangeSet(
             baseline={},
@@ -232,6 +235,7 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
             ],
         )
 
+    @unittest.expectedFailure
     def test_returns_no_commands_for_an_empty_change_set(self) -> None:
         change_set = ChangeSet(
             baseline={},

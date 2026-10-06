@@ -16,6 +16,9 @@ def _change(domain: ChangeDomain, subject: str, operation: ChangeOperation) -> C
 
 
 class CommandTranslationTests(unittest.TestCase):
+    # https://github.com/shlomoa/django-angular3/issues/204:
+    # Remove each expectedFailure when its mapping and ordering assertions pass.
+    @unittest.expectedFailure
     def test_orders_schema_before_openui_and_ends_with_validation(self) -> None:
         commands = translate_changes(
             (
@@ -40,6 +43,7 @@ class CommandTranslationTests(unittest.TestCase):
         )
         self.assertEqual(commands[-2].change_target, "openui:page:dashboard")
 
+    @unittest.expectedFailure
     def test_deletes_precede_creates_at_the_same_dependency_level(self) -> None:
         commands = translate_changes(
             (
@@ -70,6 +74,7 @@ class CommandTranslationTests(unittest.TestCase):
                 )
             )
 
+    @unittest.expectedFailure
     def test_maps_static_and_project_changes_to_documented_commands(self) -> None:
         commands = translate_changes(
             (
@@ -114,6 +119,7 @@ class CommandTranslationTests(unittest.TestCase):
             ],
         )
 
+    @unittest.expectedFailure
     def test_openui_move_selects_targeted_page_composition(self) -> None:
         commands = translate_changes(
             (

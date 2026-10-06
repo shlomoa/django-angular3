@@ -52,6 +52,12 @@ To install from a local clone:
 pip install -e /path/to/django-angular3/
 ```
 
+For contributor development, use the
+[development setup in CONTRIBUTING.md](CONTRIBUTING.md#prerequisites), which
+includes both the `dev` and `docs` extras for code and documentation validation.
+The installation commands above are for package use, not the contributor
+toolchain.
+
 ### OpenAPI and OpenUI validation
 
 `django-angular3` uses [openapi-spec-validator] for full OAS compliance
