@@ -1,11 +1,9 @@
 import json
 import os
 import platform
-import subprocess
 import tarfile
 import urllib.request
 import zipfile
-from collections.abc import Collection, Sequence
 from pathlib import Path
 from typing import Any, cast
 
@@ -21,34 +19,7 @@ _OASDIFF_SUPPORTED_PLATFORMS = {
 
 
 class ToolExecutionError(RuntimeError):
-    """Raised when an allowlisted external tool cannot be executed."""
-
-
-def ensure_command_is_allowed(
-    command_name: str, command_allowlist: Collection[str]
-) -> None:
-    """Raise when a logical command is absent from its normalized allowlist."""
-    normalized_command_name = command_name.strip().lower()
-    if normalized_command_name in command_allowlist:
-        return
-
-    allowed_commands = ", ".join(command_allowlist) or "<none>"
-    raise ToolExecutionError(
-        f"Command '{command_name}' is not allowed. Allowed commands: "
-        f"{allowed_commands}."
-    )
-
-
-def execute_command(argv: Sequence[str], *, cwd: Path) -> None:
-    """Run one external command and normalize execution failures."""
-    try:
-        subprocess.run(argv, cwd=cwd, check=True)
-    except FileNotFoundError as exc:
-        raise ToolExecutionError(f"Command not found: {argv[0]}") from exc
-    except subprocess.CalledProcessError as exc:
-        raise ToolExecutionError(
-            f"Command '{' '.join(argv)}' failed with exit code {exc.returncode}."
-        ) from exc
+    """Raised when an external tool cannot be executed."""
 
 
 def get_system_info() -> tuple[str, str]:

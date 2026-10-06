@@ -130,7 +130,7 @@ per-domain `type` field are not part of the builder contract.
 
 | Domain | Builder derivation requirement |
 |---|---|
-| `static_config` | Compare only validated static-configuration fields. Treat command-allowlist entries as set members. |
+| `static_config` | Compare only validated static-configuration fields. |
 | `project_config` | Compare project identity and all artifact selectors. Record selector changes separately from changes in selected OpenAPI or OpenUI content. |
 | `openapi` | Parse structured `oasdiff` output into atomic contract changes. Preserve complete contract identity and source diff evidence before deriving resource hints. |
 | `openui` | Compare declared OpenUI node identities, attributes, parent relations, and ordered children. Missing, duplicate, or invalid node identities fail validation. |

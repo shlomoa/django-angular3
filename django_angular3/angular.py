@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import tools
+from . import command_execution, tools
 from .config import ProjectConfig, load_project_config
 from .settings import (
     AngularCommandError,
@@ -101,19 +101,25 @@ def format_invocations(
 
 
 def execute_invocations(
-    invocations: list[AngularInvocation], settings: DjangoAngularSettings | None = None
-) -> None:
-    """Run resolved Angular invocations through the generic tool executor."""
-    active_settings = settings or load_angular_settings()
-    for invocation in invocations:
-        try:
-            tools.ensure_command_is_allowed(
-                invocation.command_name,
-                active_settings.command_allowlist,
-            )
-            tools.execute_command(invocation.argv, cwd=invocation.cwd)
-        except tools.ToolExecutionError as exc:
-            raise AngularCommandError(str(exc)) from exc
+    invocations: list[AngularInvocation],
+    settings: DjangoAngularSettings | None = None,
+    *,
+    parallel: bool = False,
+    max_workers: int = command_execution.DEFAULT_MAX_WORKERS,
+) -> list[command_execution.CommandResult]:
+    """Validate resolved Angular invocations and run them via command_execution.
+
+    Returns the captured result of each invocation, in order;
+    callers may ignore it.
+    """
+    if settings is None:
+        load_angular_settings()
+    try:
+        return command_execution.execute(
+            invocations, parallel=parallel, max_workers=max_workers
+        )
+    except (tools.ToolExecutionError, command_execution.CommandExecutionError) as exc:
+        raise AngularCommandError(str(exc)) from exc
 
 
 def build_ng_new_invocations(

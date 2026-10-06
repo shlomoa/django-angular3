@@ -222,7 +222,7 @@ them is owned by `djng-angular-construction` (§1) instead.
 | `angular_app_scaffold` | Wrap the `ngdj` application-creation schematic. |
 | `ngdj_add_feature` | Create a feature page, feature route, and application-route registration. |
 | `ngdj_add_component` | Generate a standalone component with embedding hooks. |
-| `ngdj_run_schematic` | Run an explicitly allowlisted ngdj schematic. |
+| `ngdj_run_schematic` | Run an explicitly ngdj schematic. |
 
 The Claude rendering exposes the wrapped tools through an `mcp-servers/` MCP
 server configuration pointing at the ngdj CLI. Other renderings expose the

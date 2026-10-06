@@ -33,7 +33,7 @@ A provider adapter renders the canonical Skill contract into the provider's
 native prompt, tool registration, skill file, or package representation. Every
 rendering MUST preserve the canonical name, purpose, inputs, outputs,
 dependencies, and acceptance criteria. Provider-native frontmatter, manifest
-fields, tool allowlists, filesystem layouts, and invocation syntax are derived
+fields, filesystem layouts, and invocation syntax are derived
 adapter concerns, not canonical Skill fields.
 
 Provider-package conformance tests MUST verify that preservation for each
@@ -1147,8 +1147,7 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    ```bash
    django-admin ng_new django-angular3.json --dry-run
    ```
-  Use the dry-run output to diagnose the resolved command invocation. When
-  `ng_new` is in `command_allowlist`, execute:
+  Use the dry-run output to diagnose the resolved command invocation. execute:
    ```bash
    django-admin ng_new django-angular3.json
    ```
@@ -1157,14 +1156,10 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    ```bash
    django-admin ng_add django-angular3.json --dry-run
    ```
-   When `ng_add` is in `command_allowlist`, execute:
+   execute:
    ```bash
    django-admin ng_add django-angular3.json
    ```
-
-  > **Note**: `ng_new` and `ng_add` are not in `command_allowlist` by default.
-  > Use `--dry-run` only for diagnostic validation and debugging until the
-  > allowlist is explicitly broadened. See `django_angular3/settings.py`.
 
 3. **Configure custom Material theme**:
    - Read the generated `src/styles.scss`
@@ -1337,14 +1332,11 @@ Remove the workspace directory completely, typically when starting fresh is simp
    ```bash
    django-admin ng_workspace_delete django-angular3.json --dry-run
    ```
-  Use the dry-run output to diagnose the resolved command invocation. When
-  `ng_workspace_delete` is in `command_allowlist`, execute:
+  Use the dry-run output to diagnose the resolved command invocation. execute:
    ```bash
    django-admin ng_workspace_delete django-angular3.json
    ```
    The wrapper removes the directory cross-platform via `shutil.rmtree`.
-
-   > **Note**: `ng_workspace_delete` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
 2. **Verify deletion**: Confirm `artifacts.angularWorkspace` directory no longer exists.
 
@@ -1502,7 +1494,7 @@ After modifying a workspace, verify:
 Command-level input: `confirmDelete: true`
 
 **Execution**:
-1. Run `django-admin ng_workspace_delete django-angular3.json` (when in `command_allowlist`)
+1. Run `django-admin ng_workspace_delete django-angular3.json`
 2. Confirm `artifacts.angularWorkspace` directory no longer exists
 
 **Output**: Workspace deleted
@@ -1557,13 +1549,11 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
    ```bash
    django-admin ng_gen_app django-angular3.json --dry-run
    ```
-   When `ng_gen_app` is in `command_allowlist`, execute:
+   execute:
    ```bash
    django-admin ng_gen_app django-angular3.json
    ```
-
-   > **Note**: `ng_gen_app` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
-
+     
    > **Schematic flags**: The wrapper invokes the `angular-django2:material-app`
    > schematic with `--ssr`, `--zoneless`, and `--defaults` (driven by the
    > `ssr`/`zoneless` settings) to match the Angular CLI `ng new` defaults.
@@ -1984,7 +1974,7 @@ Output path is configured in `ng-openapi-gen.json` at the workspace root; the
        "ignoreUnusedModels": false
      }
      ```
-3. **Run generation** via djng wrapper (`ng_openapi_gen` is in `command_allowlist` by default):
+3. **Run generation** via djng wrapper:
    ```bash
    django-admin ng_openapi_gen django-angular3.json
    ```

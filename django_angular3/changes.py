@@ -104,7 +104,61 @@ class ChangeEvidence:
 
 @dataclass(frozen=True)
 class Change:
-    """One immutable, atomic normalized semantic difference."""
+    """One immutable, atomic normalized semantic difference.
+
+    A Change is produced by comparing a baseline input with a candidate input
+    of one domain. Derivers: ``config_changes.py`` (static and project
+    configuration), ``openapi_changes.py`` (OpenAPI, from oasdiff output) and
+    ``external_comparisons.py`` (OpenUI, from the upstream changelog).
+
+    Attributes:
+        domain: Which normalized input the difference belongs to.
+            Represents: the ``ChangeDomain`` (static_config, project_config,
+            openapi, openui).
+            Populated: fixed by the deriver that creates the Change.
+            Used for: selecting the translator map in command translation,
+            grouping Changes per domain in a ``ChangeSet``, and step ordering.
+        subject: Stable semantic name of the thing that changed.
+            Represents: the "name" of the Change, for example
+            ``ngOpenApiGen.serviceSuffix``, ``path:/pets``,
+            ``operation:GET /pets``, ``schema:Pet`` or ``openui:page:home``.
+            Populated: configuration domains join the key path tokens with
+            ``.``; OpenAPI uses ``path:``, ``operation:<METHOD> <path>`` or
+            ``schema:<name>``; OpenUI uses ``openui:`` plus the upstream path.
+            Used for: choosing the command translation callback by prefix and
+            as ``AppBuildStep.change_target``. Must not be empty.
+        path: Location of the change inside its source document.
+            Represents: where the value lives.
+            Populated: a JSON Pointer for configuration and OpenAPI (for
+            example ``/paths/~1pets``); for OpenUI the path string reported
+            by the upstream comparison, unchanged.
+            Used for: evidence locations and error messages.
+        operation: What happened, one of ``ChangeOperation``.
+            Populated: ``create`` when the value exists only in the
+            candidate, ``delete`` when only in the baseline, ``update`` when
+            both exist and differ. ``move`` is accepted by the model but no
+            deriver emits it today.
+            Used for: command translation (for example rejecting unsupported
+            operations) and ordering delete before update before create.
+        before: Baseline value, frozen into a JSON-compatible structure.
+            Populated: the baseline value for ``delete`` and ``update``;
+            ``None`` for ``create``.
+            Used for: describing the removed state.
+        after: Candidate value, frozen like ``before``.
+            Populated: the candidate value for ``create`` and ``update``;
+            ``None`` for ``delete``.
+            Used for: describing the new state a command should produce.
+        affected: Identities of other model elements impacted by the Change.
+            Populated: only by the OpenAPI deriver (``path:<path>`` or
+            ``schema:<name>``); empty for every other domain. Identities must
+            be non-empty and unique.
+            Used for: letting later stages locate the impacted API elements.
+        evidence: ``ChangeEvidence`` records supporting the Change.
+            Populated: one record with the input source, the location (the
+            ``path``) and, for OpenAPI and OpenUI, the raw comparison
+            fragment; configuration records carry no fragment.
+            Used for: traceability in the serialized ``ChangeSet``.
+    """
 
     domain: ChangeDomain
     subject: str

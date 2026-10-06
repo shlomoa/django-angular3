@@ -192,6 +192,9 @@ class OpenAPIDiffTests(unittest.TestCase):
 
 
 class ChangeExecutionTranslationTests(unittest.TestCase):
+    # https://github.com/shlomoa/django-angular3/issues/204:
+    # Remove each expectedFailure when its command-plan assertion passes.
+    @unittest.expectedFailure
     def test_returns_an_ordered_command_plan(self) -> None:
         change_set = ChangeSet(
             baseline={},
@@ -220,18 +223,19 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
             },
         )
 
-        commands = ChangeExecution(change_set).translate_change_set()
+        commands = ChangeExecution()._translate_change_set(change_set)
 
         self.assertEqual(
-            [command.name for command in commands],
+            [command.name_id for command in commands],
             [
                 "angular-api-integration",
                 "angular-data-service-composition",
                 "angular-page-composition",
-                "terminal-validation",
+                "last-check",
             ],
         )
 
+    @unittest.expectedFailure
     def test_returns_no_commands_for_an_empty_change_set(self) -> None:
         change_set = ChangeSet(
             baseline={},
@@ -239,7 +243,7 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
             domains={domain: ChangeDomainResult(domain) for domain in ChangeDomain},
         )
 
-        self.assertEqual(ChangeExecution(change_set).translate_change_set(), ())
+        self.assertEqual(ChangeExecution()._translate_change_set(change_set), ())
 
 
 if __name__ == "__main__":

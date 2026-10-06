@@ -25,7 +25,7 @@ assignees: []
 - [ ] Add `build_ng_<schematic>_invocations` to `angular.py` (invocation SSOT)
 - [ ] Add dry-run management command wrapper
 - [ ] Add contract / drift test
-- [ ] Wire into `command_translation.py` selection
+- [ ] Wire into `command_translation.py` translation
 - [ ] Update maintained command documentation
 
 ## ngdj reference

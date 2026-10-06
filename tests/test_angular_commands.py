@@ -12,9 +12,7 @@ from django.core.management.base import CommandError
 from django.test import override_settings
 
 from django_angular3.angular import (
-    AngularCommandError,
     AngularInvocation,
-    execute_invocations,
 )
 from django_angular3.cli import build_parser, main
 from django_angular3.config import (
@@ -82,13 +80,6 @@ class AngularCliCommandTests(unittest.TestCase):
             ),
             DjangoAngularSettings(**overridden_settings),
         )
-
-    def test_load_angular_settings_normalizes_command_allowlist(self) -> None:
-        settings = load_angular_settings(
-            {"command_allowlist": ["NG_OPENAPI_GEN", " ng_openapi_gen "]}
-        )
-
-        self.assertEqual(settings.command_allowlist, ("ng_openapi_gen",))
 
     def test_loads_global_generator_settings_from_tool_configuration(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as temporary_directory:
@@ -715,39 +706,6 @@ class AngularCliCommandTests(unittest.TestCase):
             plan["invocations"][0]["argv"],
             [ng, "add", "@angular/material", "--skip-confirmation"],
         )
-
-    def test_execute_invocations_rejects_commands_outside_allowlist(self) -> None:
-        settings = load_angular_settings({"command_allowlist": ["ng_openapi_gen"]})
-        invocation = AngularInvocation(
-            command_name="ng_build",
-            argv=("pnpm", "exec", "ng-openapi-gen"),
-            cwd=ROOT,
-        )
-
-        with patch("django_angular3.tools.execute_command") as execute_command:
-            with self.assertRaisesRegex(
-                AngularCommandError,
-                (
-                    r"Command 'ng_build' is not allowed\. Allowed commands: "
-                    r"ng_openapi_gen\."
-                ),
-            ):
-                execute_invocations([invocation], settings)
-
-            execute_command.assert_not_called()
-
-    def test_execute_invocations_allows_whitelisted_commands(self) -> None:
-        settings = load_angular_settings({"command_allowlist": ["ng_openapi_gen"]})
-        invocation = AngularInvocation(
-            command_name="ng_openapi_gen",
-            argv=("pnpm", "exec", "ng-openapi-gen"),
-            cwd=ROOT,
-        )
-
-        with patch("django_angular3.tools.execute_command") as execute_command:
-            execute_invocations([invocation], settings)
-
-        execute_command.assert_called_once_with(invocation.argv, cwd=invocation.cwd)
 
 
 class AngularManagementCommandTests(unittest.TestCase):

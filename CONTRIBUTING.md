@@ -21,21 +21,26 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
-Then install the package with dev tooling:
+Then install the package with development and documentation tooling:
 
 ```bash
-python -m pip install -e .[dev]
+python -m pip install -e ".[dev,docs]"
 ```
 
 ## Development setup
 
-Install the project from source with dev tooling already covered in
+Install the project from source with development and documentation tooling covered in
 [Prerequisites](#prerequisites) above.
+
+The `dev` extra installs Ruff. The separate `docs` extra installs Sphinx,
+the documentation theme, and parser extensions. Both are included in the
+standard contributor setup because documentation builds are part of validation;
+installing only `.[dev]` does not install the documentation toolchain.
 
 If you also want YAML support for OpenAPI or UI definition files:
 
 ```bash
-python -m pip install -e .[dev,yaml]
+python -m pip install -e ".[dev,docs,yaml]"
 ```
 
 ## Local validation and build checks
@@ -77,14 +82,19 @@ CI is configured in `.github/workflows/`:
 - `deploy.yml` — builds and publishes the package to PyPI via Trusted
   Publishing when a GitHub Release is published.
 
-Before opening a pull request, run linting and the test suite locally to
+Before opening a pull request, run linting, formatting checks, the test suite,
+and the documentation build locally to
 catch issues before CI does:
 
 ```bash
 ruff check django_angular3 tests
-ruff format django_angular3 tests
+ruff format --check django_angular3 tests
 python -m unittest discover -s tests -p 'test*.py'
+python -m sphinx docs docs/_build/html -W --keep-going
 ```
+
+The documentation build uses the `docs` extra installed during contributor
+setup. `-W` treats warnings as errors, matching CI.
 
 ## Releasing
 
@@ -163,7 +173,7 @@ validators, and automation skills that orchestrate the frontend tooling:
 1. **Consume upstream library**: Update the pinned upstream package dependency
    or configuration (e.g., `ngAddPackage` in tool configuration).
 2. **Update commands and wrappers**:
-   - Update command allowlists, argument parsers, execution builders, and
+   - Update argument parsers, execution builders, and
      management commands.
    - Update or retire CLI commands and options to match the upstream library's
      public interface.
@@ -193,4 +203,3 @@ Once all participating repositories have published their releases:
    stack.
 2. **Solution-wide cleanliness audit**: Run `git status` across all workspaces
    to confirm no untracked artifacts, temporary files, or uncommitted edits remain.
-

@@ -29,7 +29,7 @@ class OasdiffComparisonTests(unittest.TestCase):
                 return_value="oasdiff",
             ),
             patch(
-                "django_angular3.external_comparisons.subprocess.run",
+                "django_angular3.command_execution.subprocess.run",
                 return_value=result,
             ) as run,
         ):
@@ -45,8 +45,10 @@ class OasdiffComparisonTests(unittest.TestCase):
                 "--format",
                 "json",
             ],
+            cwd=None,
             capture_output=True,
             text=True,
+            check=False,
         )
 
     def test_blank_oasdiff_output_means_no_difference(self) -> None:
@@ -57,7 +59,7 @@ class OasdiffComparisonTests(unittest.TestCase):
                 return_value="oasdiff",
             ),
             patch(
-                "django_angular3.external_comparisons.subprocess.run",
+                "django_angular3.command_execution.subprocess.run",
                 return_value=result,
             ),
         ):
@@ -71,7 +73,7 @@ class OasdiffComparisonTests(unittest.TestCase):
                 return_value="oasdiff",
             ),
             patch(
-                "django_angular3.external_comparisons.subprocess.run",
+                "django_angular3.command_execution.subprocess.run",
                 return_value=result,
             ),
             self.assertRaisesRegex(ExternalComparisonError, "valid JSON"),

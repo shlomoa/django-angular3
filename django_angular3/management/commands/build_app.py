@@ -6,6 +6,7 @@ Django Angular3 application.
 """
 
 import argparse
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -16,8 +17,9 @@ from bin.openui_spec import (  # type: ignore[import-untyped]
 from django.core.management.base import BaseCommand, CommandError
 
 from django_angular3.changes import Change, ChangeDomain, ChangeDomainResult, ChangeSet
+from django_angular3.command_execution import execute as cmd_executor
 from django_angular3.command_translation import (
-    CommandSelection,
+    AppBuildStep,
     CommandTranslationError,
     translate_changes,
 )
@@ -33,6 +35,8 @@ from django_angular3.openapi_changes import (
 )
 
 from ...config import ConfigError, load_project_config
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAPIConfiguration:
@@ -105,13 +109,15 @@ class Configuration:
 
         :param self: Description
         """
-        # Load Project configuration
+        logger.debug("Loading project configuration from %s", self._project_config_path)
         self._project_config: ProjectConfig = load_project_config(
             self._project_config_path
         )
-        # Load OpenAPI configuration
+        logger.debug("OpenAPI schema: %s", self._project_config.openapi_schema)
         self._openapi_config = OpenAPIConfiguration(self._project_config.openapi_schema)
-        # Load OpenUI configuration
+        logger.debug(
+            "OpenUI specification: %s", self._project_config.openui_specification
+        )
         self._openui_config = OpenUIConfiguration(
             self._project_config.openui_specification
         )
@@ -177,6 +183,7 @@ class ChangeDetector:
 
     def detect_changes(self) -> ChangeSet:
         """Derive the canonical ChangeSet for the current configuration pair."""
+        logger.debug("Detecting changes between previous and current configuration")
         try:
             project_changes = compare_project_config(
                 self._previous_config.project_config,
@@ -186,6 +193,13 @@ class ChangeDetector:
             openui_changes = self._diff_openui_specifications()
         except (ExternalComparisonError, OpenApiComparisonError, OSError) as exc:
             raise CommandError(f"Failed to detect changes: {exc}") from exc
+
+        logger.debug(
+            "Detected changes: project=%d openapi=%d openui=%d",
+            len(project_changes),
+            len(openapi_changes),
+            len(openui_changes),
+        )
 
         return ChangeSet(
             baseline={
@@ -221,29 +235,41 @@ class ChangeExecution:
     * Rolling back changes in case of failures.
     """
 
-    def __init__(self, change_set: ChangeSet):
-        self._change_set: ChangeSet = change_set
-
-    def translate_change_set(self) -> tuple[CommandSelection, ...]:
+    def _translate_change_set(self, change_set: ChangeSet) -> tuple[AppBuildStep, ...]:
         """Translate the ChangeSet into an ordered command plan."""
         changes = tuple(
             change
             for domain in ChangeDomain
-            for change in self._change_set.domains[domain].changes
+            for change in change_set.domains[domain].changes
         )
+        logger.debug("Translating %d changes into commands", len(changes))
         try:
             return translate_changes(changes)
         except CommandTranslationError as exc:
             raise CommandError(f"Failed to translate changes: {exc}") from exc
 
-    def execute(self):
+    def _extract_next_level(
+        self, commands: tuple[AppBuildStep, ...]
+    ) -> tuple[tuple[AppBuildStep, ...], tuple[AppBuildStep, ...]]:
+        level = commands[0].exec_order
+        level_commands = tuple(cmd for cmd in commands if cmd.exec_order == level)
+        remaining_commands = tuple(cmd for cmd in commands if cmd.exec_order != level)
+        return level_commands, remaining_commands
+
+    def execute(
+        self, change_set: ChangeSet, output_path: str, dry_run: bool, force: bool
+    ):
         """
         Execute the changes based on the detected differences.
 
         Raises CommandError if execution fails.
         """
+        logger.debug("Executing change set")
         try:
-            raise NotImplementedError("Change execution is not implemented.")
+            commands = self._translate_change_set(change_set)
+            while not dry_run and commands:
+                level_cmds, commands = self._extract_next_level(commands)
+                cmd_executor(level_cmds, output_path, force=force, dry_run=dry_run)
         except ConfigError as e:
             raise CommandError(f"Failed to execute changes: {e}") from e
 
@@ -312,12 +338,15 @@ class Command(BaseCommand):
             CommandError: If the configuration is invalid, its schema source is
                 absent, or ``oasdiff`` cannot be prepared or used.
         """
+        logger.debug("build_app started with options: %s", options)
         try:
             current_config = Configuration(options["current_config"])
             previous_config = Configuration(options["previous_config"])
             detector = ChangeDetector(current_config, previous_config)
             change_set: ChangeSet = detector.detect_changes()
-            executor = ChangeExecution(change_set)
-            executor.execute()
+            executor = ChangeExecution()
+            executor.execute(
+                change_set, options["output"], options["dry_run"], options["force"]
+            )
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
