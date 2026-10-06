@@ -27,7 +27,7 @@ do not maintain it as production configuration.
 - global `ngOpenApiGen` options;
 - `drfSpectacular.settings`, scoped to schema export;
 - Angular workspace, application, and build defaults; and
-- tool executable names, command allowlist, and default `ng add` package.
+- tool executable names and default `ng add` package.
 
 Start with the packaged `django-angular3.json` template. Commands consume this
 static configuration; they do not accept its path as an argument.

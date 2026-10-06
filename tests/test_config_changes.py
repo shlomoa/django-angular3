@@ -11,9 +11,7 @@ from django_angular3.config import ProjectConfig
 from django_angular3.config_changes import compare_project_config, compare_static_config
 
 
-def _static_config(
-    *, style: str = "scss", allowlist: list[str] | None = None
-) -> dict[str, object]:
+def _static_config(*, style: str = "scss") -> dict[str, object]:
     return {
         "ngOpenApiGen": {"serviceSuffix": "Api", "modelIndex": True},
         "drfSpectacular": {"settings": {"TITLE": "Example", "VERSION": "1"}},
@@ -25,7 +23,6 @@ def _static_config(
         },
         "tool": {
             "executables": {"node": "node", "pnpm": "pnpm", "ng": "ng"},
-            "commandAllowlist": allowlist or ["ng_openapi_gen", "ng_build"],
             "ngAddPackage": "angular-django2",
         },
     }
@@ -93,14 +90,6 @@ class StaticConfigComparisonTests(unittest.TestCase):
                     "/" + "/".join(path),
                 )
                 self.assertEqual(changes[0].operation, ChangeOperation.UPDATE)
-
-    def test_allowlist_reordering_and_case_do_not_change_semantics(self) -> None:
-        changes = compare_static_config(
-            _static_config(allowlist=["ng_build", "ng_openapi_gen"]),
-            _static_config(allowlist=[" NG_OPENAPI_GEN ", "ng_build"]),
-        )
-
-        self.assertEqual(changes, ())
 
     def test_missing_static_baseline_emits_create_changes(self) -> None:
         changes = compare_static_config(None, _static_config())

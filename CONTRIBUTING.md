@@ -163,7 +163,7 @@ validators, and automation skills that orchestrate the frontend tooling:
 1. **Consume upstream library**: Update the pinned upstream package dependency
    or configuration (e.g., `ngAddPackage` in tool configuration).
 2. **Update commands and wrappers**:
-   - Update command allowlists, argument parsers, execution builders, and
+   - Update argument parsers, execution builders, and
      management commands.
    - Update or retire CLI commands and options to match the upstream library's
      public interface.

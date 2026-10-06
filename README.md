@@ -99,7 +99,7 @@ INSTALLED_APPS = [
 ```
 
 The static `django-angular3.json` configures djng's Angular tool settings,
-including executable resolution and its command allowlist. `DJANGO_ANGULAR3`
+including executable resolution. `DJANGO_ANGULAR3`
 and `DjangoAngularSettings` are derived from that file; they are not independent
 configuration authorities. The generated app's identity and artifact locations
 are instead supplied by the project configuration defined in
@@ -149,9 +149,6 @@ execute packages at runtime.
 > **SKILL names** are AI-guided session identifiers (e.g. `angular-workspace-foundation`,
 > `angular-api-integration`). See `doc/ARCHITECTURE.md §3.6.4` for the authoritative definition.
 
-To execute these commands, include the relevant commands in the static tool
-configuration's `tool.commandAllowlist`, then invoke them without `--dry-run`.
-
 Use `--app-name <name>` with `ng_gen_app` to override the generated Angular
 application name.
 
@@ -176,8 +173,7 @@ delete lifecycle handling:
   --features mixins,nested,projection --dry-run
 ```
 
-Use `--mode delete --confirm` for deletion. Add `ng_complex_component` to
-`tool.commandAllowlist` before running without `--dry-run`.
+Use `--mode delete --confirm` for deletion.
 
 At the moment this reusable Django app contributes configuration helpers and
 management commands; it does not yet ship models, URLs, templates, static

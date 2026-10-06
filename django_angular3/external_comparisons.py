@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import subprocess
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import cast
@@ -11,6 +10,7 @@ from typing import cast
 from bin.compare_openui_spec import compare as compare_openui_spec
 
 from .changes import Change, ChangeDomain, ChangeEvidence, ChangeOperation
+from .command_execution import run_command
 from .documents import DocumentError, load_document
 from .tools import ensure_oasdiff
 from .validation import validate_openui_document
@@ -26,10 +26,9 @@ def run_oasdiff_diff(reference: Path, candidate: Path) -> dict[str, object]:
     OpenAPI semantic record translation remains owned by the OpenAPI evaluator.
     """
     executable = ensure_oasdiff()
-    result = subprocess.run(
+    result = run_command(
         [executable, "diff", str(reference), str(candidate), "--format", "json"],
-        capture_output=True,
-        text=True,
+        check=False,
     )
     if result.returncode:
         message = (result.stderr or result.stdout).strip()

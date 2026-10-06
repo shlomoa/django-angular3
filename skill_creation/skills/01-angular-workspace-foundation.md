@@ -67,8 +67,8 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    ```bash
    django-admin ng_new django-angular3.json --dry-run
    ```
-   Use the dry-run output to diagnose the resolved command invocation. When
-   `ng_new` is in `command_allowlist`, execute:
+   Use the dry-run output to diagnose the resolved command invocation. 
+   execute:
    ```bash
    django-admin ng_new django-angular3.json
    ```
@@ -77,15 +77,11 @@ Package manager availability and Angular CLI access are validated by the `ng_new
    ```bash
    django-admin ng_add django-angular3.json --dry-run
    ```
-   When `ng_add` is in `command_allowlist`, execute:
+   execute:
    ```bash
    django-admin ng_add django-angular3.json
    ```
-
-   > **Note**: `ng_new` and `ng_add` are not in `command_allowlist` by default.
-   > Use `--dry-run` only for diagnostic validation and debugging until the
-   > allowlist is explicitly broadened. See `django_angular3/settings.py`.
-
+   
 3. **Configure custom Material theme**:
    - Read the generated `src/styles.scss`
    - Replace default theme imports with custom theme configuration using Material 3 token-based theming
@@ -257,15 +253,13 @@ Remove the workspace directory completely, typically when starting fresh is simp
    ```bash
    django-admin ng_workspace_delete django-angular3.json --dry-run
    ```
-   Use the dry-run output to diagnose the resolved command invocation. When
-   `ng_workspace_delete` is in `command_allowlist`, execute:
+   Use the dry-run output to diagnose the resolved command invocation. 
+   execute:
    ```bash
    django-admin ng_workspace_delete django-angular3.json
    ```
    The wrapper removes the directory cross-platform via `shutil.rmtree`.
-
-   > **Note**: `ng_workspace_delete` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
-
+      
 2. **Verify deletion**: Confirm `artifacts.angularWorkspace` directory no longer exists.
 
 #### Output

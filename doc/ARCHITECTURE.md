@@ -257,7 +257,7 @@ upstream command, option, behavior, output, or error contracts. Required
 changes to those contracts belong in the upstream `angular-django2` project;
 `djng` records only its dependency on and use of them.
 
-Facts owned by `djng`, such as wrapper names, argument translation, allowlist
+Facts owned by `djng`, such as wrapper names, argument translation,
 behavior, and interface availability, remain defined and tested in `djng`.
 They must be clearly identified as integration behavior rather than `ngdj`
 behavior. If upstream sources conflict, report the conflict and resolve it
@@ -546,7 +546,7 @@ Because relationships are not one-to-one, a cell may list multiple canonical
 identifiers for the same concern. `—` means that no canonical identifier exists
 for that concern in that layer; it does not mean planned or unknown. The
 cross-cutting `ngdj_run_schematic` Tool is intentionally omitted because it can
-execute allowlisted schematics for multiple concerns rather than naming one
+execute schematics for multiple concerns rather than naming one
 construction concern.
 
 | Concern key | Operator wrapper identifier | Tool contract | Skill name |

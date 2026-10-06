@@ -220,15 +220,15 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
             },
         )
 
-        commands = ChangeExecution(change_set).translate_change_set()
+        commands = ChangeExecution()._translate_change_set(change_set)
 
         self.assertEqual(
-            [command.name for command in commands],
+            [command.name_id for command in commands],
             [
                 "angular-api-integration",
                 "angular-data-service-composition",
                 "angular-page-composition",
-                "terminal-validation",
+                "last-check",
             ],
         )
 
@@ -239,7 +239,7 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
             domains={domain: ChangeDomainResult(domain) for domain in ChangeDomain},
         )
 
-        self.assertEqual(ChangeExecution(change_set).translate_change_set(), ())
+        self.assertEqual(ChangeExecution()._translate_change_set(change_set), ())
 
 
 if __name__ == "__main__":

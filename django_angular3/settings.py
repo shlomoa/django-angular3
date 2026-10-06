@@ -1,5 +1,5 @@
 import os
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +15,43 @@ class AngularCommandError(RuntimeError):
 _is_win = os.name == "nt"
 
 PACKAGE_DEFAULT_CONFIG_PATH = Path(__file__).parent / "django-angular3.json"
+
+DEBUG: bool = os.environ.get("DJANGO_DEBUG", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+
+LOG_LEVEL: str = "DEBUG" if DEBUG else "WARNING"
+
+LOGGING: dict[str, Any] = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_LEVEL,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
+            "propagate": False,
+        },
+    },
+}
 
 
 def _package_default_tool_config() -> Mapping[str, Any]:
@@ -41,7 +78,6 @@ DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
     "node_executable": "node.exe" if _is_win else "node",
     "pnpm_executable": "pnpm.cmd" if _is_win else "pnpm",
     "ng_executable": "ng.cmd" if _is_win else "ng",
-    "command_allowlist": ("ng_openapi_gen",),
     "package_manager": "pnpm",
     "build_configuration": "production",
     "style": "scss",
@@ -69,8 +105,6 @@ class DjangoAngularSettings(SimpleNamespace):
         node_executable (str): Node executable name or path.
         pnpm_executable (str): pnpm executable name or path.
         ng_executable (str): Angular CLI executable name or path.
-        command_allowlist (tuple[str, ...]): Allowed resolved
-            django-angular3 command names.
         package_manager (str): Angular package manager setting.
         build_configuration (str): Angular build configuration name.
         style (str): Default Angular stylesheet format.
@@ -91,9 +125,6 @@ def load_angular_settings(
     data.update(_load_tool_configuration(config_path))
     if overrides:
         data.update(overrides)
-    data["command_allowlist"] = _normalize_command_allowlist(
-        data.get("command_allowlist")
-    )
     return DjangoAngularSettings(**data)
 
 
@@ -134,7 +165,6 @@ def _load_tool_configuration(
         "ssr": application.get("ssr", False),
         "zoneless": application.get("zoneless", True),
         "build_configuration": build.get("configuration", "production"),
-        "command_allowlist": tool.get("commandAllowlist", ("ng_openapi_gen",)),
         "ng_add_package": tool.get("ngAddPackage", DEFAULT_NG_ADD_PACKAGE),
     }
     for config_key, setting_key in (
@@ -190,7 +220,7 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     executables = _optional_mapping(tool, "executables")
     _reject_unknown_keys(
         tool,
-        {"executables", "commandAllowlist", "ngAddPackage"},
+        {"executables", "ngAddPackage"},
         "tool",
         errors,
     )
@@ -200,11 +230,6 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     for key in ("node", "pnpm", "ng"):
         if key in executables:
             _require_string(executables, key, "tool.executables", errors)
-    allowlist = tool.get("commandAllowlist")
-    if not isinstance(allowlist, Sequence) or isinstance(allowlist, str):
-        errors.append("tool.commandAllowlist must be a sequence of strings.")
-    elif not all(isinstance(command, str) and command.strip() for command in allowlist):
-        errors.append("tool.commandAllowlist must contain only non-empty strings.")
     if "ngAddPackage" in tool:
         _require_string(tool, "ngAddPackage", "tool", errors)
     return errors
@@ -368,30 +393,3 @@ def use_drf_spectacular_settings(
         else:
             delattr(django_settings, "SPECTACULAR_SETTINGS")
         spectacular_settings.reload()
-
-
-def _normalize_command_allowlist(value: object) -> tuple[str, ...]:
-    if isinstance(value, str):
-        commands = (value,)
-    elif isinstance(value, Sequence):
-        commands = tuple(value)
-    else:
-        raise AngularCommandError(
-            "command_allowlist must be a string or a sequence of strings."
-        )
-
-    normalized_commands: list[str] = []
-    for command in commands:
-        if not isinstance(command, str):
-            raise AngularCommandError("command_allowlist must only contain strings.")
-
-        normalized_command = command.strip().lower()
-        if not normalized_command:
-            raise AngularCommandError(
-                "command_allowlist cannot contain empty command names."
-            )
-
-        if normalized_command not in normalized_commands:
-            normalized_commands.append(normalized_command)
-
-    return tuple(normalized_commands)

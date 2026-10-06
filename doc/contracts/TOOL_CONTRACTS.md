@@ -456,7 +456,7 @@ The structured Tool behavior and outputs in this contract remain planned.
 
 **Name**: `ngdj_run_schematic`
 
-**Purpose**: Execute one explicitly allowlisted `angular-django2` schematic
+**Purpose**: Execute one `angular-django2` schematic
 with structured options, returning the resulting file delta rather than raw
 Angular CLI output.
 
@@ -464,7 +464,7 @@ Angular CLI output.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `schematic` | yes | string | — | Allowlisted ngdj schematic name, without the `angular-django2:` prefix. |
+| `schematic` | yes | string | — | ngdj schematic name, without the `angular-django2:` prefix. |
 | `options` | no | object | `{}` | JSON-shaped schematic options, validated against the selected schematic schema. |
 | `project` | no | string | inferred from `project.name` | Angular project to modify when the selected schematic supports it. |
 | `dry_run` | no | boolean | `false` | When `true`, validate and return the invocation without modifying the workspace. |
@@ -480,17 +480,14 @@ Angular CLI output.
 
 **Error behavior**: Non-zero exit / raised `ToolError` with `category` in
 `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
-`invalid_input` includes a schematic outside the djng-maintained allowlist or
-options that fail its schema. The tool MUST NOT accept arbitrary collection
-names or execute package downloads at runtime.
+`invalid_input` includes options that fail its schema.
+The tool MUST NOT accept arbitrary collection names or execute package downloads at runtime.
 
 **Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: planned djng wrapper invoking the workspace-local
-`pnpm exec ng generate angular-django2:<schematic>` command. The allowlist is
-derived from the supported ngdj collection version and is verified by contract
-tests.
+`pnpm exec ng generate angular-django2:<schematic>` command.
 
 #### 10. `oasdiff_changelog` — human-readable schema-change report
 

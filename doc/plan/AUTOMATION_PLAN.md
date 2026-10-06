@@ -51,7 +51,7 @@ GitHub owns issue scope and tracking.
 	- **10.2.** Complete canonical Skill authoring and working-copy alignment in dependency order before a selected Skill can be resolved, rendered, or executed. <!-- STEP7-f3d8206fd88c --> <!-- STEP7-59437800d439 --> <!-- STEP7-47924c62d577 --> <!-- STEP7-827e20f4b57a --> <!-- STEP7-e3b50d6cc681 --> <!-- STEP7-e1283cb70b74 -->
 11. **Phase 10: implement guided-session adapter orchestration after direct execution.**
 	- **11.1.** Implement the provider-neutral adapter interface, resolver, orchestration, stub adapter, and separately gated provider integrations. Provider outcomes must not bypass direct Tool, Hook, or terminal-validation authority; deterministic-only runs require no adapter. <!-- STEP7-78d7871e8584 --> <!-- STEP7-83340c91a5e3 --> <!-- STEP7-a0f7d2532949 --> <!-- STEP7-3eb71862cd8b --> <!-- STEP7-8454ec053897 -->
-	- **11.2.** Package every provider SDK as an optional extra only with its adapter; retain shared credential-free coverage, and run provider integration suites only with bounded Skills/Tool allowlists and approved secret-managed environments. <!-- STEP7-21d8a3f2d6e7 --> <!-- STEP7-dc521f1b817d --> <!-- STEP7-cc9438e99f21 --> <!-- STEP7-a6bdfc38c410 --> <!-- STEP7-a310edb3c380 -->
+	- **11.2.** Package every provider SDK as an optional extra only with its adapter; retain shared credential-free coverage, and run provider integration suites only with bounded Skills/Tool lists and approved secret-managed environments. <!-- STEP7-21d8a3f2d6e7 --> <!-- STEP7-dc521f1b817d --> <!-- STEP7-cc9438e99f21 --> <!-- STEP7-a6bdfc38c410 --> <!-- STEP7-a310edb3c380 -->
 	- **11.3.** Derive provider-specific Plugin packages from canonical contracts. Validate canonical preservation, exact manifests, provenance/hash staleness detection, installation/smoke behavior, and generated-workspace conformance. <!-- STEP7-296d439156d2 --> <!-- STEP7-35674349b69a --> <!-- STEP7-fd10b8999220 --> <!-- STEP7-e4966a166b23 --> <!-- STEP7-06732df6c184 --> <!-- STEP7-6852ed0af1ef --> <!-- STEP7-b0c60ee915c8 -->
 
 <!-- Removed legacy migration trace marker IDs: STEP7-db81b18fba54 STEP7-cd7cb510c282 STEP7-244b22b96a76 STEP7-cfdbfe1ff3c4 STEP7-3afcd0c47340 STEP7-616b278f5674 STEP7-3553167fc57e STEP7-ba292c49b963 STEP7-dfd02a744b05 STEP7-ab92c8417f09 STEP7-9646d470e48d STEP7-969bf05201c3 STEP7-584bb46bffd2 STEP7-48f99ac4eb26 STEP7-9dfe8ebdfa5f STEP7-ba8cda71a1ec STEP7-cef54b011de1 STEP7-ff1e628b2cda STEP7-391cbeb13f15 STEP7-14d1e81dd2d5 STEP7-ae3c4444fb15 STEP7-f3998a7d7736 STEP7-6a9d2c546778 STEP7-46ea2fee5395 STEP7-cd8248aa7ca1 STEP7-e93ecc429a67 STEP7-7e5c404e6205 STEP7-95afbbce44cc STEP7-f286a1e7d803 STEP7-07e6ce269fc7 STEP7-9873033a418a STEP7-daabd8d9358b STEP7-66e10c67020a STEP7-96e9942e5e2b STEP7-fbaf2bb984e0 STEP7-41ba89e57a6c STEP7-05ca26bd5270 STEP7-a56835ba9815 STEP7-1d2daacdbca3 STEP7-e7b0be677eb6 STEP7-2bbd5c42c542 STEP7-b5fb48bfa4c9 STEP7-3e364793716f STEP7-1d4cbcc1fe90 STEP7-e7210516ddf3 STEP7-c62fe1e70767 STEP7-8f20c02778fd STEP7-c00dd316684e STEP7-b694262f1573 STEP7-f3d8206fd88c STEP7-59437800d439 STEP7-47924c62d577 STEP7-827e20f4b57a STEP7-8eebf79cfcc4 STEP7-4f62cd16d96a STEP7-13969132ef5f STEP7-e3b50d6cc681 STEP7-e1283cb70b74 STEP7-78d7871e8584 STEP7-cddb9e2717c4 STEP7-1496bb5d3423 STEP7-693cdc161855 STEP7-e8e916bac78a STEP7-c0682b03c673 STEP7-816f7b16b04c STEP7-83340c91a5e3 STEP7-a0f7d2532949 STEP7-3eb71862cd8b STEP7-8454ec053897 STEP7-c9b541737c42 STEP7-9dcd387045dd STEP7-80a57601adec STEP7-00670b6ff2ca STEP7-9e6564311efb STEP7-cc9438e99f21 STEP7-cac8d76798f4 STEP7-fcdb50e6d5c5 STEP7-296d439156d2 STEP7-35674349b69a STEP7-fd10b8999220 STEP7-e4966a166b23 STEP7-06732df6c184 STEP7-6852ed0af1ef STEP7-41d281188104 STEP7-6f569ec2a530 STEP7-3a981ddb0dd1 STEP7-1263bd5fba27 STEP7-2543f93b0d2f STEP7-b0c60ee915c8 STEP7-a6bdfc38c410 STEP7-a310edb3c380 STEP7-569596b8e500 STEP7-a6cce6b3c1dc STEP7-afddc77e74ab STEP7-2dcdd233a9ba STEP7-b02f182c103f STEP7-ea89af0bccab STEP7-fbbfa34764d2 STEP7-0323cc907509 STEP7-213207e9bd57 STEP7-3c02e09b8ff6 -->
@@ -151,13 +151,11 @@ structured command input rather than rerunning the diff.
 
 When guided work needs a deterministic operation, the provider adapter may
 request only a canonical, allowed Tool. The direct execution controller
-validates and runs it, applies allowlisting and Hooks, records evidence, and
+validates and runs it and Hooks, records evidence, and
 determines failure consequences. A Skill/provider result cannot bypass those
 gates or mark a command/run successful.
 
-Executability follows the effective `tool.commandAllowlist` in static
-`django-angular3.json`: the library fallback permits only `ng_openapi_gen`,
-while repository/generated configurations may allow more wrappers. `--dry-run`
+`--dry-run`
 is diagnostic and non-mutating; its support proves neither a canonical Tool
 contract nor a completed `build_app` mapping. Skills must not infer
 executability from wrapper availability or dry-run output.

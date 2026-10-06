@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
 
 from django.core.management.base import BaseCommand, CommandError
 
 from ...cleanup import project_root
+from ...command_execution import run_command
 
 
 class Command(BaseCommand):
@@ -23,13 +23,7 @@ class Command(BaseCommand):
         if options["dry_run"]:
             argv.append("-n")
 
-        result = subprocess.run(
-            argv,
-            cwd=project_root(),
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = run_command(argv, cwd=project_root(), check=False)
         if result.returncode:
             raise CommandError(result.stderr.strip() or "git clean failed.")
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final, cast
@@ -12,7 +12,6 @@ from .config import ProjectConfig
 from .settings import validate_tool_configuration
 
 _MISSING: Final = object()
-_COMMAND_ALLOWLIST_PATH: Final = ("tool", "commandAllowlist")
 
 
 @dataclass(frozen=True)
@@ -128,12 +127,6 @@ def _compare_mapping(
                     cast(Mapping[str, object], after),
                 )
             )
-        elif path_tokens == _COMMAND_ALLOWLIST_PATH:
-            changes.extend(
-                _compare_command_allowlist(
-                    comparison, path_tokens, cast(object, before), cast(object, after)
-                )
-            )
         elif before != after:
             changes.append(
                 comparison.change(path_tokens, ChangeOperation.UPDATE, before, after)
@@ -151,13 +144,6 @@ def _create_changes(
             for key in sorted(mapping)
             for change in _create_changes(comparison, (*path_tokens, key), mapping[key])
         ]
-    if path_tokens == _COMMAND_ALLOWLIST_PATH:
-        return [
-            comparison.change(
-                (*path_tokens, command), ChangeOperation.CREATE, None, command
-            )
-            for command in _normalized_allowlist(value)
-        ]
     return [comparison.change(path_tokens, ChangeOperation.CREATE, None, value)]
 
 
@@ -171,50 +157,7 @@ def _delete_changes(
             for key in sorted(mapping)
             for change in _delete_changes(comparison, (*path_tokens, key), mapping[key])
         ]
-    if path_tokens == _COMMAND_ALLOWLIST_PATH:
-        return [
-            comparison.change(
-                (*path_tokens, command), ChangeOperation.DELETE, command, None
-            )
-            for command in _normalized_allowlist(value)
-        ]
     return [comparison.change(path_tokens, ChangeOperation.DELETE, value, None)]
-
-
-def _compare_command_allowlist(
-    comparison: _ConfigComparison,
-    path_tokens: tuple[str, ...],
-    baseline: object,
-    candidate: object,
-) -> list[Change]:
-    before = set(_normalized_allowlist(baseline))
-    after = set(_normalized_allowlist(candidate))
-    return [
-        comparison.change(
-            (*path_tokens, command), ChangeOperation.DELETE, command, None
-        )
-        for command in sorted(before - after)
-    ] + [
-        comparison.change(
-            (*path_tokens, command), ChangeOperation.CREATE, None, command
-        )
-        for command in sorted(after - before)
-    ]
-
-
-def _normalized_allowlist(value: object) -> tuple[str, ...]:
-    if not isinstance(value, Sequence) or isinstance(value, str):
-        raise ValueError("tool.commandAllowlist must be a sequence of strings.")
-    commands = cast(Sequence[object], value)
-    return tuple(
-        sorted(
-            {
-                command.strip().lower()
-                for command in commands
-                if isinstance(command, str)
-            }
-        )
-    )
 
 
 def _json_pointer(tokens: tuple[str, ...]) -> str:

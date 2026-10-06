@@ -48,12 +48,10 @@ Note: `standalone: true` is a fixed Angular convention and is not configurable.
    ```bash
    django-admin ng_gen_app django-angular3.json --dry-run
    ```
-   When `ng_gen_app` is in `command_allowlist`, execute:
+   execute:
    ```bash
    django-admin ng_gen_app django-angular3.json
    ```
-
-   > **Note**: `ng_gen_app` is not in `command_allowlist` by default. See `django_angular3/settings.py`.
 
    > **Schematic flags**: The wrapper invokes the `angular-django2:material-app`
    > schematic with `--ssr`, `--zoneless`, and `--defaults` (driven by the
