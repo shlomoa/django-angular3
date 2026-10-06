@@ -111,8 +111,8 @@ class OpenAPIDiffTests(unittest.TestCase):
         expected = (
             Change(
                 domain=ChangeDomain.OPENUI,
-                subject="openui:/children/0",
-                path="/children/0",
+                subject="openui:/children/dashboard",
+                path="/children/dashboard",
                 operation=ChangeOperation.CREATE,
                 before=None,
                 after={"id": "dashboard"},
@@ -149,8 +149,8 @@ class OpenAPIDiffTests(unittest.TestCase):
         )
         openui_change = Change(
             domain=ChangeDomain.OPENUI,
-            subject="openui:/children/0",
-            path="/children/0",
+            subject="openui:/children/dashboard",
+            path="/children/dashboard",
             operation=ChangeOperation.CREATE,
             before=None,
             after={"id": "dashboard"},

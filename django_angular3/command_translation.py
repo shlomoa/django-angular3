@@ -47,7 +47,7 @@ class AppBuildStep:
         change_reason: Human-readable explanation of which Change required
             the step, for plan output and debug logs.
         change_target: Identifier of the thing the Change affects (for example
-            ``openui:page:home`` or ``path:/api/items``), or ``changeset``
+            ``openui:/children/home`` or ``path:/api/items``), or ``changeset``
             for the last gate.
         change_domain: ``ChangeDomain`` the originating Change belongs to, or
             ``None`` for the last gate, which covers the whole change set.
@@ -96,19 +96,19 @@ def _not_implemented(change: Change) -> tuple[AppBuildStep, ...]:
     )
 
 
-# Per-domain maps
-# ordered steps for that Change. The longest matching prefix wins.
+# Per-domain maps from a Change subject to the translator that returns the
+# ordered steps for that Change. The subject must match a key exactly.
 OPENAPI_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate OpenAPI subject-prefix translators.
+    # TODO: populate OpenAPI subject translators.
 }
 PROJECT_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate project-config subject-prefix translators.
+    # TODO: populate project-config subject translators.
 }
 STATIC_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate static-config subject-prefix translators.
+    # TODO: populate static-config subject translators.
 }
 OPENUI_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate OpenUI subject-prefix translators.
+    # TODO: populate OpenUI subject translators.
 }
 
 

@@ -74,7 +74,9 @@ utility's `remove`, `add`, and `change` entries into `delete`, `create`, and
 comparison algorithm.
 
 `move` is reserved for identity-preserving relocation. If identity cannot be
-established, comparison must emit `delete` plus `create` instead. Invalid or
+established, comparison must emit `delete` plus `create` instead. The OpenUI
+comparison emits no `move`: relocating a node to another parent surfaces as a
+`remove` plus an `add`, and no domain deriver emits `move` yet. Invalid or
 unknown input must fail validation; it must not be represented as an unknown
 change.
 

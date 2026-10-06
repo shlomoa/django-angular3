@@ -39,8 +39,9 @@ procedure graph. For every run it performs this ordered algorithm:
   configurations.
 3. Identify the difference between the previous and current OpenAPI schemas.
 4. Identify the structural difference between the previous and current OpenUI
-   document trees, including each node's `id`, `type`, `attrs`, and ordered
-   `children`.
+   document trees, including each node's `id`, `type`, `attrs`, and parent
+   relation. The order of identified siblings is not significant (see
+   `doc/contracts/CHANGE_MODEL_CONTRACTS.md` §2.2).
 5. Translate the identified change sets into the required change commands.
 6. Execute those commands against the generated-app workspace.
 7. Validate the generated outputs and the resulting integrated application.
@@ -133,7 +134,7 @@ per-domain `type` field are not part of the builder contract.
 | `static_config` | Compare only validated static-configuration fields. |
 | `project_config` | Compare project identity and all artifact selectors. Record selector changes separately from changes in selected OpenAPI or OpenUI content. |
 | `openapi` | Parse structured `oasdiff` output into atomic contract changes. Preserve complete contract identity and source diff evidence before deriving resource hints. |
-| `openui` | Compare declared OpenUI node identities, attributes, parent relations, and ordered children. Missing, duplicate, or invalid node identities fail validation. |
+| `openui` | Compare declared OpenUI node identities, attributes, and parent relations; reordering identified siblings is not a change (`CHANGE_MODEL_CONTRACTS.md` §2.2). Missing, duplicate, or invalid node identities fail validation. |
 
 Unsupported input, unknown configuration keys, and unsupported `oasdiff` output
 shapes must fail explicitly. They must never be interpreted as no change.
@@ -184,11 +185,11 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
 | `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
 | `openapi` `update` | Targeted dependent client, service, and UI commands | update |
-| `openui` page `create`, `update`, `delete`, or `move` | `ng_page` wraps `angular-django2:page` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` standalone component `create`, `update`, `delete`, or `move` | `ng_component` wraps `angular-django2:component` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` complex component `create`, `update`, `delete`, or `move` | `ng_complex_component` wraps `angular-django2:complex-component`; deterministic TOOL contract and complete atomic-operation mapping are not yet defined | Not yet defined for `build_app` |
-| `openui` reactive form `create`, `update`, `delete`, or `move` | `ng_reactive_form` wraps `angular-django2:reactive-form` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` navigation `update` or `move` | `angular-site-composition` handles site-level navigation composition; deterministic TOOL contract and navigation-move composition are not yet defined | Not yet defined for `build_app` |
+| `openui` page `create`, `update`, or `delete` | `ng_page` wraps `angular-django2:page` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
+| `openui` standalone component `create`, `update`, or `delete` | `ng_component` wraps `angular-django2:component` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
+| `openui` complex component `create`, `update`, or `delete` | `ng_complex_component` wraps `angular-django2:complex-component`; deterministic TOOL contract and complete atomic-operation mapping are not yet defined | Not yet defined for `build_app` |
+| `openui` reactive form `create`, `update`, or `delete` | `ng_reactive_form` wraps `angular-django2:reactive-form` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
+| `openui` navigation `update` | `angular-site-composition` handles site-level navigation composition; the deterministic TOOL contract is not yet defined | Not yet defined for `build_app` |
 
 The direct wrappers define precise invocations for the ngdj operations they
 support, but `build_app` must still define the deterministic TOOL contract and

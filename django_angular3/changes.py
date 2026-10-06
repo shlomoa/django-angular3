@@ -121,7 +121,7 @@ class Change:
         subject: Stable semantic name of the thing that changed.
             Represents: the "name" of the Change, for example
             ``ngOpenApiGen.serviceSuffix``, ``path:/pets``,
-            ``operation:GET /pets``, ``schema:Pet`` or ``openui:page:home``.
+            ``operation:GET /pets``, ``schema:Pet`` or ``openui:/children/home``.
             Populated: configuration domains join the key path tokens with
             ``.``; OpenAPI uses ``path:``, ``operation:<METHOD> <path>`` or
             ``schema:<name>``; OpenUI uses ``openui:`` plus the upstream path.
