@@ -8,6 +8,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from openui_spec import compare as upstream_compare_openui_spec
+
+import django_angular3.external_comparisons as external_comparisons
 from django_angular3.changes import ChangeDomain, ChangeOperation
 from django_angular3.external_comparisons import (
     ExternalComparisonError,
@@ -82,6 +85,12 @@ class OasdiffComparisonTests(unittest.TestCase):
 
 
 class OpenUiComparisonTranslationTests(unittest.TestCase):
+    def test_imports_compare_from_supported_openui_spec_package(self) -> None:
+        self.assertIs(
+            external_comparisons.compare_openui_spec,
+            upstream_compare_openui_spec,
+        )
+
     def test_uses_upstream_identity_aware_comparison_for_reordered_children(
         self,
     ) -> None:

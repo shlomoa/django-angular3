@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import cast
 
-from bin.compare_openui_spec import compare as compare_openui_spec
+from openui_spec import compare as compare_openui_spec
 
 from .changes import Change, ChangeDomain, ChangeEvidence, ChangeOperation
 from .command_execution import run_command

@@ -68,7 +68,7 @@ required.
 
 OpenAPI documents are validated against the full OpenAPI specification using
 `openapi-spec-validator`; OpenUI documents are validated through
-`openui-spec`. The bundled 0.12.0 integration requires each OpenUI document's
+`openui-spec`. The bundled 0.12.1 integration requires each OpenUI document's
 `version` to match `0.12.0` and every `type` to be an exact, case-sensitive
 literal from its canonical catalog. Use `id` for instance identity and `attrs`
 for configuration rather than aliases, selectors, or implementation names.
