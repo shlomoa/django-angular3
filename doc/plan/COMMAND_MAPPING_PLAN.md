@@ -29,7 +29,9 @@ read the mapping, not copy it.
 - `onExisting` says what a second run does (`skip`, `reject`, `refuse-modified`,
   `rewrite`, `delegated`, `no-op`), which decides whether a create can be re-planned.
 
-### 1.2 What djng has today
+### 1.2 What djng had when this work started
+
+This is the state found before steps 5 to 8; those steps changed it as described there.
 
 - `command_translation.py`: the project-config translators are implemented
   ([#222](https://github.com/shlomoa/django-angular3/pull/222)): `project.name` and
@@ -170,7 +172,12 @@ so the branch can be split into its own PR.
 8. **Close the expected failures.** Rewrite the five remaining `expectedFailure` tests
    against the decided identities and remove each decorator only when its assertions pass
    (the rule in #204); run ruff check and format, the full unittest suite and the Sphinx
-   docs build.
+   docs build. Done: four tests were rewritten to the decided design (Tool names, a
+   path create instead of a schema update, a project name update instead of a move, and a
+   mapping that supports deleting a page to test the delete-before-create rule, because
+   ngdj supports no OpenUI delete today). The fifth, an empty change set, passes with a
+   code change: an empty change list now plans no commands. It raised an error with an
+   empty message, a leftover of the original scaffold that #202 narrowed but kept.
 9. **Document the boundary** in `README.md`, `docs/commands.md` and `CONTRIBUTING.md`:
    what `build_app` supports from the mapping and what it refuses.
 

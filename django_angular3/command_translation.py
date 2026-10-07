@@ -80,11 +80,13 @@ def translate_changes(
 
     This only plans: it neither invokes wrappers nor changes the
     generated-app workspace. Every unsupported semantic subject is rejected.
-    ``mapping`` is the ngdj command mapping; OpenUI Changes need it.
+    ``mapping`` is the ngdj command mapping; OpenUI and OpenAPI Changes need it.
+    An empty change list means nothing changed and plans no commands, not even
+    the validation gate.
     """
-    steps = [step for change in changes for step in _change_steps(change, mapping)]
     if not changes:
-        raise CommandTranslationError()
+        return ()
+    steps = [step for change in changes for step in _change_steps(change, mapping)]
     steps.append(
         AppBuildStep(
             name_id="last-check",

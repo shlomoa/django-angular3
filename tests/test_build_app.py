@@ -203,50 +203,59 @@ class OpenAPIDiffTests(unittest.TestCase):
 
 
 class ChangeExecutionTranslationTests(unittest.TestCase):
-    # https://github.com/shlomoa/django-angular3/issues/204:
-    # Remove each expectedFailure when its command-plan assertion passes.
-    @unittest.expectedFailure
-    def test_returns_an_ordered_command_plan(self) -> None:
-        change_set = ChangeSet(
-            baseline={},
-            candidate={},
-            domains={
-                ChangeDomain.STATIC_CONFIG: ChangeDomainResult(
-                    ChangeDomain.STATIC_CONFIG
-                ),
-                ChangeDomain.PROJECT_CONFIG: ChangeDomainResult(
-                    ChangeDomain.PROJECT_CONFIG
-                ),
-                ChangeDomain.OPENAPI: ChangeDomainResult(
-                    ChangeDomain.OPENAPI,
-                    (
-                        Change(
-                            domain=ChangeDomain.OPENAPI,
-                            subject="schema:Customer",
-                            path="/components/schemas/Customer",
-                            operation=ChangeOperation.UPDATE,
-                            before={},
-                            after={},
-                        ),
-                    ),
-                ),
-                ChangeDomain.OPENUI: ChangeDomainResult(ChangeDomain.OPENUI),
-            },
+    def setUp(self) -> None:
+        self.mapping = CommandMapping(
+            json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
         )
 
-        commands = ChangeExecution()._translate_change_set(change_set)
+    def test_returns_an_ordered_command_plan(self) -> None:
+        change_set = _change_set(
+            openapi=(
+                Change(
+                    domain=ChangeDomain.OPENAPI,
+                    subject="path:/customers",
+                    path="/paths/~1customers",
+                    operation=ChangeOperation.CREATE,
+                    before=None,
+                    after={},
+                ),
+            ),
+            openui=_openui_changes([], [{"id": "customers", "type": "DashboardPage"}]),
+        )
+
+        commands = ChangeExecution()._translate_change_set(change_set, self.mapping)
 
         self.assertEqual(
             [command.name_id for command in commands],
             [
-                "angular-api-integration",
-                "angular-data-service-composition",
-                "angular-page-composition",
+                "angular_api_client_generate",
+                "ngdj_add_data_service",
+                "ngdj_add_page",
                 "last-check",
             ],
         )
 
-    @unittest.expectedFailure
+    def test_an_unsupported_schema_update_is_a_command_error(self) -> None:
+        change_set = _change_set(
+            openapi=(
+                Change(
+                    domain=ChangeDomain.OPENAPI,
+                    subject="schema:Customer",
+                    path="/components/schemas/Customer",
+                    operation=ChangeOperation.UPDATE,
+                    before={},
+                    after={},
+                ),
+            )
+        )
+
+        with self.assertRaisesRegex(
+            CommandError,
+            r"Failed to translate changes: ngdj does not support update of the "
+            r"data services that depend on schema:Customer",
+        ):
+            ChangeExecution()._translate_change_set(change_set, self.mapping)
+
     def test_returns_no_commands_for_an_empty_change_set(self) -> None:
         change_set = ChangeSet(
             baseline={},
@@ -400,6 +409,11 @@ class BuildAppPlanningTests(unittest.TestCase):
         )
         self.assertEqual(plan["steps"][0]["target"], "project.name")
         self.assertIn("Required by project_config create", plan["steps"][0]["reason"])
+
+    def test_the_dry_run_of_an_empty_change_set_prints_no_steps(self) -> None:
+        plan = self.dry_run(_change_set())
+
+        self.assertEqual(plan["steps"], [])
 
     def test_the_dry_run_plans_openui_steps_with_the_installed_mapping(self) -> None:
         self.install_ngdj()

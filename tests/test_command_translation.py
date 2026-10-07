@@ -27,54 +27,60 @@ FIXTURE_MAPPING = (
 )
 
 
+def _fixture_mapping() -> CommandMapping:
+    return CommandMapping(json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8")))
+
+
 def _change(domain: ChangeDomain, subject: str, operation: ChangeOperation) -> Change:
     return Change(domain, subject, "/subject", operation, None, {"value": True})
 
 
 class CommandTranslationTests(unittest.TestCase):
-    # https://github.com/shlomoa/django-angular3/issues/204:
-    # Remove each expectedFailure when its mapping and ordering assertions pass.
-    @unittest.expectedFailure
     def test_orders_schema_before_openui_and_ends_with_validation(self) -> None:
         commands = translate_changes(
             (
-                _change(
-                    ChangeDomain.OPENUI,
-                    "openui:/children/dashboard",
-                    ChangeOperation.CREATE,
-                ),
-                _change(ChangeDomain.OPENAPI, "schema:Pet", ChangeOperation.UPDATE),
-            )
+                *_openui_changes([], [{"id": "home", "type": "DashboardPage"}]),
+                _change(ChangeDomain.OPENAPI, "path:/pets", ChangeOperation.CREATE),
+            ),
+            _fixture_mapping(),
         )
 
         self.assertEqual(commands[-1].name_id, "last-check")
         self.assertEqual(
             [command.name_id for command in commands[:-1]],
             [
-                "angular-api-integration",
-                "angular-data-service-composition",
-                "angular-page-composition",
-                "angular-page-composition",
+                "angular_api_client_generate",
+                "ngdj_add_data_service",
+                "ngdj_add_page",
             ],
         )
-        self.assertEqual(commands[-2].change_target, "openui:/children/dashboard")
+        self.assertEqual(commands[-2].change_target, "openui:/children/home")
 
-    @unittest.expectedFailure
     def test_deletes_precede_creates_at_the_same_dependency_level(self) -> None:
-        commands = translate_changes(
-            (
-                _change(
-                    ChangeDomain.OPENUI, "openui:/children/old", ChangeOperation.CREATE
-                ),
-                _change(
-                    ChangeDomain.OPENUI, "openui:/children/new", ChangeOperation.DELETE
-                ),
-            )
+        # ngdj supports no OpenUI delete today, so the ordering rule is checked
+        # with a mapping that supports deleting a page.
+        document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        document["ui"]["nodes"]["DashboardPage"]["operations"]["delete"] = {
+            "status": "supported"
+        }
+        changes = _openui_changes(
+            [{"id": "old", "type": "DashboardPage"}],
+            [{"id": "new", "type": "DashboardPage"}],
         )
+
+        commands = translate_changes(tuple(reversed(changes)), CommandMapping(document))
 
         self.assertEqual(
-            [command.change_op for command in commands[:-1]], ["delete", "create"]
+            [(command.change_op, command.exec_order) for command in commands[:-1]],
+            [("delete", 10), ("create", 10)],
         )
+        self.assertEqual(
+            [command.change_target for command in commands[:-1]],
+            ["openui:/children/old", "openui:/children/new"],
+        )
+
+    def test_an_empty_change_list_plans_no_commands(self) -> None:
+        self.assertEqual(translate_changes(()), ())
 
     def test_rejects_unmapped_openui_change(self) -> None:
         with self.assertRaisesRegex(
@@ -90,7 +96,6 @@ class CommandTranslationTests(unittest.TestCase):
                 )
             )
 
-    @unittest.expectedFailure
     def test_maps_static_and_project_changes_to_documented_commands(self) -> None:
         commands = translate_changes(
             (
@@ -117,21 +122,21 @@ class CommandTranslationTests(unittest.TestCase):
                 _change(
                     ChangeDomain.PROJECT_CONFIG,
                     "project.name",
-                    ChangeOperation.MOVE,
+                    ChangeOperation.UPDATE,
                 ),
             )
         )
 
         self.assertEqual(
-            [command.name_id for command in commands],
+            [(command.exec_order, command.name_id) for command in commands],
             [
-                "openapi-schema-export",
-                "angular-workspace-foundation",
-                "angular-workspace-foundation",
-                "angular-app-composition",
-                "angular-app-composition",
-                "angular-api-integration",
-                "last-check",
+                (0, "openapi_schema_export"),
+                (1, "angular-workspace-foundation"),
+                (1, "angular-workspace-foundation"),
+                (2, "angular-app-composition"),
+                (2, "angular-app-composition"),
+                (3, "angular_api_client_generate"),
+                (12, "last-check"),
             ],
         )
 
