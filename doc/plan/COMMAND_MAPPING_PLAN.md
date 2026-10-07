@@ -98,8 +98,9 @@ so the branch can be split into its own PR.
 2. **Mapping loader** (`django_angular3/ngdj_command_mapping.py`).
    1. Locate and load the file (decision 3); validate it with `jsonschema` against the
       shipped schema (already installed through `openapi-spec-validator`); check
-      `mappingVersion` is supported and `openuiSpecVersion` equals the installed
-      `openui_spec.__version__`.
+      `mappingVersion` is supported (checked before the schema, so a newer mapping names
+      both versions) and `openuiSpecVersion` has the same major and minor as the installed
+      `openui_spec.__version__`; a patch difference changes no spec content.
    2. Typed read-only accessors only, no copied inventory: `root_command(node_type)`,
       `operation_status(node_type, operation)`, `embedded_owner(node_type)`,
       `on_existing(command)`. A missing file or version mismatch raises one error that
