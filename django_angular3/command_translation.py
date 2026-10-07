@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Final
 
 from .changes import Change, ChangeDomain, ChangeOperation
@@ -24,7 +24,9 @@ class AppBuildStep:
     final ``last-check`` gate, which is appended once for the whole
     change set. A step only describes what should run; it does not execute
     anything, and it does not carry the options a command needs (such as a
-    page name or path). Identical steps from different Changes are not merged.
+    page name or path). Identical steps from different Changes are not merged, except
+    that project-config steps are merged into one step that lists every subject
+    (see ``_merge_project_steps``).
 
     Steps are sorted by ``exec_order``, then ``change_op``, ``change_domain``,
     ``name_id`` and ``change_target`` (see ``_step_sort_key``) to keep plans
@@ -86,7 +88,9 @@ def translate_changes(
     """
     if not changes:
         return ()
-    steps = [step for change in changes for step in _change_steps(change, mapping)]
+    steps = _merge_project_steps(
+        [step for change in changes for step in _change_steps(change, mapping)]
+    )
     steps.append(
         AppBuildStep(
             name_id="last-check",
@@ -98,6 +102,48 @@ def translate_changes(
         )
     )
     return tuple(sorted(steps, key=_step_sort_key))
+
+
+def _merge_project_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
+    """Collapse project-level steps that several project-config Changes require.
+
+    Project-config steps carry no per-target options, so two of them with the
+    same command and operation are the same command. A first run creates every
+    project-config subject, and ``project.name`` and ``artifacts.angularWorkspace``
+    both need the workspace and application foundation commands; running those
+    twice would fail on the second run. The merged step lists every subject.
+    Steps of other domains are never merged: their targets select different
+    work (for example one page each).
+    """
+    targets: dict[tuple[str, str], list[str]] = {}
+    merged: list[AppBuildStep] = []
+    for step in steps:
+        if step.change_domain is not ChangeDomain.PROJECT_CONFIG:
+            merged.append(step)
+            continue
+        key = (step.name_id, step.change_op)
+        if key in targets:
+            targets[key].append(step.change_target)
+        else:
+            targets[key] = [step.change_target]
+            merged.append(step)
+    return [
+        _merged_project_step(step, targets[(step.name_id, step.change_op)])
+        if step.change_domain is ChangeDomain.PROJECT_CONFIG
+        else step
+        for step in merged
+    ]
+
+
+def _merged_project_step(step: AppBuildStep, subjects: list[str]) -> AppBuildStep:
+    if len(subjects) == 1:
+        return step
+    joined = ", ".join(sorted(subjects))
+    return replace(
+        step,
+        change_reason=f"Required by project_config {step.change_op}: {joined}.",
+        change_target=joined,
+    )
 
 
 ChangeTranslator = Callable[[Change], tuple[AppBuildStep, ...]]
