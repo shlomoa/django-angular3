@@ -160,9 +160,13 @@ so the branch can be split into its own PR.
    `ngdj_run_schematic` Tool can run it. The translators do not plan it yet: a step names
    a Tool but carries no schematic name, so planning it through `ngdj_run_schematic`
    needs the step to carry one. That is a design decision for the owner.
-7. **Wire into `build_app`** (`management/commands/build_app.py`): pass the loader result
-   in, print the ordered steps and unsupported-change failures in `--dry-run`, and keep
-   the command marked work in progress until step 8 passes.
+7. **Wire into `build_app`** (`management/commands/build_app.py`): load the mapping when
+   an OpenUI or OpenAPI Change exists, pass it to the translation, print the ordered
+   steps in `--dry-run` as JSON, report an unsupported change or a missing package as a
+   `CommandError`, and keep the command marked work in progress until step 8 passes.
+   Running the steps is not part of this plan: the executor hand-off already raised
+   `TypeError` before this work (`command_execution.execute` takes no `force` or
+   `dry_run`, and a step is not an executable command), so a real run still fails.
 8. **Close the expected failures.** Rewrite the five remaining `expectedFailure` tests
    against the decided identities and remove each decorator only when its assertions pass
    (the rule in #204); run ruff check and format, the full unittest suite and the Sphinx
@@ -171,6 +175,18 @@ so the branch can be split into its own PR.
    what `build_app` supports from the mapping and what it refuses.
 
 ## 4. Risks
+
+- **A first build cannot plan its OpenUI and OpenAPI steps.** The mapping comes from the
+  installed package, and the package is installed by the plan's own foundation steps, so
+  a workspace that does not exist yet has no mapping. Running a plan will need two
+  phases (foundation first, then the rest once the package is there), or the owner can
+  revisit decision 3. `tool.ngAddPackage` must also be a registry name, not a path, for
+  the package directory to be found.
+- **Static-configuration changes are never detected.** `ChangeDetector.detect_changes`
+  leaves that domain empty, so the static translators have no caller yet; detecting them
+  needs a baseline for `django-angular3.json`, which is not defined.
+- **Running a plan.** A step has no arguments for its wrapper: the document path must be
+  made workspace-relative (see step 4), and the wrapper options come from the Change.
 
 - The mapping marks most updates and deletes unsupported, so `build_app` stays mostly
   create-only until upstream closes gaps such as

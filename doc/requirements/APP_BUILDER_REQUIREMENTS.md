@@ -223,6 +223,13 @@ subject. The ngdj `openapi-setup` schematic (`ng_openapi_setup`) has no dedicate
 the generic `ngdj_run_schematic` Tool can run it. The translators do not plan it yet, and
 a first build needs it before `angular_api_client_generate`.
 
+`build_app` loads the mapping only when the ChangeSet has an `openui` or `openapi`
+Change, from `<angularWorkspace>/node_modules/<package>/schematics/`, where the package is
+the one `tool.ngAddPackage` names. It must be installed at the pinned version, so a plan
+for a workspace that does not exist yet cannot include these Changes; `build_app` reports
+that the package must be installed. `--dry-run` prints the ordered steps without running
+them.
+
 The upstream command mapping (`schematics/command-mapping.json` of the installed
 `angular-django2` package, `ARCHITECTURE.md` §3.4) owns which node type is compiled by
 which command and which operations that command supports; `build_app` reads it at run

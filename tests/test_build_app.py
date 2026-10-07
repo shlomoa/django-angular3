@@ -1,9 +1,14 @@
+import io
 import json
+import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import django
+from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from django_angular3.changes import (
@@ -19,8 +24,14 @@ from django_angular3.management.commands.build_app import (
     ChangeExecution,
     Configuration,
     OpenUIConfiguration,
+    load_ngdj_mapping,
 )
+from django_angular3.ngdj_command_mapping import CommandMapping
+from tests.test_command_translation import FIXTURE_MAPPING, _openui_changes
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
+django.setup()
 
 
 class OpenUIConfigurationTests(unittest.TestCase):
@@ -244,6 +255,177 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
         )
 
         self.assertEqual(ChangeExecution()._translate_change_set(change_set), ())
+
+
+def _change_set(**changes: tuple[Change, ...]) -> ChangeSet:
+    """A ChangeSet whose domains hold the given Changes (keyed by domain value)."""
+    return ChangeSet(
+        baseline={},
+        candidate={},
+        domains={
+            domain: ChangeDomainResult(domain, changes.get(domain.value, ()))
+            for domain in ChangeDomain
+        },
+    )
+
+
+def _project_name_created() -> Change:
+    return Change(
+        domain=ChangeDomain.PROJECT_CONFIG,
+        subject="project.name",
+        path="/project/name",
+        operation=ChangeOperation.CREATE,
+        before=None,
+        after="current",
+    )
+
+
+class BuildAppPlanningTests(unittest.TestCase):
+    """The command mapping reaches the translation, and a dry run reports the plan."""
+
+    def setUp(self) -> None:
+        temporary_directory = tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR)
+        self.addCleanup(temporary_directory.cleanup)
+        self.root = Path(temporary_directory.name)
+        self.current = self._configuration("current")
+        self.previous = self._configuration("previous")
+        self.mapping = CommandMapping(
+            json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        )
+
+    def _configuration(self, name: str) -> Configuration:
+        path = self.root / f"{name}.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "project": {"name": name},
+                    "artifacts": {
+                        "openapiSchema": f"{name}.openapi.json",
+                        "openuiSpecification": f"{name}.openui.json",
+                        "angularWorkspace": f"{name}-angular",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        return Configuration(path)
+
+    def install_ngdj(self) -> None:
+        """Install the fixture package where the current workspace expects it."""
+        fixture = FIXTURE_MAPPING.parent
+        package = self.current.project_config.angular_workspace / (
+            "node_modules/angular-django2"
+        )
+        (package / "schematics").mkdir(parents=True)
+        shutil.copyfile(fixture / "package.json", package / "package.json")
+        for name in ("command-mapping.json", "command-mapping.schema.json"):
+            shutil.copyfile(fixture / name, package / "schematics" / name)
+
+    def dry_run(self, change_set: ChangeSet) -> dict:
+        stdout = io.StringIO()
+        with patch.object(ChangeDetector, "detect_changes", return_value=change_set):
+            call_command(
+                "build_app",
+                current_config=str(self.current.project_config.config_path),
+                previous_config=str(self.previous.project_config.config_path),
+                dry_run=True,
+                stdout=stdout,
+            )
+        return json.loads(stdout.getvalue())
+
+    def test_changes_that_need_no_mapping_do_not_require_the_package(self) -> None:
+        change_set = _change_set(project_config=(_project_name_created(),))
+
+        self.assertIsNone(load_ngdj_mapping(change_set, self.current.project_config))
+
+    def test_openui_and_openapi_changes_load_the_installed_mapping(self) -> None:
+        self.install_ngdj()
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+
+        mapping = load_ngdj_mapping(
+            _change_set(openui=openui), self.current.project_config
+        )
+
+        assert mapping is not None
+        self.assertEqual(mapping.mapping_version, 1)
+
+    def test_a_missing_package_is_reported_with_how_to_install_it(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+
+        with self.assertRaisesRegex(
+            CommandError,
+            r"Cannot plan the OpenUI and OpenAPI changes.*Install "
+            r"angular-django2@0\.7\.0",
+        ):
+            load_ngdj_mapping(_change_set(openui=openui), self.current.project_config)
+
+    def test_the_mapping_reaches_the_translation(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+
+        steps = ChangeExecution()._translate_change_set(
+            _change_set(openui=openui), self.mapping
+        )
+
+        self.assertEqual(
+            [step.name_id for step in steps], ["ngdj_add_page", "last-check"]
+        )
+
+    def test_a_dry_run_returns_the_plan_without_running_it(self) -> None:
+        change_set = _change_set(project_config=(_project_name_created(),))
+
+        with patch(
+            "django_angular3.management.commands.build_app.cmd_executor"
+        ) as executor:
+            steps = ChangeExecution().execute(change_set, "build", True, False)
+
+        executor.assert_not_called()
+        self.assertEqual(
+            [step.name_id for step in steps],
+            ["angular-workspace-foundation", "angular-app-composition", "last-check"],
+        )
+
+    def test_the_dry_run_command_prints_the_ordered_steps(self) -> None:
+        plan = self.dry_run(_change_set(project_config=(_project_name_created(),)))
+
+        self.assertEqual(
+            plan["projectConfig"], str(self.current.project_config.config_path)
+        )
+        self.assertEqual(
+            [(step["stage"], step["step"], step["mode"]) for step in plan["steps"]],
+            [
+                (1, "angular-workspace-foundation", "create"),
+                (2, "angular-app-composition", "create"),
+                (12, "last-check", "validate"),
+            ],
+        )
+        self.assertEqual(plan["steps"][0]["target"], "project.name")
+        self.assertIn("Required by project_config create", plan["steps"][0]["reason"])
+
+    def test_the_dry_run_plans_openui_steps_with_the_installed_mapping(self) -> None:
+        self.install_ngdj()
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+
+        plan = self.dry_run(_change_set(openui=openui))
+
+        step = plan["steps"][0]
+        self.assertEqual(
+            (step["stage"], step["step"], step["mode"], step["nodeId"], step["domain"]),
+            (10, "ngdj_add_page", "create", "home", "openui"),
+        )
+        self.assertIn("ngdj page compiles DashboardPage home", step["reason"])
+
+    def test_the_dry_run_reports_an_unsupported_change_as_a_command_error(
+        self,
+    ) -> None:
+        self.install_ngdj()
+        openui = _openui_changes([{"id": "signup", "type": "Form"}], [])
+
+        with self.assertRaisesRegex(
+            CommandError,
+            r"Failed to translate changes: ngdj does not support delete of OpenUI "
+            r"node type Form",
+        ):
+            self.dry_run(_change_set(openui=openui))
 
 
 if __name__ == "__main__":
