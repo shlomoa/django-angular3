@@ -90,7 +90,7 @@ These commands are available through both interfaces. Invoke them as either
 | `ng_complex_component` | Generate, modify, or delete an advanced Material component. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and delete confirmation via `--confirm`. |
 | `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
 | `ng_openapi_gen` | Run the workspace-local `ng-openapi-gen` via `pnpm exec` for the discovered OpenAPI artifact. |
-| `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
+| `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, `--skip-tests`, and `--auth-scheme` (`bearer` or `basic`). |
 | `ng_data_service` | Generate a typed data-service wrapper. Requires `--resource`; accepts `--project`. |
 | `ng_build` | Build the discovered Angular application. |
 

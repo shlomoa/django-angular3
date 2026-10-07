@@ -105,6 +105,21 @@ class NgdjRequirementsContractTests(unittest.TestCase):
         self.assertIn("ng-openapi-gen", source)
         self.assertIn("generate:api", source)
 
+    def test_openapi_setup_schematic_offers_the_auth_scheme_djng_forwards(
+        self,
+    ) -> None:
+        schema_path = (
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "openapi-setup"
+            / "schema.json"
+        )
+        properties = json.loads(schema_path.read_text(encoding="utf-8"))["properties"]
+        self.assertEqual(set(properties["authScheme"]["enum"]), {"bearer", "basic"})
+        self.assertIn("auth-scheme", properties["authScheme"]["aliases"])
+
     def test_data_service_schematic_generates_typed_wrapper(self) -> None:
         ds_index_path = (
             NGDJ_ROOT

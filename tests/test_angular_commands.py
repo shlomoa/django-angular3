@@ -586,6 +586,16 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertIn("--skip-helpers=true", argv)
         self.assertIn("--skip-tests=true", argv)
 
+    def test_ng_openapi_setup_dry_run_forwards_auth_scheme(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_openapi_setup", "--auth-scheme", "basic", "--dry-run"
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        argv = json.loads(stdout)["invocations"][0]["argv"]
+        self.assertIn("--auth-scheme=basic", argv)
+
     def test_angular_invocation_normalizes_long_flags(self) -> None:
         invocation = AngularInvocation(
             command_name="ng_test",

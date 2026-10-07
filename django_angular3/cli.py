@@ -206,6 +206,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Skip generating tests for the integration helpers.",
     )
     ng_openapi_setup.add_argument(
+        "--auth-scheme",
+        choices=("bearer", "basic"),
+        default=None,
+        help=(
+            "Authorization scheme of the generated transport interceptor "
+            "(default: the schematic's default, bearer)."
+        ),
+    )
+    ng_openapi_setup.add_argument(
         "--dry-run",
         action="store_true",
         help=(
@@ -360,6 +369,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "helpers_path": args.helpers_path,
                 "skip_helpers": args.skip_helpers,
                 "skip_tests": args.skip_tests,
+                "auth_scheme": args.auth_scheme,
             }
         if args.command == "ng_data_service":
             plan_options = {

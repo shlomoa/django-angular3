@@ -444,6 +444,7 @@ def build_ng_openapi_setup_invocations(
     helpers_path: str | None = None,
     skip_helpers: bool = False,
     skip_tests: bool = False,
+    auth_scheme: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     """Bootstrap ng-openapi-gen and Django integration helpers via the ngdj
@@ -461,6 +462,8 @@ def build_ng_openapi_setup_invocations(
         argv.append("--skip-helpers=true")
     if skip_tests:
         argv.append("--skip-tests=true")
+    if auth_scheme:
+        argv.append(f"--auth-scheme={auth_scheme}")
 
     return [
         AngularInvocation(
