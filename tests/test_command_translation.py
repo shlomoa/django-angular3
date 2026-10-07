@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import json
 import unittest
+from pathlib import Path
+
+from openui_spec import compare
 
 from django_angular3.changes import Change, ChangeDomain, ChangeOperation
 from django_angular3.command_translation import (
     PROJECT_CONFIG_CHANGE_TRANSLATORS,
     CommandTranslationError,
     translate_changes,
+)
+from django_angular3.external_comparisons import translate_openui_changelog
+from django_angular3.ngdj_command_mapping import CommandMapping
+
+FIXTURE_MAPPING = (
+    Path(__file__).resolve().parent / "fixtures" / "ngdj" / "command-mapping.json"
 )
 
 
@@ -229,4 +239,188 @@ class ProjectConfigTranslationTests(unittest.TestCase):
                 "artifacts.openuiSpecification",
                 "artifacts.angularWorkspace",
             },
+        )
+
+
+def _openui_changes(
+    reference_children: list[dict[str, object]],
+    candidate_children: list[dict[str, object]],
+    *,
+    reference_attrs: dict[str, str] | None = None,
+    candidate_attrs: dict[str, str] | None = None,
+) -> tuple[Change, ...]:
+    """Real OpenUI Changes from the upstream comparison of two small documents."""
+
+    def document(children: list[dict[str, object]], attrs: dict[str, str] | None):
+        result: dict[str, object] = {
+            "version": "0.12.0",
+            "id": "root",
+            "type": "Application",
+            "children": children,
+        }
+        if attrs is not None:
+            result["attrs"] = attrs
+        return json.loads(json.dumps(result))
+
+    reference = document(reference_children, reference_attrs)
+    candidate = document(candidate_children, candidate_attrs)
+    return translate_openui_changelog(
+        compare(reference, candidate),
+        source="candidate.openui.json",
+        reference=reference,
+        candidate=candidate,
+    )
+
+
+class OpenUiTranslationTests(unittest.TestCase):
+    mapping: CommandMapping
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.mapping = CommandMapping(
+            json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        )
+
+    def translate(self, *args: object, **kwargs: object):
+        return translate_changes(_openui_changes(*args, **kwargs), self.mapping)
+
+    def test_created_nodes_select_their_tool_and_stage(self) -> None:
+        steps = self.translate(
+            [],
+            [
+                {"id": "home", "type": "DashboardPage"},
+                {"id": "signup", "type": "Form"},
+                {"id": "card", "type": "SurfaceContainers"},
+                {
+                    "id": "dialogCard",
+                    "type": "SurfaceContainers",
+                    "children": [{"id": "overlay", "type": "OverlayContainers"}],
+                },
+            ],
+        )
+
+        self.assertEqual(
+            [(step.name_id, step.exec_order, step.node_id) for step in steps],
+            [
+                ("ngdj_add_component", 7, "card"),
+                ("ngdj_add_complex_component", 8, "dialogCard"),
+                ("ngdj_add_reactive_form", 9, "signup"),
+                ("ngdj_add_page", 10, "home"),
+                ("last-check", 12, None),
+            ],
+        )
+        for step in steps[:-1]:
+            self.assertEqual(step.change_op, "create")
+            self.assertIs(step.change_domain, ChangeDomain.OPENUI)
+
+    def test_a_step_reason_names_the_command_and_its_existing_output_behavior(
+        self,
+    ) -> None:
+        (step, _gate) = self.translate([], [{"id": "home", "type": "DashboardPage"}])
+
+        self.assertEqual(step.change_target, "openui:/children/home")
+        self.assertIn("ngdj page compiles DashboardPage home", step.change_reason)
+        self.assertIn("refuse-modified", step.change_reason)
+
+    def test_an_application_attribute_update_runs_the_app_scaffold(self) -> None:
+        (step, _gate) = self.translate(
+            [],
+            [],
+            reference_attrs={"uses.title": '"A"'},
+            candidate_attrs={"uses.title": '"B"'},
+        )
+
+        self.assertEqual(
+            (step.name_id, step.exec_order, step.change_op, step.node_id),
+            ("angular_app_scaffold", 2, "update", "root"),
+        )
+
+    def test_a_change_in_an_embedded_node_updates_the_application_that_compiles_it(
+        self,
+    ) -> None:
+        reference = [
+            {
+                "id": "routing",
+                "type": "Routing",
+                "children": [
+                    {"id": "r1", "type": "Route", "attrs": {"uses.path": '"a"'}}
+                ],
+            }
+        ]
+        candidate = json.loads(json.dumps(reference))
+        candidate[0]["children"][0]["attrs"]["uses.path"] = '"b"'
+
+        (step, _gate) = self.translate(reference, candidate)
+
+        self.assertEqual(
+            (step.name_id, step.change_op, step.node_id),
+            ("angular_app_scaffold", "update", "root"),
+        )
+
+    def test_an_unsupported_operation_quotes_the_mapping_reason_and_gap(self) -> None:
+        reference = [
+            {"id": "home", "type": "DashboardPage", "attrs": {"uses.title": '"A"'}}
+        ]
+        candidate = json.loads(json.dumps(reference))
+        candidate[0]["attrs"]["uses.title"] = '"B"'
+
+        with self.assertRaisesRegex(
+            CommandTranslationError,
+            r"does not support update of OpenUI node type DashboardPage "
+            r"\(unsupported\): .*\(shlomoa/angular-django2#\d+\)",
+        ):
+            self.translate(reference, candidate)
+
+    def test_deleting_a_node_fails_explicitly(self) -> None:
+        with self.assertRaisesRegex(
+            CommandTranslationError, r"does not support delete of OpenUI node type Form"
+        ):
+            self.translate([{"id": "signup", "type": "Form"}], [])
+
+    def test_a_node_whose_command_has_no_djng_tool_fails_as_no_tool(self) -> None:
+        with self.assertRaisesRegex(
+            CommandTranslationError, r"No djng Tool runs the ngdj command \(tabs\)"
+        ):
+            self.translate([], [{"id": "views", "type": "Tabs"}])
+
+    def test_commands_chosen_by_an_unevaluated_condition_have_no_djng_tool(
+        self,
+    ) -> None:
+        with self.assertRaisesRegex(
+            CommandTranslationError,
+            r"No djng Tool runs the ngdj command \(form-field, field-component\)",
+        ):
+            self.translate([], [{"id": "email", "type": "TextInputs"}])
+
+    def test_a_node_type_missing_from_the_mapping_is_not_guessed(self) -> None:
+        with self.assertRaisesRegex(
+            CommandTranslationError,
+            "Grid .* is not covered by the ngdj command mapping",
+        ):
+            self.translate([], [{"id": "layout", "type": "Grid"}])
+
+    def test_openui_changes_need_the_command_mapping(self) -> None:
+        changes = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+
+        with self.assertRaisesRegex(
+            CommandTranslationError, "needs the ngdj command mapping"
+        ):
+            translate_changes(changes)
+
+    def test_openui_steps_sort_with_the_other_domains(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+        project = _change(
+            ChangeDomain.PROJECT_CONFIG, "project.name", ChangeOperation.UPDATE
+        )
+
+        steps = translate_changes((*openui, project), self.mapping)
+
+        self.assertEqual(
+            [step.name_id for step in steps],
+            [
+                "angular-workspace-foundation",
+                "angular-app-composition",
+                "ngdj_add_page",
+                "last-check",
+            ],
         )

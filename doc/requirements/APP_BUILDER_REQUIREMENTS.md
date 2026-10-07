@@ -203,15 +203,20 @@ time and does not keep a copy. `build_app` owns the Tool selection:
 
 | Root node type | ngdj command | Tool contract | Stage |
 |---|---|---|---|
-| `html`, `link` | `workspace-setup` | `angular_workspace_scaffold` | 1 |
 | `Application` | `material-app` | `angular_app_scaffold` | 2 |
 | `SurfaceContainers` (no overlay child) | `component` | `ngdj_add_component` | 7 |
 | `SurfaceContainers` (with an overlay child) | `complex-component` | `ngdj_add_complex_component` | 8 |
 | `Form` | `reactive-form` | `ngdj_add_reactive_form` | 9 |
 | `DashboardPage`, `EmptyPage` | `page` | `ngdj_add_page` | 10 |
 
-Node types compiled by `form-field`, `field-component`, `tabs`, `dialog`, `stepper`,
-or `table` have no djng Tool yet and fail as "no wrapper". With the
+A change inside an `embedded` node type is an `update` of the root node that compiles it
+(a navigation or route change is an `Application` update). A change at a root node type
+element itself is a `create` or `delete`; a change inside it is an `update`. Node types
+compiled by `form-field`, `field-component`, `tabs`, `dialog`, `stepper`, `table`,
+`html` or `link` (whose update runs through the workspace modification wrapper) have
+no djng Tool yet and fail as "no Tool", and so does a node type the mapping does not
+cover. The `SurfaceContainers` condition and the choice of `material-app` for
+`Application` are decided by `build_app`, not by the mapping. With the
 mapping of `angular-django2` 0.7.0 only `create` is supported for most node types:
 `update` is supported for `Application`, `html` and `link`, `complex-component` is
 `partial`, and every other `update` and every `delete` fails explicitly. A Tool step

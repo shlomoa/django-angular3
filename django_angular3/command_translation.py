@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Final
 
 from .changes import Change, ChangeDomain, ChangeOperation
+from .external_comparisons import OpenUiElement, openui_change_elements
+from .ngdj_command_mapping import CommandMapping
 
 
 class CommandTranslationError(ValueError):
@@ -29,16 +31,18 @@ class AppBuildStep:
     deterministic.
 
     Attributes:
-        name_id: Skill-layer identifier of the construction command (for
-            example ``angular-page-composition``), or ``last-check`` for the
-            final gate.
-            ``ng_page``; see ``doc/ARCHITECTURE.md`` §3.6.4 for the naming
-            layers.
+        name_id: Identifier of the construction command, or ``last-check`` for
+            the final gate. OpenUI steps use the TOOL contract name (for
+            example ``ngdj_add_page``); the project-config foundation steps keep
+            the Skill-layer names (``angular-workspace-foundation``) until Tool
+            contracts exist for modifying a workspace or application. See
+            ``doc/ARCHITECTURE.md`` §3.6.4 for the naming layers.
         exec_order: Pipeline stage number.
             1 workspace foundation, 2 app composition, 3 API integration,
             4 data services, 7 components, 8 complex components, 9 reactive
-            forms, 10 pages, 11 site navigation, 12 last validation.
-            Values 5 and 6 are currently unused.
+            forms, 10 pages, 12 last validation. Values 5, 6 and 11 are
+            currently unused: a navigation change is an update of the
+            ``Application``, which is stage 2.
         change_op: What the command should do. One of the ``ChangeOperation``
             values (``create``, ``update``, ``move``, ``delete``) copied from
             the originating Change, or ``validate`` for the last gate.
@@ -53,6 +57,8 @@ class AppBuildStep:
             ``None`` for the last gate, which covers the whole change set.
             Breaks ties after ``change_op``:
             OpenUI, with all other domains and ``None`` sorting before both.
+        node_id: ``id`` of the OpenUI element the command compiles, for an
+            OpenUI step, otherwise ``None``. The step's ``--node-id``.
     """
 
     name_id: str
@@ -61,15 +67,19 @@ class AppBuildStep:
     change_reason: str
     change_target: str
     change_domain: ChangeDomain | None
+    node_id: str | None = None
 
 
-def translate_changes(changes: tuple[Change, ...]) -> tuple[AppBuildStep, ...]:
+def translate_changes(
+    changes: tuple[Change, ...], mapping: CommandMapping | None = None
+) -> tuple[AppBuildStep, ...]:
     """Translate supported changes into ordered commands and a last gate.
 
     This only plans: it neither invokes wrappers nor changes the
     generated-app workspace. Every unsupported semantic subject is rejected.
+    ``mapping`` is the ngdj command mapping; OpenUI Changes need it.
     """
-    steps = [step for change in changes for step in _change_steps(change)]
+    steps = [step for change in changes for step in _change_steps(change, mapping)]
     if not changes:
         raise CommandTranslationError()
     steps.append(
@@ -154,26 +164,161 @@ PROJECT_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
 STATIC_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
     # TODO: populate static-config subject translators.
 }
-OPENUI_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate OpenUI subject translators.
-}
 
 
 DOMAIN_CHANGE_TRANSLATORS: Final[dict[ChangeDomain, dict[str, ChangeTranslator]]] = {
     ChangeDomain.OPENAPI: OPENAPI_CHANGE_TRANSLATORS,
     ChangeDomain.PROJECT_CONFIG: PROJECT_CONFIG_CHANGE_TRANSLATORS,
     ChangeDomain.STATIC_CONFIG: STATIC_CONFIG_CHANGE_TRANSLATORS,
-    ChangeDomain.OPENUI: OPENUI_CHANGE_TRANSLATORS,
 }
 
 
-def _change_steps(change: Change) -> tuple[AppBuildStep, ...]:
+@dataclass(frozen=True)
+class _OpenUiTool:
+    """The djng Tool contract and pipeline stage that run one ngdj command."""
+
+    name: str
+    exec_order: int
+
+
+# The ngdj commands djng has a Tool contract for (``TOOL_CONTRACTS.md``), keyed by
+# the command name of the upstream mapping. Which command compiles which OpenUI
+# node type, and which operations it supports, is read from that mapping.
+_OPENUI_TOOLS: Final[dict[str, _OpenUiTool]] = {
+    "material-app": _OpenUiTool("angular_app_scaffold", 2),
+    "component": _OpenUiTool("ngdj_add_component", 7),
+    "complex-component": _OpenUiTool("ngdj_add_complex_component", 8),
+    "reactive-form": _OpenUiTool("ngdj_add_reactive_form", 9),
+    "page": _OpenUiTool("ngdj_add_page", 10),
+}
+
+
+def _has_overlay_child(element: object) -> bool:
+    children = element.get("children") if isinstance(element, Mapping) else None
+    return isinstance(children, tuple) and any(
+        isinstance(child, Mapping) and child.get("type") == "OverlayContainers"
+        for child in children
+    )
+
+
+# The mapping gives a command that compiles a node type under a prose condition
+# (``when``). djng decides those conditions here, from the element: ngdj compiles
+# a container with an overlay child with ``complex-component``, and djng generates
+# the application with ``material-app`` (``ng_gen_app``).
+_COMMAND_CONDITIONS: Final[dict[tuple[str, str], Callable[[object], bool]]] = {
+    ("SurfaceContainers", "complex-component"): _has_overlay_child,
+    ("Application", "material-app"): lambda _element: True,
+}
+
+
+def _change_steps(
+    change: Change, mapping: CommandMapping | None = None
+) -> tuple[AppBuildStep, ...]:
+    if change.domain is ChangeDomain.OPENUI:
+        return _translate_openui_change(change, mapping)
     translators = DOMAIN_CHANGE_TRANSLATORS.get(change.domain)
     if translators is None:
         raise CommandTranslationError(f"Unsupported Change domain: {change.domain}.")
     if change.subject not in translators:
         raise CommandTranslationError(f"Unsupported Change subject: {change.subject}.")
     return translators[change.subject](change)
+
+
+def _translate_openui_change(
+    change: Change, mapping: CommandMapping | None
+) -> tuple[AppBuildStep, ...]:
+    """Select the ngdj command that must run for one OpenUI Change.
+
+    The Change records the elements that enclose its path
+    (``openui_change_elements``). The command comes from the root node type that
+    compiles them, and the upstream mapping says whether it supports the
+    operation: anything else fails explicitly, quoting the mapping.
+    """
+    elements = openui_change_elements(change)
+    if not elements:
+        raise CommandTranslationError(f"Unsupported Change subject: {change.subject}.")
+    if mapping is None:
+        raise CommandTranslationError(
+            "OpenUI Change translation needs the ngdj command mapping."
+        )
+
+    owner = _compiling_element(elements, mapping)
+    # A change at the compiled element itself creates or deletes it; a change
+    # inside it (an attribute, or an embedded child) updates it.
+    at_owner = change.path == owner.path
+    operation = change.operation.value if at_owner else ChangeOperation.UPDATE.value
+    status = mapping.operation_status(owner.type, operation)
+    if status.status != "supported":
+        detail = f": {status.reason}" if status.reason else ""
+        gap = f" ({status.gap})" if status.gap else ""
+        raise CommandTranslationError(
+            f"ngdj does not support {operation} of OpenUI node type {owner.type} "
+            f"({status.status}){detail}{gap} for {change.subject}."
+        )
+
+    element_value = change.before if operation == "delete" else change.after
+    command = _select_openui_command(
+        mapping, owner.type, element_value if at_owner else None
+    )
+    tool = _OPENUI_TOOLS.get(command or "")
+    if command is None or tool is None:
+        compilers = ", ".join(
+            entry.command for entry in mapping.commands_for(owner.type)
+        )
+        raise CommandTranslationError(
+            f"No djng Tool runs the ngdj command ({command or compilers}) that "
+            f"compiles OpenUI node type {owner.type}: {change.subject}."
+        )
+    return (
+        AppBuildStep(
+            name_id=tool.name,
+            exec_order=tool.exec_order,
+            change_op=operation,
+            change_reason=(
+                f"Required by openui {change.operation.value}: {change.subject}. "
+                f"ngdj {command} compiles {owner.type} {owner.id} "
+                f"(on existing output: {mapping.on_existing(command)})."
+            ),
+            change_target=change.subject,
+            change_domain=change.domain,
+            node_id=owner.id,
+        ),
+    )
+
+
+def _compiling_element(
+    elements: tuple[OpenUiElement, ...], mapping: CommandMapping
+) -> OpenUiElement:
+    """The enclosing element whose root node type an ngdj command compiles."""
+    nearest = elements[-1]
+    if not mapping.has_node_type(nearest.type):
+        raise CommandTranslationError(
+            f"OpenUI node type {nearest.type} ({nearest.id}) is not covered by "
+            "the ngdj command mapping."
+        )
+    if mapping.role(nearest.type) == "root":
+        return nearest
+    compilers = mapping.compiled_by(nearest.type)
+    for element in reversed(elements[:-1]):
+        if element.type in compilers:
+            return element
+    raise CommandTranslationError(
+        f"OpenUI {nearest.type} element {nearest.id} is not inside a node that "
+        f"compiles it ({', '.join(compilers)})."
+    )
+
+
+def _select_openui_command(
+    mapping: CommandMapping, node_type: str, element: object
+) -> str | None:
+    """The first command of the node type whose condition holds, if any."""
+    for entry in mapping.commands_for(node_type):
+        if entry.when is None:
+            return entry.command
+        condition = _COMMAND_CONDITIONS.get((node_type, entry.command))
+        if condition is not None and condition(element):
+            return entry.command
+    return None
 
 
 def _change_step(order: int, name: str, change: Change) -> AppBuildStep:

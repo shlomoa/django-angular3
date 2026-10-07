@@ -350,7 +350,10 @@ generated application matches the Angular CLI `ng new` defaults.
 **Error behavior**: Non-zero exit / raised `ToolError`. Categories:
 
 - `invalid_input` — `artifacts.angularWorkspace` does not contain an Angular workspace, or
-  an application with the same name already exists.
+  an application with the same name already exists and no `document` is given. With a
+  `document`, an existing application is updated: ngdj's `material-app` replaces only the
+  text it generated between its `openui:begin` and `openui:end` markers and keeps edits
+  made around it.
 - `missing_dependency` — `ngdj` schematic package not installed in the
   workspace.
 - `external_tool_failed` — schematic invocation exited non-zero.
@@ -359,7 +362,8 @@ generated application matches the Angular CLI `ng new` defaults.
 
 **Allowed invocation context**: `build_app` (as a TOOL command between the
 `angular-workspace-foundation` and `angular-app-composition` skill sessions, when the application does not yet
-exist); CLI (`django-admin ng_gen_app`). Not invocable from a HOOK.
+exist, or, with a `document`, when the application exists and its OpenUI `Application` element
+changed); CLI (`django-admin ng_gen_app`). Not invocable from a HOOK.
 
 **Implementation reference**:
 `django_angular3/management/commands/ng_gen_app.py`;

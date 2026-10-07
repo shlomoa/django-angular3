@@ -69,9 +69,11 @@ Settled by the owner on 2026-10-07, plus what the documentation already fixes:
    `ngdj_add_component` pattern: `ngdj_add_page`, `ngdj_add_reactive_form`,
    `ngdj_add_complex_component` and `ngdj_add_data_service`. The existing
    `ngdj_add_component`, `angular_app_scaffold` and `angular_workspace_scaffold` gain
-   optional `document` and `node_id` inputs. The Skill names in the project-config steps
-   merged in #222 are renamed to their Tool names in the step that introduces the Tool
-   identities.
+   optional `document` and `node_id` inputs. The new OpenUI steps use these Tool names.
+   The project-config steps merged in #222 keep their Skill names: their `update` runs
+   through the workspace and application modification wrappers, for which no Tool contract
+   exists (`angular_workspace_scaffold` only scaffolds a fresh workspace), so a rename
+   would claim a contract that is not there.
 2. **Node type: enrich at derivation.** `external_comparisons.py` records the element id and
    type in each OpenUI Change's evidence; `translate_changes` stays a pure function of the
    Changes.
@@ -130,15 +132,21 @@ so the branch can be split into its own PR.
    document readable inside the Angular workspace before it runs a step. This is the
    djng-owned argument translation of `ARCHITECTURE.md` §3.4.
 5. **OpenUI translators** (`command_translation.py`).
-   1. One translator keyed by the resolved node type, not by path: look up the status for
-      the Change's operation, emit the step for `supported`, and raise
+   1. `translate_changes` takes the loaded `CommandMapping`. One translator keyed by the
+      resolved node type, not by path: look up the status for the Change's operation
+      (an element's own creation or deletion, or an update for a change inside it), emit
+      the step for `supported`, and raise
       `CommandTranslationError` for `partial`, `unsupported` and for a command without a
       djng wrapper, quoting the mapping's `reason` and `gap` where it has one.
    2. Give each OpenUI Tool an `exec_order` between the existing stages (components 7,
-      complex components 8, forms 9, pages 10, site navigation 11); new stages are
-      added to the `AppBuildStep` docstring and the requirements together.
-   3. A Change whose `onExisting` outcome is `reject` or `refuse-modified` and whose
-      target already exists is reported in the step's `change_reason`, not hidden.
+      complex components 8, forms 9, pages 10; stage 11 stays unassigned, as a navigation
+      change is an `Application` update at stage 2); the `AppBuildStep` docstring and the
+      requirements say so together.
+   3. The step's `change_reason` names the command and its `onExisting` outcome. Whether
+      the target exists is only known at execution, so it is not decided here. A step
+      also carries the `node_id` of the element it compiles, which the wrapper takes as
+      `--node-id`. `html` and `link` (workspace-setup) get no Tool: their update runs
+      through `ng_workspace_modify`, which has no Tool contract.
 6. **API translators.** `openapi create` selects `angular_api_client_generate` then
    `ngdj_add_data_service` (stages 3 and 4) from the mapping's `api` section; `update` and
    `delete` fail with the mapping's reason. `static_config` follows the existing
