@@ -108,12 +108,13 @@ second parser.
 
 ### 4. Build and validate the generated app
 
-`build_app` is the generated-app construction planner. It detects the changes
+`build_app` constructs the generated app. It detects the changes
 between the previous and the current inputs and, with `--dry-run`, prints the ordered
-steps it would run, as far as the ngdj command mapping supports them (see
-{ref}`What build_app plans <what-build-app-plans>`). Running the steps is not
-implemented yet, so do not rely on it to build or validate a generated app; use the
-individual wrappers below while the planner is completed. Its target requirements are
+steps it would run, with their wrapper commands and parameters, as far as the ngdj command
+mapping supports them (see {ref}`What build_app plans <what-build-app-plans>`). Without
+`--dry-run` it runs the same steps and halts at the first failure. The terminal
+validation beyond building the application, and the steps that are refused, are not
+implemented yet; use the individual wrappers below for those. Its target requirements are
 documented in
 `doc/requirements/APP_BUILDER_REQUIREMENTS.md`
 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md){.modal-link}

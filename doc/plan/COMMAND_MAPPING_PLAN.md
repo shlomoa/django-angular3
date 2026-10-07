@@ -166,7 +166,9 @@ so the branch can be split into its own PR.
    an OpenUI or OpenAPI Change exists, pass it to the translation, print the ordered
    steps in `--dry-run` as JSON, report an unsupported change or a missing package as a
    `CommandError`, and keep the command marked work in progress until step 8 passes.
-   Running the steps is not part of this plan: the executor hand-off already raised
+   Running the steps is not part of this plan (done in
+   [#211](https://github.com/shlomoa/django-angular3/issues/211): the step carries its
+   wrapper and resolved parameters, and the execute path is repaired). The executor hand-off already raised
    `TypeError` before this work (`command_execution.execute` takes no `force` or
    `dry_run`, and a step is not an executable command), so a real run still fails.
 8. **Close the expected failures.** Rewrite the five remaining `expectedFailure` tests

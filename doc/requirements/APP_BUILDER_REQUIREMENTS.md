@@ -19,11 +19,14 @@ python manage.py build_app [options]
 > **Implementation status:** `handle()` loads the project configurations, derives
 > the ChangeSet (project configuration, OpenAPI and OpenUI; the static-configuration
 > lane is not detected), translates it with `translate_changes` and, with
-> `--dry-run`, prints the ordered steps. OpenUI and OpenAPI changes are planned with the
-> ngdj command mapping (§Change-to-command mapping). Running the steps is not
-> implemented: the hand-off to the executor raises `TypeError` (the executor takes no
-> `force` or `dry_run`, and a step is not an executable command), and `--force` and
-> `--output` are not honored by the translation. Previous-configuration discovery, the
+> `--dry-run`, prints the ordered steps with their wrapper commands and resolved
+> parameters. OpenUI and OpenAPI changes are planned with the
+> ngdj command mapping (§Change-to-command mapping). Without `--dry-run` the steps run
+> in order through their wrappers (§Step execution), halt at the first failure and
+> leave `build-evidence.json` in `--output`; `--force` is refused, not honored. The
+> `export_schema` wrapper has no invocation builder, so a schema export step is refused,
+> and a data service step cannot run until its `resource` is defined
+> ([#207](https://github.com/shlomoa/django-angular3/issues/207)). Previous-configuration discovery, the
 > static-configuration change lane, the implementation of the deterministic TOOL
 > commands, hooks, and terminal validation are not implemented. This document
 > specifies the target behavior; it must not be read as a claim that those target
@@ -258,6 +261,36 @@ mapping of `angular-django2` 0.7.0 only `create` is supported for most node type
 receives the `document` and `node_id` of its element.
 
 Unsupported changes must fail explicitly; `build_app` must not silently omit them.
+
+### Step execution
+
+A step produced by translation names a Tool contract or a Skill name. `build_app` bridges
+it to its operator wrapper through the crosswalk of `ARCHITECTURE.md` §3.6.4.1
+(`django_angular3/step_bridge.py` keeps a copy that a test compares with the table) and
+resolves the wrapper's options from the project configuration and the ngdj command
+mapping. A step therefore carries its concern key, wrapper (`command`), ngdj command and
+`parameters`. No site identifier comes from ngdj, and each option must be a parameter of
+the step's ngdj command in the mapping.
+
+| Option | Resolved from |
+|---|---|
+| `document`, `node_id` | The OpenUI element the step compiles; `document` is workspace-relative |
+| `name` | The element `id`, dasherized as ngdj does |
+| `target_path` | `src/app/features/<name>` for a page, `src/app/features` for a complex component |
+| `project`, `app_name` | `project.name` |
+
+A document that lies outside the Angular workspace is copied to
+`<workspace>/.django-angular3/` before the first step that reads it, never in a dry run.
+The final `last-check` gate runs `ng_build` until the terminal validation commands exist.
+
+`--dry-run` resolves the plan and prints it; it runs no wrapper and writes no file. A real
+run refuses a plan with an unresolved option before anything runs. It then executes the
+steps level by level (by `exec_order`) and, within a level, in plan order; the first
+failing call halts the run, the remaining steps are recorded as skipped and `build_app`
+exits with a `CommandError` naming the step. The evidence
+(`<output>/build-evidence.json`, written after a failure too) holds every step with its
+status and each call's argv, exit code and output, and the pinned `tool.ngAddPackage` and
+the mapping and OpenUI spec versions of the mapping the plan used.
 
 ### Execution order
 

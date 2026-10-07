@@ -239,12 +239,15 @@ def build_ng_gen_app_invocations(
         "angular-django2:material-app",
         target_app,
         f"--style={settings.style}",
-        "--routing" if settings.routing else "--no-routing",
         f"--ssr={_stringify_bool(settings.ssr)}",
         f"--zoneless={_stringify_bool(settings.zoneless)}",
         "--defaults",
-        *_openui_document_argv(document, node_id, "Application"),
     ]
+    if document is None:
+        # With a document the Application node describes the routing, and ngdj
+        # rejects the flag next to --document.
+        argv.insert(5, "--routing" if settings.routing else "--no-routing")
+    argv.extend(_openui_document_argv(document, node_id, "Application"))
     return [
         AngularInvocation(
             command_name="ng_gen_app",
@@ -260,7 +263,7 @@ def build_ng_complex_component_invocations(
     *,
     name: str,
     target_path: str,
-    features: str | list[str] | tuple[str, ...],
+    features: str | list[str] | tuple[str, ...] | None = None,
     project: str | None = None,
     mode: str = "create",
     confirm: bool = False,
@@ -268,21 +271,29 @@ def build_ng_complex_component_invocations(
     node_id: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
-    """Build the ngdj advanced complex-component schematic invocation."""
+    """Build the ngdj advanced complex-component schematic invocation.
+
+    ``features`` is required without a document; with one, the OpenUI node
+    describes the component and the features may be left out.
+    """
+    if features is None and document is None:
+        raise AngularCommandError("Complex component features are required.")
     _validate_complex_component_options(name, target_path, features, mode, confirm)
     document_argv = _openui_document_argv(document, node_id, "Complex component")
     if document is not None and mode != "create":
         raise AngularCommandError("Complex component document requires mode create.")
-    feature_names = _normalize_complex_component_features(features)
     argv: list[str] = [
         settings.ng_executable,
         "generate",
         "angular-django2:complex-component",
         name,
         f"--path={target_path}",
-        f"--features={','.join(feature_names)}",
-        f"--mode={mode}",
     ]
+    if features is not None:
+        argv.append(
+            f"--features={','.join(_normalize_complex_component_features(features))}"
+        )
+    argv.append(f"--mode={mode}")
     if project:
         argv.append(f"--project={project}")
     if mode == "delete":
@@ -337,8 +348,11 @@ def build_ng_page_invocations(
         "angular-django2:page",
         name,
         f"--path={target_path}",
-        f"--access={access}",
     ]
+    if document is None or access != "public":
+        # The OpenUI page node describes its access, so ngdj rejects the flag
+        # next to --document; the default "public" is then left out.
+        argv.append(f"--access={access}")
     if project:
         argv.append(f"--project={project}")
     if route_path:
@@ -769,7 +783,7 @@ def _normalize_complex_component_features(
 def _validate_complex_component_options(
     name: str,
     target_path: str,
-    features: str | list[str] | tuple[str, ...],
+    features: str | list[str] | tuple[str, ...] | None,
     mode: str,
     confirm: bool,
 ) -> None:
@@ -783,9 +797,11 @@ def _validate_complex_component_options(
             "Angular application source tree."
         )
 
-    feature_names = _normalize_complex_component_features(features)
+    feature_names = (
+        _normalize_complex_component_features(features) if features is not None else ()
+    )
     invalid_features = set(feature_names) - _COMPLEX_COMPONENT_FEATURES
-    if (
+    if features is not None and (
         not feature_names
         or invalid_features
         or len(set(feature_names)) != len(feature_names)

@@ -6,7 +6,6 @@ Django Angular3 application.
 """
 
 import argparse
-import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -18,7 +17,6 @@ from bin.openui_spec import (  # type: ignore[import-untyped]
 from django.core.management.base import BaseCommand, CommandError
 
 from django_angular3.changes import Change, ChangeDomain, ChangeDomainResult, ChangeSet
-from django_angular3.command_execution import execute as cmd_executor
 from django_angular3.command_translation import (
     AppBuildStep,
     CommandTranslationError,
@@ -39,7 +37,20 @@ from django_angular3.openapi_changes import (
     OpenApiComparisonError,
     compare_openapi_files,
 )
-from django_angular3.settings import load_angular_settings
+from django_angular3.settings import (
+    AngularCommandError,
+    DjangoAngularSettings,
+    load_angular_settings,
+)
+from django_angular3.step_bridge import StepBridgeError, resolve_steps
+from django_angular3.step_execution import (
+    EVIDENCE_FILE_NAME,
+    ExecutionEvidence,
+    execute_steps,
+    new_evidence,
+    unresolved_steps,
+    write_evidence,
+)
 
 from ...config import ConfigError, load_project_config
 
@@ -257,30 +268,6 @@ def load_ngdj_mapping(
         ) from exc
 
 
-def format_plan(project_config: ProjectConfig, steps: tuple[AppBuildStep, ...]) -> str:
-    """Serialize the ordered steps for ``--dry-run``: a preview, not a plan artifact."""
-    return json.dumps(
-        {
-            "projectConfig": str(project_config.config_path),
-            "steps": [
-                {
-                    "stage": step.exec_order,
-                    "step": step.name_id,
-                    "mode": step.change_op,
-                    "domain": None
-                    if step.change_domain is None
-                    else step.change_domain.value,
-                    "target": step.change_target,
-                    "nodeId": step.node_id,
-                    "reason": step.change_reason,
-                }
-                for step in steps
-            ],
-        },
-        indent=2,
-    )
-
-
 class ChangeExecution:
     """
     Docstring for ChangeExecution
@@ -306,39 +293,69 @@ class ChangeExecution:
         except CommandTranslationError as exc:
             raise CommandError(f"Failed to translate changes: {exc}") from exc
 
-    def _extract_next_level(
-        self, commands: tuple[AppBuildStep, ...]
-    ) -> tuple[tuple[AppBuildStep, ...], tuple[AppBuildStep, ...]]:
-        level = commands[0].exec_order
-        level_commands = tuple(cmd for cmd in commands if cmd.exec_order == level)
-        remaining_commands = tuple(cmd for cmd in commands if cmd.exec_order != level)
-        return level_commands, remaining_commands
-
     def execute(
         self,
         change_set: ChangeSet,
+        project_config: ProjectConfig,
         output_path: str,
         dry_run: bool,
         force: bool,
         mapping: CommandMapping | None = None,
-    ) -> tuple[AppBuildStep, ...]:
+        settings: DjangoAngularSettings | None = None,
+    ) -> ExecutionEvidence:
         """
-        Execute the changes based on the detected differences.
+        Plan the changes and, unless ``dry_run``, run the plan.
 
-        Returns the ordered plan, which a dry run reports without running it.
+        The plan is bridged to its wrappers and its parameters are resolved from the
+        project configuration and the mapping. A dry run returns that plan as
+        evidence and touches nothing. A real run first refuses a plan with an
+        unresolved parameter, then runs the steps level by level, halts at the
+        first failure, writes the evidence to ``<output_path>/build-evidence.json``
+        (also after a failure) and raises ``CommandError`` for the failure.
 
-        Raises CommandError if execution fails.
+        ``force`` is not honored yet and is refused rather than ignored.
+
+        Raises CommandError if planning or execution fails.
         """
         logger.debug("Executing change set")
+        if force:
+            raise CommandError(
+                "--force start-from-scratch is not implemented: change detection "
+                "cannot be overridden yet."
+            )
         try:
-            commands = self._translate_change_set(change_set, mapping)
-            plan = commands
-            while not dry_run and commands:
-                level_cmds, commands = self._extract_next_level(commands)
-                cmd_executor(level_cmds, output_path, force=force, dry_run=dry_run)
-            return plan
-        except ConfigError as e:
-            raise CommandError(f"Failed to execute changes: {e}") from e
+            settings = settings or load_angular_settings()
+            steps = resolve_steps(
+                self._translate_change_set(change_set, mapping),
+                project_config,
+                mapping,
+            )
+        except (StepBridgeError, AngularCommandError, ConfigError) as exc:
+            raise CommandError(f"Failed to plan changes: {exc}") from exc
+
+        evidence = new_evidence(
+            project_config, settings, mapping, steps, dry_run=dry_run
+        )
+        if dry_run:
+            return evidence
+
+        problems = unresolved_steps(steps)
+        if problems:
+            raise CommandError(
+                "Cannot run the plan; nothing was executed: "
+                + "; ".join(problems)
+                + "."
+            )
+        execute_steps(evidence, project_config, settings)
+        evidence_path = write_evidence(evidence, Path(output_path))
+        failed = evidence.failed
+        if failed is not None:
+            raise CommandError(
+                f"Step {failed.step.name_id} ({failed.step.command}, "
+                f"{failed.step.change_target}) failed: {failed.error}\n"
+                f"The remaining steps were skipped. Evidence: {evidence_path}"
+            )
+        return evidence
 
 
 class Command(BaseCommand):
@@ -373,12 +390,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the build stages without running them",
+            help="Print the ordered steps, their commands, parameters and reasons "
+            "without running them or changing the workspace",
         )
         parser.add_argument(
             "--output",
             default="build",
-            help="Directory to write the stagesplan (build-plan.ext).",
+            help="Directory to write the evidence of a run (build-evidence.json).",
         )
         parser.add_argument(
             "--force",
@@ -413,14 +431,20 @@ class Command(BaseCommand):
             change_set: ChangeSet = detector.detect_changes()
             mapping = load_ngdj_mapping(change_set, current_config.project_config)
             executor = ChangeExecution()
-            steps = executor.execute(
+            evidence = executor.execute(
                 change_set,
+                current_config.project_config,
                 options["output"],
                 options["dry_run"],
                 options["force"],
                 mapping=mapping,
             )
             if options["dry_run"]:
-                self.stdout.write(format_plan(current_config.project_config, steps))
+                self.stdout.write(evidence.to_json())
+            else:
+                self.stdout.write(
+                    f"Executed {len(evidence.records)} step(s). Evidence: "
+                    f"{Path(options['output']) / EVIDENCE_FILE_NAME}"
+                )
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc
