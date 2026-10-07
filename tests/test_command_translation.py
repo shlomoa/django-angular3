@@ -195,6 +195,23 @@ class ProjectConfigTranslationTests(unittest.TestCase):
             ["angular-workspace-foundation", "angular-app-composition", "last-check"],
         )
 
+    def test_first_run_merges_project_steps_into_one_per_command(self) -> None:
+        commands = translate_changes(
+            tuple(
+                _change(ChangeDomain.PROJECT_CONFIG, subject, ChangeOperation.CREATE)
+                for subject in PROJECT_CONFIG_CHANGE_TRANSLATORS
+            )
+        )
+
+        self.assertEqual(
+            [command.name_id for command in commands],
+            ["angular-workspace-foundation", "angular-app-composition", "last-check"],
+        )
+        merged = "artifacts.angularWorkspace, project.name"
+        for command in commands[:-1]:
+            self.assertEqual(command.change_target, merged)
+            self.assertIn(merged, command.change_reason)
+
     def test_rejects_unsupported_operations_for_every_subject(self) -> None:
         for subject in PROJECT_CONFIG_CHANGE_TRANSLATORS:
             for operation in (ChangeOperation.DELETE, ChangeOperation.MOVE):

@@ -220,6 +220,12 @@ deterministic TOOL command only when the selected work is genuinely
 underspecified or requires interpretive refinement. It is not part of the
 required path for validated structured inputs.
 
+Project-level foundation commands are planned once per command and operation,
+not once per `project_config` subject: on a first run `project.name` and
+`artifacts.angularWorkspace` are both created, and each of those commands
+appears once, with every contributing subject listed in its target and reason.
+Steps from other domains are not merged.
+
 Commands that delete removed resources precede commands that create replacement
 or new resources at the same dependency level. Schema-derived commands precede
 OpenUI-derived commands at the same level. Mandatory validation commands run
