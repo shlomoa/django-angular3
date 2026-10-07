@@ -16,17 +16,18 @@ django-admin build_app [options]
 python manage.py build_app [options]
 ```
 
-> **Implementation status:** the current command exposes its documented
-> argument interface. Project-configuration loading, OpenAPI and OpenUI change
-> derivation (`ChangeDetector`), and change-to-command selection
-> (`translate_changes`) exist as separate components, but the command does not
-> yet compose them: `handle()` neither translates the detected changes nor honors
-> `--dry-run`, `--force`, or `--output`, and change execution raises
-> `NotImplementedError`. Previous-configuration discovery, the static-configuration
-> change lane, the deterministic TOOL command contracts, hooks, and terminal
-> validation are not implemented. This document specifies the target behavior;
-> it must not be read as a claim that those target behaviors are already
-> available.
+> **Implementation status:** `handle()` loads the project configurations, derives
+> the ChangeSet (project configuration, OpenAPI and OpenUI; the static-configuration
+> lane is not detected), translates it with `translate_changes` and, with
+> `--dry-run`, prints the ordered steps. OpenUI and OpenAPI changes are planned with the
+> ngdj command mapping (§Change-to-command mapping). Running the steps is not
+> implemented: the hand-off to the executor raises `TypeError` (the executor takes no
+> `force` or `dry_run`, and a step is not an executable command), and `--force` and
+> `--output` are not honored by the translation. Previous-configuration discovery, the
+> static-configuration change lane, the implementation of the deterministic TOOL
+> commands, hooks, and terminal validation are not implemented. This document
+> specifies the target behavior; it must not be read as a claim that those target
+> behaviors are already available.
 
 ### Build algorithm
 
