@@ -171,7 +171,12 @@ The backend package provides Django integration, CLI wrappers, schema
 validators, and automation skills that orchestrate the frontend tooling:
 
 1. **Consume upstream library**: Update the pinned upstream package dependency
-   or configuration (e.g., `ngAddPackage` in tool configuration).
+   or configuration (e.g., `ngAddPackage` in tool configuration). When you change
+   the `angular-django2` pin, regenerate the command-mapping test fixture from that
+   version with
+   `python tests/fixtures/ngdj/sync_command_mapping.py <angular-django2>/projects/angular-django2`
+   (never edit it by hand) and read the mapping's operation statuses: what `build_app`
+   plans and refuses follows them (`docs/commands.md`, "What `build_app` plans").
 2. **Update commands and wrappers**:
    - Update argument parsers, execution builders, and
      management commands.
