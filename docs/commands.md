@@ -73,7 +73,7 @@ configuration and the mapping: `name`, `target_path` and `project` for a page,
 `document` and `node_id` for an OpenUI element, and so on. `--dry-run` prints them and
 changes nothing. Without `--dry-run`, `build_app` first refuses a plan with an unresolved
 option (a data service has no `resource` until the resource identity rule is decided,
-[#207](https://github.com/shlomoa/django-angular3/issues/207)); it then copies an OpenUI
+[shlomoa/django-angular3#207](https://github.com/shlomoa/django-angular3/issues/207)); it then copies an OpenUI
 document that lies outside the Angular workspace to `.django-angular3/` in the workspace,
 runs the steps level by level, halts at the first failure and writes
 `build-evidence.json` to `--output` (default `build/`) with each call's exit code and
