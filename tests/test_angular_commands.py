@@ -752,6 +752,23 @@ class AngularCliCommandTests(unittest.TestCase):
         argv = json.loads(stdout)["invocations"][0]["argv"]
         self.assertIn("--auth-scheme=basic", argv)
 
+    def test_ng_openapi_setup_management_command_forwards_auth_scheme(self) -> None:
+        from django.core.management import call_command
+
+        for options, expected in (({"auth_scheme": "basic"}, True), ({}, False)):
+            with self.subTest(options=options):
+                stdout = io.StringIO()
+                call_command("ng_openapi_setup", dry_run=True, stdout=stdout, **options)
+
+                (invocation,) = json.loads(stdout.getvalue())["invocations"]
+                self.assertEqual("--auth-scheme=basic" in invocation["argv"], expected)
+                self.assertFalse(
+                    any(
+                        arg.startswith("--auth-scheme=bearer")
+                        for arg in invocation["argv"]
+                    )
+                )
+
     def test_angular_invocation_normalizes_long_flags(self) -> None:
         invocation = AngularInvocation(
             command_name="ng_test",

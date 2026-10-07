@@ -228,6 +228,25 @@ class CommandMappingAccessorTests(CommandMappingTestCase):
             self.mapping.operation_status("Application", "teleport")
 
 
+class FixtureVersionTests(unittest.TestCase):
+    def test_the_fixture_is_the_version_the_shipped_configuration_pins(self) -> None:
+        shipped = json.loads(
+            (
+                Path(__file__).resolve().parent.parent
+                / "django_angular3"
+                / "django-angular3.json"
+            ).read_text(encoding="utf-8")
+        )["tool"]["ngAddPackage"]
+        fixture = json.loads((FIXTURE_DIR / "package.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            (fixture["name"], fixture["version"]),
+            parse_package_spec(shipped),
+            "tool.ngAddPackage changed; regenerate the fixture with "
+            "tests/fixtures/ngdj/sync_command_mapping.py",
+        )
+
+
 @unittest.skipUnless(
     SIBLING_PACKAGE_DIR.is_dir(), "angular-django2 sibling repository is required"
 )

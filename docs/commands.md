@@ -69,8 +69,9 @@ Refused with an error that quotes the upstream reason and gap issue:
 
 Not implemented yet: running the steps, planning `ng_openapi_setup`, and detecting changes
 of `django-angular3.json`. Planning OpenUI and OpenAPI changes needs the `angular-django2`
-package installed in the Angular workspace at the version `tool.ngAddPackage` pins, so it
-cannot plan them for a workspace that does not exist yet.
+package installed in the Angular workspace at the version `tool.ngAddPackage` pins (a
+registry name such as `angular-django2@0.7.0`, not a path), so it cannot plan them for a
+workspace that does not exist yet.
 
 ## Command ownership
 
