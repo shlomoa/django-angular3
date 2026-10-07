@@ -180,7 +180,9 @@ not introduce custom behavioral selectors or a duplicate parser.
 | Source atomic change | Selected command category | Mode |
 |---|---|---|
 | Initial-domain `create` | Workspace, application, API-integration, data-service, and required OpenUI commands | create |
-| `project_config` `update` or `move` | Project-level workspace and application foundation commands | matching operation |
+| `project_config` `create` or `update` of `project.name` or `artifacts.angularWorkspace` | Project-level workspace and application foundation commands | matching operation |
+| `project_config` `create` or `update` of `artifacts.openapiSchema` or `artifacts.openuiSpecification` | No construction command; the selected OpenAPI or OpenUI content is compared by its own domain, and the terminal validation gate checks the new source | — |
+| `project_config` `delete` or `move` | Unsupported; fails explicitly (`move` is reserved) | — |
 | `static_config` `update` | The command category for the supported configuration subject | update |
 | `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
 | `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
