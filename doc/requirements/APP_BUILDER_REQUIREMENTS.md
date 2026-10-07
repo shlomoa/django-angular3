@@ -26,7 +26,7 @@ python manage.py build_app [options]
 > leave `build-evidence.json` in `--output`; `--force` is refused, not honored. The
 > `export_schema` wrapper has no invocation builder, so a schema export step is refused,
 > and a data service step cannot run until its `resource` is defined
-> ([#207](https://github.com/shlomoa/django-angular3/issues/207)). Previous-configuration discovery, the
+> ([shlomoa/django-angular3#207](https://github.com/shlomoa/django-angular3/issues/207)). Previous-configuration discovery, the
 > static-configuration change lane, the implementation of the deterministic TOOL
 > commands, hooks, and terminal validation are not implemented. This document
 > specifies the target behavior; it must not be read as a claim that those target
