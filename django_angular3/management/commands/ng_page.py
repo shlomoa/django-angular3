@@ -1,6 +1,10 @@
 import argparse
 
-from ._base import AngularBaseCommand
+from ._base import (
+    AngularBaseCommand,
+    add_openui_document_arguments,
+    openui_document_options,
+)
 
 
 class Command(AngularBaseCommand):
@@ -19,6 +23,7 @@ class Command(AngularBaseCommand):
         parser.add_argument("--auth-guard", default="authGuard")
         parser.add_argument("--navigation-label", default=None)
         parser.add_argument("--navigation-icon", default=None)
+        add_openui_document_arguments(parser)
 
     def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {
@@ -30,4 +35,5 @@ class Command(AngularBaseCommand):
             "auth_guard": options["auth_guard"],
             "navigation_label": options["navigation_label"],
             "navigation_icon": options["navigation_icon"],
+            **openui_document_options(options),
         }

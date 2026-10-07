@@ -292,7 +292,7 @@ command behind the structured tool contract used during direct execution.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `document` | no | string (relative path) | — | Validated canonical OpenUI document whose `html` and `link` elements configure the workspace, forwarded as `--document`. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document whose `html` and `link` elements configure the workspace, forwarded as `--document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the resolved command line without creating the workspace. |
 
 **Outputs**:
@@ -335,7 +335,7 @@ generated application matches the Angular CLI `ng new` defaults.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `document` | no | string (relative path) | — | Validated canonical OpenUI document whose `Application` element is compiled, forwarded as `--document`. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document whose `Application` element is compiled, forwarded as `--document`. |
 | `node_id` | no | string | — | `id` of the `Application` element of `document`, forwarded as `--node-id`. Requires `document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the resolved command line without modifying the workspace. |
 
@@ -428,7 +428,7 @@ embedding hooks at a deterministic project-relative path.
 | `name` | yes | string | — | Kebab-case component name. |
 | `path` | no | string (relative path) | Angular CLI default | Project-relative destination directory. |
 | `project` | no | string | inferred from `project.name` | Angular project to modify. |
-| `document` | no | string (relative path) | — | Validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
 | `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 
@@ -553,7 +553,7 @@ contract `ARCHITECTURE.md` §3.6.3 classifies as a TOOL.
 | `auth_guard` | no | string (identifier) | `authGuard` | Guard applied when `access` is `protected`. |
 | `navigation_label` | no | string | — | Navigation entry label; must not be empty when set. |
 | `navigation_icon` | no | string | — | Material icon name: lowercase letters, digits and underscores. |
-| `document` | no | string (relative path) | — | Validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
 | `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 
@@ -577,9 +577,9 @@ refused by the schematic and surfaces as `external_tool_failed`.
 Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: the `ng_page` wrapper in `django_angular3/angular.py`
-resolves `ng generate angular-django2:page`. Option semantics are owned upstream
-(`ARCHITECTURE.md` §3.4). Forwarding `document` and `node_id` and the structured outputs
-are planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
+resolves `ng generate angular-django2:page` and forwards `document` and `node_id`.
+Option semantics are owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are
+planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
 
 #### 12. `ngdj_add_reactive_form` — typed reactive form scaffold
 
@@ -593,7 +593,7 @@ are planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
 | `name` | yes | string | — | Kebab-case form name. |
-| `document` | no | string (relative path) | — | Validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
 | `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
 | `definition` | no | string (relative path) | — | Deprecated form definition file; use `document` and `node_id`. |
 | `path` | no | string (relative path) | schematic default | Project-relative destination directory. |
@@ -612,7 +612,8 @@ are planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
 **Error behavior**: Non-zero exit / raised `ToolError` with `category` in
 `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
 `invalid_input` includes a non-kebab-case name, a path outside the selected application
-source root, a `node_id` without a `document`, and neither `document` nor `definition`.
+source root, a `node_id` without a `document`, and both or neither of `document` and
+`definition`.
 `output_invalid` applies when the invocation succeeds but does not create the form.
 
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
@@ -620,8 +621,8 @@ Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: the `ng_reactive_form` wrapper in
 `django_angular3/angular.py` resolves `ng generate angular-django2:reactive-form` and
-today forwards only `--definition`. Forwarding `document` and `node_id` and the structured
-outputs are planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
+forwards `document` and `node_id`, or the deprecated `definition`. The structured outputs
+are planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
 
 #### 13. `ngdj_add_complex_component` — complex component scaffold
 
@@ -640,7 +641,7 @@ OpenUI `SurfaceContainers` element that has an overlay child or from explicit op
 | `mode` | no | `"create"` \| `"modify"` \| `"delete"` | `"create"` | Operation on the component. |
 | `confirm` | no | boolean | `false` | Required to be `true` when `mode` is `delete`. |
 | `project` | no | string | inferred from `project.name` | Angular project to modify. |
-| `document` | no | string (relative path) | — | Validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
 | `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 
@@ -655,16 +656,16 @@ OpenUI `SurfaceContainers` element that has an overlay child or from explicit op
 **Error behavior**: Non-zero exit / raised `ToolError` with `category` in
 `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
 `invalid_input` includes a non-kebab-case name, a path outside the selected application
-source root, an unknown mode, `mode` `delete` without `confirm`, and a `node_id` without a
-`document`. `output_invalid` applies when the invocation succeeds but the expected
+source root, an unknown mode, `mode` `delete` without `confirm`, a `document` with a
+`mode` other than `create`, and a `node_id` without a `document`. `output_invalid` applies when the invocation succeeds but the expected
 component is missing (or still present after a delete).
 
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: the `ng_complex_component` wrapper in
-`django_angular3/angular.py` resolves `ng generate angular-django2:complex-component`.
-Forwarding `document` and `node_id` and the structured outputs are planned
+`django_angular3/angular.py` resolves `ng generate angular-django2:complex-component` and
+forwards `document` and `node_id`. The structured outputs are planned
 (`doc/plan/COMMAND_MAPPING_PLAN.md`).
 
 #### 14. `ngdj_add_data_service` — typed data-service scaffold

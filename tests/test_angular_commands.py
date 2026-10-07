@@ -514,6 +514,162 @@ class AngularCliCommandTests(unittest.TestCase):
             "Reactive form definition must be a non-empty relative path", stderr
         )
 
+    DOCUMENT_ARGS = ("--document", "src/app/app.openui.json")
+    NODE_ARGS = ("--node-id", "root")
+    DOCUMENT_COMMANDS = {
+        "ng_gen_app": (),
+        "ng_complex_component": (
+            "--name",
+            "dashboard-card",
+            "--target-path",
+            "src/app/features/dashboard",
+            "--features",
+            "nested",
+        ),
+        "ng_page": ("--name", "orders", "--target-path", "src/app/features/orders"),
+        "ng_component": ("--name", "order-card"),
+        "ng_reactive_form": ("--name", "contact"),
+    }
+
+    def dry_run_argvs(self, command: str, *args: str) -> list[list[str]]:
+        exit_code, stdout, stderr = self.run_cli(command, *args, "--dry-run")
+        self.assertEqual((exit_code, stderr), (0, ""))
+        return [item["argv"] for item in json.loads(stdout)["invocations"]]
+
+    def test_openui_document_and_node_id_are_forwarded_by_each_wrapper(self) -> None:
+        for command, required in self.DOCUMENT_COMMANDS.items():
+            with self.subTest(command=command):
+                (argv,) = self.dry_run_argvs(
+                    command, *required, *self.DOCUMENT_ARGS, *self.NODE_ARGS
+                )
+
+                self.assertIn("--document=src/app/app.openui.json", argv)
+                self.assertIn("--node-id=root", argv)
+                self.assertNotIn("--definition", " ".join(argv))
+
+    def test_ng_workspace_forwards_the_document_to_workspace_setup(self) -> None:
+        argvs = self.dry_run_argvs("ng_workspace", *self.DOCUMENT_ARGS)
+
+        setup = argvs[-1]
+        self.assertIn("angular-django2:workspace-setup", setup)
+        self.assertIn("--document=src/app/app.openui.json", setup)
+        self.assertEqual(
+            sum("--document=src/app/app.openui.json" in argv for argv in argvs), 1
+        )
+
+    def test_invocations_without_a_document_carry_no_document_flags(self) -> None:
+        for command, required in self.DOCUMENT_COMMANDS.items():
+            with self.subTest(command=command):
+                args = (
+                    ("--definition", "forms/contact.json")
+                    if command == "ng_reactive_form"
+                    else ()
+                )
+                (argv,) = self.dry_run_argvs(command, *required, *args)
+
+                self.assertFalse(
+                    [arg for arg in argv if arg.startswith(("--document", "--node-id"))]
+                )
+
+    def test_a_node_id_requires_a_document(self) -> None:
+        for command, required in self.DOCUMENT_COMMANDS.items():
+            with self.subTest(command=command):
+                exit_code, _stdout, stderr = self.run_cli(
+                    command, *required, *self.NODE_ARGS, "--dry-run"
+                )
+
+                self.assertEqual(exit_code, 1)
+                self.assertIn("node id requires a document", stderr)
+
+    def test_a_document_must_stay_inside_the_workspace(self) -> None:
+        for command, required in self.DOCUMENT_COMMANDS.items():
+            with self.subTest(command=command):
+                exit_code, _stdout, stderr = self.run_cli(
+                    command, *required, "--document", "../outside.json", "--dry-run"
+                )
+
+                self.assertEqual(exit_code, 1)
+                self.assertIn("document must be a non-empty relative path", stderr)
+
+    def test_a_blank_node_id_is_rejected(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_page",
+            *self.DOCUMENT_COMMANDS["ng_page"],
+            *self.DOCUMENT_ARGS,
+            "--node-id",
+            " ",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("node id must not be empty", stderr)
+
+    def test_reactive_form_needs_exactly_one_of_document_and_definition(self) -> None:
+        for extra in (
+            (),
+            (*self.DOCUMENT_ARGS, "--definition", "forms/contact.json"),
+        ):
+            with self.subTest(extra=extra):
+                exit_code, _stdout, stderr = self.run_cli(
+                    "ng_reactive_form", "--name", "contact", *extra, "--dry-run"
+                )
+
+                self.assertEqual(exit_code, 1)
+                self.assertIn("exactly one of a document or a definition", stderr)
+
+    def test_complex_component_document_requires_create_mode(self) -> None:
+        exit_code, _stdout, stderr = self.run_cli(
+            "ng_complex_component",
+            *self.DOCUMENT_COMMANDS["ng_complex_component"],
+            *self.DOCUMENT_ARGS,
+            "--mode",
+            "modify",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("document requires mode create", stderr)
+
+    def test_management_commands_forward_the_openui_document(self) -> None:
+        from django.core.management import call_command
+
+        cases = {
+            "ng_gen_app": {"app_name": "portal"},
+            "ng_complex_component": {
+                "name": "dashboard-card",
+                "target_path": "src/app/features/dashboard",
+                "features": "nested",
+            },
+            "ng_page": {"name": "orders", "target_path": "src/app/features/orders"},
+            "ng_component": {"name": "order-card"},
+            "ng_reactive_form": {"name": "contact"},
+        }
+        for command, options in cases.items():
+            with self.subTest(command=command):
+                stdout = io.StringIO()
+                call_command(
+                    command,
+                    dry_run=True,
+                    stdout=stdout,
+                    document="src/app/app.openui.json",
+                    node_id="root",
+                    **options,
+                )
+
+                (invocation,) = json.loads(stdout.getvalue())["invocations"]
+                self.assertIn("--document=src/app/app.openui.json", invocation["argv"])
+                self.assertIn("--node-id=root", invocation["argv"])
+
+        stdout = io.StringIO()
+        call_command(
+            "ng_workspace",
+            dry_run=True,
+            stdout=stdout,
+            document="src/app/app.openui.json",
+        )
+        last = json.loads(stdout.getvalue())["invocations"][-1]
+        self.assertIn("--document=src/app/app.openui.json", last["argv"])
+
     def test_ng_openapi_gen_dry_run_uses_derived_configuration_file(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_openapi_gen", "--dry-run")
 

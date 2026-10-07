@@ -14,6 +14,36 @@ from ...angular import (
 from ...config import ConfigError
 
 
+def add_openui_document_arguments(
+    parser: argparse.ArgumentParser, *, node_id: bool = True
+) -> None:
+    """Add the options that point an ngdj schematic at an OpenUI document."""
+    parser.add_argument(
+        "--document",
+        default=None,
+        help=(
+            "Workspace-relative path of the validated OpenUI document to compile "
+            "with the ngdj schematic."
+        ),
+    )
+    if node_id:
+        parser.add_argument(
+            "--node-id",
+            default=None,
+            help="Element id of the document to compile. Requires --document.",
+        )
+
+
+def openui_document_options(
+    options: dict[str, object], *, node_id: bool = True
+) -> dict[str, object]:
+    """The invocation options of the OpenUI document arguments."""
+    result: dict[str, object] = {"document": options.get("document")}
+    if node_id:
+        result["node_id"] = options.get("node_id")
+    return result
+
+
 class AngularBaseCommand(BaseCommand):
     """Base class for django-angular3 management commands that wrap
     Angular tooling."""

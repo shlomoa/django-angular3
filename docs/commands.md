@@ -80,15 +80,15 @@ These commands are available through both interfaces. Invoke them as either
 | Command | djng behavior and arguments |
 |---|---|
 | `ng_new` | Create an empty Angular workspace. |
-| `ng_workspace` | Bootstrap the configured workspace: `ng new`, workspace defaults, ngdj registration, and schematic generation. |
+| `ng_workspace` | Bootstrap the configured workspace: `ng new`, workspace defaults, ngdj registration, and schematic generation. Accepts `--document <path>`, a workspace-relative OpenUI document for the workspace setup. |
 | `ng_config` | Apply workspace defaults such as package manager, style, and routing. |
 | `ng_add` | Run `ng add`; accepts `--package <name>` and otherwise uses the derived `ngAddPackage` setting. |
-| `ng_gen_app` | Generate the configured Angular application. Accepts `--app-name <name>`; SSR and zoneless behavior come from derived tool settings. |
+| `ng_gen_app` | Generate the configured Angular application. Accepts `--app-name <name>`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`); SSR and zoneless behavior come from derived tool settings. |
 | `ng_material_setup` | Configure Angular Material. Accepts `--project`, `--theme`, `--typography`/`--no-typography`, and `--animations`/`--no-animations`; unset options use ngdj defaults. |
-| `ng_page` | Generate a routed page. Requires `--name` and `--target-path`; accepts `--project`, `--route-path`, `--access`, `--auth-guard`, `--navigation-label`, and `--navigation-icon`. |
-| `ng_component` | Generate a standalone OnPush component. Requires `--name`; accepts `--target-path` and `--project`. |
-| `ng_complex_component` | Generate, modify, or delete an advanced Material component. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and delete confirmation via `--confirm`. |
-| `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
+| `ng_page` | Generate a routed page. Requires `--name` and `--target-path`; accepts `--project`, `--route-path`, `--access`, `--auth-guard`, `--navigation-label`, `--navigation-icon`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`). |
+| `ng_component` | Generate a standalone OnPush component. Requires `--name`; accepts `--target-path`, `--project`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`). |
+| `ng_complex_component` | Generate, modify, or delete an advanced Material component. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, delete confirmation via `--confirm`, `--document <path>` (a workspace-relative OpenUI document; requires `--mode create`) and `--node-id` (requires `--document`). |
+| `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and exactly one of `--document <path>` (a workspace-relative OpenUI document, with optional `--node-id`) or the deprecated `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
 | `ng_openapi_gen` | Run the workspace-local `ng-openapi-gen` via `pnpm exec` for the discovered OpenAPI artifact. |
 | `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, `--skip-tests`, and `--auth-scheme` (`bearer` or `basic`). |
 | `ng_data_service` | Generate a typed data-service wrapper. Requires `--resource`; accepts `--project`. |

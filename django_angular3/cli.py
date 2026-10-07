@@ -51,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
         "ng_workspace",
         help="Bootstrap the configured Angular workspace with angular-django2.",
     )
+    _add_openui_document_arguments(ng_workspace, node_id=False)
     ng_workspace.add_argument(
         "--dry-run",
         action="store_true",
@@ -91,6 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_gen_app.add_argument(
         "--app-name", default=None, help="Optional Angular application name."
     )
+    _add_openui_document_arguments(ng_gen_app)
     ng_gen_app.add_argument(
         "--dry-run",
         action="store_true",
@@ -124,6 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_complex_component.add_argument(
         "--confirm", action="store_true", help="Required when --mode=delete."
     )
+    _add_openui_document_arguments(ng_complex_component)
     ng_complex_component.add_argument(
         "--dry-run",
         action="store_true",
@@ -146,6 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
     ng_page.add_argument("--auth-guard", default="authGuard")
     ng_page.add_argument("--navigation-label", default=None)
     ng_page.add_argument("--navigation-icon", default=None)
+    _add_openui_document_arguments(ng_page)
     _add_dry_run_argument(ng_page)
 
     ng_component = subparsers.add_parser(
@@ -154,16 +158,22 @@ def build_parser() -> argparse.ArgumentParser:
     ng_component.add_argument("--name", required=True, help="Component name.")
     ng_component.add_argument("--target-path", default=None)
     ng_component.add_argument("--project", default=None)
+    _add_openui_document_arguments(ng_component)
     _add_dry_run_argument(ng_component)
 
     ng_reactive_form = subparsers.add_parser(
         "ng_reactive_form", help="Generate a typed Angular Material reactive form."
     )
     ng_reactive_form.add_argument("--name", required=True, help="Kebab-case name.")
-    ng_reactive_form.add_argument("--definition", required=True)
+    ng_reactive_form.add_argument(
+        "--definition",
+        default=None,
+        help="Deprecated form definition file; use --document instead.",
+    )
     ng_reactive_form.add_argument("--target-path", default=None)
     ng_reactive_form.add_argument("--project", default=None)
     ng_reactive_form.add_argument("--primitives-path", default=None)
+    _add_openui_document_arguments(ng_reactive_form)
     _add_dry_run_argument(ng_reactive_form)
 
     ng_openapi_gen = subparsers.add_parser(
@@ -359,8 +369,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "ng_add",
     }:
         plan_options: dict[str, str | bool | None] = {}
+        if args.command == "ng_workspace":
+            plan_options["document"] = args.document
         if args.command == "ng_gen_app":
             plan_options["app_name"] = args.app_name
+            plan_options["document"] = args.document
+            plan_options["node_id"] = args.node_id
         if args.command == "ng_add":
             plan_options["package"] = args.package
         if args.command == "ng_openapi_setup":
@@ -391,6 +405,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "project": args.project,
                 "mode": args.mode,
                 "confirm": args.confirm,
+                "document": args.document,
+                "node_id": args.node_id,
             }
         if args.command == "ng_page":
             plan_options = {
@@ -402,12 +418,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "auth_guard": args.auth_guard,
                 "navigation_label": args.navigation_label,
                 "navigation_icon": args.navigation_icon,
+                "document": args.document,
+                "node_id": args.node_id,
             }
         if args.command == "ng_component":
             plan_options = {
                 "name": args.name,
                 "target_path": args.target_path,
                 "project": args.project,
+                "document": args.document,
+                "node_id": args.node_id,
             }
         if args.command == "ng_reactive_form":
             plan_options = {
@@ -416,6 +436,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "target_path": args.target_path,
                 "project": args.project,
                 "primitives_path": args.primitives_path,
+                "document": args.document,
+                "node_id": args.node_id,
             }
         return _run_angular_command(args.command, dry_run=args.dry_run, **plan_options)
 
@@ -432,6 +454,25 @@ def _run_validation(errors: list[str], label: str) -> int:
 
     print(f"{label} is valid.")
     return 0
+
+
+def _add_openui_document_arguments(
+    parser: argparse.ArgumentParser, *, node_id: bool = True
+) -> None:
+    parser.add_argument(
+        "--document",
+        default=None,
+        help=(
+            "Workspace-relative path of the validated OpenUI document to compile "
+            "with the ngdj schematic."
+        ),
+    )
+    if node_id:
+        parser.add_argument(
+            "--node-id",
+            default=None,
+            help="Element id of the document to compile. Requires --document.",
+        )
 
 
 def _add_dry_run_argument(parser: argparse.ArgumentParser) -> None:

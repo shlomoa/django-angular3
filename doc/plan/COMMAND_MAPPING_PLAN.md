@@ -117,13 +117,18 @@ so the branch can be split into its own PR.
       done by the step 5 translator.
    2. Root-level changes (`/attrs`, `/children`, `/type`) belong to the root element.
 4. **Forward the OpenUI document from the wrappers.** None of the djng wrappers
-   (`ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`, `ng_reactive_form`,
-   `ng_data_service`) passes `--document` or `--node-id`, which every OpenUI-driven
-   schematic takes; `ng_reactive_form` still passes the deprecated `--definition`.
-   Add optional `--document` and `--node-id` to each, in the CLI and the management
-   command, with the mapping's rule that `--node-id` requires `--document`, and keep the
-   default invocations unchanged. This is the djng-owned argument translation of
-   `ARCHITECTURE.md` §3.4.
+   (`ng_workspace`, `ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`,
+   `ng_reactive_form`) passed `--document` or `--node-id`, which every OpenUI-driven
+   schematic takes; `ng_reactive_form` still passed the deprecated `--definition`.
+   Each now accepts an optional `--document` (workspace-relative, as ngdj resolves it)
+   and, except `ng_workspace`, `--node-id` (requires `--document`), in the CLI and the
+   management command, and default invocations are unchanged. The ngdj rules are kept:
+   `ng_reactive_form` takes exactly one of `--document` and `--definition`, and
+   `ng_complex_component` takes a document only with `--mode create`. `ng_data_service`
+   is not changed, as its Tool contract has no document input. Because the path is
+   workspace-relative, the `build_app` execution (step 7) must make the project's OpenUI
+   document readable inside the Angular workspace before it runs a step. This is the
+   djng-owned argument translation of `ARCHITECTURE.md` §3.4.
 5. **OpenUI translators** (`command_translation.py`).
    1. One translator keyed by the resolved node type, not by path: look up the status for
       the Change's operation, emit the step for `supported`, and raise
