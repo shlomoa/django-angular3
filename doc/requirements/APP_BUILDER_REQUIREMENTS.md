@@ -188,13 +188,32 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `project_config` `create` or `update` of `project.name` or `artifacts.angularWorkspace` | Project-level workspace and application foundation commands | matching operation |
 | `project_config` `create` or `update` of `artifacts.openapiSchema` or `artifacts.openuiSpecification` | No construction command; the selected OpenAPI or OpenUI content is compared by its own domain, and the terminal validation gate checks the new source | — |
 | `project_config` `delete` or `move` | Unsupported; fails explicitly (`move` is reserved) | — |
-| `static_config` `update` | The command category for the supported configuration subject | update |
+| `static_config` `create` or `update` of a setting in the table below | The command that consumes the setting | matching operation |
+| `static_config` `create` or `update` of a setting that changes no construction output | No construction command; the terminal validation gate runs | — |
+| `static_config` `delete` or `move`, or a subject not in the table | Unsupported; fails explicitly | — |
 | `openapi` `create` of a path | `angular_api_client_generate`, then `ngdj_add_data_service` for the new resource | create |
 | `openapi` `create` of a schema | `angular_api_client_generate` | create |
 | Any other `openapi` change: an operation, or the `update` or `delete` of a path or schema | Unsupported while ngdj's `data-service` is create-only; fails explicitly with the upstream mapping's reason and gap issue | — |
 | `openui` change whose element resolves to a root node type of the upstream command mapping, with a `supported` status for its operation | The Tool of that node type in the table below | matching operation |
 | `openui` change inside an `embedded` node type | The Tool of its root node type, with the root's operation status | update |
 | `openui` change whose operation is `partial` or `unsupported` in the mapping, or whose command has no djng Tool | Unsupported; fails explicitly with the mapping's reason and gap issue, or "no wrapper" | — |
+
+A static setting selects the command that consumes it. `create` appears for an initial
+build or a new setting, and has the same translation as `update`:
+
+| Static setting | Consumed by | Step | Stage |
+|---|---|---|---|
+| `drfSpectacular.settings.*` | schema export | `openapi_schema_export` | 0 |
+| `angular.workspace.*` (`packageManager`, `style`, `routing`) | workspace defaults, reapplied by the workspace modification wrapper | `angular-workspace-foundation` | 1 |
+| `tool.ngAddPackage` | the ngdj registration, repeated by the same wrapper | `angular-workspace-foundation` | 1 |
+| `angular.application.*` (`ssr`, `zoneless`) | application generation | `angular-app-composition` | 2 |
+| `ngOpenApiGen.*` (`serviceSuffix`, `modelIndex`) | the derived `ng-openapi-gen.json` | `angular_api_client_generate` | 3 |
+| `angular.build.*`, `oasdiff.*`, `tool.executables.*` | the build gate, the diff output and the executable lookup | none | — |
+
+The workspace and application steps use Skill-layer names, as the project-config steps
+do, because no Tool contract modifies a workspace or application. A schema export does
+not by itself change the OpenAPI subjects: any resulting difference in the schema comes
+from the `openapi` Changes.
 
 Every `openapi` change regenerates the typed client from the changed schema. Whether
 `data-service` supports an operation is read from the upstream command mapping, as for
@@ -242,7 +261,8 @@ Commands must satisfy this dependency order:
 3  angular_api_client_generate      (TOOL; depends on 2)
 ```
 
-The remaining stages are `4` data service (`ngdj_add_data_service`), `7` component,
+Stage `0` is the schema export (`openapi_schema_export`); the remaining stages are `4`
+data service (`ngdj_add_data_service`), `7` component,
 `8` complex component, `9` reactive form and `10` page, as in the table above, and `12`
 last validation; `5`, `6` and `11` are unassigned. A deterministic `ngdj` operation
 without a Tool contract in `TOOL_CONTRACTS.md` is not added to this order and is not

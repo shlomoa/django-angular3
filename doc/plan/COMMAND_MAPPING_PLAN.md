@@ -152,9 +152,10 @@ so the branch can be split into its own PR.
    an operation, and the `update` or `delete` of a path or schema, would have to update or
    delete data services, which the mapping's `data-service` does not support, so it fails
    with the mapping's reason and gap. `project_config` is already done (#222) and keeps
-   its behavior. `static_config` is not done: the requirements name no command for a
-   static subject, and the sketch in the `expectedFailure` tests predates #222 and uses
-   Skill names, so the subject-to-command table needs an owner decision first.
+   its behavior. `static_config` follows a subject-to-command table researched from how
+   each setting is consumed and from the scenario specification (`angular.workspace.style`
+   runs the workspace modification only); it is recorded in the requirements, and
+   `create` and `update` are supported, `delete` and `move` fail explicitly.
    `openapi-setup` (`ng_openapi_setup`) has no dedicated Tool; the generic
    `ngdj_run_schematic` Tool can run it. The translators do not plan it yet: a step names
    a Tool but carries no schematic name, so planning it through `ngdj_run_schematic`

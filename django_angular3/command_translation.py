@@ -33,14 +33,17 @@ class AppBuildStep:
     Attributes:
         name_id: Identifier of the construction command, or ``last-check`` for
             the final gate. OpenUI steps use the TOOL contract name (for
-            example ``ngdj_add_page``); the project-config foundation steps keep
-            the Skill-layer names (``angular-workspace-foundation``) until Tool
-            contracts exist for modifying a workspace or application. See
+            example ``ngdj_add_page``). The project-config and static-config
+            foundation steps keep the Skill-layer names
+            (``angular-workspace-foundation``) until Tool contracts exist for
+            modifying a workspace or application; the schema export and the
+            client generation of a static setting use their Tool names. See
             ``doc/ARCHITECTURE.md`` §3.6.4 for the naming layers.
         exec_order: Pipeline stage number.
-            1 workspace foundation, 2 app composition, 3 API integration,
-            4 data services, 7 components, 8 complex components, 9 reactive
-            forms, 10 pages, 12 last validation. Values 5, 6 and 11 are
+            0 schema export, 1 workspace foundation, 2 app composition,
+            3 API integration, 4 data services, 7 components, 8 complex
+            components, 9 reactive forms, 10 pages, 12 last validation.
+            Values 5, 6 and 11 are
             currently unused: a navigation change is an update of the
             ``Application``, which is stage 2.
         change_op: What the command should do. One of the ``ChangeOperation``
@@ -106,17 +109,17 @@ def _not_implemented(change: Change) -> tuple[AppBuildStep, ...]:
     )
 
 
-_PROJECT_CONFIG_OPERATIONS: Final = (ChangeOperation.CREATE, ChangeOperation.UPDATE)
+_CONFIG_OPERATIONS: Final = (ChangeOperation.CREATE, ChangeOperation.UPDATE)
 
 
-def _require_project_config_operation(change: Change) -> None:
-    """Reject operations without a documented project-config translation.
+def _require_create_or_update(change: Change) -> None:
+    """Reject operations without a documented configuration translation.
 
-    The project-config comparison emits only ``create`` (no baseline) and
-    ``update``. ``delete`` and ``move`` have no translation, so they fail
+    A configuration value is created (no baseline, or a new setting) or
+    updated. ``delete`` and ``move`` have no translation, so they fail
     explicitly instead of being planned as no work.
     """
-    if change.operation not in _PROJECT_CONFIG_OPERATIONS:
+    if change.operation not in _CONFIG_OPERATIONS:
         raise CommandTranslationError(
             f"Unsupported Change operation: {change.domain.value} "
             f"{change.operation.value}: {change.subject}."
@@ -131,7 +134,7 @@ def _translate_project_foundation(change: Change) -> tuple[AppBuildStep, ...]:
     needs the project-level foundation commands (``APP_BUILDER_REQUIREMENTS.md``
     Change-to-command mapping).
     """
-    _require_project_config_operation(change)
+    _require_create_or_update(change)
     return (
         _change_step(1, "angular-workspace-foundation", change),
         _change_step(2, "angular-app-composition", change),
@@ -146,7 +149,7 @@ def _translate_project_selector(change: Change) -> tuple[AppBuildStep, ...]:
     compare the selected documents and drive their own commands, and the final
     ``last-check`` gate validates the newly selected source.
     """
-    _require_project_config_operation(change)
+    _require_create_or_update(change)
     return ()
 
 
@@ -158,15 +161,53 @@ PROJECT_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
     "artifacts.openapiSchema": _translate_project_selector,
     "artifacts.openuiSpecification": _translate_project_selector,
 }
-STATIC_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate static-config subject translators.
-}
 
 
 DOMAIN_CHANGE_TRANSLATORS: Final[dict[ChangeDomain, dict[str, ChangeTranslator]]] = {
     ChangeDomain.PROJECT_CONFIG: PROJECT_CONFIG_CHANGE_TRANSLATORS,
-    ChangeDomain.STATIC_CONFIG: STATIC_CONFIG_CHANGE_TRANSLATORS,
 }
+
+
+@dataclass(frozen=True)
+class _StaticConfigRule:
+    """The steps a static-configuration subject, and any subject below it, needs.
+
+    ``steps`` are ``(exec_order, name_id)`` pairs; none means the setting changes no
+    construction output, so only the final validation gate follows.
+    """
+
+    subject: str
+    steps: tuple[tuple[int, str], ...]
+
+
+# Which command consumes which setting of ``django-angular3.json``
+# (``SPECIFICATIONS.md`` §2.1). A workspace setting is reapplied by the workspace
+# modification wrapper, as the scenario specification shows for
+# ``angular.workspace.style``. The Skill-layer names are those of the project-config
+# foundation steps; the schema export and the client generation have Tool contracts.
+_STATIC_CONFIG_RULES: Final[tuple[_StaticConfigRule, ...]] = (
+    _StaticConfigRule("drfSpectacular.settings", ((0, "openapi_schema_export"),)),
+    _StaticConfigRule("angular.workspace", ((1, "angular-workspace-foundation"),)),
+    _StaticConfigRule("tool.ngAddPackage", ((1, "angular-workspace-foundation"),)),
+    _StaticConfigRule("angular.application", ((2, "angular-app-composition"),)),
+    _StaticConfigRule("ngOpenApiGen", ((3, "angular_api_client_generate"),)),
+    # Read only by the build gate, the diff tool and the executable lookup.
+    _StaticConfigRule("angular.build", ()),
+    _StaticConfigRule("oasdiff", ()),
+    _StaticConfigRule("tool.executables", ()),
+)
+
+
+def _translate_static_config_change(change: Change) -> tuple[AppBuildStep, ...]:
+    for rule in _STATIC_CONFIG_RULES:
+        if change.subject == rule.subject or change.subject.startswith(
+            rule.subject + "."
+        ):
+            _require_create_or_update(change)
+            return tuple(
+                _change_step(order, name, change) for order, name in rule.steps
+            )
+    raise CommandTranslationError(f"Unsupported Change subject: {change.subject}.")
 
 
 @dataclass(frozen=True)
@@ -214,6 +255,8 @@ def _change_steps(
         return _translate_openui_change(change, mapping)
     if change.domain is ChangeDomain.OPENAPI:
         return _translate_openapi_change(change, mapping)
+    if change.domain is ChangeDomain.STATIC_CONFIG:
+        return _translate_static_config_change(change)
     translators = DOMAIN_CHANGE_TRANSLATORS.get(change.domain)
     if translators is None:
         raise CommandTranslationError(f"Unsupported Change domain: {change.domain}.")

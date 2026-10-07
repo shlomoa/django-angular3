@@ -14,10 +14,14 @@ from django_angular3.command_translation import (
     CommandTranslationError,
     translate_changes,
 )
+from django_angular3.config_changes import compare_static_config
 from django_angular3.external_comparisons import translate_openui_changelog
 from django_angular3.ngdj_command_mapping import CommandMapping
 from django_angular3.openapi_changes import translate_oasdiff_detail
 
+STATIC_CONFIG = (
+    Path(__file__).resolve().parent.parent / "django_angular3" / "django-angular3.json"
+)
 FIXTURE_MAPPING = (
     Path(__file__).resolve().parent / "fixtures" / "ngdj" / "command-mapping.json"
 )
@@ -554,4 +558,149 @@ class OpenApiTranslationTests(unittest.TestCase):
                 ("ngdj_add_data_service", "path:/pets"),
                 ("last-check", "changeset"),
             ],
+        )
+
+
+class StaticConfigTranslationTests(unittest.TestCase):
+    def names(self, subject: str, operation: ChangeOperation) -> list[str]:
+        commands = translate_changes(
+            (_change(ChangeDomain.STATIC_CONFIG, subject, operation),)
+        )
+        return [command.name_id for command in commands]
+
+    def test_each_setting_selects_the_command_that_consumes_it(self) -> None:
+        cases = {
+            "drfSpectacular.settings.TITLE": ("openapi_schema_export", 0),
+            "drfSpectacular.settings.SWAGGER_UI_SETTINGS.deepLinking": (
+                "openapi_schema_export",
+                0,
+            ),
+            "angular.workspace.style": ("angular-workspace-foundation", 1),
+            "angular.workspace.packageManager": ("angular-workspace-foundation", 1),
+            "angular.workspace.routing": ("angular-workspace-foundation", 1),
+            "tool.ngAddPackage": ("angular-workspace-foundation", 1),
+            "angular.application.ssr": ("angular-app-composition", 2),
+            "angular.application.zoneless": ("angular-app-composition", 2),
+            "ngOpenApiGen.serviceSuffix": ("angular_api_client_generate", 3),
+            "ngOpenApiGen.modelIndex": ("angular_api_client_generate", 3),
+        }
+        for subject, (name, order) in cases.items():
+            for operation in (ChangeOperation.CREATE, ChangeOperation.UPDATE):
+                with self.subTest(subject=subject, operation=operation.value):
+                    commands = translate_changes(
+                        (_change(ChangeDomain.STATIC_CONFIG, subject, operation),)
+                    )
+
+                    self.assertEqual(
+                        [(c.name_id, c.exec_order, c.change_op) for c in commands],
+                        [
+                            (name, order, operation.value),
+                            ("last-check", 12, "validate"),
+                        ],
+                    )
+                    self.assertEqual(commands[0].change_target, subject)
+                    self.assertIs(commands[0].change_domain, ChangeDomain.STATIC_CONFIG)
+
+    def test_settings_that_change_no_construction_output_only_add_the_gate(
+        self,
+    ) -> None:
+        for subject in (
+            "angular.build.configuration",
+            "oasdiff.format",
+            "tool.executables.pnpm",
+        ):
+            with self.subTest(subject=subject):
+                self.assertEqual(
+                    self.names(subject, ChangeOperation.UPDATE), ["last-check"]
+                )
+
+    def test_rejects_unsupported_operations_for_every_setting(self) -> None:
+        for subject in (
+            "drfSpectacular.settings.TITLE",
+            "angular.workspace.style",
+            "tool.ngAddPackage",
+            "angular.application.ssr",
+            "ngOpenApiGen.serviceSuffix",
+            "angular.build.configuration",
+            "oasdiff.format",
+            "tool.executables.ng",
+        ):
+            for operation in (ChangeOperation.DELETE, ChangeOperation.MOVE):
+                with self.subTest(subject=subject, operation=operation.value):
+                    with self.assertRaisesRegex(
+                        CommandTranslationError, "Unsupported Change operation"
+                    ):
+                        self.names(subject, operation)
+
+    def test_rejects_a_subject_no_command_consumes(self) -> None:
+        for subject in ("angular.unknown.flag", "ngOpenApiGenX.setting", "tool"):
+            with self.subTest(subject=subject):
+                with self.assertRaisesRegex(
+                    CommandTranslationError, "Unsupported Change subject"
+                ):
+                    self.names(subject, ChangeOperation.UPDATE)
+
+    def test_steps_run_export_workspace_app_then_client(self) -> None:
+        subjects = (
+            "ngOpenApiGen.serviceSuffix",
+            "angular.application.ssr",
+            "angular.workspace.style",
+            "drfSpectacular.settings.TITLE",
+        )
+
+        commands = translate_changes(
+            tuple(
+                _change(ChangeDomain.STATIC_CONFIG, subject, ChangeOperation.UPDATE)
+                for subject in subjects
+            )
+        )
+
+        self.assertEqual(
+            [command.name_id for command in commands],
+            [
+                "openapi_schema_export",
+                "angular-workspace-foundation",
+                "angular-app-composition",
+                "angular_api_client_generate",
+                "last-check",
+            ],
+        )
+
+    def test_changes_compared_from_the_configuration_translate(self) -> None:
+        baseline = json.loads(STATIC_CONFIG.read_text(encoding="utf-8"))
+        candidate = json.loads(json.dumps(baseline))
+        candidate["angular"]["workspace"]["style"] = "css"
+        candidate["ngOpenApiGen"]["serviceSuffix"] = "Client"
+        candidate["drfSpectacular"]["settings"]["TITLE"] = "Portal API"
+
+        commands = translate_changes(compare_static_config(baseline, candidate))
+
+        self.assertEqual(
+            [command.name_id for command in commands],
+            [
+                "openapi_schema_export",
+                "angular-workspace-foundation",
+                "angular_api_client_generate",
+                "last-check",
+            ],
+        )
+
+    def test_every_shipped_setting_is_covered_by_an_initial_build(self) -> None:
+        candidate = json.loads(STATIC_CONFIG.read_text(encoding="utf-8"))
+
+        commands = translate_changes(compare_static_config(None, candidate))
+
+        self.assertEqual(commands[-1].name_id, "last-check")
+        self.assertEqual(
+            {command.name_id for command in commands},
+            {
+                "openapi_schema_export",
+                "angular-workspace-foundation",
+                "angular-app-composition",
+                "angular_api_client_generate",
+                "last-check",
+            },
+        )
+        self.assertTrue(
+            all(command.change_op in {"create", "validate"} for command in commands)
         )
