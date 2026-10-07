@@ -109,10 +109,13 @@ so the branch can be split into its own PR.
       written by hand, plus a drift test against the sibling checkout when present, like
       `test_ngdj_requirements.py`.
 3. **OpenUI Change enrichment** (`external_comparisons.py`, decision 2).
-   1. For each upstream entry, walk the path up to the nearest element in the candidate
-      (or reference, for a delete) document and record its `id` and `type` in the Change
-      evidence. A change below an `embedded` node resolves to its root ancestor.
-   2. Root-level changes (`Application`) resolve to the document root.
+   1. For each upstream entry, walk its path through the candidate document (the
+      reference document for a delete) and record the `id` and `type` of every enclosing
+      element, root element first, as evidence records of the Change
+      (`openui_change_elements` reads them). The enrichment knows nothing of the mapping:
+      resolving an `embedded` node to the root node that compiles it (`compiled_by`) is
+      done by the step 5 translator.
+   2. Root-level changes (`/attrs`, `/children`, `/type`) belong to the root element.
 4. **Forward the OpenUI document from the wrappers.** None of the djng wrappers
    (`ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`, `ng_reactive_form`,
    `ng_data_service`) passes `--document` or `--node-id`, which every OpenUI-driven

@@ -156,8 +156,14 @@ class Change:
         evidence: ``ChangeEvidence`` records supporting the Change.
             Populated: one record with the input source, the location (the
             ``path``) and, for OpenAPI and OpenUI, the raw comparison
-            fragment; configuration records carry no fragment.
-            Used for: traceability in the serialized ``ChangeSet``.
+            fragment; configuration records carry no fragment. An OpenUI Change
+            derived from the compared documents also carries one record per
+            element enclosing its path, root element first, with the element's
+            pointer as location (none for the root) and its ``id`` and ``type``
+            as fragment; ``external_comparisons.openui_change_elements`` reads
+            them.
+            Used for: traceability in the serialized ``ChangeSet``, and for
+            command translation to select a command by OpenUI node type.
     """
 
     domain: ChangeDomain
