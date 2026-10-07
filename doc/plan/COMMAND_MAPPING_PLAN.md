@@ -31,13 +31,19 @@ read the mapping, not copy it.
 
 ### 1.2 What djng has today
 
-- `command_translation.py`: the four per-domain translator maps are empty `TODO` stubs.
-  `translate_changes` already sorts steps by `exec_order`, `change_op`, domain, name.
-- Five tests are `expectedFailure` ([#204](https://github.com/shlomoa/django-angular3/issues/204)):
-  3 in `test_command_translation.py`, 2 in `test_build_app.py`. They use Skill-layer
-  `name_id` values (`angular-page-composition`).
-- `APP_BUILDER_REQUIREMENTS.md` § Change-to-command mapping marks every OpenUI row
-  "not yet defined", and `AUTOMATION_PLAN.md` step 8.2 forbids claiming an undefined
+- `command_translation.py`: the project-config translators are implemented
+  ([#222](https://github.com/shlomoa/django-angular3/pull/222)): `project.name` and
+  `artifacts.angularWorkspace` select the workspace and application foundation steps,
+  the two source selectors select no step, and `delete` and `move` fail explicitly.
+  The OpenAPI, static-config and OpenUI translator maps are still empty `TODO` stubs.
+  `translate_changes` sorts steps by `exec_order`, `change_op`, domain, name, and
+  rejects only an empty change list.
+- Five tests are still `expectedFailure` ([#204](https://github.com/shlomoa/django-angular3/issues/204)):
+  3 in `test_command_translation.py`, 2 in `test_build_app.py`. They need the OpenAPI,
+  static-config or OpenUI maps, and use Skill-layer `name_id` values
+  (`angular-page-composition`).
+- `APP_BUILDER_REQUIREMENTS.md` § Change-to-command mapping defines the project-config
+  rows (since #222) and still marks every OpenUI row "not yet defined", and `AUTOMATION_PLAN.md` step 8.2 forbids claiming an undefined
   OpenUI wrapper as supported.
 - OpenUI Changes come from `external_comparisons.py` with `subject = "openui:" + path`
   (the upstream comparison path, which may end at an attribute inside an element).
@@ -106,8 +112,9 @@ them"), naming the upstream reason and gap issue. The plan does not widen this.
       target already exists is reported in the step's `change_reason`, not hidden.
 5. **API translators.** `openapi create` selects `openapi-setup` then `data-service`
    (stages 3 and 4) from the mapping's `api` section; `update` and `delete` fail with the
-   mapping's reason. `project_config` and `static_config` rows follow the existing
-   requirements table, which djng owns, and are done as a separate commit.
+   mapping's reason. `static_config` follows the existing requirements table, which djng
+   owns, and is done as a separate commit. `project_config` is already done (#222) and
+   keeps its behavior.
 6. **Wire into `build_app`** (`management/commands/build_app.py`): pass the loader result
    in, print the ordered steps and unsupported-change failures in `--dry-run`, keep
    the command marked work in progress until step 7 passes.
@@ -117,7 +124,7 @@ them"), naming the upstream reason and gap issue. The plan does not widen this.
       when present, like `test_ngdj_requirements.py`.
    2. Table tests: every (root node type, operation) pair in the fixture yields a step or
       the expected error, so a mapping change fails a test instead of drifting.
-   3. Rewrite the five `expectedFailure` tests against the decided identities and remove
+   3. Rewrite the five remaining `expectedFailure` tests against the decided identities and remove
       each decorator only when its assertions pass (the rule in #204).
    4. Ruff check and format, the full unittest suite, and the Sphinx docs build.
 8. **Document the boundary** in `README.md`, `docs/commands.md` and `CONTRIBUTING.md`:
