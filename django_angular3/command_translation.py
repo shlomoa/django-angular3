@@ -152,9 +152,6 @@ def _translate_project_selector(change: Change) -> tuple[AppBuildStep, ...]:
 
 # Per-domain maps from a Change subject to the translator that returns the
 # ordered steps for that Change. The subject must match a key exactly.
-OPENAPI_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate OpenAPI subject translators.
-}
 PROJECT_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
     "project.name": _translate_project_foundation,
     "artifacts.angularWorkspace": _translate_project_foundation,
@@ -167,7 +164,6 @@ STATIC_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
 
 
 DOMAIN_CHANGE_TRANSLATORS: Final[dict[ChangeDomain, dict[str, ChangeTranslator]]] = {
-    ChangeDomain.OPENAPI: OPENAPI_CHANGE_TRANSLATORS,
     ChangeDomain.PROJECT_CONFIG: PROJECT_CONFIG_CHANGE_TRANSLATORS,
     ChangeDomain.STATIC_CONFIG: STATIC_CONFIG_CHANGE_TRANSLATORS,
 }
@@ -216,12 +212,87 @@ def _change_steps(
 ) -> tuple[AppBuildStep, ...]:
     if change.domain is ChangeDomain.OPENUI:
         return _translate_openui_change(change, mapping)
+    if change.domain is ChangeDomain.OPENAPI:
+        return _translate_openapi_change(change, mapping)
     translators = DOMAIN_CHANGE_TRANSLATORS.get(change.domain)
     if translators is None:
         raise CommandTranslationError(f"Unsupported Change domain: {change.domain}.")
     if change.subject not in translators:
         raise CommandTranslationError(f"Unsupported Change subject: {change.subject}.")
     return translators[change.subject](change)
+
+
+_OPENAPI_SUBJECT_KINDS: Final = ("path", "operation", "schema")
+_DATA_SERVICE_COMMAND: Final = "data-service"
+
+
+def _translate_openapi_change(
+    change: Change, mapping: CommandMapping | None
+) -> tuple[AppBuildStep, ...]:
+    """Plan the client regeneration and data service an OpenAPI Change needs.
+
+    Every change regenerates the typed client from the changed schema. A new path
+    (a new resource) also gets its data service. A change to an operation, or to
+    a path or schema that already has services depending on it, would have to
+    update or delete data services, and the upstream mapping says ngdj cannot
+    (``data-service`` is create-only), so it fails explicitly with the mapping's
+    reason. The dependent OpenUI commands come from the OpenUI Changes, not from
+    here.
+    """
+    kind, _, _ = change.subject.partition(":")
+    if kind not in _OPENAPI_SUBJECT_KINDS:
+        raise CommandTranslationError(f"Unsupported Change subject: {change.subject}.")
+    if mapping is None:
+        raise CommandTranslationError(
+            "OpenAPI Change translation needs the ngdj command mapping."
+        )
+
+    client = AppBuildStep(
+        name_id="angular_api_client_generate",
+        exec_order=3,
+        change_op=change.operation.value,
+        change_reason=(
+            f"Required by openapi {change.operation.value}: {change.subject}. "
+            "The typed client is regenerated from the changed schema."
+        ),
+        change_target=change.subject,
+        change_domain=change.domain,
+    )
+    if kind == "schema" and change.operation is ChangeOperation.CREATE:
+        return (client,)
+
+    # A path is a resource: its creation creates its data service. A change to
+    # an operation modifies the service of the path it belongs to, and a schema
+    # change modifies the services that use it.
+    operation = (
+        ChangeOperation.UPDATE if kind == "operation" else change.operation
+    ).value
+    status = mapping.command_operation_status(_DATA_SERVICE_COMMAND, operation)
+    if status.status != "supported":
+        subject = (
+            "the data services that depend on"
+            if kind == "schema"
+            else "the data service of"
+        )
+        detail = f": {status.reason}" if status.reason else ""
+        gap = f" ({status.gap})" if status.gap else ""
+        raise CommandTranslationError(
+            f"ngdj does not support {operation} of {subject} {change.subject} "
+            f"({status.status}){detail}{gap}."
+        )
+    service = AppBuildStep(
+        name_id="ngdj_add_data_service",
+        exec_order=4,
+        change_op=operation,
+        change_reason=(
+            f"Required by openapi {change.operation.value}: {change.subject}. "
+            f"ngdj {_DATA_SERVICE_COMMAND} creates the service of the new resource "
+            f"(on existing output: {mapping.on_existing(_DATA_SERVICE_COMMAND)})."
+        ),
+        change_target=change.subject,
+        change_domain=change.domain,
+    )
+    return (client, service)
 
 
 def _translate_openui_change(

@@ -189,12 +189,19 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `project_config` `create` or `update` of `artifacts.openapiSchema` or `artifacts.openuiSpecification` | No construction command; the selected OpenAPI or OpenUI content is compared by its own domain, and the terminal validation gate checks the new source | — |
 | `project_config` `delete` or `move` | Unsupported; fails explicitly (`move` is reserved) | — |
 | `static_config` `update` | The command category for the supported configuration subject | update |
-| `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
-| `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
-| `openapi` `update` | Targeted dependent client, service, and UI commands | update |
+| `openapi` `create` of a path | `angular_api_client_generate`, then `ngdj_add_data_service` for the new resource | create |
+| `openapi` `create` of a schema | `angular_api_client_generate` | create |
+| Any other `openapi` change: an operation, or the `update` or `delete` of a path or schema | Unsupported while ngdj's `data-service` is create-only; fails explicitly with the upstream mapping's reason and gap issue | — |
 | `openui` change whose element resolves to a root node type of the upstream command mapping, with a `supported` status for its operation | The Tool of that node type in the table below | matching operation |
 | `openui` change inside an `embedded` node type | The Tool of its root node type, with the root's operation status | update |
 | `openui` change whose operation is `partial` or `unsupported` in the mapping, or whose command has no djng Tool | Unsupported; fails explicitly with the mapping's reason and gap issue, or "no wrapper" | — |
+
+Every `openapi` change regenerates the typed client from the changed schema. Whether
+`data-service` supports an operation is read from the upstream command mapping, as for
+OpenUI. The OpenUI commands that depend on an API subject come from the `openui`
+Changes of the same ChangeSet; `build_app` does not derive that dependency from the API
+subject. The ngdj `openapi-setup` schematic (`ng_openapi_setup`) has no Tool contract
+yet, so a first build needs it before `angular_api_client_generate` outside `build_app`.
 
 The upstream command mapping (`schematics/command-mapping.json` of the installed
 `angular-django2` package, `ARCHITECTURE.md` §3.4) owns which node type is compiled by

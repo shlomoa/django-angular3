@@ -147,11 +147,15 @@ so the branch can be split into its own PR.
       also carries the `node_id` of the element it compiles, which the wrapper takes as
       `--node-id`. `html` and `link` (workspace-setup) get no Tool: their update runs
       through `ng_workspace_modify`, which has no Tool contract.
-6. **API translators.** `openapi create` selects `angular_api_client_generate` then
-   `ngdj_add_data_service` (stages 3 and 4) from the mapping's `api` section; `update` and
-   `delete` fail with the mapping's reason. `static_config` follows the existing
-   requirements table, which djng owns, and is done as a separate commit.
-   `project_config` is already done (#222) and keeps its behavior.
+6. **API translators.** Every `openapi` change selects `angular_api_client_generate`
+   (stage 3). A `path` create also selects `ngdj_add_data_service` (stage 4). A change to
+   an operation, and the `update` or `delete` of a path or schema, would have to update or
+   delete data services, which the mapping's `data-service` does not support, so it fails
+   with the mapping's reason and gap. `project_config` is already done (#222) and keeps
+   its behavior. `static_config` is not done: the requirements name no command for a
+   static subject, and the sketch in the `expectedFailure` tests predates #222 and uses
+   Skill names, so the subject-to-command table needs an owner decision first.
+   `openapi-setup` has no Tool contract, so `build_app` cannot run it yet.
 7. **Wire into `build_app`** (`management/commands/build_app.py`): pass the loader result
    in, print the ordered steps and unsupported-change failures in `--dry-run`, and keep
    the command marked work in progress until step 8 passes.

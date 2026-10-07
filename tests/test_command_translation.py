@@ -16,6 +16,7 @@ from django_angular3.command_translation import (
 )
 from django_angular3.external_comparisons import translate_openui_changelog
 from django_angular3.ngdj_command_mapping import CommandMapping
+from django_angular3.openapi_changes import translate_oasdiff_detail
 
 FIXTURE_MAPPING = (
     Path(__file__).resolve().parent / "fixtures" / "ngdj" / "command-mapping.json"
@@ -422,5 +423,135 @@ class OpenUiTranslationTests(unittest.TestCase):
                 "angular-app-composition",
                 "ngdj_add_page",
                 "last-check",
+            ],
+        )
+
+
+class OpenApiTranslationTests(unittest.TestCase):
+    mapping: CommandMapping
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.mapping = CommandMapping(
+            json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        )
+
+    def translate(self, subject: str, operation: ChangeOperation):
+        return translate_changes(
+            (_change(ChangeDomain.OPENAPI, subject, operation),), self.mapping
+        )
+
+    def test_a_new_path_regenerates_the_client_and_creates_its_data_service(
+        self,
+    ) -> None:
+        steps = self.translate("path:/pets", ChangeOperation.CREATE)
+
+        self.assertEqual(
+            [(step.name_id, step.exec_order, step.change_op) for step in steps],
+            [
+                ("angular_api_client_generate", 3, "create"),
+                ("ngdj_add_data_service", 4, "create"),
+                ("last-check", 12, "validate"),
+            ],
+        )
+        for step in steps[:-1]:
+            self.assertEqual(step.change_target, "path:/pets")
+            self.assertIs(step.change_domain, ChangeDomain.OPENAPI)
+        self.assertIn("on existing output: skip", steps[1].change_reason)
+
+    def test_a_new_schema_only_regenerates_the_client(self) -> None:
+        steps = self.translate("schema:Pet", ChangeOperation.CREATE)
+
+        self.assertEqual(
+            [step.name_id for step in steps],
+            ["angular_api_client_generate", "last-check"],
+        )
+
+    def test_changes_that_would_update_or_delete_data_services_fail_explicitly(
+        self,
+    ) -> None:
+        cases = (
+            (
+                "operation:GET /pets",
+                ChangeOperation.CREATE,
+                "update of the data service",
+            ),
+            (
+                "operation:GET /pets",
+                ChangeOperation.UPDATE,
+                "update of the data service",
+            ),
+            (
+                "operation:GET /pets",
+                ChangeOperation.DELETE,
+                "update of the data service",
+            ),
+            ("path:/pets", ChangeOperation.DELETE, "delete of the data service"),
+            ("schema:Pet", ChangeOperation.UPDATE, "update of the data services that"),
+            ("schema:Pet", ChangeOperation.DELETE, "delete of the data services that"),
+        )
+        for subject, operation, expected in cases:
+            with self.subTest(subject=subject, operation=operation.value):
+                with self.assertRaisesRegex(
+                    CommandTranslationError,
+                    rf"ngdj does not support {expected}.* {subject} \(unsupported\): "
+                    r".*\(shlomoa/angular-django2#\d+\)",
+                ):
+                    self.translate(subject, operation)
+
+    def test_an_unknown_subject_kind_is_rejected(self) -> None:
+        with self.assertRaisesRegex(
+            CommandTranslationError, "Unsupported Change subject: server:prod"
+        ):
+            self.translate("server:prod", ChangeOperation.CREATE)
+
+    def test_openapi_changes_need_the_command_mapping(self) -> None:
+        change = _change(ChangeDomain.OPENAPI, "path:/pets", ChangeOperation.CREATE)
+
+        with self.assertRaisesRegex(
+            CommandTranslationError, "needs the ngdj command mapping"
+        ):
+            translate_changes((change,))
+
+    def test_api_steps_precede_the_openui_steps_they_support(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+        api = _change(ChangeDomain.OPENAPI, "path:/pets", ChangeOperation.CREATE)
+
+        steps = translate_changes((*openui, api), self.mapping)
+
+        self.assertEqual(
+            [step.name_id for step in steps],
+            [
+                "angular_api_client_generate",
+                "ngdj_add_data_service",
+                "ngdj_add_page",
+                "last-check",
+            ],
+        )
+
+    def test_changes_derived_from_an_oasdiff_detail_translate(self) -> None:
+        candidate = {
+            "paths": {"/pets": {"get": {}}},
+            "components": {"schemas": {"Pet": {"type": "object"}}},
+        }
+        changes = translate_oasdiff_detail(
+            {
+                "paths": {"added": ["/pets"]},
+                "components": {"schemas": {"added": ["Pet"]}},
+            },
+            {"paths": {}, "components": {"schemas": {}}},
+            candidate,
+            source="candidate.openapi.json",
+        )
+
+        steps = translate_changes(changes, self.mapping)
+
+        self.assertEqual(
+            [(step.name_id, step.change_target) for step in steps],
+            [
+                ("angular_api_client_generate", "path:/pets"),
+                ("angular_api_client_generate", "schema:Pet"),
+                ("ngdj_add_data_service", "path:/pets"),
+                ("last-check", "changeset"),
             ],
         )
