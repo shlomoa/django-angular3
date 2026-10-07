@@ -171,6 +171,11 @@ not introduce custom behavioral selectors or a duplicate parser.
 | Angular workspace scaffold | TOOL | `angular_workspace_scaffold` | — | Create the workspace for a first build. |
 | Angular app scaffold | TOOL | `angular_app_scaffold` | — | Create the primary Angular application. |
 | Typed Angular client generation | TOOL | `angular_api_client_generate` | — | Generate the typed API client. |
+| Data service | TOOL | `ngdj_add_data_service` | — | Generate the typed data service of an API resource. |
+| Standalone component | TOOL | `ngdj_add_component` | — | Generate a component from an OpenUI element. |
+| Complex component | TOOL | `ngdj_add_complex_component` | — | Generate an advanced component from an OpenUI element. |
+| Reactive form | TOOL | `ngdj_add_reactive_form` | — | Generate a typed form from an OpenUI `Form` element. |
+| Routed page | TOOL | `ngdj_add_page` | — | Generate a page from an OpenUI page element. |
 | Optional interpretive refinement | SKILL | — | — | Handle only selected work that structured inputs and deterministic schematics do not fully specify. |
 | Post-generation verification | HOOK | — | `post-generation` | Record and enforce per-command structural checks. |
 | Session-end audit | HOOK | — | `session-stop` | Archive run information and write a session summary. |
@@ -187,17 +192,32 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
 | `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
 | `openapi` `update` | Targeted dependent client, service, and UI commands | update |
-| `openui` page `create`, `update`, or `delete` | `ng_page` wraps `angular-django2:page` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` standalone component `create`, `update`, or `delete` | `ng_component` wraps `angular-django2:component` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` complex component `create`, `update`, or `delete` | `ng_complex_component` wraps `angular-django2:complex-component`; deterministic TOOL contract and complete atomic-operation mapping are not yet defined | Not yet defined for `build_app` |
-| `openui` reactive form `create`, `update`, or `delete` | `ng_reactive_form` wraps `angular-django2:reactive-form` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` navigation `update` | `angular-site-composition` handles site-level navigation composition; the deterministic TOOL contract is not yet defined | Not yet defined for `build_app` |
+| `openui` change whose element resolves to a root node type of the upstream command mapping, with a `supported` status for its operation | The Tool of that node type in the table below | matching operation |
+| `openui` change inside an `embedded` node type | The Tool of its root node type, with the root's operation status | update |
+| `openui` change whose operation is `partial` or `unsupported` in the mapping, or whose command has no djng Tool | Unsupported; fails explicitly with the mapping's reason and gap issue, or "no wrapper" | — |
 
-The direct wrappers define precise invocations for the ngdj operations they
-support, but `build_app` must still define the deterministic TOOL contract and
-atomic-operation mapping for every row before claiming change-driven support.
-Unsupported changes must fail explicitly; `build_app` must not silently omit
-them.
+The upstream command mapping (`schematics/command-mapping.json` of the installed
+`angular-django2` package, `ARCHITECTURE.md` §3.4) owns which node type is compiled by
+which command and which operations that command supports; `build_app` reads it at run
+time and does not keep a copy. `build_app` owns the Tool selection:
+
+| Root node type | ngdj command | Tool contract | Stage |
+|---|---|---|---|
+| `html`, `link` | `workspace-setup` | `angular_workspace_scaffold` | 1 |
+| `Application` | `material-app` | `angular_app_scaffold` | 2 |
+| `SurfaceContainers` (no overlay child) | `component` | `ngdj_add_component` | 7 |
+| `SurfaceContainers` (with an overlay child) | `complex-component` | `ngdj_add_complex_component` | 8 |
+| `Form` | `reactive-form` | `ngdj_add_reactive_form` | 9 |
+| `DashboardPage`, `EmptyPage` | `page` | `ngdj_add_page` | 10 |
+
+Node types compiled by `form-field`, `field-component`, `tabs`, `dialog`, `stepper`,
+or `table` have no djng Tool yet and fail as "no wrapper". With the
+mapping of `angular-django2` 0.7.0 only `create` is supported for most node types:
+`update` is supported for `Application`, `html` and `link`, `complex-component` is
+`partial`, and every other `update` and every `delete` fails explicitly. A Tool step
+receives the `document` and `node_id` of its element.
+
+Unsupported changes must fail explicitly; `build_app` must not silently omit them.
 
 ### Execution order
 
@@ -209,11 +229,11 @@ Commands must satisfy this dependency order:
 3  angular_api_client_generate      (TOOL; depends on 2)
 ```
 
-The TOOL contracts and dependency order for the remaining deterministic `ngdj`
-schematic operations are not yet defined. Existing direct wrappers do not by
-themselves establish `build_app` support. The contracts and ordering must be
-specified before those operations are added to this execution order or claimed
-as supported by `build_app`.
+The remaining stages are `4` data service (`ngdj_add_data_service`), `7` component,
+`8` complex component, `9` reactive form and `10` page, as in the table above, and `12`
+last validation; `5`, `6` and `11` are unassigned. A deterministic `ngdj` operation
+without a Tool contract in `TOOL_CONTRACTS.md` is not added to this order and is not
+claimed as supported by `build_app`.
 
 An optional matching `angular-*-composition` SKILL command may follow its
 deterministic TOOL command only when the selected work is genuinely
