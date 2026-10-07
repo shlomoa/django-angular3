@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Final
 
 from .changes import Change, ChangeDomain, ChangeOperation
@@ -23,8 +23,10 @@ class AppBuildStep:
     several steps, for example an OpenAPI change yields three), except for the
     final ``last-check`` gate, which is appended once for the whole
     change set. A step only describes what should run; it does not execute
-    anything, and it does not carry the options a command needs (such as a
-    page name or path). Identical steps from different Changes are not merged, except
+    anything. Translation leaves the command and its parameters empty, because
+    they depend on the project configuration: ``step_bridge.resolve_steps`` fills
+    ``concern_key``, ``command`` and ``parameters`` (see below). Identical steps
+    from different Changes are not merged, except
     that project-config steps are merged into one step that lists every subject
     (see ``_merge_project_steps``).
 
@@ -64,6 +66,25 @@ class AppBuildStep:
             OpenUI, with all other domains and ``None`` sorting before both.
         node_id: ``id`` of the OpenUI element the command compiles, for an
             OpenUI step, otherwise ``None``. The step's ``--node-id``.
+        ngdj_command: Name of the ngdj command of the upstream mapping that the
+            step runs (for example ``page``), when translation selected one from
+            the mapping; otherwise ``None``.
+        concern_key: Concern key of the crosswalk row (``ARCHITECTURE.md``
+            §3.6.4.1) the step belongs to, for example ``angular.page``. Set by
+            ``step_bridge.resolve_steps``; ``None`` for the ``last-check`` gate
+            and before resolution.
+        command: Operator wrapper identifier (for example ``ng_page``) that runs
+            the step, chosen through the crosswalk. Set by
+            ``step_bridge.resolve_steps``; ``None`` before resolution.
+        parameters: The wrapper options resolved for the step, by the wrapper's
+            option name (for example ``name``, ``target_path``, ``project``,
+            ``document`` and ``node_id``). Derived from the project
+            configuration and the mapping; no site identifier is read from
+            ngdj. Empty before resolution.
+        unresolved: Names of required wrapper options that cannot be resolved
+            yet (for example the ``resource`` of a data service, whose identity
+            rule is open). A dry run lists them; a real run refuses to start
+            while any step has one.
     """
 
     name_id: str
@@ -73,6 +94,11 @@ class AppBuildStep:
     change_target: str
     change_domain: ChangeDomain | None
     node_id: str | None = None
+    ngdj_command: str | None = None
+    concern_key: str | None = None
+    command: str | None = None
+    parameters: Mapping[str, object] = field(default_factory=dict, hash=False)
+    unresolved: tuple[str, ...] = ()
 
 
 def translate_changes(
@@ -382,6 +408,7 @@ def _translate_openapi_change(
         ),
         change_target=change.subject,
         change_domain=change.domain,
+        ngdj_command=_DATA_SERVICE_COMMAND,
     )
     return (client, service)
 
@@ -444,6 +471,7 @@ def _translate_openui_change(
             change_target=change.subject,
             change_domain=change.domain,
             node_id=owner.id,
+            ngdj_command=command,
         ),
     )
 

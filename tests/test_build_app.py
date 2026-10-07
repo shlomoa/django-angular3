@@ -383,13 +383,15 @@ class BuildAppPlanningTests(unittest.TestCase):
         change_set = _change_set(project_config=(_project_name_created(),))
 
         with patch(
-            "django_angular3.management.commands.build_app.cmd_executor"
-        ) as executor:
-            steps = ChangeExecution().execute(change_set, "build", True, False)
+            "django_angular3.step_execution.command_execution.run_command"
+        ) as run_command:
+            evidence = ChangeExecution().execute(
+                change_set, self.current.project_config, "build", True, False
+            )
 
-        executor.assert_not_called()
+        run_command.assert_not_called()
         self.assertEqual(
-            [step.name_id for step in steps],
+            [step.name_id for step in evidence.steps],
             ["angular-workspace-foundation", "angular-app-composition", "last-check"],
         )
 

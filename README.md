@@ -145,8 +145,10 @@ it resolves commands without executing Angular tooling:
 - `ng_openapi_gen` runs a locally installed `ng-openapi-gen` for the configured OpenAPI source
 
 `build_app --dry-run` plans these steps from detected OpenAPI, OpenUI and project
-changes, following the command mapping of the installed `angular-django2` package. It
-refuses what ngdj cannot do and does not run the steps yet; see
+changes, following the command mapping of the installed `angular-django2` package, and
+prints each step's order, wrapper command, resolved parameters and reason. Without
+`--dry-run` it runs the same steps in order, halts at the first failure and writes
+`build/build-evidence.json`. It refuses what ngdj cannot do; see
 [What `build_app` plans](https://djangoangular.com/commands/#what-build-app-plans)
 for what is planned and refused.
 

@@ -196,6 +196,12 @@ class CommandMapping:
         """The status of an operation on an ngdj command of any section."""
         return _operation_status(self._command(command)["operations"], operation)
 
+    def parameter_names(self, command: str) -> tuple[str, ...]:
+        """The parameter names (``nodeId``, ``path``, ...) an ngdj command accepts."""
+        return tuple(
+            entry["name"] for entry in self._command(command).get("parameters", ())
+        )
+
     def on_existing(self, command: str) -> str:
         """What a second run does: ``skip``, ``reject``, ``rewrite`` and so on."""
         return cast(str, self._command(command)["onExisting"]["outcome"])

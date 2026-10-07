@@ -630,6 +630,46 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("document requires mode create", stderr)
 
+    def test_flags_the_openui_node_describes_are_left_out_with_a_document(self) -> None:
+        """ngdj rejects ``--access``, ``--routing`` and ``--features`` next to
+        ``--document``, so the wrappers' defaults must not emit them."""
+        (page,) = self.dry_run_argvs(
+            "ng_page",
+            *self.DOCUMENT_COMMANDS["ng_page"],
+            *self.DOCUMENT_ARGS,
+        )
+        (app,) = self.dry_run_argvs("ng_gen_app", *self.DOCUMENT_ARGS)
+
+        self.assertFalse([arg for arg in page if arg.startswith("--access")])
+        self.assertNotIn("--routing", app)
+        self.assertNotIn("--no-routing", app)
+
+    def test_the_same_flags_are_kept_without_a_document(self) -> None:
+        (page,) = self.dry_run_argvs("ng_page", *self.DOCUMENT_COMMANDS["ng_page"])
+        (app,) = self.dry_run_argvs("ng_gen_app")
+
+        self.assertIn("--access=public", page)
+        self.assertIn("--routing", app)
+
+    def test_complex_component_features_are_optional_only_with_a_document(self) -> None:
+        from django_angular3.angular import build_ng_complex_component_invocations
+        from django_angular3.config import load_project_config
+        from django_angular3.settings import AngularCommandError, load_angular_settings
+
+        config = load_project_config(PROJECT_CONFIG_PATH)
+        settings = load_angular_settings()
+        options = {"name": "dashboard-card", "target_path": "src/app/features"}
+
+        (invocation,) = build_ng_complex_component_invocations(
+            config, settings, document="src/app/app.openui.json", **options
+        )
+        with self.assertRaisesRegex(AngularCommandError, "features are required"):
+            build_ng_complex_component_invocations(config, settings, **options)
+
+        self.assertFalse(
+            [arg for arg in invocation.argv if arg.startswith("--features")]
+        )
+
     def test_management_commands_forward_the_openui_document(self) -> None:
         from django.core.management import call_command
 
