@@ -1,0 +1,411 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shlomoa/angular-django2/blob/main/projects/angular-django2/schematics/command-mapping.schema.json",
+  "title": "angular-django2 command mapping",
+  "description": "Machine-readable mapping between changes to an OpenUI document or an OpenAPI contract and the angular-django2 (ngdj) commands that act on them. Consumed by django-angular3 (djng), which keeps change detection and orchestration; ngdj owns this file, its command contracts and its parameters. The content version is the version of the package that ships the file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mappingVersion",
+    "openuiSpecVersion",
+    "ui",
+    "api",
+    "tooling",
+    "scopes",
+    "limitations"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "mappingVersion": {
+      "const": 1,
+      "description": "Version of this file format. A breaking change to the format increments it."
+    },
+    "openuiSpecVersion": {
+      "type": "string",
+      "description": "The @shlomoa/openui-spec version the mapping was checked against; it equals the version the package pins."
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commands", "nodes"],
+      "description": "Commands that compile OpenUI nodes, and the OpenUI node types they accept. djng selects a command by node type and operation.",
+      "properties": {
+        "commands": { "$ref": "#/$defs/commandMap" },
+        "nodes": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9]*$" },
+          "additionalProperties": { "$ref": "#/$defs/node" }
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commands"],
+      "description": "Capabilities and parameters of the two ngdj commands in the OpenAPI lane, openapi-setup and data-service. Routing from OpenAPI subjects (path, operation, schema) to these commands belongs to djng, not to this file.",
+      "properties": {
+        "commands": { "$ref": "#/$defs/commandMap" }
+      }
+    },
+    "tooling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commands"],
+      "description": "Commands with no OpenUI or OpenAPI counterpart.",
+      "properties": {
+        "commands": { "$ref": "#/$defs/commandMap" }
+      }
+    },
+    "scopes": {
+      "type": "array",
+      "description": "Every OpenUI scope of the pinned catalog and the cross-cutting categories, each exactly once, with how ngdj covers it.",
+      "items": { "$ref": "#/$defs/scopeEntry" }
+    },
+    "limitations": {
+      "type": "array",
+      "description": "Known limitations of the document-driven commands that are not tied to one node type.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["summary", "issue"],
+        "properties": {
+          "summary": { "type": "string", "minLength": 1 },
+          "issue": { "$ref": "#/$defs/issueRef" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "issueRef": {
+      "type": "string",
+      "pattern": "^shlomoa/[a-z0-9-]+#[0-9]+$",
+      "description": "A GitHub issue, written owner/repository#number."
+    },
+    "status": {
+      "enum": ["supported", "partial", "unsupported", "indirect", "tooling-only"],
+      "description": "supported: works through the public command and is tested. partial: part of the operation works; the reason says which part. unsupported: not available, or the command exists but does not perform this operation. indirect: applied by regenerating the node's root command (see via). tooling-only: Angular CLI or project tooling with no OpenUI counterpart."
+    },
+    "testRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file"],
+      "anyOf": [{ "required": ["ids"] }, { "required": ["match"] }],
+      "properties": {
+        "file": { "type": "string", "description": "Repository-relative path of the spec file." },
+        "ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9-]+?(\\.\\.[0-9]+)?$" },
+          "description": "Test IDs that must appear in the file. A range is written TC-NAME-01..15."
+        },
+        "match": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Literal strings that must appear in the file, for tests without an ID."
+        }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "reason": { "type": "string", "minLength": 1 },
+        "gap": { "$ref": "#/$defs/issueRef" },
+        "via": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "For indirect: the root node types whose command is regenerated; their operation status governs."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "enum": ["partial", "unsupported"] } },
+            "required": ["status"]
+          },
+          "then": { "required": ["reason", "gap"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "indirect" } }, "required": ["status"] },
+          "then": { "required": ["via"] }
+        }
+      ]
+    },
+    "operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["create", "update", "delete", "move"],
+      "properties": {
+        "create": { "$ref": "#/$defs/operation" },
+        "update": { "$ref": "#/$defs/operation" },
+        "delete": { "$ref": "#/$defs/operation" },
+        "move": { "$ref": "#/$defs/operation" }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "flag", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Option name in the command's option schema (schema.json)."
+        },
+        "flag": { "type": "string", "pattern": "^--[a-z][a-z0-9-]*$" },
+        "type": { "enum": ["string", "boolean", "object"] },
+        "positional": { "type": "integer", "minimum": 0 },
+        "default": {},
+        "enum": { "type": "array", "items": { "type": "string" } },
+        "required": { "type": "boolean" },
+        "requiredUnlessDocument": { "type": "boolean" },
+        "requiresDocument": { "type": "boolean" },
+        "notWithDocument": { "type": "boolean" },
+        "deprecated": { "type": "boolean" },
+        "source": {
+          "enum": ["project-config", "change", "default"],
+          "description": "Who supplies the value. project-config: djng project configuration. change: the Change or the OpenUI node being compiled. default: the default of the option schema."
+        },
+        "sourceKey": {
+          "type": "string",
+          "description": "For source project-config: the configuration key."
+        }
+      }
+    },
+    "onExisting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "detail"],
+      "properties": {
+        "outcome": {
+          "enum": ["reject", "skip", "no-op", "refuse-modified", "rewrite", "delegated"],
+          "description": "What a second run does on existing output. reject: fails, nothing written. skip: leaves existing files and logs. no-op: output is identical. refuse-modified: no-op when unchanged, fails when the existing output differs. rewrite: regenerates and replaces files. delegated: the behavior of an Angular CLI schematic."
+        },
+        "detail": { "type": "string", "minLength": 1 }
+      }
+    },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "summary",
+        "invocation",
+        "inputs",
+        "parameters",
+        "onExisting",
+        "operations",
+        "tests"
+      ],
+      "properties": {
+        "classification": { "enum": ["direct", "conceptual", "tooling"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "invocation": { "type": "string", "pattern": "^ng generate angular-django2:[a-z-]+$" },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["document", "cli"] }
+        },
+        "documentSelection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["document"],
+          "properties": {
+            "document": { "type": "string" },
+            "node": { "type": "string" },
+            "default": { "type": "string" }
+          }
+        },
+        "modes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cli": { "$ref": "#/$defs/mode" },
+            "document": { "$ref": "#/$defs/mode" }
+          }
+        },
+        "parameters": { "type": "array", "items": { "$ref": "#/$defs/parameter" } },
+        "onExisting": { "$ref": "#/$defs/onExisting" },
+        "operations": { "$ref": "#/$defs/operations" },
+        "capabilities": {
+          "type": "object",
+          "description": "Facts about what the generated output can do, for consumers that check a contract against the command.",
+          "additionalProperties": true
+        },
+        "before": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Commands or tools that must run after this one."
+        },
+        "after": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Commands or tools that must run before this one."
+        },
+        "outputs": { "type": "array", "items": { "type": "string" } },
+        "tests": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "document": { "type": "array", "items": { "$ref": "#/$defs/testRef" } },
+            "cli": { "type": "array", "items": { "$ref": "#/$defs/testRef" } },
+            "rerun": { "type": "array", "items": { "$ref": "#/$defs/testRef" } }
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["issue", "summary"],
+            "properties": {
+              "issue": { "$ref": "#/$defs/issueRef" },
+              "summary": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "notes": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "array", "items": { "type": "string" } },
+        "optional": { "type": "array", "items": { "type": "string" } },
+        "conflicts": { "type": "array", "items": { "type": "string" } },
+        "binding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["attribute", "format"],
+          "properties": {
+            "attribute": { "type": "string" },
+            "format": { "type": "string" }
+          }
+        }
+      }
+    },
+    "commandMap": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z-]*$" },
+      "additionalProperties": { "$ref": "#/$defs/command" }
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "supported": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Categorized attribute keys the command compiles on this node type."
+        },
+        "extensions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Subset of supported: attributes that angular-django2 reads but the OpenUI catalog does not declare for the type. They are repository-local extensions, not OpenUI-defined attributes."
+        },
+        "unsupported": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Declared attributes the command rejects, where a decision exists."
+        },
+        "unused": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Attributes accepted but without effect on the output."
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "role", "operations"],
+      "properties": {
+        "scope": {
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z]*(/[a-z][A-Za-z]*)?$",
+          "description": "A catalog scope (category/id) or a category."
+        },
+        "role": {
+          "enum": ["root", "embedded"],
+          "description": "root: a command compiles this node and its subtree. embedded: compiled as part of a root's subtree, never by a command of its own."
+        },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Candidate commands in order; the first whose condition holds is used. Required for a root.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["command"],
+            "properties": {
+              "command": { "type": "string" },
+              "lane": { "enum": ["ui", "api"], "default": "ui" },
+              "when": { "type": "string" }
+            }
+          }
+        },
+        "compiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Child node types the root's command compiles and embeds."
+        },
+        "compiledBy": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Root node types whose command compiles this node as part of their subtree. Required for embedded. For a root: when the node is a descendant of one of these types, that ancestor's command compiles it and no command of its own runs, so a second command would not collide with the first."
+        },
+        "attributes": { "$ref": "#/$defs/attributes" },
+        "operations": { "$ref": "#/$defs/operations" },
+        "notes": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "role": { "const": "root" } }, "required": ["role"] },
+          "then": { "required": ["commands"] }
+        },
+        {
+          "if": { "properties": { "role": { "const": "embedded" } }, "required": ["role"] },
+          "then": { "required": ["compiledBy"] }
+        }
+      ]
+    },
+    "scopeEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "class"],
+      "properties": {
+        "scope": { "type": "string", "pattern": "^[a-z][A-Za-z]*(/[a-z][A-Za-z]*)?$" },
+        "class": {
+          "enum": ["direct", "conceptual", "tracked", "not-planned", "cross-cutting"],
+          "description": "direct: ngdj compiles it from a document (see nodeTypes). conceptual: realized indirectly or by CLI options. tracked: not built, an issue exists. not-planned: not built and no issue; reason says why. cross-cutting: shared vocabulary with no one-to-one command."
+        },
+        "nodeTypes": { "type": "array", "items": { "type": "string" } },
+        "issue": { "$ref": "#/$defs/issueRef" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "class": { "const": "direct" } }, "required": ["class"] },
+          "then": { "required": ["nodeTypes"] }
+        },
+        {
+          "if": { "properties": { "class": { "const": "tracked" } }, "required": ["class"] },
+          "then": { "required": ["issue"] }
+        },
+        {
+          "if": {
+            "properties": { "class": { "enum": ["not-planned", "conceptual", "cross-cutting"] } },
+            "required": ["class"]
+          },
+          "then": { "required": ["reason"] }
+        }
+      ]
+    }
+  }
+}

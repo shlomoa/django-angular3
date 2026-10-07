@@ -147,17 +147,23 @@ def build_ng_new_invocations(
 
 
 def build_ng_workspace_schematic_invocations(
-    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    document: str | None = None,
+    **_: Any,
 ) -> list[AngularInvocation]:
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:workspace-setup",
+        config.project_name,
+        *_openui_document_argv(document, None, "Workspace"),
+    ]
     return [
         AngularInvocation(
             command_name="ng_workspace",
-            argv=(
-                settings.ng_executable,
-                "generate",
-                "angular-django2:workspace-setup",
-                config.project_name,
-            ),
+            argv=tuple(argv),
             cwd=config.angular_workspace,
         )
     ]
@@ -222,23 +228,27 @@ def build_ng_gen_app_invocations(
     settings: DjangoAngularSettings,
     *,
     app_name: str | None = None,
+    document: str | None = None,
+    node_id: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     target_app = app_name or config.project_name
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:material-app",
+        target_app,
+        f"--style={settings.style}",
+        "--routing" if settings.routing else "--no-routing",
+        f"--ssr={_stringify_bool(settings.ssr)}",
+        f"--zoneless={_stringify_bool(settings.zoneless)}",
+        "--defaults",
+        *_openui_document_argv(document, node_id, "Application"),
+    ]
     return [
         AngularInvocation(
             command_name="ng_gen_app",
-            argv=(
-                settings.ng_executable,
-                "generate",
-                "angular-django2:material-app",
-                target_app,
-                f"--style={settings.style}",
-                "--routing" if settings.routing else "--no-routing",
-                f"--ssr={_stringify_bool(settings.ssr)}",
-                f"--zoneless={_stringify_bool(settings.zoneless)}",
-                "--defaults",
-            ),
+            argv=tuple(argv),
             cwd=config.angular_workspace,
         )
     ]
@@ -254,10 +264,15 @@ def build_ng_complex_component_invocations(
     project: str | None = None,
     mode: str = "create",
     confirm: bool = False,
+    document: str | None = None,
+    node_id: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     """Build the ngdj advanced complex-component schematic invocation."""
     _validate_complex_component_options(name, target_path, features, mode, confirm)
+    document_argv = _openui_document_argv(document, node_id, "Complex component")
+    if document is not None and mode != "create":
+        raise AngularCommandError("Complex component document requires mode create.")
     feature_names = _normalize_complex_component_features(features)
     argv: list[str] = [
         settings.ng_executable,
@@ -272,6 +287,7 @@ def build_ng_complex_component_invocations(
         argv.append(f"--project={project}")
     if mode == "delete":
         argv.append("--confirm=true")
+    argv.extend(document_argv)
 
     return [
         AngularInvocation(
@@ -294,9 +310,12 @@ def build_ng_page_invocations(
     auth_guard: str = "authGuard",
     navigation_label: str | None = None,
     navigation_icon: str | None = None,
+    document: str | None = None,
+    node_id: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     """Build the ngdj page schematic invocation."""
+    document_argv = _openui_document_argv(document, node_id, "Page")
     _validate_kebab_case_name(name, "Page")
     _validate_relative_path(target_path, "Page target path")
     if access not in {"public", "protected"}:
@@ -330,6 +349,7 @@ def build_ng_page_invocations(
         argv.append(f"--navigation-label={navigation_label}")
     if navigation_icon:
         argv.append(f"--navigation-icon={navigation_icon}")
+    argv.extend(document_argv)
 
     return [
         AngularInvocation(
@@ -347,6 +367,8 @@ def build_ng_component_invocations(
     name: str,
     target_path: str | None = None,
     project: str | None = None,
+    document: str | None = None,
+    node_id: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     """Build the ngdj component schematic invocation."""
@@ -354,6 +376,7 @@ def build_ng_component_invocations(
         raise AngularCommandError("Component name must not be empty.")
     if target_path is not None:
         _validate_relative_path(target_path, "Component target path")
+    document_argv = _openui_document_argv(document, node_id, "Component")
 
     argv: list[str] = [
         settings.ng_executable,
@@ -365,6 +388,7 @@ def build_ng_component_invocations(
         argv.append(f"--path={target_path}")
     if project:
         argv.append(f"--project={project}")
+    argv.extend(document_argv)
 
     return [
         AngularInvocation(
@@ -380,15 +404,27 @@ def build_ng_reactive_form_invocations(
     settings: DjangoAngularSettings,
     *,
     name: str,
-    definition: str,
+    definition: str | None = None,
     target_path: str | None = None,
     project: str | None = None,
     primitives_path: str | None = None,
+    document: str | None = None,
+    node_id: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
-    """Build the ngdj reactive-form schematic invocation."""
+    """Build the ngdj reactive-form schematic invocation.
+
+    The form comes from an OpenUI ``document`` (and optionally a ``node_id``) or
+    from the deprecated ``definition`` file, never both.
+    """
     _validate_kebab_case_name(name, "Reactive form")
-    _validate_relative_path(definition, "Reactive form definition")
+    document_argv = _openui_document_argv(document, node_id, "Reactive form")
+    if (definition is None) == (document is None):
+        raise AngularCommandError(
+            "Reactive form requires exactly one of a document or a definition."
+        )
+    if definition is not None:
+        _validate_relative_path(definition, "Reactive form definition")
     if target_path is not None:
         _validate_relative_path(target_path, "Reactive form target path")
     if primitives_path is not None:
@@ -399,14 +435,16 @@ def build_ng_reactive_form_invocations(
         "generate",
         "angular-django2:reactive-form",
         name,
-        f"--definition={definition}",
     ]
+    if definition is not None:
+        argv.append(f"--definition={definition}")
     if target_path:
         argv.append(f"--path={target_path}")
     if project:
         argv.append(f"--project={project}")
     if primitives_path:
         argv.append(f"--primitives-path={primitives_path}")
+    argv.extend(document_argv)
 
     return [
         AngularInvocation(
@@ -444,6 +482,7 @@ def build_ng_openapi_setup_invocations(
     helpers_path: str | None = None,
     skip_helpers: bool = False,
     skip_tests: bool = False,
+    auth_scheme: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     """Bootstrap ng-openapi-gen and Django integration helpers via the ngdj
@@ -461,6 +500,8 @@ def build_ng_openapi_setup_invocations(
         argv.append("--skip-helpers=true")
     if skip_tests:
         argv.append("--skip-tests=true")
+    if auth_scheme:
+        argv.append(f"--auth-scheme={auth_scheme}")
 
     return [
         AngularInvocation(
@@ -579,7 +620,11 @@ def build_ng_add_invocations(
 
 
 def build_ng_workspace_invocations(
-    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    document: str | None = None,
+    **_: Any,
 ) -> list[AngularInvocation]:
     """Create and bootstrap an Angular workspace with angular-django2 defaults."""
     invocations = _relabel_invocations(
@@ -593,7 +638,9 @@ def build_ng_workspace_invocations(
     invocations.extend(
         _relabel_invocations(build_ng_add_invocations(config, settings), "ng_workspace")
     )
-    invocations.extend(build_ng_workspace_schematic_invocations(config, settings))
+    invocations.extend(
+        build_ng_workspace_schematic_invocations(config, settings, document=document)
+    )
     return invocations
 
 
@@ -684,6 +731,27 @@ def _validate_relative_path(value: str, label: str) -> None:
         raise AngularCommandError(
             f"{label} must be a non-empty relative path within the Angular workspace."
         )
+
+
+def _openui_document_argv(
+    document: str | None, node_id: str | None, label: str
+) -> list[str]:
+    """Flags that point an ngdj schematic at an OpenUI document and element.
+
+    ``document`` is relative to the Angular workspace, as ngdj resolves it, and
+    ``node_id`` selects an element of it and requires ``document``.
+    """
+    if node_id is not None and document is None:
+        raise AngularCommandError(f"{label} node id requires a document.")
+    argv: list[str] = []
+    if document is not None:
+        _validate_relative_path(document, f"{label} document")
+        argv.append(f"--document={document}")
+    if node_id is not None:
+        if not node_id.strip():
+            raise AngularCommandError(f"{label} node id must not be empty.")
+        argv.append(f"--node-id={node_id}")
+    return argv
 
 
 def _validate_identifier(value: str, label: str) -> None:

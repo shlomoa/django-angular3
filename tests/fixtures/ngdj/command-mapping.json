@@ -1,0 +1,2408 @@
+{
+  "$schema": "./command-mapping.schema.json",
+  "mappingVersion": 1,
+  "openuiSpecVersion": "0.12.1",
+  "ui": {
+    "commands": {
+      "reactive-form": {
+        "classification": "direct",
+        "summary": "Compile an OpenUI Form node into a typed standalone OnPush Angular Material reactive form.",
+        "invocation": "ng generate angular-django2:reactive-form",
+        "inputs": ["document"],
+        "parameters": [
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0, "required": true },
+          { "name": "definition", "flag": "--definition", "type": "string", "deprecated": true },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true },
+          { "name": "path", "flag": "--path", "type": "string", "default": "src/app/features" },
+          { "name": "project", "flag": "--project", "type": "string" },
+          {
+            "name": "primitivesPath",
+            "flag": "--primitives-path",
+            "type": "string",
+            "default": "src/app/shared/form-helpers"
+          }
+        ],
+        "onExisting": {
+          "outcome": "skip",
+          "detail": "Create-only. A second run warns that the output already exists and leaves it unchanged."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "Create-only: a second run leaves the existing component unchanged.",
+            "gap": "shlomoa/angular-django2#194"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#194"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.reactive-form.spec.ts",
+              "ids": [
+                "TC-REACTIVE-FORM-OPENUI-01..06",
+                "TC-REACTIVE-FORM-OPENUI-DEPRECATION",
+                "TC-REACTIVE-FORM-OPENUI-TUTORIAL"
+              ]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.reactive-form.spec.ts",
+              "ids": ["TC-REACTIVE-FORM-09"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        },
+        "notes": [
+          "--definition (a legacy JSON form definition) is deprecated; the warning prints the equivalent Form node."
+        ]
+      },
+      "form-field": {
+        "classification": "direct",
+        "summary": "Compile a TextInputs or RangeControl node into a reusable ControlValueAccessor Angular Material form field.",
+        "invocation": "ng generate angular-django2:form-field",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true
+          },
+          {
+            "name": "path",
+            "flag": "--path",
+            "type": "string",
+            "default": "src/app/shared/form-helpers"
+          },
+          { "name": "project", "flag": "--project", "type": "string" },
+          {
+            "name": "controlType",
+            "flag": "--control-type",
+            "type": "string",
+            "enum": ["text", "email", "password", "number", "textarea"],
+            "notWithDocument": true
+          },
+          {
+            "name": "appearance",
+            "flag": "--appearance",
+            "type": "string",
+            "enum": ["fill", "outline"],
+            "notWithDocument": true
+          },
+          {
+            "name": "subscriptSizing",
+            "flag": "--subscript-sizing",
+            "type": "string",
+            "enum": ["fixed", "dynamic"],
+            "notWithDocument": true
+          },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "A second run fails before modifying existing output."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run is rejected before it modifies the existing output.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.form-field.spec.ts",
+              "ids": ["TC-FORM-FIELD-OPENUI-01..06"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.form-field.spec.ts",
+              "ids": ["TC-FORM-FIELD-06"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        }
+      },
+      "field-component": {
+        "classification": "direct",
+        "summary": "Compile a TextInputs node into a simple typed Angular Material field-control convenience component.",
+        "invocation": "ng generate angular-django2:field-component",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true
+          },
+          {
+            "name": "path",
+            "flag": "--path",
+            "type": "string",
+            "default": "src/app/shared/form-helpers"
+          },
+          { "name": "project", "flag": "--project", "type": "string" },
+          {
+            "name": "kind",
+            "flag": "--kind",
+            "type": "string",
+            "enum": ["text", "email", "password", "textarea"],
+            "notWithDocument": true
+          },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "A second run fails with 'already exists' before creating files."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run is rejected before it creates files.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.field-component.spec.ts",
+              "ids": ["TC-FIELD-OPENUI-01"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.field-component.spec.ts",
+              "match": ["already exists"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        }
+      },
+      "component": {
+        "classification": "direct",
+        "summary": "Compile a SurfaceContainers node and its Form, TextInputs and RangeControl children into standalone OnPush components, each embedded in its parent.",
+        "invocation": "ng generate angular-django2:component",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true
+          },
+          { "name": "path", "flag": "--path", "type": "string" },
+          { "name": "project", "flag": "--project", "type": "string" },
+          { "name": "standalone", "flag": "--standalone", "type": "boolean", "default": true },
+          {
+            "name": "changeDetection",
+            "flag": "--change-detection",
+            "type": "string",
+            "default": "OnPush"
+          },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "A second run fails with a merge conflict on the existing component file; nothing is written."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails with a merge conflict.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.composition.spec.ts",
+              "ids": ["TC-COMPOSE-01..04", "TC-COMPOSE-09"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-04"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        }
+      },
+      "complex-component": {
+        "classification": "direct",
+        "summary": "As component, plus at most one OverlayContainers child compiled to a CDK overlay.",
+        "invocation": "ng generate angular-django2:complex-component",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true
+          },
+          { "name": "path", "flag": "--path", "type": "string", "required": true },
+          { "name": "project", "flag": "--project", "type": "string" },
+          {
+            "name": "features",
+            "flag": "--features",
+            "type": "string",
+            "requiredUnlessDocument": true
+          },
+          {
+            "name": "mode",
+            "flag": "--mode",
+            "type": "string",
+            "default": "create",
+            "enum": ["create", "modify", "delete"]
+          },
+          { "name": "confirm", "flag": "--confirm", "type": "boolean", "default": false },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "With --document a second run fails with a merge conflict; the CLI feature lifecycle has its own modify and delete modes."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "partial",
+            "reason": "--mode=modify exists for CLI-defined features only; --document accepts --mode=create only.",
+            "gap": "shlomoa/angular-django2#200"
+          },
+          "delete": {
+            "status": "partial",
+            "reason": "--mode=delete --confirm exists for CLI-defined features only; --document accepts --mode=create only.",
+            "gap": "shlomoa/angular-django2#200"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.composition.spec.ts",
+              "ids": ["TC-COMPOSE-05..08"]
+            }
+          ],
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.complex-component.spec.ts",
+              "ids": ["TC-COMPLEX-01..03"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-05"]
+            },
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-09"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        },
+        "notes": [
+          "With --document the command rejects --mode=modify and --mode=delete with '--document supports only --mode=create.'"
+        ]
+      },
+      "tabs": {
+        "classification": "direct",
+        "summary": "Compile a Tabs container and its tab children into a standalone OnPush Angular Material tabs component.",
+        "invocation": "ng generate angular-django2:tabs",
+        "inputs": ["document"],
+        "parameters": [
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0 },
+          { "name": "path", "flag": "--path", "type": "string" },
+          { "name": "project", "flag": "--project", "type": "string" },
+          { "name": "document", "flag": "--document", "type": "string", "required": true },
+          { "name": "nodeId", "flag": "--node-id", "type": "string" }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "The command generates through Angular's component schematic first, so a second run fails with a merge conflict; nothing is written."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails with a merge conflict.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.tabs.spec.ts",
+              "ids": ["TC-TABS-01..15"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-01"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        }
+      },
+      "dialog": {
+        "classification": "direct",
+        "summary": "Compile an OpenUI dialog node into a standalone OnPush Angular Material dialog component.",
+        "invocation": "ng generate angular-django2:dialog",
+        "inputs": ["document"],
+        "parameters": [
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0 },
+          { "name": "path", "flag": "--path", "type": "string" },
+          { "name": "project", "flag": "--project", "type": "string" },
+          { "name": "document", "flag": "--document", "type": "string", "required": true },
+          { "name": "nodeId", "flag": "--node-id", "type": "string" }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "The command generates through Angular's component schematic first, so a second run fails with a merge conflict; nothing is written."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails with a merge conflict.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.dialog.spec.ts",
+              "ids": ["TC-DIALOG-01..18"]
+            },
+            {
+              "file": "projects/angular-django2-reference/src/app/demos/dialog/dialog-demo-page.spec.ts",
+              "ids": ["TC-DIALOG-DEMO-01..08"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-02"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first dialog node"
+        }
+      },
+      "stepper": {
+        "classification": "direct",
+        "summary": "Compile a Stepper container and its step children into a standalone OnPush Angular Material stepper component.",
+        "invocation": "ng generate angular-django2:stepper",
+        "inputs": ["document"],
+        "parameters": [
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0 },
+          { "name": "path", "flag": "--path", "type": "string" },
+          { "name": "project", "flag": "--project", "type": "string" },
+          { "name": "document", "flag": "--document", "type": "string", "required": true },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "The command generates through Angular's component schematic first, so a second run fails with a merge conflict; nothing is written."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails with a merge conflict.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.stepper.spec.ts",
+              "ids": ["TC-STEPPER-01..21"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-03"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        }
+      },
+      "table": {
+        "classification": "direct",
+        "summary": "Compile an OpenUI table node into a standalone OnPush Angular Material table component; the host supplies columns and rows.",
+        "invocation": "ng generate angular-django2:table",
+        "inputs": ["document"],
+        "parameters": [
+          { "name": "document", "flag": "--document", "type": "string", "required": true },
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0 },
+          {
+            "name": "path",
+            "flag": "--path",
+            "type": "string",
+            "default": "src/app/shared/tables"
+          },
+          { "name": "project", "flag": "--project", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string" }
+        ],
+        "onExisting": {
+          "outcome": "reject",
+          "detail": "A second run is rejected before modifying existing output."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run is rejected before modifying existing output.",
+            "gap": "shlomoa/angular-django2#197"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#197"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.table.spec.ts",
+              "ids": ["TC-TABLE-01..18"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.table.spec.ts",
+              "ids": ["TC-TABLE-17"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        }
+      },
+      "page": {
+        "classification": "direct",
+        "summary": "Compile a DashboardPage or EmptyPage into a standalone OnPush page with an owned lazy route registered in app.routes.ts.",
+        "invocation": "ng generate angular-django2:page",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true
+          },
+          { "name": "path", "flag": "--path", "type": "string", "required": true },
+          { "name": "project", "flag": "--project", "type": "string" },
+          {
+            "name": "routePath",
+            "flag": "--route-path",
+            "type": "string",
+            "notWithDocument": true
+          },
+          {
+            "name": "access",
+            "flag": "--access",
+            "type": "string",
+            "enum": ["public", "protected"],
+            "notWithDocument": true
+          },
+          {
+            "name": "authGuard",
+            "flag": "--auth-guard",
+            "type": "string",
+            "notWithDocument": true
+          },
+          {
+            "name": "navigationLabel",
+            "flag": "--navigation-label",
+            "type": "string",
+            "notWithDocument": true
+          },
+          {
+            "name": "navigationIcon",
+            "flag": "--navigation-icon",
+            "type": "string",
+            "notWithDocument": true
+          },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "refuse-modified",
+          "detail": "A second run with unchanged input is a no-op; if the generated files or the route registration differ from what would be generated, it fails instead of overwriting."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A changed document makes the expected files differ from the existing ones, so the run is refused.",
+            "gap": "shlomoa/angular-django2#195"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; the page files and the route registration in app.routes.ts are not removed.",
+            "gap": "shlomoa/angular-django2#195"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.openui-app.spec.ts",
+              "ids": ["TC-APP-03..05"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.page.spec.ts",
+              "match": ["is idempotent and refuses incomplete owned route registration"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node of the accepted type"
+        },
+        "notes": [
+          "Protected routes need an existing, already imported auth guard; the command does not create one."
+        ]
+      },
+      "application": {
+        "classification": "direct",
+        "summary": "Compile an Application node into an Angular application; routing follows the Routing child.",
+        "invocation": "ng generate angular-django2:application",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true
+          },
+          { "name": "routing", "flag": "--routing", "type": "boolean", "notWithDocument": true },
+          { "name": "standalone", "flag": "--standalone", "type": "boolean", "default": true },
+          { "name": "ssr", "flag": "--ssr", "type": "boolean", "default": false },
+          { "name": "zoneless", "flag": "--zoneless", "type": "boolean", "default": true },
+          { "name": "style", "flag": "--style", "type": "string", "default": "scss" },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "delegated",
+          "detail": "A second run fails with 'Project name already exists.' from Angular's application schematic."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails because the project already exists; use material-app to re-derive the layout.",
+            "gap": "shlomoa/angular-django2#198"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode.",
+            "gap": "shlomoa/angular-django2#198"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.openui-app.spec.ts",
+              "ids": ["TC-APP-01", "TC-APP-02", "TC-APP-17"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-06"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first Application node"
+        }
+      },
+      "material-app": {
+        "classification": "direct",
+        "summary": "Compile an Application node into a Django-friendly Material application with sidenav, toolbar and routes.",
+        "invocation": "ng generate angular-django2:material-app",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true
+          },
+          {
+            "name": "theme",
+            "flag": "--theme",
+            "type": "string",
+            "enum": ["indigo-pink", "deeppurple-amber", "pink-bluegrey", "purple-green", "custom"],
+            "notWithDocument": true
+          },
+          {
+            "name": "typography",
+            "flag": "--typography",
+            "type": "boolean",
+            "notWithDocument": true
+          },
+          {
+            "name": "animations",
+            "flag": "--animations",
+            "type": "boolean",
+            "notWithDocument": true
+          },
+          { "name": "routing", "flag": "--routing", "type": "boolean", "notWithDocument": true },
+          { "name": "standalone", "flag": "--standalone", "type": "boolean", "default": true },
+          { "name": "ssr", "flag": "--ssr", "type": "boolean", "default": false },
+          { "name": "zoneless", "flag": "--zoneless", "type": "boolean", "default": true },
+          { "name": "defaults", "flag": "--defaults", "type": "boolean", "default": true },
+          { "name": "style", "flag": "--style", "type": "string", "default": "scss" },
+          { "name": "prefix", "flag": "--prefix", "type": "string", "default": "app" },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "rewrite",
+          "detail": "Skips project creation when the project exists and re-derives the layout from the document: only the generated regions of the layout, component, styles and spec are replaced, so a changed document is applied and edits made around those regions are kept. A file without generated regions (Angular's default, or output of an earlier version) is replaced whole once. An unchanged document leaves the output byte-identical."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": { "status": "supported" },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode.",
+            "gap": "shlomoa/angular-django2#198"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.openui-app.spec.ts",
+              "ids": ["TC-APP-06", "TC-APP-07", "TC-APP-13..17"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-07"]
+            },
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.material-app-update.spec.ts",
+              "ids": ["TC-APP-UPDATE-01..06"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first Application node"
+        },
+        "notes": [
+          "Route paths have two unsynchronized sources: page registers DashboardPage uses.route and material-app links to Route uses.path."
+        ]
+      },
+      "workspace-setup": {
+        "classification": "direct",
+        "summary": "Compile the html and link nodes of an Application into the workspace index.html and favicon; also initializes workspace files from CLI options.",
+        "invocation": "ng generate angular-django2:workspace-setup",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0, "required": true },
+          { "name": "project", "flag": "--project", "type": "string" },
+          { "name": "files", "flag": "--files", "type": "object" },
+          { "name": "document", "flag": "--document", "type": "string" }
+        ],
+        "onExisting": {
+          "outcome": "rewrite",
+          "detail": "Rewrites index.html and the favicon from the document on every run; unchanged input gives identical output."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": { "status": "supported" },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; index.html and the favicon are not reverted.",
+            "gap": "shlomoa/angular-django2#198"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.openui-app.spec.ts",
+              "ids": ["TC-APP-08..10"]
+            }
+          ],
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.workspace-setup.spec.ts",
+              "ids": ["TC-WS-01..20"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-08"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "default": "the first non-root html node and the first link node with uses.rel icon"
+        },
+        "notes": ["--node-id does not exist for this command."]
+      },
+      "embed-component": {
+        "classification": "conceptual",
+        "summary": "Embed a generated component into a parent component through its embedding hooks; the composition engine behind component, complex-component and page.",
+        "invocation": "ng generate angular-django2:embed-component",
+        "inputs": ["cli"],
+        "parameters": [
+          { "name": "component", "flag": "--component", "type": "string", "positional": 0 },
+          { "name": "parent", "flag": "--parent", "type": "string", "positional": 1 },
+          { "name": "from", "flag": "--from", "type": "string" },
+          { "name": "selector", "flag": "--selector", "type": "string" },
+          { "name": "inputs", "flag": "--inputs", "type": "string" },
+          { "name": "outputs", "flag": "--outputs", "type": "string" },
+          {
+            "name": "slot",
+            "flag": "--slot",
+            "type": "string",
+            "enum": ["header", "content", "actions"]
+          }
+        ],
+        "onExisting": {
+          "outcome": "skip",
+          "detail": "Every transformation is idempotent; embedding the same child twice does not duplicate it."
+        },
+        "operations": {
+          "create": { "status": "indirect", "via": ["SurfaceContainers", "DashboardPage"] },
+          "update": { "status": "indirect", "via": ["SurfaceContainers", "DashboardPage"] },
+          "delete": { "status": "indirect", "via": ["SurfaceContainers", "DashboardPage"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.component.spec.ts",
+              "ids": ["TC-EMBED-01..11"]
+            },
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.composition.spec.ts",
+              "ids": ["TC-COMPOSE-09..15"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.component.spec.ts",
+              "ids": ["TC-EMBED-05", "TC-EMBED-09"]
+            }
+          ]
+        },
+        "notes": [
+          "No OpenUI input: its slot is a CLI option. uses.slot on a child node is an angular-django2 extension."
+        ]
+      },
+      "material-setup": {
+        "classification": "conceptual",
+        "summary": "Configure Angular Material in an existing project with a theme and providers; its options are the OpenUI Presentation tokens.",
+        "invocation": "ng generate angular-django2:material-setup",
+        "inputs": ["cli"],
+        "parameters": [
+          { "name": "project", "flag": "--project", "type": "string", "required": true },
+          {
+            "name": "theme",
+            "flag": "--theme",
+            "type": "string",
+            "default": "indigo-pink",
+            "enum": ["indigo-pink", "deeppurple-amber", "pink-bluegrey", "purple-green", "custom"]
+          },
+          { "name": "typography", "flag": "--typography", "type": "boolean", "default": true },
+          { "name": "animations", "flag": "--animations", "type": "boolean", "default": true }
+        ],
+        "onExisting": {
+          "outcome": "no-op",
+          "detail": "Idempotent: a second run with unchanged options leaves the project byte-identical. A changed option is applied: the theme is swapped in the angular.json styles array and the styles.scss theme block, the typography changes the custom theme, and the animations option swaps the provider. A theme written by hand into styles.scss is left alone."
+        },
+        "operations": {
+          "create": { "status": "tooling-only" },
+          "update": { "status": "tooling-only" },
+          "delete": { "status": "tooling-only" },
+          "move": { "status": "tooling-only" }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.material-setup.spec.ts",
+              "ids": ["TC-M1..4"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.material-setup.spec.ts",
+              "ids": ["TC-M4"]
+            },
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.material-app-update.spec.ts",
+              "ids": ["TC-APP-UPDATE-01"]
+            },
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.mapping-rerun.spec.ts",
+              "ids": ["TC-MAPPING-RERUN-10"]
+            }
+          ]
+        },
+        "notes": [
+          "material-app --document reads the Presentation node and passes the tokens on; it runs this command on every run."
+        ]
+      },
+      "app-shell": {
+        "classification": "conceptual",
+        "summary": "Pass-through to Angular's SSR and prerender app-shell schematic; no OpenUI counterpart.",
+        "invocation": "ng generate angular-django2:app-shell",
+        "inputs": ["cli"],
+        "parameters": [{ "name": "project", "flag": "--project", "type": "string" }],
+        "onExisting": {
+          "outcome": "delegated",
+          "detail": "The behavior of Angular's app-shell schematic."
+        },
+        "operations": {
+          "create": { "status": "tooling-only" },
+          "update": { "status": "tooling-only" },
+          "delete": { "status": "tooling-only" },
+          "move": { "status": "tooling-only" }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.pass-through.spec.ts",
+              "match": ["appShell"]
+            }
+          ]
+        }
+      }
+    },
+    "nodes": {
+      "Application": {
+        "scope": "application",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": { "status": "supported" },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode.",
+            "gap": "shlomoa/angular-django2#198"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [
+          {
+            "command": "material-app",
+            "when": "the Material sidenav layout; django-angular3 ng_gen_app invokes material-app"
+          },
+          { "command": "application" }
+        ],
+        "compiles": [
+          "Routing",
+          "Navigation",
+          "ToolBar",
+          "Presentation",
+          "html",
+          "link",
+          "Route",
+          "NavItem",
+          "NavGroup",
+          "ToolBarRow",
+          "ToolAction"
+        ],
+        "attributes": { "supported": [] }
+      },
+      "html": {
+        "scope": "application/indexHtml",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": { "status": "supported" },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; index.html is not reverted.",
+            "gap": "shlomoa/angular-django2#198"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "workspace-setup" }],
+        "attributes": { "supported": ["uses.lang", "uses.dir", "uses.title"] },
+        "notes": [
+          "uses.dir accepts ltr, rtl and auto. Also read by material-app as the toolbar title."
+        ]
+      },
+      "link": {
+        "scope": "application/favicon",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": { "status": "supported" },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; the favicon is not reverted.",
+            "gap": "shlomoa/angular-django2#198"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "workspace-setup" }],
+        "attributes": {
+          "supported": ["uses.rel", "uses.href", "uses.type", "uses.sizes", "uses.media"],
+          "unused": ["uses.rel", "uses.type", "uses.sizes", "uses.media"]
+        },
+        "notes": ["Only uses.href is used; the first link with uses.rel icon is the favicon."]
+      },
+      "Routing": {
+        "scope": "application/routing",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": { "supported": ["uses.defaultRoute"], "unused": ["uses.defaultRoute"] }
+      },
+      "Route": {
+        "scope": "application/route",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": {
+          "supported": ["uses.path", "uses.target", "uses.title", "uses.access", "uses.redirectTo"],
+          "unused": ["uses.title", "uses.access", "uses.redirectTo"]
+        }
+      },
+      "Navigation": {
+        "scope": "application/navigation",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": { "supported": ["uses.ariaLabel"], "unused": ["uses.ariaLabel"] }
+      },
+      "NavItem": {
+        "scope": "application/navItem",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": { "supported": ["uses.label", "uses.route", "uses.icon", "uses.disabled"] }
+      },
+      "NavGroup": {
+        "scope": "application/navGroup",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": {
+          "supported": ["uses.label", "uses.expanded"],
+          "unused": ["uses.label", "uses.expanded"]
+        },
+        "notes": ["Group entries are flattened; the group label is not rendered."]
+      },
+      "ToolBar": {
+        "scope": "application/toolBars",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": { "supported": ["uses.ariaLabel"] }
+      },
+      "ToolBarRow": {
+        "scope": "application/toolBarRow",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": { "supported": [] }
+      },
+      "ToolAction": {
+        "scope": "application/toolAction",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": {
+          "supported": ["uses.label", "uses.icon", "uses.disabled", "produces.activate"]
+        },
+        "notes": [
+          "produces.activate is a null marker that generates an on<ActionId>Activate($event) stub."
+        ]
+      },
+      "Presentation": {
+        "scope": "presentation",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Application"] },
+          "update": { "status": "indirect", "via": ["Application"] },
+          "delete": { "status": "indirect", "via": ["Application"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Application"],
+        "attributes": {
+          "supported": ["uses.theme", "uses.typography", "uses.animations"],
+          "extensions": ["uses.theme", "uses.typography", "uses.animations"]
+        }
+      },
+      "DashboardPage": {
+        "scope": "pages/dashboard",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A changed document makes the expected files differ from the existing ones, so the run is refused.",
+            "gap": "shlomoa/angular-django2#195"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#195"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "page" }],
+        "compiles": ["SurfaceContainers", "Form", "TextInputs", "RangeControl"],
+        "attributes": {
+          "supported": ["uses.title", "uses.route", "uses.access", "uses.authGuard", "uses.icon"],
+          "extensions": ["uses.title", "uses.route", "uses.access", "uses.authGuard", "uses.icon"],
+          "unused": ["uses.icon"]
+        },
+        "notes": [
+          "uses.access accepts public and protected; protected needs an existing, already imported guard (uses.authGuard)."
+        ]
+      },
+      "EmptyPage": {
+        "scope": "pages/emptyPage",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A changed document makes the expected files differ from the existing ones, so the run is refused.",
+            "gap": "shlomoa/angular-django2#195"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#195"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "page" }],
+        "compiles": [],
+        "attributes": {
+          "supported": ["uses.title", "uses.route", "uses.access", "uses.authGuard", "uses.icon"],
+          "extensions": ["uses.title", "uses.route", "uses.access", "uses.authGuard", "uses.icon"],
+          "unused": ["uses.icon"]
+        },
+        "notes": ["Rejects children."]
+      },
+      "Form": {
+        "scope": "views/form",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "Create-only: a second run leaves the existing component unchanged.",
+            "gap": "shlomoa/angular-django2#194"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#194"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "reactive-form" }],
+        "compiles": ["TextInputs", "RangeControl", "ActionControls"],
+        "compiledBy": ["DashboardPage", "SurfaceContainers", "Tabs", "Stepper", "dialog"],
+        "attributes": {
+          "supported": ["uses.title", "uses.action", "behaves.submit"],
+          "extensions": ["uses.title", "uses.action"],
+          "unsupported": ["behaves.validate", "produces.dirtyChange"]
+        },
+        "notes": [
+          "behaves.submit is an expression <artifact>#<Symbol>.<method>.",
+          "behaves.validate (shlomoa/angular-django2#188) and produces.dirtyChange (shlomoa/angular-django2#189) are declared by the catalog and rejected."
+        ]
+      },
+      "ActionControls": {
+        "scope": "controls/actionControls",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Form"] },
+          "update": { "status": "indirect", "via": ["Form"] },
+          "delete": { "status": "indirect", "via": ["Form"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Form"],
+        "attributes": { "supported": ["uses.label"] },
+        "notes": [
+          "Compiled only as the Form submit action (at most one, no children); standalone action controls are tracked in shlomoa/angular-django2#187."
+        ]
+      },
+      "TextInputs": {
+        "scope": "controls/textInputs",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run is rejected; the existing field is not updated.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [
+          { "command": "form-field", "when": "a reusable ControlValueAccessor field is wanted" },
+          {
+            "command": "field-component",
+            "when": "a simple typed convenience component is wanted"
+          }
+        ],
+        "compiledBy": ["DashboardPage", "SurfaceContainers", "Tabs", "Stepper", "dialog"],
+        "attributes": {
+          "supported": [
+            "uses.type",
+            "uses.multiline",
+            "uses.label",
+            "uses.value",
+            "uses.placeholder",
+            "uses.required",
+            "uses.maxLength",
+            "uses.name",
+            "uses.hint",
+            "uses.autocomplete",
+            "uses.email",
+            "uses.minLength",
+            "uses.min",
+            "uses.max",
+            "uses.pattern",
+            "uses.appearance",
+            "uses.subscriptSizing"
+          ],
+          "extensions": [
+            "uses.name",
+            "uses.hint",
+            "uses.autocomplete",
+            "uses.email",
+            "uses.minLength",
+            "uses.min",
+            "uses.max",
+            "uses.pattern",
+            "uses.appearance",
+            "uses.subscriptSizing"
+          ]
+        },
+        "notes": [
+          "uses.type accepts text, email and password; search, tel and url are rejected. uses.multiline \"true\" selects a textarea.",
+          "Both commands accept the same node and the document does not select between them: the choice belongs to the orchestrator. The order lists form-field first because reactive-form composes it."
+        ]
+      },
+      "RangeControl": {
+        "scope": "controls/rangeControl",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run is rejected; the existing field is not updated.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "form-field" }],
+        "compiledBy": ["DashboardPage", "SurfaceContainers", "Tabs", "Stepper", "dialog"],
+        "attributes": {
+          "supported": [
+            "uses.label",
+            "uses.value",
+            "uses.min",
+            "uses.max",
+            "uses.type",
+            "uses.name",
+            "uses.hint",
+            "uses.autocomplete",
+            "uses.email",
+            "uses.minLength",
+            "uses.pattern",
+            "uses.appearance",
+            "uses.subscriptSizing"
+          ],
+          "extensions": [
+            "uses.type",
+            "uses.name",
+            "uses.hint",
+            "uses.autocomplete",
+            "uses.email",
+            "uses.minLength",
+            "uses.pattern",
+            "uses.appearance",
+            "uses.subscriptSizing"
+          ]
+        },
+        "notes": ["uses.min, uses.max and uses.value are numbers; uses.type accepts number."]
+      },
+      "SurfaceContainers": {
+        "scope": "containers/surfaceContainers",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "component and complex-component fail on a second run with a merge conflict; complex-component modify and delete exist for CLI-defined features only (shlomoa/angular-django2#200).",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#193"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [
+          {
+            "command": "complex-component",
+            "when": "the container has an OverlayContainers child"
+          },
+          { "command": "component" }
+        ],
+        "compiles": [
+          "SurfaceContainers",
+          "Form",
+          "TextInputs",
+          "RangeControl",
+          "OverlayContainers"
+        ],
+        "compiledBy": ["DashboardPage", "SurfaceContainers", "Tabs", "Stepper", "dialog"],
+        "attributes": {
+          "supported": ["uses.title", "uses.slot", "uses.data"],
+          "extensions": ["uses.slot", "uses.data"]
+        },
+        "notes": [
+          "uses.slot (header, content, actions; default content) is read on a child and chooses its section.",
+          "A child's uses. attributes that name a child input are bound: a quoted literal as a string literal, an unquoted string as the Angular expression itself."
+        ]
+      },
+      "OverlayContainers": {
+        "scope": "containers/overlayContainers",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["SurfaceContainers"] },
+          "update": { "status": "indirect", "via": ["SurfaceContainers"] },
+          "delete": { "status": "indirect", "via": ["SurfaceContainers"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["SurfaceContainers"],
+        "attributes": { "supported": ["uses.label"], "extensions": ["uses.label"] },
+        "notes": [
+          "At most one per container; its children may not set uses.slot; create mode only."
+        ]
+      },
+      "Tabs": {
+        "scope": "containers/tabs",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails with a merge conflict.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "tabs" }],
+        "compiles": ["tab", "SurfaceContainers", "Form", "TextInputs", "RangeControl", "Tabs"],
+        "compiledBy": ["Tabs"],
+        "attributes": {
+          "supported": ["uses.selectedIndex", "uses.orientation", "produces.selectedTabChange"]
+        },
+        "notes": [
+          "A page stack (tabs without a tab strip), other attributes and other child types are rejected."
+        ]
+      },
+      "tab": {
+        "scope": "containers/tabs",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Tabs"] },
+          "update": { "status": "indirect", "via": ["Tabs"] },
+          "delete": { "status": "indirect", "via": ["Tabs"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Tabs"],
+        "attributes": {
+          "supported": ["uses.label", "uses.disabled"],
+          "extensions": ["uses.label", "uses.disabled"]
+        },
+        "notes": ["uses.label is required; the catalog declares no attribute for tab."]
+      },
+      "dialog": {
+        "scope": "widgets/dialog",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails with a merge conflict.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "dialog" }],
+        "compiles": ["header", "section", "footer"],
+        "attributes": {
+          "supported": ["uses.open", "uses.modal", "produces.close", "produces.cancel"]
+        },
+        "notes": [
+          "Regions in the order title, content, actions, each once, with the content section required. A ModalOverlay targeting the dialog is rejected."
+        ]
+      },
+      "header": {
+        "scope": "widgets/dialog",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["dialog"] },
+          "update": { "status": "indirect", "via": ["dialog"] },
+          "delete": { "status": "indirect", "via": ["dialog"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["dialog"],
+        "attributes": { "supported": ["uses.title"], "extensions": ["uses.title"] },
+        "notes": ["The dialog title region."]
+      },
+      "section": {
+        "scope": "widgets/dialog",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["dialog"] },
+          "update": { "status": "indirect", "via": ["dialog"] },
+          "delete": { "status": "indirect", "via": ["dialog"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["dialog"],
+        "attributes": { "supported": [] },
+        "notes": ["The dialog content region; required."]
+      },
+      "footer": {
+        "scope": "widgets/dialog",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["dialog"] },
+          "update": { "status": "indirect", "via": ["dialog"] },
+          "delete": { "status": "indirect", "via": ["dialog"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["dialog"],
+        "attributes": { "supported": [] },
+        "notes": ["The dialog actions region."]
+      },
+      "Stepper": {
+        "scope": "widgets/stepper",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run fails with a merge conflict.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#196"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "stepper" }],
+        "compiles": ["step", "SurfaceContainers", "Form", "TextInputs", "RangeControl"],
+        "attributes": {
+          "supported": [
+            "uses.selectedIndex",
+            "uses.linear",
+            "uses.orientation",
+            "produces.selectionChange",
+            "produces.complete"
+          ],
+          "unsupported": ["uses.branching"]
+        }
+      },
+      "step": {
+        "scope": "widgets/stepper",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["Stepper"] },
+          "update": { "status": "indirect", "via": ["Stepper"] },
+          "delete": { "status": "indirect", "via": ["Stepper"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["Stepper"],
+        "attributes": {
+          "supported": ["uses.label", "uses.optional"],
+          "extensions": ["uses.label", "uses.optional"]
+        }
+      },
+      "table": {
+        "scope": "widgets/table",
+        "role": "root",
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "A second run is rejected before modifying existing output.",
+            "gap": "shlomoa/angular-django2#197"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; generated files and their embedding are not removed.",
+            "gap": "shlomoa/angular-django2#197"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "commands": [{ "command": "table" }],
+        "compiles": ["caption", "thead", "tr"],
+        "attributes": { "supported": ["behaves.sort", "behaves.filter", "behaves.paginate"] },
+        "notes": [
+          "The host supplies the column definitions and the rows. behaves.sort needs a thead."
+        ]
+      },
+      "caption": {
+        "scope": "widgets/table",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["table"] },
+          "update": { "status": "indirect", "via": ["table"] },
+          "delete": { "status": "indirect", "via": ["table"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["table"],
+        "attributes": { "supported": [] }
+      },
+      "thead": {
+        "scope": "widgets/table",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["table"] },
+          "update": { "status": "indirect", "via": ["table"] },
+          "delete": { "status": "indirect", "via": ["table"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["table"],
+        "attributes": { "supported": [] }
+      },
+      "tr": {
+        "scope": "widgets/table",
+        "role": "embedded",
+        "operations": {
+          "create": { "status": "indirect", "via": ["table"] },
+          "update": { "status": "indirect", "via": ["table"] },
+          "delete": { "status": "indirect", "via": ["table"] },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "compiledBy": ["table"],
+        "attributes": { "supported": [] }
+      }
+    }
+  },
+  "api": {
+    "commands": {
+      "openapi-setup": {
+        "classification": "tooling",
+        "summary": "Bootstrap ng-openapi-gen configuration and the Django authorization, CSRF, transport and resource-adapter helpers.",
+        "invocation": "ng generate angular-django2:openapi-setup",
+        "inputs": ["cli"],
+        "parameters": [
+          {
+            "name": "outputPath",
+            "flag": "--output-path",
+            "type": "string",
+            "default": "src/app/api",
+            "source": "default"
+          },
+          {
+            "name": "openapiSpecFile",
+            "flag": "--openapi-spec-file",
+            "type": "string",
+            "default": "openapi.json",
+            "source": "project-config",
+            "sourceKey": "artifacts.openapiSchema"
+          },
+          {
+            "name": "helpersPath",
+            "flag": "--helpers-path",
+            "type": "string",
+            "default": "src/app/api-integration",
+            "source": "default"
+          },
+          {
+            "name": "authScheme",
+            "flag": "--auth-scheme",
+            "type": "string",
+            "enum": ["bearer", "basic"],
+            "default": "bearer",
+            "source": "default"
+          },
+          {
+            "name": "skipHelpers",
+            "flag": "--skip-helpers",
+            "type": "boolean",
+            "default": false,
+            "source": "default"
+          },
+          {
+            "name": "skipTests",
+            "flag": "--skip-tests",
+            "type": "boolean",
+            "default": false,
+            "source": "default"
+          }
+        ],
+        "onExisting": {
+          "outcome": "skip",
+          "detail": "Existing configuration, script and helper files are skipped and logged; a second run is idempotent."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "Existing files are skipped and never refreshed, so a changed option or contract does not change the output.",
+            "gap": "shlomoa/angular-django2#199"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode.",
+            "gap": "shlomoa/angular-django2#199"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.openapi-setup.spec.ts",
+              "ids": ["TC-API-01..20"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.openapi-setup.spec.ts",
+              "ids": ["TC-API-05", "TC-API-15"]
+            }
+          ]
+        },
+        "capabilities": {
+          "transportSchemes": ["bearer", "basic"],
+          "cookieCredentials": true,
+          "csrfHelper": true
+        },
+        "before": ["ng-openapi-gen"],
+        "outputs": [
+          "ng-openapi-gen.json",
+          "the generate:api script in package.json",
+          "<helpersPath>/ (authorization, CSRF, transport and resource-adapter helpers and their specs unless --skip-tests)"
+        ],
+        "notes": [
+          "--auth-scheme selects the Authorization header form of the generated interceptor: bearer sends Bearer <token>, basic sends Basic <base64 of UTF-8 username:password>. The scheme is applied when the helpers are first written; an existing django-transport.ts is skipped, so changing it needs the file removed first (shlomoa/angular-django2#199).",
+          "ng-openapi-gen itself is a third-party tool wrapped by django-angular3 and is not described here."
+        ]
+      },
+      "data-service": {
+        "classification": "direct",
+        "summary": "Generate a typed data-service wrapper around a generated OpenAPI service, from a resource name or from a node bound with uses.data.",
+        "invocation": "ng generate angular-django2:data-service",
+        "inputs": ["document", "cli"],
+        "parameters": [
+          {
+            "name": "name",
+            "flag": "--name",
+            "type": "string",
+            "positional": 0,
+            "requiredUnlessDocument": true,
+            "source": "change",
+            "sourceKey": "resource"
+          },
+          { "name": "path", "flag": "--path", "type": "string", "source": "default" },
+          {
+            "name": "project",
+            "flag": "--project",
+            "type": "string",
+            "source": "project-config",
+            "sourceKey": "project.name"
+          },
+          {
+            "name": "apiService",
+            "flag": "--api-service",
+            "type": "string",
+            "notWithDocument": true
+          },
+          { "name": "apiPath", "flag": "--api-path", "type": "string", "notWithDocument": true },
+          {
+            "name": "flat",
+            "flag": "--flat",
+            "type": "boolean",
+            "default": false,
+            "source": "default"
+          },
+          {
+            "name": "skipTests",
+            "flag": "--skip-tests",
+            "type": "boolean",
+            "default": false,
+            "source": "default"
+          },
+          { "name": "document", "flag": "--document", "type": "string" },
+          { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
+        ],
+        "onExisting": {
+          "outcome": "skip",
+          "detail": "An existing service or spec file is left unchanged and a warning is logged."
+        },
+        "operations": {
+          "create": { "status": "supported" },
+          "update": {
+            "status": "unsupported",
+            "reason": "An existing service is never refreshed, so a changed API service does not change the wrapper.",
+            "gap": "shlomoa/angular-django2#199"
+          },
+          "delete": {
+            "status": "unsupported",
+            "reason": "There is no delete mode; a data service for a removed resource is not removed.",
+            "gap": "shlomoa/angular-django2#199"
+          },
+          "move": {
+            "status": "unsupported",
+            "reason": "The Change Model does not emit move for the POC; a relocation is reported as delete plus create.",
+            "gap": "shlomoa/angular-django2#201"
+          }
+        },
+        "tests": {
+          "document": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.openui-app.spec.ts",
+              "ids": ["TC-APP-11", "TC-APP-12"]
+            }
+          ],
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.data-service.spec.ts",
+              "ids": ["TC-DS-01..12"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.data-service.spec.ts",
+              "ids": ["TC-DS-08"]
+            }
+          ]
+        },
+        "documentSelection": {
+          "document": "--document",
+          "node": "--node-id",
+          "default": "the first node with a uses.data binding"
+        },
+        "modes": {
+          "cli": {
+            "required": ["name"],
+            "optional": ["path", "project", "apiService", "apiPath", "flat", "skipTests"]
+          },
+          "document": {
+            "required": ["document"],
+            "optional": ["nodeId", "name", "path", "project", "flat", "skipTests"],
+            "conflicts": ["apiService", "apiPath"],
+            "binding": { "attribute": "uses.data", "format": "<apiPath>#<ApiService>" }
+          }
+        },
+        "after": ["openapi-setup", "ng-openapi-gen"],
+        "outputs": [
+          "<path>/<name>/<name>.data.service.ts",
+          "<path>/<name>/<name>.data.service.spec.ts (unless --skip-tests)"
+        ]
+      }
+    }
+  },
+  "tooling": {
+    "commands": {
+      "ng-add": {
+        "classification": "tooling",
+        "summary": "Register angular-django2 as a schematic collection in angular.json.",
+        "invocation": "ng generate angular-django2:ng-add",
+        "inputs": ["cli"],
+        "parameters": [],
+        "onExisting": {
+          "outcome": "no-op",
+          "detail": "Idempotent: an already registered collection is not duplicated."
+        },
+        "operations": {
+          "create": { "status": "tooling-only" },
+          "update": { "status": "tooling-only" },
+          "delete": { "status": "tooling-only" },
+          "move": { "status": "tooling-only" }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.ng-add.spec.ts",
+              "ids": ["TC-01..06"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.ng-add.spec.ts",
+              "ids": ["TC-03"]
+            }
+          ]
+        }
+      },
+      "project-structure": {
+        "classification": "tooling",
+        "summary": "Create the standard directory structure with barrel exports (core, shared, features).",
+        "invocation": "ng generate angular-django2:project-structure",
+        "inputs": ["cli"],
+        "parameters": [
+          { "name": "project", "flag": "--project", "type": "string", "required": true },
+          { "name": "prefix", "flag": "--prefix", "type": "string", "default": "app" }
+        ],
+        "onExisting": {
+          "outcome": "skip",
+          "detail": "Existing non-empty barrel files are not overwritten."
+        },
+        "operations": {
+          "create": { "status": "tooling-only" },
+          "update": { "status": "tooling-only" },
+          "delete": { "status": "tooling-only" },
+          "move": { "status": "tooling-only" }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.material-setup.spec.ts",
+              "ids": ["TC-D1..3"]
+            }
+          ],
+          "rerun": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.material-setup.spec.ts",
+              "ids": ["TC-D3"]
+            }
+          ]
+        }
+      },
+      "service": {
+        "classification": "tooling",
+        "summary": "Generate an injectable service through Angular's service schematic.",
+        "invocation": "ng generate angular-django2:service",
+        "inputs": ["cli"],
+        "parameters": [
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0, "required": true },
+          { "name": "path", "flag": "--path", "type": "string" },
+          { "name": "project", "flag": "--project", "type": "string" }
+        ],
+        "onExisting": {
+          "outcome": "delegated",
+          "detail": "The behavior of Angular's service schematic."
+        },
+        "operations": {
+          "create": { "status": "tooling-only" },
+          "update": { "status": "tooling-only" },
+          "delete": { "status": "tooling-only" },
+          "move": { "status": "tooling-only" }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.pass-through.spec.ts",
+              "match": ["'@schematics/angular', 'service'"]
+            }
+          ]
+        }
+      },
+      "class": {
+        "classification": "tooling",
+        "summary": "Generate a TypeScript class through Angular's class schematic.",
+        "invocation": "ng generate angular-django2:class",
+        "inputs": ["cli"],
+        "parameters": [
+          { "name": "name", "flag": "--name", "type": "string", "positional": 0, "required": true },
+          { "name": "path", "flag": "--path", "type": "string" },
+          { "name": "project", "flag": "--project", "type": "string" }
+        ],
+        "onExisting": {
+          "outcome": "delegated",
+          "detail": "The behavior of Angular's class schematic."
+        },
+        "operations": {
+          "create": { "status": "tooling-only" },
+          "update": { "status": "tooling-only" },
+          "delete": { "status": "tooling-only" },
+          "move": { "status": "tooling-only" }
+        },
+        "tests": {
+          "cli": [
+            {
+              "file": "projects/angular-django-validation/unit/schematics/schematics.pass-through.spec.ts",
+              "match": ["'@schematics/angular', 'class'"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "scopes": [
+    { "scope": "application/routing", "class": "direct", "nodeTypes": ["Routing"] },
+    { "scope": "application/route", "class": "direct", "nodeTypes": ["Route"] },
+    { "scope": "application/navigation", "class": "direct", "nodeTypes": ["Navigation"] },
+    { "scope": "application/navItem", "class": "direct", "nodeTypes": ["NavItem"] },
+    { "scope": "application/navGroup", "class": "direct", "nodeTypes": ["NavGroup"] },
+    { "scope": "application/toolBars", "class": "direct", "nodeTypes": ["ToolBar"] },
+    { "scope": "application/toolBarRow", "class": "direct", "nodeTypes": ["ToolBarRow"] },
+    { "scope": "application/toolAction", "class": "direct", "nodeTypes": ["ToolAction"] },
+    { "scope": "application/favicon", "class": "direct", "nodeTypes": ["link"] },
+    { "scope": "application/indexHtml", "class": "direct", "nodeTypes": ["html"] },
+    {
+      "scope": "behaviors/dragAndDrop",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#183"
+    },
+    { "scope": "behaviors/resizable", "class": "tracked", "issue": "shlomoa/angular-django2#184" },
+    {
+      "scope": "behaviors/collapsible",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#147",
+      "reason": "Tracked together with containers/expandablePanels."
+    },
+    {
+      "scope": "behaviors/inputAssistance",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#161"
+    },
+    {
+      "scope": "behaviors/modalOverlay",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#185",
+      "reason": "The dialog command builds in the focus and Escape behavior its scope needs and rejects a ModalOverlay that targets it."
+    },
+    {
+      "scope": "behaviors/viewportAndFocusControl",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#186"
+    },
+    { "scope": "containers/grid", "class": "tracked", "issue": "shlomoa/angular-django2#166" },
+    {
+      "scope": "containers/expandablePanels",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#147"
+    },
+    { "scope": "containers/tabs", "class": "direct", "nodeTypes": ["Tabs", "tab"] },
+    {
+      "scope": "containers/surfaceContainers",
+      "class": "direct",
+      "nodeTypes": ["SurfaceContainers"]
+    },
+    {
+      "scope": "containers/sheetContainers",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#148"
+    },
+    {
+      "scope": "containers/overlayContainers",
+      "class": "direct",
+      "nodeTypes": ["OverlayContainers"]
+    },
+    {
+      "scope": "containers/structuralContainers",
+      "class": "not-planned",
+      "reason": "Covered by existing commands: composition uses uses.slot sections inside SurfaceContainers."
+    },
+    { "scope": "containers/splitters", "class": "tracked", "issue": "shlomoa/angular-django2#181" },
+    {
+      "scope": "controls/native",
+      "class": "not-planned",
+      "reason": "Covered through controls/choiceControls and controls/pickerControl."
+    },
+    {
+      "scope": "controls/actionControls",
+      "class": "direct",
+      "nodeTypes": ["ActionControls"],
+      "issue": "shlomoa/angular-django2#187",
+      "reason": "Compiled only as the Form submit action; standalone action controls are tracked."
+    },
+    { "scope": "controls/textInputs", "class": "direct", "nodeTypes": ["TextInputs"] },
+    {
+      "scope": "controls/choiceControls",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#158"
+    },
+    {
+      "scope": "controls/pickerControl",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#162",
+      "reason": "File kind first."
+    },
+    { "scope": "controls/rangeControl", "class": "direct", "nodeTypes": ["RangeControl"] },
+    {
+      "scope": "controls/drawingAndCapture",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#182"
+    },
+    {
+      "scope": "controls/displayPrimitives",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#163"
+    },
+    {
+      "scope": "controls/statusIndicator",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#164"
+    },
+    {
+      "scope": "controls/linkAndScrollControls",
+      "class": "not-planned",
+      "reason": "Covered by existing navigation: NavItem and ToolAction."
+    },
+    { "scope": "pages/dashboard", "class": "direct", "nodeTypes": ["DashboardPage"] },
+    {
+      "scope": "pages/shellPage",
+      "class": "conceptual",
+      "reason": "material-app builds the shell (toolbar, sidenav, router outlet) from the Application node and its children; no ShellPage node is read."
+    },
+    { "scope": "pages/emptyPage", "class": "direct", "nodeTypes": ["EmptyPage"] },
+    {
+      "scope": "views/report",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#160",
+      "reason": "data-service generates data transport from a uses.data binding only; it renders no UI."
+    },
+    {
+      "scope": "views/form",
+      "class": "direct",
+      "nodeTypes": ["Form"],
+      "issue": "shlomoa/angular-django2#188",
+      "reason": "behaves.validate (shlomoa/angular-django2#188) and produces.dirtyChange (shlomoa/angular-django2#189) are declared by the catalog and rejected."
+    },
+    { "scope": "widgets/chart", "class": "tracked", "issue": "shlomoa/angular-django2#152" },
+    {
+      "scope": "widgets/table",
+      "class": "direct",
+      "nodeTypes": ["table", "caption", "thead", "tr"]
+    },
+    { "scope": "widgets/dataGrid", "class": "tracked", "issue": "shlomoa/angular-django2#143" },
+    { "scope": "widgets/list", "class": "tracked", "issue": "shlomoa/angular-django2#159" },
+    {
+      "scope": "widgets/feedbackWidgets",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#150"
+    },
+    { "scope": "widgets/mediaWidgets", "class": "tracked", "issue": "shlomoa/angular-django2#180" },
+    {
+      "scope": "widgets/navigationWidgets",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#165",
+      "reason": "Breadcrumbs and pagination only; the material-app sidenav comes from application/navigation, not from this scope."
+    },
+    { "scope": "widgets/menuWidgets", "class": "tracked", "issue": "shlomoa/angular-django2#149" },
+    {
+      "scope": "widgets/dateTimePickers",
+      "class": "tracked",
+      "issue": "shlomoa/angular-django2#151"
+    },
+    {
+      "scope": "widgets/stepper",
+      "class": "direct",
+      "nodeTypes": ["Stepper", "step"],
+      "issue": "shlomoa/angular-django2#206",
+      "reason": "Compiled by the stepper command (shlomoa/angular-django2#172, 0.6.2; #145 closed). Not yet a composable child of SurfaceContainers, DashboardPage or a dialog region, and its steps are not bound to their reactive forms; both are tracked in the linked issue."
+    },
+    {
+      "scope": "widgets/dialog",
+      "class": "direct",
+      "nodeTypes": ["dialog", "header", "section", "footer"]
+    },
+    { "scope": "presentation", "class": "direct", "nodeTypes": ["Presentation"] },
+    {
+      "scope": "interaction",
+      "class": "cross-cutting",
+      "reason": "Shared vocabulary with no one-to-one command."
+    },
+    {
+      "scope": "internationalization",
+      "class": "cross-cutting",
+      "reason": "Shared vocabulary with no one-to-one command."
+    },
+    {
+      "scope": "layout",
+      "class": "cross-cutting",
+      "reason": "Shared vocabulary with no one-to-one command."
+    }
+  ],
+  "limitations": [
+    {
+      "summary": "application --document does not validate Navigation or Routing content beyond what the validator checks (reference types); only material-app does.",
+      "issue": "shlomoa/angular-django2#153"
+    },
+    {
+      "summary": "Attributes accepted but unused: Route uses.title, uses.access and uses.redirectTo, Routing uses.defaultRoute, Navigation uses.ariaLabel, NavGroup uses.expanded (and its label is not rendered), page uses.icon.",
+      "issue": "shlomoa/angular-django2#154"
+    },
+    {
+      "summary": "Nested Route paths are not composed: a link to a child route uses the child's uses.path alone, although OpenUI defines it as relative to the parent route.",
+      "issue": "shlomoa/angular-django2#155"
+    },
+    {
+      "summary": "Route uses.target is typed only as a reference: the validator and the command check that it names an element, not that it is a page or content element.",
+      "issue": "shlomoa/angular-django2#156"
+    },
+    {
+      "summary": "Route paths have two unsynchronized sources: page registers DashboardPage uses.route and material-app links to Route uses.path; nothing checks that they match.",
+      "issue": "shlomoa/angular-django2#157"
+    }
+  ]
+}

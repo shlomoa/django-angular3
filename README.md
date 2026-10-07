@@ -141,7 +141,14 @@ it resolves commands without executing Angular tooling:
 - `ng_gen_app` generates an Angular application inside the configured workspace via the `angular-django2:material-app` schematic, forwarding `--ssr`, `--zoneless`, and `--defaults` to align with the Angular CLI `ng new` defaults
 - `ng_material_setup` configures Angular Material in an existing project via the `angular-django2:material-setup` schematic, forwarding optional `--theme`, `--typography`, and `--animations`
 - `ng_page`, `ng_component`, and `ng_reactive_form` wrap the matching `angular-django2` schematics without changing their deterministic behavior
+- `ng_workspace`, `ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`, and `ng_reactive_form` accept `--document` (a workspace-relative OpenUI document) and, except `ng_workspace`, `--node-id` to compile an OpenUI element; `ng_openapi_setup` accepts `--auth-scheme bearer|basic`
 - `ng_openapi_gen` runs a locally installed `ng-openapi-gen` for the configured OpenAPI source
+
+`build_app --dry-run` plans these steps from detected OpenAPI, OpenUI and project
+changes, following the command mapping of the installed `angular-django2` package. It
+refuses what ngdj cannot do and does not run the steps yet; see
+[What `build_app` plans](https://djangoangular.com/commands/#what-build-app-plans)
+for what is planned and refused.
 
 `ng_openapi_gen` resolves to `pnpm exec`, so it only uses dependencies that
 are already installed in the Angular workspace. It does not download and

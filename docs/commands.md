@@ -39,6 +39,40 @@ not application configuration.
 - Directly constructing and validating the generated app from schema and OpenUI changes (`build_app`).
 - Managing the full Angular workspace lifecycle, including modify and delete operations.
 
+(what-build-app-plans)=
+
+## What `build_app` plans
+
+`build_app --dry-run` prints the ordered steps for the detected changes. The ngdj command
+mapping that ships in the installed `angular-django2` package decides what ngdj supports,
+so `djng` follows it instead of keeping its own list. The authoritative rules and tables
+are in `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change-to-command mapping
+[↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#change-to-command-mapping){.modal-link}.
+
+Planned today:
+
+- A changed project name or workspace location plans the workspace and application
+  foundation steps. A changed artifact selector plans only the final validation.
+- A new OpenUI page, form, component or complex component plans the matching wrapper step.
+  A change inside the `Application` element, including its routes, navigation and toolbar,
+  plans an update of the application.
+- A new OpenAPI path plans the client regeneration and its data service. A new schema plans
+  the client regeneration.
+
+Refused with an error that quotes the upstream reason and gap issue:
+
+- Updating or deleting any other OpenUI node.
+- A change to an OpenAPI operation, and updating or deleting a path or schema, because ngdj
+  cannot update or delete data services.
+- A node type with no `djng` wrapper yet (`tabs`, `dialog`, `stepper`, `table`,
+  `form-field`, `field-component`, `html`, `link`) or one the mapping does not cover.
+
+Not implemented yet: running the steps, planning `ng_openapi_setup`, and detecting changes
+of `django-angular3.json`. Planning OpenUI and OpenAPI changes needs the `angular-django2`
+package installed in the Angular workspace at the version `tool.ngAddPackage` pins (a
+registry name such as `angular-django2@0.7.0`, not a path), so it cannot plan them for a
+workspace that does not exist yet.
+
 ## Command ownership
 
 - **ngdj schematics** use the identity, ownership, and upstream-source policy in
@@ -80,17 +114,17 @@ These commands are available through both interfaces. Invoke them as either
 | Command | djng behavior and arguments |
 |---|---|
 | `ng_new` | Create an empty Angular workspace. |
-| `ng_workspace` | Bootstrap the configured workspace: `ng new`, workspace defaults, ngdj registration, and schematic generation. |
+| `ng_workspace` | Bootstrap the configured workspace: `ng new`, workspace defaults, ngdj registration, and schematic generation. Accepts `--document <path>`, a workspace-relative OpenUI document for the workspace setup. |
 | `ng_config` | Apply workspace defaults such as package manager, style, and routing. |
 | `ng_add` | Run `ng add`; accepts `--package <name>` and otherwise uses the derived `ngAddPackage` setting. |
-| `ng_gen_app` | Generate the configured Angular application. Accepts `--app-name <name>`; SSR and zoneless behavior come from derived tool settings. |
+| `ng_gen_app` | Generate the configured Angular application. Accepts `--app-name <name>`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`); SSR and zoneless behavior come from derived tool settings. |
 | `ng_material_setup` | Configure Angular Material. Accepts `--project`, `--theme`, `--typography`/`--no-typography`, and `--animations`/`--no-animations`; unset options use ngdj defaults. |
-| `ng_page` | Generate a routed page. Requires `--name` and `--target-path`; accepts `--project`, `--route-path`, `--access`, `--auth-guard`, `--navigation-label`, and `--navigation-icon`. |
-| `ng_component` | Generate a standalone OnPush component. Requires `--name`; accepts `--target-path` and `--project`. |
-| `ng_complex_component` | Generate, modify, or delete an advanced Material component. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, and delete confirmation via `--confirm`. |
-| `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
+| `ng_page` | Generate a routed page. Requires `--name` and `--target-path`; accepts `--project`, `--route-path`, `--access`, `--auth-guard`, `--navigation-label`, `--navigation-icon`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`). |
+| `ng_component` | Generate a standalone OnPush component. Requires `--name`; accepts `--target-path`, `--project`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`). |
+| `ng_complex_component` | Generate, modify, or delete an advanced Material component. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, delete confirmation via `--confirm`, `--document <path>` (a workspace-relative OpenUI document; requires `--mode create`) and `--node-id` (requires `--document`). |
+| `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and exactly one of `--document <path>` (a workspace-relative OpenUI document, with optional `--node-id`) or the deprecated `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
 | `ng_openapi_gen` | Run the workspace-local `ng-openapi-gen` via `pnpm exec` for the discovered OpenAPI artifact. |
-| `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, and `--skip-tests`. |
+| `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path`, `--helpers-path`, `--skip-helpers`, `--skip-tests`, and `--auth-scheme` (`bearer` or `basic`). |
 | `ng_data_service` | Generate a typed data-service wrapper. Requires `--resource`; accepts `--project`. |
 | `ng_build` | Build the discovered Angular application. |
 
@@ -105,7 +139,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one (`api.json` → `api.previous.json`) to provide the baseline file; a previous project configuration selects it through its `artifacts.openapiSchema` for `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app` | Exposes the app-build command interface, but planning and execution are not implemented yet. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run` and `--force start-from-scratch`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs){.modal-link} for discovery behavior. |
+| `build_app` | Detects project-configuration, OpenAPI and OpenUI changes and, with `--dry-run`, prints the ordered build steps as JSON (stage, step, mode, target, element id and reason); running the steps is not implemented yet, and static-configuration changes are not detected yet. OpenUI and OpenAPI changes are planned with the command mapping of the `angular-django2` package installed in the Angular workspace, so the package must be installed. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run` and `--force start-from-scratch`. See {ref}`What build_app plans <what-build-app-plans>`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs){.modal-link} for discovery behavior. |
 | `clean` | Remove temporary Python build and package artifacts, including `build`, `dist`, root `*.egg-info`, caches, and Python bytecode. Accepts `--dry-run`. |
 | `distclean` | Run `git clean -f -d` from the current project directory, removing all untracked files and directories while preserving ignored and tracked files. Accepts `--dry-run`, which passes `-n` to Git. |
 | `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |

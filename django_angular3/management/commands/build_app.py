@@ -6,6 +6,7 @@ Django Angular3 application.
 """
 
 import argparse
+import json
 import logging
 from pathlib import Path
 from typing import Any
@@ -29,10 +30,16 @@ from django_angular3.external_comparisons import (
     ExternalComparisonError,
     compare_openui_files,
 )
+from django_angular3.ngdj_command_mapping import (
+    CommandMapping,
+    CommandMappingError,
+    load_command_mapping,
+)
 from django_angular3.openapi_changes import (
     OpenApiComparisonError,
     compare_openapi_files,
 )
+from django_angular3.settings import load_angular_settings
 
 from ...config import ConfigError, load_project_config
 
@@ -225,6 +232,55 @@ class ChangeDetector:
         )
 
 
+def load_ngdj_mapping(
+    change_set: ChangeSet, project_config: ProjectConfig
+) -> CommandMapping | None:
+    """Load the ngdj command mapping when a Change needs it.
+
+    OpenUI and OpenAPI Changes are translated with the mapping that the Angular
+    workspace's installed ``angular-django2`` package ships. Other Changes need none,
+    so a plan for them does not require the package to be installed.
+    """
+    needs_mapping = any(
+        change_set.domains[domain].changes
+        for domain in (ChangeDomain.OPENUI, ChangeDomain.OPENAPI)
+    )
+    if not needs_mapping:
+        return None
+    try:
+        return load_command_mapping(
+            project_config.angular_workspace, load_angular_settings().ng_add_package
+        )
+    except CommandMappingError as exc:
+        raise CommandError(
+            f"Cannot plan the OpenUI and OpenAPI changes: {exc}"
+        ) from exc
+
+
+def format_plan(project_config: ProjectConfig, steps: tuple[AppBuildStep, ...]) -> str:
+    """Serialize the ordered steps for ``--dry-run``: a preview, not a plan artifact."""
+    return json.dumps(
+        {
+            "projectConfig": str(project_config.config_path),
+            "steps": [
+                {
+                    "stage": step.exec_order,
+                    "step": step.name_id,
+                    "mode": step.change_op,
+                    "domain": None
+                    if step.change_domain is None
+                    else step.change_domain.value,
+                    "target": step.change_target,
+                    "nodeId": step.node_id,
+                    "reason": step.change_reason,
+                }
+                for step in steps
+            ],
+        },
+        indent=2,
+    )
+
+
 class ChangeExecution:
     """
     Docstring for ChangeExecution
@@ -235,7 +291,9 @@ class ChangeExecution:
     * Rolling back changes in case of failures.
     """
 
-    def _translate_change_set(self, change_set: ChangeSet) -> tuple[AppBuildStep, ...]:
+    def _translate_change_set(
+        self, change_set: ChangeSet, mapping: CommandMapping | None = None
+    ) -> tuple[AppBuildStep, ...]:
         """Translate the ChangeSet into an ordered command plan."""
         changes = tuple(
             change
@@ -244,7 +302,7 @@ class ChangeExecution:
         )
         logger.debug("Translating %d changes into commands", len(changes))
         try:
-            return translate_changes(changes)
+            return translate_changes(changes, mapping)
         except CommandTranslationError as exc:
             raise CommandError(f"Failed to translate changes: {exc}") from exc
 
@@ -257,19 +315,28 @@ class ChangeExecution:
         return level_commands, remaining_commands
 
     def execute(
-        self, change_set: ChangeSet, output_path: str, dry_run: bool, force: bool
-    ):
+        self,
+        change_set: ChangeSet,
+        output_path: str,
+        dry_run: bool,
+        force: bool,
+        mapping: CommandMapping | None = None,
+    ) -> tuple[AppBuildStep, ...]:
         """
         Execute the changes based on the detected differences.
+
+        Returns the ordered plan, which a dry run reports without running it.
 
         Raises CommandError if execution fails.
         """
         logger.debug("Executing change set")
         try:
-            commands = self._translate_change_set(change_set)
+            commands = self._translate_change_set(change_set, mapping)
+            plan = commands
             while not dry_run and commands:
                 level_cmds, commands = self._extract_next_level(commands)
                 cmd_executor(level_cmds, output_path, force=force, dry_run=dry_run)
+            return plan
         except ConfigError as e:
             raise CommandError(f"Failed to execute changes: {e}") from e
 
@@ -344,9 +411,16 @@ class Command(BaseCommand):
             previous_config = Configuration(options["previous_config"])
             detector = ChangeDetector(current_config, previous_config)
             change_set: ChangeSet = detector.detect_changes()
+            mapping = load_ngdj_mapping(change_set, current_config.project_config)
             executor = ChangeExecution()
-            executor.execute(
-                change_set, options["output"], options["dry_run"], options["force"]
+            steps = executor.execute(
+                change_set,
+                options["output"],
+                options["dry_run"],
+                options["force"],
+                mapping=mapping,
             )
+            if options["dry_run"]:
+                self.stdout.write(format_plan(current_config.project_config, steps))
         except ConfigError as exc:
             raise CommandError(str(exc)) from exc

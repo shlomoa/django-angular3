@@ -448,6 +448,7 @@ class ScaffoldTests(unittest.TestCase):
             "claude-agent-sdk",
             "openui-spec==0.12.1",
             "openapi-spec-validator>=0.7",
+            "jsonschema>=4.18",
         }
         self.assertEqual(dependencies, expected_runtime_dependencies)
 
