@@ -1,6 +1,10 @@
 import argparse
 
-from ._base import AngularBaseCommand
+from ._base import (
+    AngularBaseCommand,
+    add_openui_document_arguments,
+    openui_document_options,
+)
 
 
 class Command(AngularBaseCommand):
@@ -27,6 +31,7 @@ class Command(AngularBaseCommand):
         parser.add_argument(
             "--confirm", action="store_true", help="Required when --mode=delete."
         )
+        add_openui_document_arguments(parser)
 
     def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {
@@ -36,4 +41,5 @@ class Command(AngularBaseCommand):
             "project": options["project"],
             "mode": options["mode"],
             "confirm": options["confirm"],
+            **openui_document_options(options),
         }

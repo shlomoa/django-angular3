@@ -292,6 +292,7 @@ command behind the structured tool contract used during direct execution.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document whose `html` and `link` elements configure the workspace, forwarded as `--document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the resolved command line without creating the workspace. |
 
 **Outputs**:
@@ -334,6 +335,8 @@ generated application matches the Angular CLI `ng new` defaults.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document whose `Application` element is compiled, forwarded as `--document`. |
+| `node_id` | no | string | — | `id` of the `Application` element of `document`, forwarded as `--node-id`. Requires `document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and report the resolved command line without modifying the workspace. |
 
 **Outputs**:
@@ -347,7 +350,10 @@ generated application matches the Angular CLI `ng new` defaults.
 **Error behavior**: Non-zero exit / raised `ToolError`. Categories:
 
 - `invalid_input` — `artifacts.angularWorkspace` does not contain an Angular workspace, or
-  an application with the same name already exists.
+  an application with the same name already exists and no `document` is given. With a
+  `document`, an existing application is updated: ngdj's `material-app` replaces only the
+  text it generated between its `openui:begin` and `openui:end` markers and keeps edits
+  made around it.
 - `missing_dependency` — `ngdj` schematic package not installed in the
   workspace.
 - `external_tool_failed` — schematic invocation exited non-zero.
@@ -356,7 +362,8 @@ generated application matches the Angular CLI `ng new` defaults.
 
 **Allowed invocation context**: `build_app` (as a TOOL command between the
 `angular-workspace-foundation` and `angular-app-composition` skill sessions, when the application does not yet
-exist); CLI (`django-admin ng_gen_app`). Not invocable from a HOOK.
+exist, or, with a `document`, when the application exists and its OpenUI `Application` element
+changed); CLI (`django-admin ng_gen_app`). Not invocable from a HOOK.
 
 **Implementation reference**:
 `django_angular3/management/commands/ng_gen_app.py`;
@@ -425,6 +432,8 @@ embedding hooks at a deterministic project-relative path.
 | `name` | yes | string | — | Kebab-case component name. |
 | `path` | no | string (relative path) | Angular CLI default | Project-relative destination directory. |
 | `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 
 **Outputs**:
@@ -527,6 +536,178 @@ target.
 **Implementation reference**: planned wrapper around the installed `oasdiff`
 CLI changelog capability. It must use the existing `ensure_oasdiff()` binary
 resolution and archive output under the configured build directory.
+
+#### 11. `ngdj_add_page` — routed page scaffold
+
+**Name**: `ngdj_add_page`
+
+**Purpose**: Generate a routed Angular page, with its route and optional navigation
+entry, from an OpenUI page element or from explicit options. This is the deterministic
+contract `ARCHITECTURE.md` §3.6.3 classifies as a TOOL.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `name` | yes | string | — | Kebab-case page name. |
+| `path` | yes | string (relative path) | — | Project-relative destination directory. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `route_path` | no | string | value of `name` | URL-safe route path segments. |
+| `access` | no | `"public"` \| `"protected"` | `"public"` | Whether the route is guarded. |
+| `auth_guard` | no | string (identifier) | `authGuard` | Guard applied when `access` is `protected`. |
+| `navigation_label` | no | string | — | Navigation entry label; must not be empty when set. |
+| `navigation_icon` | no | string | — | Material icon name: lowercase letters, digits and underscores. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `page_path` | string (path) | Absolute path of the generated page directory. |
+| `generated_files` | array of string (path) | Files created by this invocation, relative to `page_path`. |
+| `command` | string | Exact `angular-django2:page` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a non-kebab-case name, a path outside the selected application
+source root, an invalid route path, guard identifier, navigation label or icon, and a
+`node_id` without a `document`. `output_invalid` applies when the invocation succeeds but
+does not create the expected page. A second run on a page the user has modified is
+refused by the schematic and surfaces as `external_tool_failed`.
+
+**Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
+Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: the `ng_page` wrapper in `django_angular3/angular.py`
+resolves `ng generate angular-django2:page` and forwards `document` and `node_id`.
+Option semantics are owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are
+planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
+
+#### 12. `ngdj_add_reactive_form` — typed reactive form scaffold
+
+**Name**: `ngdj_add_reactive_form`
+
+**Purpose**: Generate a typed standalone Angular Material reactive form from an OpenUI
+`Form` element.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `name` | yes | string | — | Kebab-case form name. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
+| `definition` | no | string (relative path) | — | Deprecated form definition file; use `document` and `node_id`. |
+| `path` | no | string (relative path) | schematic default | Project-relative destination directory. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `primitives_path` | no | string (relative path) | schematic default | Directory of the shared form helpers. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `form_path` | string (path) | Absolute path of the generated form directory. |
+| `generated_files` | array of string (path) | Files created by this invocation, relative to `form_path`. |
+| `command` | string | Exact `angular-django2:reactive-form` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a non-kebab-case name, a path outside the selected application
+source root, a `node_id` without a `document`, and both or neither of `document` and
+`definition`.
+`output_invalid` applies when the invocation succeeds but does not create the form.
+
+**Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
+Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: the `ng_reactive_form` wrapper in
+`django_angular3/angular.py` resolves `ng generate angular-django2:reactive-form` and
+forwards `document` and `node_id`, or the deprecated `definition`. The structured outputs
+are planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
+
+#### 13. `ngdj_add_complex_component` — complex component scaffold
+
+**Name**: `ngdj_add_complex_component`
+
+**Purpose**: Generate, modify or delete an advanced Angular Material component, from an
+OpenUI `SurfaceContainers` element that has an overlay child or from explicit options.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `name` | yes | string | — | Kebab-case component name. |
+| `path` | yes | string (relative path) | — | Project-relative destination directory. |
+| `features` | yes | string or array of string | — | Features of the component, as the wrapper normalizes them. |
+| `mode` | no | `"create"` \| `"modify"` \| `"delete"` | `"create"` | Operation on the component. |
+| `confirm` | no | boolean | `false` | Required to be `true` when `mode` is `delete`. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `document` | no | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | — | `id` of the element of `document` to compile, forwarded as `--node-id`. Requires `document`. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `component_path` | string (path) | Absolute path of the component directory. |
+| `generated_files` | array of string (path) | Files created, changed or removed, relative to `component_path`. |
+| `command` | string | Exact `angular-django2:complex-component` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a non-kebab-case name, a path outside the selected application
+source root, an unknown mode, `mode` `delete` without `confirm`, a `document` with a
+`mode` other than `create`, and a `node_id` without a `document`. `output_invalid` applies when the invocation succeeds but the expected
+component is missing (or still present after a delete).
+
+**Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
+Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: the `ng_complex_component` wrapper in
+`django_angular3/angular.py` resolves `ng generate angular-django2:complex-component` and
+forwards `document` and `node_id`. The structured outputs are planned
+(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+
+#### 14. `ngdj_add_data_service` — typed data-service scaffold
+
+**Name**: `ngdj_add_data_service`
+
+**Purpose**: Generate a typed data-service wrapper for one API resource of the generated
+client.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `resource` | yes | string | — | Resource name of the generated service. |
+| `project` | no | string | `project.name` | Angular project to modify. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `service_path` | string (path) | Absolute path of the generated service. |
+| `generated_files` | array of string (path) | Files created by this invocation, relative to the workspace. |
+| `command` | string | Exact `angular-django2:data-service` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes an invalid resource name. `missing_dependency` includes a
+workspace without the generated API client. `output_invalid` applies when the invocation
+succeeds but does not create the service.
+
+**Allowed invocation context**: `build_app` (as a TOOL command, after
+`angular_api_client_generate`), agent (inside a guided Skill session), CLI. Not a HOOK
+target.
+
+**Implementation reference**: the `ng_data_service` wrapper in
+`django_angular3/angular.py` resolves `ng generate angular-django2:data-service`. The
+structured outputs are planned.
 
 ### Contract compliance
 

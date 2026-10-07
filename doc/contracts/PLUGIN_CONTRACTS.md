@@ -207,7 +207,7 @@ sourcing its derived skills from the existing skill specifications in
 **Name**: `ngdj-scaffold`
 
 **Purpose**: Package deterministic `ngdj` Angular workspace, application,
-feature, and component schematics behind provider-neutral structured tool
+feature, component, page, form, complex-component, and data-service schematics behind provider-neutral structured tool
 calls usable directly by `build_app` or, optionally, by an agent.
 
 **Bundled SKILLS**: none. `ngdj`'s scaffold operations are deterministic and
@@ -222,6 +222,10 @@ them is owned by `djng-angular-construction` (§1) instead.
 | `angular_app_scaffold` | Wrap the `ngdj` application-creation schematic. |
 | `ngdj_add_feature` | Create a feature page, feature route, and application-route registration. |
 | `ngdj_add_component` | Generate a standalone component with embedding hooks. |
+| `ngdj_add_page` | Generate a routed page with its route and optional navigation entry. |
+| `ngdj_add_reactive_form` | Generate a typed reactive form. |
+| `ngdj_add_complex_component` | Generate, modify, or delete an advanced Material component. |
+| `ngdj_add_data_service` | Generate a typed data-service wrapper for a resource. |
 | `ngdj_run_schematic` | Run an explicitly ngdj schematic. |
 
 The Claude rendering exposes the wrapped tools through an `mcp-servers/` MCP

@@ -16,17 +16,18 @@ django-admin build_app [options]
 python manage.py build_app [options]
 ```
 
-> **Implementation status:** the current command exposes its documented
-> argument interface. Project-configuration loading, OpenAPI and OpenUI change
-> derivation (`ChangeDetector`), and change-to-command selection
-> (`translate_changes`) exist as separate components, but the command does not
-> yet compose them: `handle()` neither translates the detected changes nor honors
-> `--dry-run`, `--force`, or `--output`, and change execution raises
-> `NotImplementedError`. Previous-configuration discovery, the static-configuration
-> change lane, the deterministic TOOL command contracts, hooks, and terminal
-> validation are not implemented. This document specifies the target behavior;
-> it must not be read as a claim that those target behaviors are already
-> available.
+> **Implementation status:** `handle()` loads the project configurations, derives
+> the ChangeSet (project configuration, OpenAPI and OpenUI; the static-configuration
+> lane is not detected), translates it with `translate_changes` and, with
+> `--dry-run`, prints the ordered steps. OpenUI and OpenAPI changes are planned with the
+> ngdj command mapping (§Change-to-command mapping). Running the steps is not
+> implemented: the hand-off to the executor raises `TypeError` (the executor takes no
+> `force` or `dry_run`, and a step is not an executable command), and `--force` and
+> `--output` are not honored by the translation. Previous-configuration discovery, the
+> static-configuration change lane, the implementation of the deterministic TOOL
+> commands, hooks, and terminal validation are not implemented. This document
+> specifies the target behavior; it must not be read as a claim that those target
+> behaviors are already available.
 
 ### Build algorithm
 
@@ -171,6 +172,11 @@ not introduce custom behavioral selectors or a duplicate parser.
 | Angular workspace scaffold | TOOL | `angular_workspace_scaffold` | — | Create the workspace for a first build. |
 | Angular app scaffold | TOOL | `angular_app_scaffold` | — | Create the primary Angular application. |
 | Typed Angular client generation | TOOL | `angular_api_client_generate` | — | Generate the typed API client. |
+| Data service | TOOL | `ngdj_add_data_service` | — | Generate the typed data service of an API resource. |
+| Standalone component | TOOL | `ngdj_add_component` | — | Generate a component from an OpenUI element. |
+| Complex component | TOOL | `ngdj_add_complex_component` | — | Generate an advanced component from an OpenUI element. |
+| Reactive form | TOOL | `ngdj_add_reactive_form` | — | Generate a typed form from an OpenUI `Form` element. |
+| Routed page | TOOL | `ngdj_add_page` | — | Generate a page from an OpenUI page element. |
 | Optional interpretive refinement | SKILL | — | — | Handle only selected work that structured inputs and deterministic schematics do not fully specify. |
 | Post-generation verification | HOOK | — | `post-generation` | Record and enforce per-command structural checks. |
 | Session-end audit | HOOK | — | `session-stop` | Archive run information and write a session summary. |
@@ -183,21 +189,75 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `project_config` `create` or `update` of `project.name` or `artifacts.angularWorkspace` | Project-level workspace and application foundation commands | matching operation |
 | `project_config` `create` or `update` of `artifacts.openapiSchema` or `artifacts.openuiSpecification` | No construction command; the selected OpenAPI or OpenUI content is compared by its own domain, and the terminal validation gate checks the new source | — |
 | `project_config` `delete` or `move` | Unsupported; fails explicitly (`move` is reserved) | — |
-| `static_config` `update` | The command category for the supported configuration subject | update |
-| `openapi` `create` | API-integration and data-service commands for affected subjects, followed by dependent UI commands | create |
-| `openapi` `delete` | Dependent UI, data-service, and API-integration commands for affected subjects | delete |
-| `openapi` `update` | Targeted dependent client, service, and UI commands | update |
-| `openui` page `create`, `update`, or `delete` | `ng_page` wraps `angular-django2:page` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` standalone component `create`, `update`, or `delete` | `ng_component` wraps `angular-django2:component` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` complex component `create`, `update`, or `delete` | `ng_complex_component` wraps `angular-django2:complex-component`; deterministic TOOL contract and complete atomic-operation mapping are not yet defined | Not yet defined for `build_app` |
-| `openui` reactive form `create`, `update`, or `delete` | `ng_reactive_form` wraps `angular-django2:reactive-form` for create; deterministic TOOL contract and remaining operation mappings are not yet defined | Not yet defined for `build_app` |
-| `openui` navigation `update` | `angular-site-composition` handles site-level navigation composition; the deterministic TOOL contract is not yet defined | Not yet defined for `build_app` |
+| `static_config` `create` or `update` of a setting in the table below | The command that consumes the setting | matching operation |
+| `static_config` `create` or `update` of a setting that changes no construction output | No construction command; the terminal validation gate runs | — |
+| `static_config` `delete` or `move`, or a subject not in the table | Unsupported; fails explicitly | — |
+| `openapi` `create` of a path | `angular_api_client_generate`, then `ngdj_add_data_service` for the new resource | create |
+| `openapi` `create` of a schema | `angular_api_client_generate` | create |
+| Any other `openapi` change: an operation, or the `update` or `delete` of a path or schema | Unsupported while ngdj's `data-service` is create-only; fails explicitly with the upstream mapping's reason and gap issue | — |
+| `openui` change whose element resolves to a root node type of the upstream command mapping, with a `supported` status for its operation | The Tool of that node type in the table below | matching operation |
+| `openui` change inside an `embedded` node type | The Tool of its root node type, with the root's operation status | update |
+| `openui` change whose operation is `partial` or `unsupported` in the mapping, or whose command has no djng Tool | Unsupported; fails explicitly with the mapping's reason and gap issue, or "no wrapper" | — |
 
-The direct wrappers define precise invocations for the ngdj operations they
-support, but `build_app` must still define the deterministic TOOL contract and
-atomic-operation mapping for every row before claiming change-driven support.
-Unsupported changes must fail explicitly; `build_app` must not silently omit
+A static setting selects the command that consumes it. `create` appears for an initial
+build or a new setting, and has the same translation as `update`:
+
+| Static setting | Consumed by | Step | Stage |
+|---|---|---|---|
+| `drfSpectacular.settings.*` | schema export | `openapi_schema_export` | 0 |
+| `angular.workspace.*` (`packageManager`, `style`, `routing`) | workspace defaults, reapplied by the workspace modification wrapper | `angular-workspace-foundation` | 1 |
+| `tool.ngAddPackage` | the ngdj registration, repeated by the same wrapper | `angular-workspace-foundation` | 1 |
+| `angular.application.*` (`ssr`, `zoneless`) | application generation | `angular-app-composition` | 2 |
+| `ngOpenApiGen.*` (`serviceSuffix`, `modelIndex`) | the derived `ng-openapi-gen.json` | `angular_api_client_generate` | 3 |
+| `angular.build.*`, `oasdiff.*`, `tool.executables.*` | the build gate, the diff output and the executable lookup | none | — |
+
+The workspace and application steps use Skill-layer names, as the project-config steps
+do, because no Tool contract modifies a workspace or application. A schema export does
+not by itself change the OpenAPI subjects: any resulting difference in the schema comes
+from the `openapi` Changes.
+
+Every `openapi` change regenerates the typed client from the changed schema. Whether
+`data-service` supports an operation is read from the upstream command mapping, as for
+OpenUI. The OpenUI commands that depend on an API subject come from the `openui`
+Changes of the same ChangeSet; `build_app` does not derive that dependency from the API
+subject. The ngdj `openapi-setup` schematic (`ng_openapi_setup`) has no dedicated Tool;
+the generic `ngdj_run_schematic` Tool can run it. The translators do not plan it yet, and
+a first build needs it before `angular_api_client_generate`.
+
+`build_app` loads the mapping only when the ChangeSet has an `openui` or `openapi`
+Change, from `<angularWorkspace>/node_modules/<package>/schematics/`, where the package is
+the one `tool.ngAddPackage` names. It must be installed at the pinned version, so a plan
+for a workspace that does not exist yet cannot include these Changes; `build_app` reports
+that the package must be installed. `--dry-run` prints the ordered steps without running
 them.
+
+The upstream command mapping (`schematics/command-mapping.json` of the installed
+`angular-django2` package, `ARCHITECTURE.md` §3.4) owns which node type is compiled by
+which command and which operations that command supports; `build_app` reads it at run
+time and does not keep a copy. `build_app` owns the Tool selection:
+
+| Root node type | ngdj command | Tool contract | Stage |
+|---|---|---|---|
+| `Application` | `material-app` | `angular_app_scaffold` | 2 |
+| `SurfaceContainers` (no overlay child) | `component` | `ngdj_add_component` | 7 |
+| `SurfaceContainers` (with an overlay child) | `complex-component` | `ngdj_add_complex_component` | 8 |
+| `Form` | `reactive-form` | `ngdj_add_reactive_form` | 9 |
+| `DashboardPage`, `EmptyPage` | `page` | `ngdj_add_page` | 10 |
+
+A change inside an `embedded` node type is an `update` of the root node that compiles it
+(a navigation or route change is an `Application` update). A change at a root node type
+element itself is a `create` or `delete`; a change inside it is an `update`. Node types
+compiled by `form-field`, `field-component`, `tabs`, `dialog`, `stepper`, `table`,
+`html` or `link` (whose update runs through the workspace modification wrapper) have
+no djng Tool yet and fail as "no Tool", and so does a node type the mapping does not
+cover. The `SurfaceContainers` condition and the choice of `material-app` for
+`Application` are decided by `build_app`, not by the mapping. With the
+mapping of `angular-django2` 0.7.0 only `create` is supported for most node types:
+`update` is supported for `Application`, `html` and `link`, `complex-component` is
+`partial`, and every other `update` and every `delete` fails explicitly. A Tool step
+receives the `document` and `node_id` of its element.
+
+Unsupported changes must fail explicitly; `build_app` must not silently omit them.
 
 ### Execution order
 
@@ -209,11 +269,12 @@ Commands must satisfy this dependency order:
 3  angular_api_client_generate      (TOOL; depends on 2)
 ```
 
-The TOOL contracts and dependency order for the remaining deterministic `ngdj`
-schematic operations are not yet defined. Existing direct wrappers do not by
-themselves establish `build_app` support. The contracts and ordering must be
-specified before those operations are added to this execution order or claimed
-as supported by `build_app`.
+Stage `0` is the schema export (`openapi_schema_export`); the remaining stages are `4`
+data service (`ngdj_add_data_service`), `7` component,
+`8` complex component, `9` reactive form and `10` page, as in the table above, and `12`
+last validation; `5`, `6` and `11` are unassigned. A deterministic `ngdj` operation
+without a Tool contract in `TOOL_CONTRACTS.md` is not added to this order and is not
+claimed as supported by `build_app`.
 
 An optional matching `angular-*-composition` SKILL command may follow its
 deterministic TOOL command only when the selected work is genuinely

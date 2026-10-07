@@ -76,8 +76,8 @@ full-stack integration layers described in `doc/ARCHITECTURE.md` §3.4.1.
 
 OpenUI change semantics are owned by the upstream
 [OpenUI JSON comparison tool](https://openui-spec.readthedocs.io/en/latest/tooling/comparison/),
-not by `djng`. Until `build_app` integrates this planned comparison step, use
-the `compare_openui_spec` console script installed by `openui-spec`, passing
+not by `djng`. `build_app` uses it to detect OpenUI changes; to inspect a changelog
+by hand, use the `compare_openui_spec` console script installed by `openui-spec`, passing
 the accepted reference document first and the candidate document second:
 
 ```bash
@@ -108,11 +108,13 @@ second parser.
 
 ### 4. Build and validate the generated app
 
-`build_app` is reserved for the generated-app construction planner. The current
-implementation discovers and validates the project inputs, but its planning and
-execution workflow is not implemented yet. Do not rely on it to build or
-validate a generated app; use the individual wrappers below while the planner
-is completed. Its target requirements are documented in
+`build_app` is the generated-app construction planner. It detects the changes
+between the previous and the current inputs and, with `--dry-run`, prints the ordered
+steps it would run, as far as the ngdj command mapping supports them (see
+{ref}`What build_app plans <what-build-app-plans>`). Running the steps is not
+implemented yet, so do not rely on it to build or validate a generated app; use the
+individual wrappers below while the planner is completed. Its target requirements are
+documented in
 `doc/requirements/APP_BUILDER_REQUIREMENTS.md`
 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md){.modal-link}
 

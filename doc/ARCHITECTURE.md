@@ -478,7 +478,7 @@ When a new capability is proposed:
 | `oasdiff_diff` | Yes | None | No | **TOOL** |
 | `angular_api_client_generate` | Yes | None | No | **TOOL** |
 | `pre-construction` contract validation gate | Yes | None | Yes | **HOOK** wrapping `validate_openapi_schema` |
-| Generate an Angular page or reactive form from validated OpenUI | Yes | None | No | **TOOL**; contract not yet defined |
+| Generate an Angular page or reactive form from validated OpenUI | Yes | None | No | **TOOL** (`ngdj_add_page`, `ngdj_add_reactive_form`) |
 | Interpret underspecified intent or refine generated behavior | No | High | No | Optional **SKILL** |
 | `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** |
 
@@ -555,13 +555,13 @@ construction concern.
 | `angular.app` | `ng_gen_app` | `angular_app_scaffold` | `angular-app-composition` |
 | `angular.feature` | — | `ngdj_add_feature` | — |
 | `angular.api-client` | `ng_openapi_gen` | `angular_api_client_generate` | `angular-api-integration` |
-| `angular.data-service` | `ng_data_service` | — | `angular-data-service-composition` |
+| `angular.data-service` | `ng_data_service` | `ngdj_add_data_service` | `angular-data-service-composition` |
 | `angular.field-component` | — | — | `angular-field-component-composition` |
 | `angular.form-field` | — | — | `angular-form-field-composition` |
 | `angular.component` | `ng_component` | `ngdj_add_component` | `angular-component-composition` |
-| `angular.complex-component` | `ng_complex_component` | — | `angular-complex-component-composition` |
-| `angular.reactive-form` | `ng_reactive_form` | — | `angular-reactive-form-composition` |
-| `angular.page` | `ng_page` | — | `angular-page-composition` |
+| `angular.complex-component` | `ng_complex_component` | `ngdj_add_complex_component` | `angular-complex-component-composition` |
+| `angular.reactive-form` | `ng_reactive_form` | `ngdj_add_reactive_form` | `angular-reactive-form-composition` |
+| `angular.page` | `ng_page` | `ngdj_add_page` | `angular-page-composition` |
 | `contract.schema-export` | `export_schema` | `openapi_schema_export` | — |
 | `contract.schema-validate` | — | `validate_openapi_schema` | — |
 | `contract.schema-diff` | — | `oasdiff_diff`, `oasdiff_changelog` | — |

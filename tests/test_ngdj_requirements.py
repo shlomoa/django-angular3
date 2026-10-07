@@ -105,6 +105,42 @@ class NgdjRequirementsContractTests(unittest.TestCase):
         self.assertIn("ng-openapi-gen", source)
         self.assertIn("generate:api", source)
 
+    def test_openapi_setup_schematic_offers_the_auth_scheme_djng_forwards(
+        self,
+    ) -> None:
+        schema_path = (
+            NGDJ_ROOT
+            / "projects"
+            / "angular-django2"
+            / "schematics"
+            / "openapi-setup"
+            / "schema.json"
+        )
+        properties = json.loads(schema_path.read_text(encoding="utf-8"))["properties"]
+        self.assertEqual(set(properties["authScheme"]["enum"]), {"bearer", "basic"})
+        self.assertIn("auth-scheme", properties["authScheme"]["aliases"])
+
+    def test_schematics_accept_the_openui_document_options_djng_forwards(
+        self,
+    ) -> None:
+        schematics = NGDJ_ROOT / "projects" / "angular-django2" / "schematics"
+        for name, has_node_id in (
+            ("workspace-setup", False),
+            ("material-app", True),
+            ("page", True),
+            ("component", True),
+            ("complex-component", True),
+            ("reactive-form", True),
+        ):
+            with self.subTest(schematic=name):
+                properties = json.loads(
+                    (schematics / name / "schema.json").read_text(encoding="utf-8")
+                )["properties"]
+                self.assertEqual(properties["document"]["format"], "path")
+                self.assertEqual("nodeId" in properties, has_node_id)
+                if has_node_id:
+                    self.assertIn("node-id", properties["nodeId"]["aliases"])
+
     def test_data_service_schematic_generates_typed_wrapper(self) -> None:
         ds_index_path = (
             NGDJ_ROOT

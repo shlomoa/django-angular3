@@ -73,6 +73,13 @@ utility's `remove`, `add`, and `change` entries into `delete`, `create`, and
 `update` Changes respectively. `djng` must not implement a competing OpenUI
 comparison algorithm.
 
+Each `openui` Change also records, as evidence, the `id` and `type` of every
+element that encloses its path, root element first: the element the path names,
+or the one that owns the attribute, member or child list it names. The type is
+read from the candidate document, or from the reference document for a `delete`.
+Command translation selects a command from the node types in that chain and the
+upstream command mapping, without reading the documents again.
+
 `move` is reserved for identity-preserving relocation. If identity cannot be
 established, comparison must emit `delete` plus `create` instead. The OpenUI
 comparison emits no `move`: relocating a node to another parent surfaces as a

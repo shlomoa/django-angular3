@@ -35,6 +35,15 @@ class Command(AngularBaseCommand):
             action="store_true",
             help="Skip generating tests for the integration helpers.",
         )
+        parser.add_argument(
+            "--auth-scheme",
+            choices=("bearer", "basic"),
+            default=None,
+            help=(
+                "Authorization scheme of the generated transport interceptor "
+                "(default: the schematic's default, bearer)."
+            ),
+        )
 
     def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {
@@ -42,4 +51,5 @@ class Command(AngularBaseCommand):
             "helpers_path": options.get("helpers_path"),
             "skip_helpers": options.get("skip_helpers"),
             "skip_tests": options.get("skip_tests"),
+            "auth_scheme": options.get("auth_scheme"),
         }
