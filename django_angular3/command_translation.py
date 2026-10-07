@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Final
 
-from .changes import Change, ChangeDomain
+from .changes import Change, ChangeDomain, ChangeOperation
 
 
 class CommandTranslationError(ValueError):
@@ -70,7 +70,7 @@ def translate_changes(changes: tuple[Change, ...]) -> tuple[AppBuildStep, ...]:
     generated-app workspace. Every unsupported semantic subject is rejected.
     """
     steps = [step for change in changes for step in _change_steps(change)]
-    if not steps:
+    if not changes:
         raise CommandTranslationError()
     steps.append(
         AppBuildStep(
@@ -96,13 +96,60 @@ def _not_implemented(change: Change) -> tuple[AppBuildStep, ...]:
     )
 
 
+_PROJECT_CONFIG_OPERATIONS: Final = (ChangeOperation.CREATE, ChangeOperation.UPDATE)
+
+
+def _require_project_config_operation(change: Change) -> None:
+    """Reject operations without a documented project-config translation.
+
+    The project-config comparison emits only ``create`` (no baseline) and
+    ``update``. ``delete`` and ``move`` have no translation, so they fail
+    explicitly instead of being planned as no work.
+    """
+    if change.operation not in _PROJECT_CONFIG_OPERATIONS:
+        raise CommandTranslationError(
+            f"Unsupported Change operation: {change.domain.value} "
+            f"{change.operation.value}: {change.subject}."
+        )
+
+
+def _translate_project_foundation(change: Change) -> tuple[AppBuildStep, ...]:
+    """Project identity and workspace location: workspace, then application.
+
+    ``project.name`` names the workspace and the Angular application, and
+    ``artifacts.angularWorkspace`` is where both live, so a change to either
+    needs the project-level foundation commands (``APP_BUILDER_REQUIREMENTS.md``
+    Change-to-command mapping).
+    """
+    _require_project_config_operation(change)
+    return (
+        _change_step(1, "angular-workspace-foundation", change),
+        _change_step(2, "angular-app-composition", change),
+    )
+
+
+def _translate_project_selector(change: Change) -> tuple[AppBuildStep, ...]:
+    """OpenAPI and OpenUI source selectors need no construction command.
+
+    A selector change is a separate fact from a change in the selected content
+    (``CHANGE_MODEL_CONTRACTS.md`` §2.2): the openapi and openui domains
+    compare the selected documents and drive their own commands, and the final
+    ``last-check`` gate validates the newly selected source.
+    """
+    _require_project_config_operation(change)
+    return ()
+
+
 # Per-domain maps from a Change subject to the translator that returns the
 # ordered steps for that Change. The subject must match a key exactly.
 OPENAPI_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
     # TODO: populate OpenAPI subject translators.
 }
 PROJECT_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
-    # TODO: populate project-config subject translators.
+    "project.name": _translate_project_foundation,
+    "artifacts.angularWorkspace": _translate_project_foundation,
+    "artifacts.openapiSchema": _translate_project_selector,
+    "artifacts.openuiSpecification": _translate_project_selector,
 }
 STATIC_CONFIG_CHANGE_TRANSLATORS: Final[dict[str, ChangeTranslator]] = {
     # TODO: populate static-config subject translators.
