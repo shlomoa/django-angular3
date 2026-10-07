@@ -200,10 +200,9 @@ Every `openapi` change regenerates the typed client from the changed schema. Whe
 `data-service` supports an operation is read from the upstream command mapping, as for
 OpenUI. The OpenUI commands that depend on an API subject come from the `openui`
 Changes of the same ChangeSet; `build_app` does not derive that dependency from the API
-subject. The ngdj `openapi-setup` schematic (`ng_openapi_setup`) has no Tool contract,
-and the translators do not plan it. A first build needs it before
-`angular_api_client_generate`. The contracts do not settle whether `build_app` may select
-an operation that has no Tool contract, so this is open for the owner to decide.
+subject. The ngdj `openapi-setup` schematic (`ng_openapi_setup`) has no dedicated Tool;
+the generic `ngdj_run_schematic` Tool can run it. The translators do not plan it yet, and
+a first build needs it before `angular_api_client_generate`.
 
 The upstream command mapping (`schematics/command-mapping.json` of the installed
 `angular-django2` package, `ARCHITECTURE.md` §3.4) owns which node type is compiled by

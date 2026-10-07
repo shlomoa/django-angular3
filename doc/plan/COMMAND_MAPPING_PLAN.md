@@ -155,9 +155,10 @@ so the branch can be split into its own PR.
    its behavior. `static_config` is not done: the requirements name no command for a
    static subject, and the sketch in the `expectedFailure` tests predates #222 and uses
    Skill names, so the subject-to-command table needs an owner decision first.
-   `openapi-setup` (`ng_openapi_setup`) has no Tool contract and is not planned by the
-   translators. Whether `build_app` may select an operation without a Tool contract is not
-   settled by the contracts; it is an owner decision.
+   `openapi-setup` (`ng_openapi_setup`) has no dedicated Tool; the generic
+   `ngdj_run_schematic` Tool can run it. The translators do not plan it yet: a step names
+   a Tool but carries no schematic name, so planning it through `ngdj_run_schematic`
+   needs the step to carry one. That is a design decision for the owner.
 7. **Wire into `build_app`** (`management/commands/build_app.py`): pass the loader result
    in, print the ordered steps and unsupported-change failures in `--dry-run`, and keep
    the command marked work in progress until step 8 passes.
