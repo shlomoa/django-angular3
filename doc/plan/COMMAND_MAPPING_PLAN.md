@@ -58,33 +58,42 @@ With the current mapping, change-driven `build_app` can honestly support first b
 must fail explicitly, as the requirements already demand ("must not silently omit
 them"), naming the upstream reason and gap issue. The plan does not widen this.
 
-## 2. Decisions needed before step 3
+## 2. Decisions
 
-1. **Step identity.** `AppBuildStep.name_id` is documented as a Skill-layer name, but the
-   requirements say deterministic selection uses TOOL contract names. Use TOOL names
-   (recommended; the `expectedFailure` tests are rewritten to match) or keep Skill names?
-2. **Element type for an OpenUI Change.** Translation needs the node type of the element
-   a Change belongs to. Either enrich each OpenUI Change at derivation time, where both
-   documents are loaded (recommended; `translate_changes` stays a pure function of the
-   Changes), or pass the documents to `translate_changes`.
-3. **Mapping source.** Read `command-mapping.json` at run time from the installed
-   package (`<workspace>/node_modules/angular-django2/schematics/`), failing if its
-   version differs from `tool.ngAddPackage` (recommended), or vendor a snapshot into djng.
-4. **New wrappers.** Add wrappers and Tool contracts for `tabs`, `dialog`, `stepper`,
-   `table`, `form-field`, `field-component` in this PR, or translate only node types
-   whose wrapper already exists and fail the rest as "no wrapper"? Recommended: the
-   second, then add wrappers in follow-up PRs, one per command.
-5. **Unsupported update or delete.** Confirm fail-fast (the stated requirement) rather
-   than planning a delete plus create.
+Settled by the owner on 2026-10-07, plus what the documentation already fixes:
+
+1. **Step identity: TOOL contract names.** `ARCHITECTURE.md` §3.6.3 classifies "generate an
+   Angular page or reactive form from validated OpenUI" as a deterministic TOOL whose
+   contract is not yet defined, and §3.6.4 requires every selected deterministic operation
+   to use a TOOL name. Step 1 therefore defines the missing contracts, following the
+   `ngdj_add_component` pattern: `ngdj_add_page`, `ngdj_add_reactive_form`,
+   `ngdj_add_complex_component` and `ngdj_add_data_service`. The existing
+   `ngdj_add_component`, `angular_app_scaffold` and `angular_workspace_scaffold` gain
+   optional `document` and `node_id` inputs. The Skill names in the project-config steps
+   merged in #222 are renamed to their Tool names in the step that introduces the Tool
+   identities.
+2. **Node type: enrich at derivation.** `external_comparisons.py` records the element id and
+   type in each OpenUI Change's evidence; `translate_changes` stays a pure function of the
+   Changes.
+3. **Mapping source: the installed package.** Read
+   `<workspace>/node_modules/angular-django2/schematics/command-mapping.json` at run time,
+   and fail when its version differs from `tool.ngAddPackage`.
+4. **New wrappers: deferred.** Node types whose command has no djng wrapper (`tabs`,
+   `dialog`, `stepper`, `table`, `form-field`, `field-component`) fail as "no wrapper".
+5. **Unsupported update or delete: fail explicitly**, as the requirements already state.
+
+Commit granularity: one commit per step below, each with its own tests and doc updates,
+so the branch can be split into its own PR.
 
 ## 3. Steps
 
 1. **Contracts and requirements first** (docs only).
-   1. In `APP_BUILDER_REQUIREMENTS.md`, replace each OpenUI "not yet defined" row that the
+   1. Add the four Tool contracts of decision 1 to `TOOL_CONTRACTS.md`, add the `document`
+      and `node_id` inputs to the three existing OpenUI-capable Tools, and update the
+      §3.6.4.1 crosswalk, the §3.6.3 worked example and the `ngdj-scaffold` Plugin list.
+   2. In `APP_BUILDER_REQUIREMENTS.md`, replace each OpenUI "not yet defined" row that the
       mapping now defines with the node-type, operation and status rule, citing the
-      upstream mapping instead of restating it. Rows still undefined stay marked so.
-   2. In `TOOL_CONTRACTS.md` and the §3.6.4.1 crosswalk, add the Tool contract for each
-      OpenUI command that will be translated (per decision 4), and the stage numbers.
+      upstream mapping instead of restating it, and state the stage of each Tool.
    3. Update `AUTOMATION_PLAN.md` 8.2 to say which OpenUI operations are now defined.
 2. **Mapping loader** (`django_angular3/ngdj_command_mapping.py`).
    1. Locate and load the file (decision 3); validate it with `jsonschema` against the
@@ -95,39 +104,45 @@ them"), naming the upstream reason and gap issue. The plan does not widen this.
       `operation_status(node_type, operation)`, `embedded_owner(node_type)`,
       `on_existing(command)`. A missing file or version mismatch raises one error that
       names both versions.
+   3. Tests against a fixture copied from the pinned upstream file by a script, not
+      written by hand, plus a drift test against the sibling checkout when present, like
+      `test_ngdj_requirements.py`.
 3. **OpenUI Change enrichment** (`external_comparisons.py`, decision 2).
    1. For each upstream entry, walk the path up to the nearest element in the candidate
       (or reference, for a delete) document and record its `id` and `type` in the Change
       evidence. A change below an `embedded` node resolves to its root ancestor.
    2. Root-level changes (`Application`) resolve to the document root.
-4. **OpenUI translators** (`command_translation.py`).
+4. **Forward the OpenUI document from the wrappers.** None of the djng wrappers
+   (`ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`, `ng_reactive_form`,
+   `ng_data_service`) passes `--document` or `--node-id`, which every OpenUI-driven
+   schematic takes; `ng_reactive_form` still passes the deprecated `--definition`.
+   Add optional `--document` and `--node-id` to each, in the CLI and the management
+   command, with the mapping's rule that `--node-id` requires `--document`, and keep the
+   default invocations unchanged. This is the djng-owned argument translation of
+   `ARCHITECTURE.md` §3.4.
+5. **OpenUI translators** (`command_translation.py`).
    1. One translator keyed by the resolved node type, not by path: look up the status for
       the Change's operation, emit the step for `supported`, and raise
-      `CommandTranslationError` for `partial` and `unsupported`, quoting the mapping's
-      `reason` and `gap`.
-   2. Give each OpenUI command an `exec_order` between the existing stages (components 7,
+      `CommandTranslationError` for `partial`, `unsupported` and for a command without a
+      djng wrapper, quoting the mapping's `reason` and `gap` where it has one.
+   2. Give each OpenUI Tool an `exec_order` between the existing stages (components 7,
       complex components 8, forms 9, pages 10, site navigation 11); new stages are
       added to the `AppBuildStep` docstring and the requirements together.
    3. A Change whose `onExisting` outcome is `reject` or `refuse-modified` and whose
       target already exists is reported in the step's `change_reason`, not hidden.
-5. **API translators.** `openapi create` selects `openapi-setup` then `data-service`
-   (stages 3 and 4) from the mapping's `api` section; `update` and `delete` fail with the
-   mapping's reason. `static_config` follows the existing requirements table, which djng
-   owns, and is done as a separate commit. `project_config` is already done (#222) and
-   keeps its behavior.
-6. **Wire into `build_app`** (`management/commands/build_app.py`): pass the loader result
-   in, print the ordered steps and unsupported-change failures in `--dry-run`, keep
-   the command marked work in progress until step 7 passes.
-7. **Tests.**
-   1. Loader tests against a fixture copied from the pinned upstream file by a script
-      (not written by hand), plus a drift test that compares it to the sibling checkout
-      when present, like `test_ngdj_requirements.py`.
-   2. Table tests: every (root node type, operation) pair in the fixture yields a step or
-      the expected error, so a mapping change fails a test instead of drifting.
-   3. Rewrite the five remaining `expectedFailure` tests against the decided identities and remove
-      each decorator only when its assertions pass (the rule in #204).
-   4. Ruff check and format, the full unittest suite, and the Sphinx docs build.
-8. **Document the boundary** in `README.md`, `docs/commands.md` and `CONTRIBUTING.md`:
+6. **API translators.** `openapi create` selects `angular_api_client_generate` then
+   `ngdj_add_data_service` (stages 3 and 4) from the mapping's `api` section; `update` and
+   `delete` fail with the mapping's reason. `static_config` follows the existing
+   requirements table, which djng owns, and is done as a separate commit.
+   `project_config` is already done (#222) and keeps its behavior.
+7. **Wire into `build_app`** (`management/commands/build_app.py`): pass the loader result
+   in, print the ordered steps and unsupported-change failures in `--dry-run`, and keep
+   the command marked work in progress until step 8 passes.
+8. **Close the expected failures.** Rewrite the five remaining `expectedFailure` tests
+   against the decided identities and remove each decorator only when its assertions pass
+   (the rule in #204); run ruff check and format, the full unittest suite and the Sphinx
+   docs build.
+9. **Document the boundary** in `README.md`, `docs/commands.md` and `CONTRIBUTING.md`:
    what `build_app` supports from the mapping and what it refuses.
 
 ## 4. Risks
