@@ -233,6 +233,17 @@ class ExportSchemaCommandTests(unittest.TestCase):
             elif destination.exists():
                 destination.unlink()
 
+    def test_derived_settings_reach_drf_spectacular_and_are_restored(self) -> None:
+        from drf_spectacular.settings import spectacular_settings
+
+        from django_angular3.settings import use_drf_spectacular_settings
+
+        original_title = spectacular_settings.TITLE
+        with use_drf_spectacular_settings({"TITLE": "Derived API", "VERSION": "9.9.9"}):
+            self.assertEqual(spectacular_settings.TITLE, "Derived API")
+            self.assertEqual(spectacular_settings.VERSION, "9.9.9")
+        self.assertEqual(spectacular_settings.TITLE, original_title)
+
     def test_rotates_existing_schema_to_previous(self) -> None:
         """When a current schema exists, it should be renamed to .previous."""
         from django.core.management import call_command

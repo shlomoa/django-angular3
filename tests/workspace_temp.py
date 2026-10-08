@@ -12,3 +12,8 @@ WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 WORKSPACE_TEMP_DIR = WORKSPACE_ROOT / "scratch"
 WORKSPACE_TEMP_DIR.mkdir(exist_ok=True)
 atexit.register(shutil.rmtree, WORKSPACE_TEMP_DIR, ignore_errors=True)
+
+
+def keep_workspace_temp() -> None:
+    """Leave the scratch directory in place when the process exits."""
+    atexit.unregister(shutil.rmtree)
