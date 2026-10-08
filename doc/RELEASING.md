@@ -133,10 +133,11 @@ Edit the version string in all three files:
 | `django_angular3/__init__.py` | `__version__ = "X.Y.Z"` |
 | `docs/conf.py` | `release = "X.Y.Z"` |
 
-Then commit:
+In `CHANGELOG.md`, rename the `[Unreleased]` heading to `[X.Y.Z]` and add an empty
+`[Unreleased]` section above it. Then commit:
 
 ```bash
-git add pyproject.toml django_angular3/__init__.py docs/conf.py
+git add pyproject.toml django_angular3/__init__.py docs/conf.py CHANGELOG.md
 git commit -m "chore: bump version to X.Y.Z"
 ```
 
@@ -182,7 +183,8 @@ git push origin vX.Y.Z
 2. Select the tag `vX.Y.Z`.
 3. Set the title to `vX.Y.Z`.
 4. Write a short release summary covering notable changes, breaking changes (if
-   any), and upgrade instructions.
+   any), and upgrade instructions. Take it from the `[Unreleased]` section of
+   `CHANGELOG.md`.
 5. Click **Publish release**.
 
 Publishing the release triggers `.github/workflows/deploy.yml`, which builds

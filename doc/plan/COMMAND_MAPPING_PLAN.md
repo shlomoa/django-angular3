@@ -90,6 +90,14 @@ Settled by the owner on 2026-10-07, plus what the documentation already fixes:
    `ng generate angular-django2:<command>` from it. `form-field` and `field-component`
    have no Tool contract and still fail as "no Tool".
 5. **Unsupported update or delete: fail explicitly**, as the requirements already state.
+6. **Update and delete follow upstream.** Support is enabled per command when its gap issue
+   closes and the mapping marks the operation `supported`: `component`, `form-field` and
+   `field-component` (`shlomoa/angular-django2#193`), `reactive-form` (`#194`), `page` (`#195`),
+   `tabs`, `dialog` and `stepper` (`#196`), `table` (`#197`), `Application` delete (`#198`),
+   `openapi-setup` and `data-service` (`#199`) and `complex-component` (`#200`). The
+   translators already read the status, so enabling an operation needs the test scenario that
+   exercises it, not a new rule; none exists yet for an update of an existing OpenUI element
+   (`TEST_SCENARIO_SPECIFICATIONS.md` scenario 6 only adds a page).
 
 Commit granularity: one commit per step below, each with its own tests and doc updates,
 so the branch can be split into its own PR.

@@ -89,6 +89,39 @@ needs the `angular-django2` package installed in the Angular workspace at the ve
 `tool.ngAddPackage` pins (a registry name such as `angular-django2@0.7.0`, not a path), so
 it cannot derive them for a workspace that does not exist yet.
 
+### Behavior on existing output
+
+Each ngdj command declares what a second run does on existing output, as `onExisting` in the
+command mapping. `build_app` quotes it in the reason of every step and does not keep its own
+copy. The outcomes are:
+
+| Outcome | A second run |
+|---|---|
+| `reject` | fails and writes nothing |
+| `skip` | leaves existing files and logs them |
+| `no-op` | gives identical output |
+| `refuse-modified` | gives identical output when unchanged, and fails when the existing output differs |
+| `rewrite` | regenerates and replaces files |
+| `delegated` | behaves as the Angular CLI schematic does |
+
+Read the value of a command in
+`<workspace>/node_modules/angular-django2/schematics/command-mapping.json`. A few cases
+matter when a build is repeated:
+
+- `material-app` (the `Application` node) and `workspace-setup` (`html` and `link`) are the
+  only commands that apply a changed document. `material-app` replaces only the text between
+  its `openui:begin` and `openui:end` comments and keeps edits made around them; the handler
+  of a toolbar action that left the document stays.
+- `material-setup` applies a changed `--theme`, `--typography` or `--animations` and leaves a
+  second run with unchanged options byte-identical.
+- `ng_openapi_setup` skips existing files. The `--auth-scheme` is fixed when
+  `django-transport.ts` is first written; remove the file to regenerate it for another
+  scheme.
+- The commands that compile a single OpenUI element (`tabs`, `dialog`, `stepper`, `table`,
+  `component`, `complex-component`) reject a second run. `build_app` generates an element
+  once, when it is created in the OpenUI document, and refuses to update or delete it until
+  the mapping marks the operation supported.
+
 ## Command ownership
 
 - **ngdj schematics** use the identity, ownership, and upstream-source policy in

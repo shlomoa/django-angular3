@@ -20,7 +20,11 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from django_angular3.changes import Change, ChangeDomain, ChangeOperation
-from django_angular3.command_translation import AppBuildStep, translate_changes
+from django_angular3.command_translation import (
+    _OPENUI_TOOLS,
+    AppBuildStep,
+    translate_changes,
+)
 from django_angular3.external_comparisons import compare_openui_files
 from django_angular3.management.commands.build_app import (
     ChangeDetector,
@@ -33,6 +37,7 @@ from django_angular3.step_bridge import (
     CROSSWALK,
     STAGED_DOCUMENT_DIRECTORY,
     StepBridgeError,
+    crosswalk_row,
     dasherize,
     resolve_steps,
     wrapper_for,
@@ -130,6 +135,15 @@ class CrosswalkTests(unittest.TestCase):
             },
             rows,
         )
+
+    def test_every_tool_of_the_translation_map_has_a_contract_and_a_row(self) -> None:
+        contracts = (REPOSITORY / "doc" / "contracts" / "TOOL_CONTRACTS.md").read_text(
+            encoding="utf-8"
+        )
+        for command, tool in _OPENUI_TOOLS.items():
+            with self.subTest(command=command, tool=tool.name):
+                self.assertRegex(contracts, rf"(?m)^#### \d+\. `{tool.name}` ")
+                self.assertIsNotNone(crosswalk_row(tool.name))
 
     def test_a_tool_name_and_a_skill_name_select_the_same_wrapper(self) -> None:
         step = _page_step()
