@@ -33,7 +33,7 @@ if not settings.configured:
 project = "django-angular3"
 copyright = "2026, shlomoa"
 author = "shlomoa"
-release = "0.3.5"
+release = "0.3.6"
 
 # ---------------------------------------------------------------------------
 # General configuration

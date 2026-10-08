@@ -8,6 +8,8 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+## [0.3.6]
+
 ### Added
 
 - `build_app` translates the detected project-configuration, OpenAPI and OpenUI changes into
@@ -48,6 +50,11 @@ package versions. Releases before this file are described on the
   two is required.
 - `last-check` builds the application (`ng_build`) until the terminal validation commands
   exist.
+
+### Fixed
+
+- Relative paths for ngdj schematics now reject Windows drive-qualified, rooted, and
+  parent-traversal paths on every platform.
 
 ### Removed
 
