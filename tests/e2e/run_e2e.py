@@ -109,6 +109,13 @@ ADDED_SCHEMA = {
 }
 
 _OUTPUT_TAIL = 4000
+_CI_MARKERS = (
+    "CI",
+    "CONTINUOUS_INTEGRATION",
+    "BUILD_NUMBER",
+    "RUN_ID",
+    "GITHUB_ACTIONS",
+)
 _NODE_VERSION = re.compile(r"v?(\d+)\.(\d+)\.(\d+)")
 
 
@@ -340,6 +347,11 @@ class Flow:
             NO_COLOR="1",
             FORCE_COLOR="0",
         )
+        # In a CI environment pnpm refuses an install that must update the lockfile,
+        # which every schematic that adds a dependency does, and no setting overrides
+        # that default for the install the Angular CLI runs. The tools run as locally.
+        for marker in _CI_MARKERS:
+            env.pop(marker, None)
         self.env = env
 
         node = self.run(["node", "--version"], cwd=REPOSITORY, label="node --version")

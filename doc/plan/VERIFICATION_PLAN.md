@@ -261,7 +261,13 @@ runner used for user-facing flows.
 
 #### 3. Generated-application construction
 
-- Execute each scenario against a real generated Angular workspace.
+- Execute each scenario against a real generated Angular workspace. The
+  real-tools flow of `tests/e2e/run_e2e.py` (see the "End-to-end validation"
+  section of `CONTRIBUTING.md`) is the first such run: tutorial project, real
+  `drf-spectacular` export, real Angular CLI, ngdj and `ng-openapi-gen`, and a
+  browser against Django. It covers the wrappers directly (Track W) and
+  `build_app` after a document and schema change (Track B phase 2); the
+  per-scenario matrix remains to be run the same way.
 - Run selected wrappers, Tools, Hooks, and Skills in dependency order.
 - Verify generated-output ownership and idempotence.
 - Verify preservation of unaffected output during incremental scenarios.

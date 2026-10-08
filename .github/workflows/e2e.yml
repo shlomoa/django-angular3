@@ -1,0 +1,108 @@
+---
+name: End-to-end
+
+# The real-tools flow of tests/e2e/run_e2e.py: drf-spectacular, the Angular CLI,
+# angular-django2, ng-openapi-gen and a browser, nothing mocked. See CONTRIBUTING.md.
+on:
+  workflow_dispatch:
+    inputs:
+      break:
+        description: >-
+          Inject a deliberate break; the run must then fail at the stage that names it.
+        type: choice
+        default: none
+        options: [none, model-field, openui-route, proxy]
+      tracks:
+        description: Tracks to run (W = wrappers, B = build_app phase 2).
+        type: string
+        default: "W,B"
+  schedule:
+    - cron: "17 3 * * *"
+  pull_request:
+    paths:
+      - "django_angular3/**"
+      - "tests/e2e/**"
+      - ".github/workflows/e2e.yml"
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DJNG_E2E: "1"
+      E2E_BREAK: ${{ inputs.break != 'none' && inputs.break || '' }}
+      E2E_TRACKS: ${{ inputs.tracks || 'W,B' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # ngdj needs ^22.22.3 || ^24.15.0; "22" resolves to the latest 22.x.
+          node-version: "22"
+
+      - name: Install pnpm and the Angular CLI
+        run: npm install --global pnpm@10 @angular/cli@22
+
+      - name: Cache the pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
+      - name: Install djng
+        run: python -m pip install -e ".[yaml]"
+
+      - name: Cache oasdiff
+        uses: actions/cache@v4
+        with:
+          path: django_angular3/.bin
+          key: oasdiff-${{ runner.os }}-${{ hashFiles('django_angular3/tools.py') }}
+
+      - name: Pre-install oasdiff
+        run: python -c "from django_angular3.tools import ensure_oasdiff; print(ensure_oasdiff())"
+
+      - name: Install the Playwright specs
+        working-directory: tests/e2e
+        run: npm ci --no-audit --no-fund
+
+      - name: Cache the Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('tests/e2e/package-lock.json') }}
+
+      - name: Install Chromium
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the end-to-end flow
+        run: python -m tests.e2e.run_e2e
+
+      - name: Upload the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-evidence
+          path: build/e2e-evidence/
+          if-no-files-found: warn
+
+      - name: Upload the Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: build/e2e-evidence/playwright-report/
+          if-no-files-found: ignore
