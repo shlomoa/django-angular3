@@ -79,7 +79,7 @@ class CommandTranslationTests(unittest.TestCase):
             ["openui:/children/old", "openui:/children/new"],
         )
 
-    def test_an_empty_change_list_plans_no_commands(self) -> None:
+    def test_an_empty_change_list_gives_no_steps(self) -> None:
         self.assertEqual(translate_changes(()), ())
 
     def test_rejects_unmapped_openui_change(self) -> None:

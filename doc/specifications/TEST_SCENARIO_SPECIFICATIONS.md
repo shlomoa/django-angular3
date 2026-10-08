@@ -39,7 +39,7 @@ and ordering are defined in [APP_BUILDER_REQUIREMENTS.md].
 
 ## 3. Scenario invocation
 
-After `build_app` planning is implemented, a development fixture is exercised
+Once `build_app` derives the steps of a scenario, a development fixture is exercised
 from its scenario directory with explicit inputs:
 
 ```bash
@@ -52,7 +52,7 @@ django-admin build_app \
 
 Arguments may be omitted to exercise the discovery and derivation rules in
 [SPECIFICATIONS.md] §2.2. A missing derived previous project configuration
-selects the first-run path. The current planner is not implemented, so the
+selects the first-run path. `build_app` does not derive the steps of every scenario yet, so the
 scenario suite specifies target verification rather than runnable current
 behavior.
 
