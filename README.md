@@ -1,6 +1,9 @@
 # django-angular3
 
 [![Nightly regression](https://github.com/shlomoa/django-angular3/actions/workflows/e2e.yml/badge.svg?branch=main&event=schedule)](https://github.com/shlomoa/django-angular3/actions/workflows/e2e.yml)
+[![django-angular3 on PyPI](https://img.shields.io/pypi/v/django-angular3?label=django-angular3)](https://pypi.org/project/django-angular3/)
+[![angular-django2 on npm](https://img.shields.io/npm/v/angular-django2?label=angular-django2)](https://www.npmjs.com/package/angular-django2)
+[![openui-spec on PyPI](https://img.shields.io/pypi/v/openui-spec?label=openui-spec)](https://pypi.org/project/openui-spec/)
 
 `django-angular3` enables seamless integration of Django, Django REST Framework (DRF), and Angular — giving teams a contract-first, automation-ready bridge between a DRF backend and an Angular Material frontend.
 
