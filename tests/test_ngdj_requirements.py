@@ -5,24 +5,16 @@ from typing import Any
 from unittest.mock import patch
 
 from django_angular3.angular import resolve_angular_command
+from tests.ngdj_source import NGDJ_PACKAGE_DIR, require_ngdj_source
 
 ROOT: Path = Path(__file__).resolve().parent.parent
-NGDJ_ROOT: Path = ROOT.parent / "angular-django2"
 PROJECT_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.json"
 
 
-@unittest.skipUnless(
-    NGDJ_ROOT.is_dir(), "angular-django2 sibling repository is required"
-)
+@require_ngdj_source
 class NgdjRequirementsContractTests(unittest.TestCase):
     def _collection(self) -> Any:
-        collection_path: Path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "collection.json"
-        )
+        collection_path: Path = NGDJ_PACKAGE_DIR / "schematics" / "collection.json"
         self.assertTrue(collection_path.is_file())
         return json.loads(collection_path.read_text(encoding="utf-8"))
 
@@ -45,14 +37,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
                 self.assertIn(name, schematics)
 
     def test_ng_add_registers_angular_django2_in_schematic_collections(self) -> None:
-        ng_add_index_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "ng-add"
-            / "index.ts"
-        )
+        ng_add_index_path = NGDJ_PACKAGE_DIR / "schematics" / "ng-add" / "index.ts"
         self.assertTrue(ng_add_index_path.is_file())
 
         ng_add_source = ng_add_index_path.read_text(encoding="utf-8")
@@ -61,14 +46,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
         self.assertIn("[COLLECTION_NAME, ...existingCollections]", ng_add_source)
 
     def test_application_schema_defaults_style_to_scss(self) -> None:
-        schema_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "application"
-            / "schema.json"
-        )
+        schema_path = NGDJ_PACKAGE_DIR / "schematics" / "application" / "schema.json"
         self.assertTrue(schema_path.is_file())
 
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -77,12 +55,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_material_app_schematic_creates_material_app(self) -> None:
         material_app_index_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "material-app"
-            / "index.ts"
+            NGDJ_PACKAGE_DIR / "schematics" / "material-app" / "index.ts"
         )
         self.assertTrue(material_app_index_path.is_file())
 
@@ -92,12 +65,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_openapi_setup_schematic_bootstraps_ng_openapi_gen(self) -> None:
         openapi_setup_index_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "openapi-setup"
-            / "index.ts"
+            NGDJ_PACKAGE_DIR / "schematics" / "openapi-setup" / "index.ts"
         )
         self.assertTrue(openapi_setup_index_path.is_file())
 
@@ -108,14 +76,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
     def test_openapi_setup_schematic_offers_the_auth_scheme_djng_forwards(
         self,
     ) -> None:
-        schema_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "openapi-setup"
-            / "schema.json"
-        )
+        schema_path = NGDJ_PACKAGE_DIR / "schematics" / "openapi-setup" / "schema.json"
         properties = json.loads(schema_path.read_text(encoding="utf-8"))["properties"]
         self.assertEqual(set(properties["authScheme"]["enum"]), {"bearer", "basic"})
         self.assertIn("auth-scheme", properties["authScheme"]["aliases"])
@@ -123,7 +84,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
     def test_schematics_accept_the_openui_document_options_djng_forwards(
         self,
     ) -> None:
-        schematics = NGDJ_ROOT / "projects" / "angular-django2" / "schematics"
+        schematics = NGDJ_PACKAGE_DIR / "schematics"
         for name, has_node_id in (
             ("workspace-setup", False),
             ("material-app", True),
@@ -142,14 +103,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
                     self.assertIn("node-id", properties["nodeId"]["aliases"])
 
     def test_data_service_schematic_generates_typed_wrapper(self) -> None:
-        ds_index_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "data-service"
-            / "index.ts"
-        )
+        ds_index_path = NGDJ_PACKAGE_DIR / "schematics" / "data-service" / "index.ts"
         self.assertTrue(ds_index_path.is_file())
 
         source = ds_index_path.read_text(encoding="utf-8")
@@ -158,12 +112,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_data_service_schematic_exposes_search_wrapper(self) -> None:
         ds_templates_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "data-service"
-            / "templates.ts"
+            NGDJ_PACKAGE_DIR / "schematics" / "data-service" / "templates.ts"
         )
         self.assertTrue(ds_templates_path.is_file())
 
@@ -172,12 +121,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_project_structure_declares_core_shared_features(self) -> None:
         directory_structure_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "utility"
-            / "directory-structure.ts"
+            NGDJ_PACKAGE_DIR / "schematics" / "utility" / "directory-structure.ts"
         )
         self.assertTrue(directory_structure_path.is_file())
 
@@ -189,12 +133,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
 
     def test_openapi_setup_schematic_emits_django_integration_helpers(self) -> None:
         openapi_setup_templates_path = (
-            NGDJ_ROOT
-            / "projects"
-            / "angular-django2"
-            / "schematics"
-            / "openapi-setup"
-            / "templates.ts"
+            NGDJ_PACKAGE_DIR / "schematics" / "openapi-setup" / "templates.ts"
         )
         self.assertTrue(openapi_setup_templates_path.is_file())
 

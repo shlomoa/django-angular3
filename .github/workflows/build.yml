@@ -48,6 +48,51 @@ jobs:
     - name: Build package
       run: python -m build
 
+  ngdj-contract:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+    - name: Derive the pinned angular-django2 tag
+      id: pin
+      run: |
+        python - <<'PY' >> "$GITHUB_OUTPUT"
+        import json
+        import re
+        import sys
+
+        with open("django_angular3/django-angular3.json", encoding="utf-8") as handle:
+            package = json.load(handle)["tool"]["ngAddPackage"]
+        match = re.fullmatch(r"angular-django2@(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?)", package)
+        if match is None:
+            sys.exit(
+                f"tool.ngAddPackage is {package!r}: expected a registry spec with a pinned "
+                "version such as 'angular-django2@0.7.0', not a path or an unpinned name"
+            )
+        print(f"ref=v{match.group(1)}")
+        PY
+    - name: Check out angular-django2 at the pinned release
+      uses: actions/checkout@v4
+      with:
+        repository: shlomoa/angular-django2
+        ref: ${{ steps.pin.outputs.ref }}
+        path: ngdj
+        sparse-checkout: projects/angular-django2
+        fetch-depth: 1
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[yaml]
+    - name: Run the ngdj contract and fixture-drift tests
+      env:
+        ANGULAR_DJANGO2_ROOT: ${{ github.workspace }}/ngdj
+        DJNG_REQUIRE_NGDJ: "1"
+      run: python -m unittest tests.test_ngdj_requirements tests.test_ngdj_command_mapping -v
+
   docs:
     runs-on: ubuntu-latest
     steps:
