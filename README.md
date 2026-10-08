@@ -1,5 +1,7 @@
 # django-angular3
 
+[![Nightly regression](https://github.com/shlomoa/django-angular3/actions/workflows/e2e.yml/badge.svg?branch=main&event=schedule)](https://github.com/shlomoa/django-angular3/actions/workflows/e2e.yml)
+
 `django-angular3` enables seamless integration of Django, Django REST Framework (DRF), and Angular — giving teams a contract-first, automation-ready bridge between a DRF backend and an Angular Material frontend.
 
 Project website: <https://djangoangular.com/>
