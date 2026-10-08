@@ -90,8 +90,9 @@ several minutes. Prerequisites:
   pre-install it where egress is restricted.
 - Ports 8000 (Django) and 4200 (Angular dev server) free.
 - The flow removes the CI markers (`CI`, `GITHUB_ACTIONS`, ...) from the environment of
-  the tools: under them pnpm refuses the lockfile-updating installs that the
-  schematics run.
+  the tools. Under them pnpm 10 refuses an install that has to update the lockfile, which
+  every schematic that adds a dependency causes, and no setting overrides that for the
+  install the Angular CLI runs itself.
 
 The flow runs these stages; a failure names its stage:
 
@@ -125,6 +126,11 @@ Environment variables:
 | `E2E_CHROMIUM_PATH` | Chromium executable for Playwright |
 | `E2E_PLAYWRIGHT_INSTALL=1` | Run `playwright install chromium` first |
 | `E2E_BREAK` | `model-field`, `openui-route` or `proxy`: inject a deliberate break; the run must fail at stage 2, 6 and 6 (P1, P2) respectively |
+
+The first run showed differences between what the tools do and what their documentation or
+the flow's design assumed; they are recorded in
+[`doc/plan/VERIFICATION_PLAN.md`](doc/plan/VERIFICATION_PLAN.md#first-slice-the-tutorial-flow)
+and in the `findings` of `summary.json`.
 
 Everything is written to `build/e2e-evidence/`: the exported schemas, the
 `build_app` dry run and run, every command's argv, exit code and output, tool
