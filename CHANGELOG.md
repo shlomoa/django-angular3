@@ -38,6 +38,10 @@ package versions. Releases before this file are described on the
 
 ### Changed
 
+- The tutorial builds the bundled project and then changes its OpenUI document and rebuilds
+  it with `build_app --previous-config`. `build_app` does not discover the previous
+  configuration yet: without `--previous-config` it compares the configuration with itself
+  and finds no change.
 - `tool.ngAddPackage` pins `angular-django2@0.7.0` (was `0.6.1`) and the package requires
   `openui-spec==0.12.1` (was `0.12.0`).
 - `ng_reactive_form --definition` is deprecated in favor of `--document`; exactly one of the

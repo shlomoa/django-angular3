@@ -43,9 +43,11 @@ not application configuration.
 
 ## Changes `build_app` turns into steps
 
-`build_app --dry-run` prints the ordered steps for the detected changes. The ngdj command
-mapping that ships in the installed `angular-django2` package decides what ngdj supports,
-so `djng` follows it instead of keeping its own list. The authoritative rules and tables
+`build_app --dry-run` prints the ordered steps for the detected changes. It compares the
+current configuration with the previous one, which is not discovered yet: pass it with
+`--previous-config`, or the configuration is compared with itself and no step is found. The
+ngdj command mapping that ships in the installed `angular-django2` package decides what
+ngdj supports, so `djng` follows it instead of keeping its own list. The authoritative rules and tables
 are in `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change-to-command mapping
 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#change-to-command-mapping){.modal-link}.
 
