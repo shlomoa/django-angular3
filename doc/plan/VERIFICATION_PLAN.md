@@ -276,22 +276,22 @@ suite gets its own runner:
 
 The runs showed these differences between the tools and their documentation or
 the flow's design. The flow works around each one and records the relevant ones
-in the `findings` of its `summary.json`. None of them is filed as an issue yet,
-except where stated.
+in the `findings` of its `summary.json`. Each is tracked in the issue named in the
+last column.
 
-| Finding | Owner | Handling in the flow |
-|---|---|---|
-| `export_schema` dropped `drfSpectacular.settings` (`info.title` and `version` were `""` and `0.0.0`) | djng | Fixed ([#223](https://github.com/shlomoa/django-angular3/issues/223)); the flow asserts `info` against the tool configuration |
-| The tutorial's `app.openui.json` puts `DashboardPage` under `Application`, which `material-app --document` rejects | djng (tutorial) | The flow uses an `html` root with the `Application` and its pages as siblings |
-| A `table` cannot be composed into a `DashboardPage` (supported: `SurfaceContainers`, `Form`, `TextInputs`, `RangeControl`) | ngdj | The table is a sibling element; the host glue places it in the page |
-| `material-app` builds sidenav links from `Navigation` and `NavItem`, not from every `DashboardPage` as its documentation says | ngdj | The document declares `Navigation` |
-| `ng-openapi-gen` 1.x generates the functional client (`api.ts`, `fn/`, `models/`) and no `services/`; djng's `ngOpenApiGen` configuration accepts only `serviceSuffix` and `modelIndex`, and the `data-service` schematic wraps a `<Resource>ApiService` | djng and ngdj | The host glue uses the generated `Api` class; the generated data service is not part of the build |
-| `ng_openapi_gen` writes the client to `<workspace>/generated/ng-openapi-gen`, replacing the `output` of the `ng-openapi-gen.json` that `ng_openapi_setup` wrote | djng | The glue imports from the configured output |
-| `openapi-setup` and the `data-service` schematic default to the workspace-root `src/` instead of the application project; the `ng_data_service` wrapper has no `--path` | ngdj and djng | The flow passes explicit project paths to `ng_openapi_setup`; the generated data service stays outside the project |
-| The generated `ResourceAdapter` only logs a failed request; no generated artifact shows an error state | ngdj | The failure spec asserts the log and the host glue's own error state |
-| The tutorial's `shop` app has no migrations, so `migrate` alone creates no tables | djng (tutorial) | The flow uses `migrate --run-syncdb` |
-| Under CI environment variables pnpm 10 refuses installs that update the lockfile, including the one the Angular CLI runs | tooling | The flow removes the CI markers from the tools' environment |
-| `oasdiff` is downloaded at first use and fails behind a restrictive egress policy | djng | The flow requires it pre-installed |
+| Finding | Owner | Handling in the flow | Issue |
+|---|---|---|---|
+| `export_schema` dropped `drfSpectacular.settings` (`info.title` and `version` were `""` and `0.0.0`) | djng | Fixed ([#223](https://github.com/shlomoa/django-angular3/issues/223)); the flow asserts `info` against the tool configuration | [#223](https://github.com/shlomoa/django-angular3/issues/223) (fixed) |
+| The tutorial's `app.openui.json` puts `DashboardPage` under `Application`, which `material-app --document` rejects | djng (tutorial) | The flow uses an `html` root with the `Application` and its pages as siblings | [#238](https://github.com/shlomoa/django-angular3/issues/238) |
+| A `table` cannot be composed into a `DashboardPage` (supported: `SurfaceContainers`, `Form`, `TextInputs`, `RangeControl`) | ngdj | The table is a sibling element; the host glue places it in the page | [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| `material-app` builds sidenav links from `Navigation` and `NavItem`, not from every `DashboardPage` as its documentation says | ngdj | The document declares `Navigation` | [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| `ng-openapi-gen` 1.x generates the functional client (`api.ts`, `fn/`, `models/`) and no `services/`; djng's `ngOpenApiGen` configuration accepts only `serviceSuffix` and `modelIndex`, and the `data-service` schematic wraps a `<Resource>ApiService` | djng and ngdj | The host glue uses the generated `Api` class; the generated data service is not part of the build | [#240](https://github.com/shlomoa/django-angular3/issues/240) |
+| `ng_openapi_gen` writes the client to `<workspace>/generated/ng-openapi-gen`, replacing the `output` of the `ng-openapi-gen.json` that `ng_openapi_setup` wrote | djng | The glue imports from the configured output | [#239](https://github.com/shlomoa/django-angular3/issues/239) |
+| `openapi-setup` and the `data-service` schematic default to the workspace-root `src/` instead of the application project; the `ng_data_service` wrapper has no `--path` | ngdj and djng | The flow passes explicit project paths to `ng_openapi_setup`; the generated data service stays outside the project | [#239](https://github.com/shlomoa/django-angular3/issues/239), [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| The generated `ResourceAdapter` only logs a failed request; no generated artifact shows an error state | ngdj | The failure spec asserts the log and the host glue's own error state | [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| The tutorial's `shop` app has no migrations, so `migrate` alone creates no tables | djng (tutorial) | The flow uses `migrate --run-syncdb` | [#238](https://github.com/shlomoa/django-angular3/issues/238) |
+| Under CI environment variables pnpm 10 refuses installs that update the lockfile, including the one the Angular CLI runs | tooling | The flow removes the CI markers from the tools' environment | none; documented in `CONTRIBUTING.md` |
+| `oasdiff` is downloaded at first use and fails behind a restrictive egress policy | djng | The flow requires it pre-installed | [#241](https://github.com/shlomoa/django-angular3/issues/241) |
 
 ### Implementation sequence
 
