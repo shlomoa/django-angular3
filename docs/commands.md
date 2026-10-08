@@ -43,9 +43,11 @@ not application configuration.
 
 ## Changes `build_app` turns into steps
 
-`build_app --dry-run` prints the ordered steps for the detected changes. The ngdj command
-mapping that ships in the installed `angular-django2` package decides what ngdj supports,
-so `djng` follows it instead of keeping its own list. The authoritative rules and tables
+`build_app --dry-run` prints the ordered steps for the detected changes. It compares the
+current configuration with the previous one, which is not discovered yet: pass it with
+`--previous-config`, or the configuration is compared with itself and no step is found. The
+ngdj command mapping that ships in the installed `angular-django2` package decides what
+ngdj supports, so `djng` follows it instead of keeping its own list. The authoritative rules and tables
 are in `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change-to-command mapping
 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#change-to-command-mapping){.modal-link}.
 
@@ -54,6 +56,8 @@ Supported today:
 - A changed project name or workspace location gives the workspace and application
   foundation steps. A changed artifact selector gives only the final validation.
 - A new OpenUI page, form, component or complex component gives the matching wrapper step.
+  A new `tabs`, `dialog`, `stepper` or `table` element gives the matching
+  `ng generate angular-django2:<command>` step, which has no wrapper.
   A change inside the `Application` element, including its routes, navigation and toolbar,
   gives an update of the application.
 - A new OpenAPI path gives the client regeneration and its data service. A new schema gives
@@ -64,8 +68,8 @@ Refused with an error that quotes the upstream reason and gap issue:
 - Updating or deleting any other OpenUI node.
 - A change to an OpenAPI operation, and updating or deleting a path or schema, because ngdj
   cannot update or delete data services.
-- A node type with no `djng` wrapper yet (`tabs`, `dialog`, `stepper`, `table`,
-  `form-field`, `field-component`, `html`, `link`) or one the mapping does not cover.
+- A node type with no `djng` Tool yet (`form-field`, `field-component`, `html`, `link`) or
+  one the mapping does not cover.
 
 Each step names the wrapper that runs it (through the crosswalk of
 `doc/ARCHITECTURE.md` §3.6.4.1) and carries the options it needs, resolved from the project
@@ -86,6 +90,39 @@ detecting changes of `django-angular3.json`. Deriving the steps of OpenUI and Op
 needs the `angular-django2` package installed in the Angular workspace at the version
 `tool.ngAddPackage` pins (a registry name such as `angular-django2@0.7.0`, not a path), so
 it cannot derive them for a workspace that does not exist yet.
+
+### Behavior on existing output
+
+Each ngdj command declares what a second run does on existing output, as `onExisting` in the
+command mapping. `build_app` quotes it in the reason of every step and does not keep its own
+copy. The outcomes are:
+
+| Outcome | A second run |
+|---|---|
+| `reject` | fails and writes nothing |
+| `skip` | leaves existing files and logs them |
+| `no-op` | gives identical output |
+| `refuse-modified` | gives identical output when unchanged, and fails when the existing output differs |
+| `rewrite` | regenerates and replaces files |
+| `delegated` | behaves as the Angular CLI schematic does |
+
+Read the value of a command in
+`<workspace>/node_modules/angular-django2/schematics/command-mapping.json`. A few cases
+matter when a build is repeated:
+
+- `material-app` (the `Application` node) and `workspace-setup` (`html` and `link`) are the
+  only commands that apply a changed document. `material-app` replaces only the text between
+  its `openui:begin` and `openui:end` comments and keeps edits made around them; the handler
+  of a toolbar action that left the document stays.
+- `material-setup` applies a changed `--theme`, `--typography` or `--animations` and leaves a
+  second run with unchanged options byte-identical.
+- `ng_openapi_setup` skips existing files. The `--auth-scheme` is fixed when
+  `django-transport.ts` is first written; remove the file to regenerate it for another
+  scheme.
+- The commands that compile a single OpenUI element (`tabs`, `dialog`, `stepper`, `table`,
+  `component`, `complex-component`) reject a second run. `build_app` generates an element
+  once, when it is created in the OpenUI document, and refuses to update or delete it until
+  the mapping marks the operation supported.
 
 ## Command ownership
 

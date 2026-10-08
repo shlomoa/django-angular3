@@ -17,7 +17,12 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Final
 
-from .angular import _COMMAND_BUILDERS, AngularInvocation
+from .angular import (
+    _COMMAND_BUILDERS,
+    NGDJ_COLLECTION,
+    AngularInvocation,
+    build_ngdj_schematic_invocations,
+)
 from .command_translation import AppBuildStep
 from .config import ProjectConfig
 from .ngdj_command_mapping import CommandMapping, CommandMappingError
@@ -104,6 +109,10 @@ CROSSWALK: Final[tuple[CrosswalkRow, ...]] = (
         ("ngdj_add_page",),
         ("angular-page-composition",),
     ),
+    CrosswalkRow("angular.tabs", (), ("ngdj_add_tabs",), ()),
+    CrosswalkRow("angular.dialog", (), ("ngdj_add_dialog",), ()),
+    CrosswalkRow("angular.stepper", (), ("ngdj_add_stepper",), ()),
+    CrosswalkRow("angular.table", (), ("ngdj_add_table",), ()),
     CrosswalkRow(
         "contract.schema-export",
         ("export_schema",),
@@ -163,6 +172,10 @@ def wrapper_for(step: AppBuildStep) -> tuple[str | None, str]:
         raise StepBridgeError(
             f"{step.name_id} is not in the automation naming crosswalk."
         )
+    if not row.wrappers and step.ngdj_command is not None:
+        # No wrapper serves the concern: the step runs the ngdj command of the
+        # mapping directly (``angular-django2:tabs``), so the mapping is the contract.
+        return row.concern_key, f"{NGDJ_COLLECTION}:{step.ngdj_command}"
     if not row.wrappers:
         raise StepBridgeError(
             f"{step.name_id} ({row.concern_key}) has no operator wrapper."
@@ -179,6 +192,12 @@ def wrapper_for(step: AppBuildStep) -> tuple[str | None, str]:
     if len(row.wrappers) > 1:  # pragma: no cover - a crosswalk row needs a rule
         raise StepBridgeError(f"{row.concern_key} needs a wrapper rule.")
     return row.concern_key, row.wrappers[0]
+
+
+def _schematic_of(command: str) -> str | None:
+    """The ngdj schematic a step runs directly, or ``None`` for an operator wrapper."""
+    collection, separator, schematic = command.partition(":")
+    return schematic if separator and collection == NGDJ_COLLECTION else None
 
 
 def dasherize(identifier: str) -> str:
@@ -240,7 +259,7 @@ def _resolve_step(
     step: AppBuildStep, project_config: ProjectConfig, mapping: CommandMapping | None
 ) -> AppBuildStep:
     concern_key, wrapper = wrapper_for(step)
-    if wrapper not in _COMMAND_BUILDERS:
+    if _schematic_of(wrapper) is None and wrapper not in _COMMAND_BUILDERS:
         raise StepBridgeError(
             f"{wrapper} ({step.name_id}) is an operator wrapper with no invocation "
             f"builder yet: {step.change_target}."
@@ -265,7 +284,15 @@ def _step_parameters(
     parameters: dict[str, object] = {}
     unresolved: tuple[str, ...] = ()
 
-    if wrapper == "ng_gen_app":
+    if _schematic_of(wrapper) is not None:
+        # name and path stay with the schematic's own defaults.
+        if step.node_id is None:
+            raise StepBridgeError(
+                f"{step.name_id} needs the OpenUI element to compile: "
+                f"{step.change_target}."
+            )
+        parameters["project"] = project
+    elif wrapper == "ng_gen_app":
         parameters["app_name"] = project
     elif wrapper == "ng_data_service":
         # The resource identity rule across OpenAPI changes, ngdj data-service names
@@ -339,6 +366,11 @@ def build_invocations(
         raise StepBridgeError(
             f"{step.command} for {step.change_target} needs "
             f"{', '.join(step.unresolved)}, which is not resolved yet."
+        )
+    schematic = _schematic_of(step.command)
+    if schematic is not None:
+        return build_ngdj_schematic_invocations(
+            project_config, settings, schematic=schematic, **step.parameters
         )
     builder = _COMMAND_BUILDERS.get(step.command)
     if builder is None:

@@ -51,7 +51,8 @@ This is the state found before steps 5 to 8; those steps changed it as described
   (the upstream comparison path, which may end at an attribute inside an element).
 - Wrappers exist for `page`, `component`, `complex-component`, `reactive-form`,
   `material-app`, `material-setup`, `openapi-setup`, `data-service`. None exists for
-  `tabs`, `dialog`, `stepper`, `table`, `form-field`, `field-component`.
+  `tabs`, `dialog`, `stepper`, `table`, `form-field`, `field-component`; decision 4 covers
+  the first four without one.
 
 ### 1.3 Consequence
 
@@ -82,9 +83,21 @@ Settled by the owner on 2026-10-07, plus what the documentation already fixes:
 3. **Mapping source: the installed package.** Read
    `<workspace>/node_modules/angular-django2/schematics/command-mapping.json` at run time,
    and fail when its version differs from `tool.ngAddPackage`.
-4. **New wrappers: deferred.** Node types whose command has no djng wrapper (`tabs`,
-   `dialog`, `stepper`, `table`, `form-field`, `field-component`) fail as "no wrapper".
+4. **No new wrappers.** The `ng_*` wrappers are conveniences, and the mapping already
+   says which ngdj command compiles a node type, so a command with a Tool contract needs
+   only entries in the translation map and the crosswalk. `tabs`, `dialog`, `stepper` and
+   `table` are run this way: the step carries the ngdj command and the bridge builds
+   `ng generate angular-django2:<command>` from it. `form-field` and `field-component`
+   have no Tool contract and still fail as "no Tool".
 5. **Unsupported update or delete: fail explicitly**, as the requirements already state.
+6. **Update and delete follow upstream.** Support is enabled per command when its gap issue
+   closes and the mapping marks the operation `supported`: `component`, `form-field` and
+   `field-component` (`shlomoa/angular-django2#193`), `reactive-form` (`#194`), `page` (`#195`),
+   `tabs`, `dialog` and `stepper` (`#196`), `table` (`#197`), `Application` delete (`#198`),
+   `openapi-setup` and `data-service` (`#199`) and `complex-component` (`#200`). The
+   translators already read the status, so enabling an operation needs the test scenario that
+   exercises it, not a new rule; none exists yet for an update of an existing OpenUI element
+   (`TEST_SCENARIO_SPECIFICATIONS.md` scenario 6 only adds a page).
 
 Commit granularity: one commit per step below, each with its own tests and doc updates,
 so the branch can be split into its own PR.

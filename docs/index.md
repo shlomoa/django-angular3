@@ -55,14 +55,14 @@ django-angular3 --help
 
 ```bash
 django-admin validate-project
-django-admin build_app --dry-run
+django-admin build_app --previous-config <previous-config.json> --dry-run
 django-admin ng_workspace --dry-run
 django-admin ng_openapi_gen --dry-run
 ```
 
 ## Tutorial navigation
 
-- **Next tutorial page:** [Install the tutorial project](tutorial.md)
+- **Next tutorial page:** [Build the tutorial project](tutorial.md)
 
 ```{toctree}
 :hidden:

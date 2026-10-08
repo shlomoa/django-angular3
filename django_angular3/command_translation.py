@@ -301,6 +301,12 @@ _OPENUI_TOOLS: Final[dict[str, _OpenUiTool]] = {
     "complex-component": _OpenUiTool("ngdj_add_complex_component", 8),
     "reactive-form": _OpenUiTool("ngdj_add_reactive_form", 9),
     "page": _OpenUiTool("ngdj_add_page", 10),
+    # Standalone widgets and containers that compile their own children. Stage 6 puts
+    # them before a page, which will embed them once the mapping allows it.
+    "tabs": _OpenUiTool("ngdj_add_tabs", 6),
+    "dialog": _OpenUiTool("ngdj_add_dialog", 6),
+    "stepper": _OpenUiTool("ngdj_add_stepper", 6),
+    "table": _OpenUiTool("ngdj_add_table", 6),
 }
 
 

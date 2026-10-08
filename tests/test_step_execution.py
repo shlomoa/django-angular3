@@ -20,7 +20,11 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 
 from django_angular3.changes import Change, ChangeDomain, ChangeOperation
-from django_angular3.command_translation import AppBuildStep, translate_changes
+from django_angular3.command_translation import (
+    _OPENUI_TOOLS,
+    AppBuildStep,
+    translate_changes,
+)
 from django_angular3.external_comparisons import compare_openui_files
 from django_angular3.management.commands.build_app import (
     ChangeDetector,
@@ -33,6 +37,7 @@ from django_angular3.step_bridge import (
     CROSSWALK,
     STAGED_DOCUMENT_DIRECTORY,
     StepBridgeError,
+    crosswalk_row,
     dasherize,
     resolve_steps,
     wrapper_for,
@@ -63,6 +68,18 @@ _BASE_DOCUMENT = {
 _DASHBOARD_DOCUMENT = {
     **_BASE_DOCUMENT,
     "children": [*_BASE_DOCUMENT["children"], _DASHBOARD_PAGE],
+}
+
+# The base application plus every standalone element ngdj compiles without a wrapper.
+_WIDGETS_DOCUMENT = {
+    **_BASE_DOCUMENT,
+    "children": [
+        *_BASE_DOCUMENT["children"],
+        {"id": "views", "type": "Tabs"},
+        {"id": "confirmDelete", "type": "dialog"},
+        {"id": "setupWizard", "type": "Stepper"},
+        {"id": "orders", "type": "table"},
+    ],
 }
 
 # A stand-in for the Angular CLI: it logs every call, creates the directory of
@@ -118,6 +135,15 @@ class CrosswalkTests(unittest.TestCase):
             },
             rows,
         )
+
+    def test_every_tool_of_the_translation_map_has_a_contract_and_a_row(self) -> None:
+        contracts = (REPOSITORY / "doc" / "contracts" / "TOOL_CONTRACTS.md").read_text(
+            encoding="utf-8"
+        )
+        for command, tool in _OPENUI_TOOLS.items():
+            with self.subTest(command=command, tool=tool.name):
+                self.assertRegex(contracts, rf"(?m)^#### \d+\. `{tool.name}` ")
+                self.assertIsNotNone(crosswalk_row(tool.name))
 
     def test_a_tool_name_and_a_skill_name_select_the_same_wrapper(self) -> None:
         step = _page_step()
@@ -375,6 +401,47 @@ class StepResolutionTests(unittest.TestCase):
         with self.assertRaisesRegex(StepBridgeError, "no invocation builder"):
             resolve_steps(steps, self.project.project_config)
 
+    def test_a_widget_step_runs_the_ngdj_command_of_the_mapping_without_a_wrapper(
+        self,
+    ) -> None:
+        self.project.document.write_text(
+            json.dumps(_WIDGETS_DOCUMENT), encoding="utf-8"
+        )
+
+        steps = self.resolve(self.project.change_set())
+
+        widgets = {
+            step.name_id: step for step in steps if step.name_id.startswith("ngdj_add_")
+        }
+        self.assertEqual(
+            {name: (s.concern_key, s.command) for name, s in widgets.items()},
+            {
+                "ngdj_add_tabs": ("angular.tabs", "angular-django2:tabs"),
+                "ngdj_add_dialog": ("angular.dialog", "angular-django2:dialog"),
+                "ngdj_add_stepper": ("angular.stepper", "angular-django2:stepper"),
+                "ngdj_add_table": ("angular.table", "angular-django2:table"),
+            },
+        )
+        self.assertEqual(
+            dict(widgets["ngdj_add_tabs"].parameters),
+            {
+                "project": "shop",
+                "document": f"{STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
+                "node_id": "views",
+            },
+        )
+
+    def test_a_widget_step_is_refused_when_the_command_lacks_an_option(self) -> None:
+        self.project.document.write_text(
+            json.dumps(_WIDGETS_DOCUMENT), encoding="utf-8"
+        )
+        document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        tabs = document["ui"]["commands"]["tabs"]
+        tabs["parameters"] = [p for p in tabs["parameters"] if p["name"] != "project"]
+
+        with self.assertRaisesRegex(StepBridgeError, "has no parameter project"):
+            self.resolve(self.project.change_set(), CommandMapping(document))
+
     def test_element_ids_are_dasherized_as_ngdj_names_them(self) -> None:
         self.assertEqual(
             [dasherize(i) for i in ("home", "dashboardPage", "order_list", "A1b")],
@@ -514,6 +581,33 @@ class RealRunTests(unittest.TestCase):
                 "--project=shop",
                 f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
                 "--node-id=dashboardPage",
+            ],
+        )
+
+    def test_widgets_are_generated_by_the_ngdj_schematic_before_the_pages(self) -> None:
+        self.project.document.write_text(
+            json.dumps(_WIDGETS_DOCUMENT), encoding="utf-8"
+        )
+
+        self.project.run_build(self.project.change_set())
+
+        generated = [c for c in self.project.calls() if c[:1] == ["generate"]]
+        self.assertEqual(
+            [c[1] for c in generated[-4:]],
+            [
+                "angular-django2:dialog",
+                "angular-django2:stepper",
+                "angular-django2:table",
+                "angular-django2:tabs",
+            ],
+        )
+        tabs = next(c for c in generated if c[1] == "angular-django2:tabs")
+        self.assertEqual(
+            tabs[2:],
+            [
+                "--project=shop",
+                f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
+                "--node-id=views",
             ],
         )
 
