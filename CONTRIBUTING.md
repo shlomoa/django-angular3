@@ -6,7 +6,8 @@
 - You have **Git** installed and configured with your GitHub identity.
 - You have cloned the repository and your working directory is the repo root.
 - No Node.js, Angular CLI, or other frontend tooling is required to contribute
-  to this repository. It is a Python-only package.
+  to this repository. It is a Python-only package. Only the opt-in
+  [end-to-end validation](#end-to-end-validation) needs them.
 
 ## Prerequisites
 
@@ -63,6 +64,78 @@ Run the existing test suite with explicit discovery:
 python -m unittest discover -s tests -p 'test*.py'
 ```
 
+## End-to-end validation
+
+The unit tests check generated command lines and use a stand-in `ng`. One opt-in
+flow runs the real tools instead: it installs the tutorial project, exports its
+schema with `drf-spectacular`, creates an Angular workspace and application with the
+Angular CLI and `angular-django2` (ngdj), generates the API client with
+`ng-openapi-gen`, builds the application, serves it next to Django and drives it
+with Playwright. It does not repeat ngdj's schematic tests.
+
+```bash
+DJNG_E2E=1 python -m tests.e2e.run_e2e
+```
+
+Without `DJNG_E2E=1` the default test discovery reports it as skipped. It takes
+several minutes. Prerequisites:
+
+- Python 3.12 or 3.13 with `python -m pip install -e ".[yaml]"`.
+- Node `^22.22.3 || ^24.15.0`, `pnpm`, and an Angular CLI on `PATH` (otherwise the
+  flow installs `@angular/cli@E2E_ANGULAR_CLI` into its temporary area).
+- A Chromium for Playwright: `cd tests/e2e && npm ci && npx playwright install
+  chromium`, or `E2E_PLAYWRIGHT_INSTALL=1`, or `E2E_CHROMIUM_PATH`.
+- `oasdiff` cached once (Track B): `python -c "from django_angular3.tools import
+  ensure_oasdiff; ensure_oasdiff()"`. It is downloaded from the GitHub releases, so
+  pre-install it where egress is restricted.
+- Ports 8000 (Django) and 4200 (Angular dev server) free.
+- The flow removes the CI markers (`CI`, `GITHUB_ACTIONS`, ...) from the environment of
+  the tools: under them pnpm refuses the lockfile-updating installs that the
+  schematics run.
+
+The flow runs these stages; a failure names its stage:
+
+| Stage | What it proves |
+| :--- | :--- |
+| 0 environment | Tool versions are supported |
+| 1 backend | The tutorial installs, migrates and loads the seed (25 customers, 12 products) |
+| 2 export-schema | `export_schema` with the real `drf-spectacular`: paths, schemas, `info`, rotation |
+| 3 workspace-and-client | `ng_workspace`, `ng_gen_app`, `ng_openapi_setup`, `ng_openapi_gen` |
+| 4 ui-from-openui | `ng_page`, the `table` schematic, `ng_data_service`, the host glue |
+| 5 build | `ng_build` leaves a non-empty `dist/` |
+| 6 browser | Playwright specs P1 shell, P2 data alignment, P3 pagination, P4 failure path |
+| B build_app phase 2 | A changed OpenUI document and schema: the dry run derives the steps, the run succeeds |
+
+Track B starts from the workspace the wrappers created; running `build_app` from
+nothing waits on django-angular3#209 and previous-configuration discovery.
+
+The fixtures in `tests/e2e/fixtures` are generated, not edited: run
+`python -m tests.e2e.generate_fixtures`. `customers-host.ts` is the exception, a
+hand-written host component marked as test glue, because nothing generated binds the
+generated table to the generated client.
+
+Environment variables:
+
+| Variable | Effect |
+| :--- | :--- |
+| `E2E_TRACKS` | `W`, `B` or `W,B` (default) |
+| `E2E_NGDJ_TARBALL` | Install a locally packed ngdj (`npm pack ./projects/angular-django2/dist`) instead of the pinned release |
+| `E2E_KEEP=1` | Keep the temporary area under `scratch/` |
+| `E2E_ANGULAR_CLI` | Angular CLI range installed when `ng` is missing (default `^22`) |
+| `E2E_CHROMIUM_PATH` | Chromium executable for Playwright |
+| `E2E_PLAYWRIGHT_INSTALL=1` | Run `playwright install chromium` first |
+| `E2E_BREAK` | `model-field`, `openui-route` or `proxy`: inject a deliberate break; the run must fail at stage 2, 6 and 6 (P1, P2) respectively |
+
+Everything is written to `build/e2e-evidence/`: the exported schemas, the
+`build_app` dry run and run, every command's argv, exit code and output, tool
+versions, the generated tree, the Playwright report, traces and screenshots, and
+`summary.json` with the findings of the run.
+
+The `End-to-end` workflow (`.github/workflows/e2e.yml`) runs it on
+`workflow_dispatch` (with a `break` input), nightly, and on pull requests that touch
+`django_angular3/`, `tests/e2e/` or the workflow, and uploads the evidence and the
+Playwright report as artifacts.
+
 ## Linting and formatting
 
 ```bash
@@ -79,6 +152,8 @@ CI is configured in `.github/workflows/`:
 
 - `build.yml` — runs ruff lint/format checks, then the test suite and package
   build on every push and pull request to `main`.
+- `e2e.yml` — runs the real-tools [end-to-end validation](#end-to-end-validation)
+  on demand, nightly and on pull requests that touch the package or the flow.
 - `deploy.yml` — builds and publishes the package to PyPI via Trusted
   Publishing when a GitHub Release is published.
 
