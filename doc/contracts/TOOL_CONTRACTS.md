@@ -749,8 +749,8 @@ Skill session), CLI. Not a HOOK target.
 **Implementation reference**: no operator wrapper exists. `build_app` resolves the step
 from the ngdj command mapping and runs `ng generate angular-django2:tabs` through
 `build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
-(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
+implemented yet.
 
 #### 16. `ngdj_add_dialog` — dialog component scaffold
 
@@ -792,8 +792,8 @@ Skill session), CLI. Not a HOOK target.
 **Implementation reference**: no operator wrapper exists. `build_app` resolves the step
 from the ngdj command mapping and runs `ng generate angular-django2:dialog` through
 `build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
-(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
+implemented yet.
 
 #### 17. `ngdj_add_stepper` — stepper component scaffold
 
@@ -835,8 +835,8 @@ Skill session), CLI. Not a HOOK target.
 **Implementation reference**: no operator wrapper exists. `build_app` resolves the step
 from the ngdj command mapping and runs `ng generate angular-django2:stepper` through
 `build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
-(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
+implemented yet.
 
 #### 18. `ngdj_add_table` — table component scaffold
 
@@ -878,8 +878,8 @@ Skill session), CLI. Not a HOOK target.
 **Implementation reference**: no operator wrapper exists. `build_app` resolves the step
 from the ngdj command mapping and runs `ng generate angular-django2:table` through
 `build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
-(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
+implemented yet.
 
 ### Contract compliance
 
