@@ -1061,6 +1061,8 @@ class NgdjSchematicInvocationTests(unittest.TestCase):
             ({"schematic": "tabs"}, "needs an OpenUI document"),
             ({"schematic": "../tabs", "document": "a.json"}, "kebab-case"),
             ({"schematic": "tabs", "document": "/abs.json"}, "relative path"),
+            ({"schematic": "tabs", "document": r"C:\abs.json"}, "relative path"),
+            ({"schematic": "tabs", "document": r"..\outside.json"}, "relative path"),
             ({"schematic": "tabs", "document": "a.json", "path": "../x"}, "relative"),
             ({"schematic": "tabs", "document": "a.json", "name": "Bad"}, "kebab-case"),
         ):

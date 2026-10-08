@@ -4,7 +4,7 @@ import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
 from . import command_execution, tools
@@ -789,8 +789,17 @@ def _validate_kebab_case_name(name: str, label: str) -> None:
 
 
 def _validate_relative_path(value: str, label: str) -> None:
-    path = Path(value)
-    if path.is_absolute() or ".." in path.parts or not value.strip():
+    posix_path = PurePosixPath(value)
+    windows_path = PureWindowsPath(value)
+    if (
+        posix_path.is_absolute()
+        or windows_path.is_absolute()
+        or windows_path.root
+        or windows_path.drive
+        or ".." in posix_path.parts
+        or ".." in windows_path.parts
+        or not value.strip()
+    ):
         raise AngularCommandError(
             f"{label} must be a non-empty relative path within the Angular workspace."
         )
