@@ -250,7 +250,7 @@ def load_ngdj_mapping(
 
     OpenUI and OpenAPI Changes are translated with the mapping that the Angular
     workspace's installed ``angular-django2`` package ships. Other Changes need none,
-    so translating them does not require the package to be installed.
+    so deriving their steps does not require the package to be installed.
     """
     needs_mapping = any(
         change_set.domains[domain].changes
@@ -264,7 +264,7 @@ def load_ngdj_mapping(
         )
     except CommandMappingError as exc:
         raise CommandError(
-            f"Cannot translate the OpenUI and OpenAPI changes: {exc}"
+            f"Cannot derive the steps for the OpenUI and OpenAPI changes: {exc}"
         ) from exc
 
 
@@ -281,7 +281,7 @@ class ChangeExecution:
     def _translate_change_set(
         self, change_set: ChangeSet, mapping: CommandMapping | None = None
     ) -> tuple[AppBuildStep, ...]:
-        """Translate the ChangeSet into ordered steps."""
+        """Translate the ChangeSet into the ordered steps."""
         changes = tuple(
             change
             for domain in ChangeDomain
@@ -304,10 +304,10 @@ class ChangeExecution:
         settings: DjangoAngularSettings | None = None,
     ) -> ExecutionEvidence:
         """
-        Translate the changes into steps and, unless ``dry_run``, run them.
+        Derive the steps of the changes and, unless ``dry_run``, run them.
 
         The steps are bridged to their wrappers and their parameters are resolved from
-        the project configuration and the mapping. A dry run returns those steps as
+        the project configuration and the mapping. A dry run returns them as
         evidence and touches nothing. A real run first refuses steps with an
         unresolved parameter, then runs the steps level by level, halts at the
         first failure, writes the evidence to ``<output_path>/build-evidence.json``
@@ -315,7 +315,7 @@ class ChangeExecution:
 
         ``force`` is not honored yet and is refused rather than ignored.
 
-        Raises CommandError if translation or execution fails.
+        Raises CommandError if resolving the steps or running them fails.
         """
         logger.debug("Executing change set")
         if force:
@@ -331,7 +331,7 @@ class ChangeExecution:
                 mapping,
             )
         except (StepBridgeError, AngularCommandError, ConfigError) as exc:
-            raise CommandError(f"Failed to resolve steps: {exc}") from exc
+            raise CommandError(f"Failed to resolve the steps: {exc}") from exc
 
         evidence = new_evidence(
             project_config, settings, mapping, steps, dry_run=dry_run

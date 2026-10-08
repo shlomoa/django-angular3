@@ -208,7 +208,7 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
             json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
         )
 
-    def test_returns_ordered_commands(self) -> None:
+    def test_returns_ordered_steps(self) -> None:
         change_set = _change_set(
             openapi=(
                 Change(
@@ -289,7 +289,7 @@ def _project_name_created() -> Change:
     )
 
 
-class BuildAppTranslationTests(unittest.TestCase):
+class BuildAppStepTests(unittest.TestCase):
     """The command mapping reaches the translation, and a dry run reports the steps."""
 
     def setUp(self) -> None:
@@ -363,7 +363,7 @@ class BuildAppTranslationTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             CommandError,
-            r"Cannot translate the OpenUI and OpenAPI changes.*Install "
+            r"Cannot derive the steps for the OpenUI and OpenAPI changes.*Install "
             r"angular-django2@0\.7\.0",
         ):
             load_ngdj_mapping(_change_set(openui=openui), self.current.project_config)
@@ -417,9 +417,7 @@ class BuildAppTranslationTests(unittest.TestCase):
 
         self.assertEqual(report["steps"], [])
 
-    def test_the_dry_run_translates_openui_changes_with_the_installed_mapping(
-        self,
-    ) -> None:
+    def test_the_dry_run_derives_openui_steps_with_the_installed_mapping(self) -> None:
         self.install_ngdj()
         openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
 

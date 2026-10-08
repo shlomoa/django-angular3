@@ -1,4 +1,4 @@
-"""Tests for the step-to-wrapper bridge and the execution of an app build."""
+"""Tests for the step-to-wrapper bridge and the execution of the build steps."""
 
 from __future__ import annotations
 
@@ -512,7 +512,7 @@ class DryRunTests(unittest.TestCase):
             "b",
         )
 
-        with self.assertRaisesRegex(CommandError, "Failed to resolve steps"):
+        with self.assertRaisesRegex(CommandError, "Failed to resolve the steps"):
             self.project.run_build(_change_set(static_config=(change,)), dry_run=True)
 
 
@@ -527,7 +527,7 @@ class RealRunTests(unittest.TestCase):
         return [(s["command"], s["step"]) for s in report["steps"]]
 
     def test_a_real_run_executes_the_steps_of_the_dry_run(self) -> None:
-        previewed = self.dry_run_steps()
+        expected_steps = self.dry_run_steps()
 
         self.project.run_build(self.project.change_set())
 
@@ -535,7 +535,7 @@ class RealRunTests(unittest.TestCase):
             (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
         )
         self.assertEqual(
-            [(s["command"], s["step"]) for s in evidence["steps"]], previewed
+            [(s["command"], s["step"]) for s in evidence["steps"]], expected_steps
         )
         self.assertEqual({s["status"] for s in evidence["steps"]}, {"succeeded"})
         self.assertFalse(evidence["dryRun"])

@@ -1,9 +1,9 @@
 """Run the resolved steps of an app build and record the evidence.
 
-Steps run by ordered level (``exec_order``), in step order within a level, and the
+Steps run by ordered level (``exec_order``), in list order within a level, and the
 run halts at the first failure. Every external process goes through
 ``command_execution.run_command``. The evidence names the pinned ngdj package and
-the mapping versions the steps were resolved with, so a run can be reproduced.
+the mapping versions the steps were derived with, so a run can be reproduced.
 """
 
 from __future__ import annotations
@@ -63,7 +63,7 @@ class StepRecord:
 
 @dataclass
 class ExecutionEvidence:
-    """What a run (or a dry run) resolved, executed and was pinned to."""
+    """What a run (or a dry run) derived, executed and was pinned to."""
 
     project_config: Path
     ngdj_package: str
