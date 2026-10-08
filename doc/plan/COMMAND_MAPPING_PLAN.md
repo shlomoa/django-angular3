@@ -27,25 +27,25 @@ read the mapping, not copy it.
   is `partial`; every other update, and every delete, is `unsupported`. `move` is
   unsupported everywhere**, and the Change Model emits no `move`.
 - `onExisting` says what a second run does (`skip`, `reject`, `refuse-modified`,
-  `rewrite`, `delegated`, `no-op`), which decides whether a create can be re-planned.
+  `rewrite`, `delegated`, `no-op`), which decides whether a create can be run again.
 
 ### 1.2 What djng had when this work started
 
 This is the state found before steps 5 to 8; those steps changed it as described there.
 
 - `command_translation.py`: the project-config translators are implemented
-  ([#222](https://github.com/shlomoa/django-angular3/pull/222)): `project.name` and
+  ([shlomoa/django-angular3#222](https://github.com/shlomoa/django-angular3/pull/222)): `project.name` and
   `artifacts.angularWorkspace` select the workspace and application foundation steps,
   the two source selectors select no step, and `delete` and `move` fail explicitly.
   The OpenAPI, static-config and OpenUI translator maps are still empty `TODO` stubs.
   `translate_changes` sorts steps by `exec_order`, `change_op`, domain, name, and
   rejects only an empty change list.
-- Five tests are still `expectedFailure` ([#204](https://github.com/shlomoa/django-angular3/issues/204)):
+- Five tests are still `expectedFailure` ([shlomoa/django-angular3#204](https://github.com/shlomoa/django-angular3/issues/204)):
   3 in `test_command_translation.py`, 2 in `test_build_app.py`. They need the OpenAPI,
   static-config or OpenUI maps, and use Skill-layer `name_id` values
   (`angular-page-composition`).
 - `APP_BUILDER_REQUIREMENTS.md` § Change-to-command mapping defines the project-config
-  rows (since #222) and still marks every OpenUI row "not yet defined", and `AUTOMATION_PLAN.md` step 8.2 forbids claiming an undefined
+  rows (since [shlomoa/django-angular3#222](https://github.com/shlomoa/django-angular3/pull/222)) and still marks every OpenUI row "not yet defined", and `AUTOMATION_PLAN.md` step 8.2 forbids claiming an undefined
   OpenUI wrapper as supported.
 - OpenUI Changes come from `external_comparisons.py` with `subject = "openui:" + path`
   (the upstream comparison path, which may end at an attribute inside an element).
@@ -58,7 +58,7 @@ This is the state found before steps 5 to 8; those steps changed it as described
 With the current mapping, change-driven `build_app` can honestly support first builds
 (create), `Application` updates and `html`/`link` updates. Every other update or delete
 must fail explicitly, as the requirements already demand ("must not silently omit
-them"), naming the upstream reason and gap issue. The plan does not widen this.
+them"), naming the upstream reason and gap issue. This work does not widen that.
 
 ## 2. Decisions
 
@@ -72,7 +72,7 @@ Settled by the owner on 2026-10-07, plus what the documentation already fixes:
    `ngdj_add_complex_component` and `ngdj_add_data_service`. The existing
    `ngdj_add_component`, `angular_app_scaffold` and `angular_workspace_scaffold` gain
    optional `document` and `node_id` inputs. The new OpenUI steps use these Tool names.
-   The project-config steps merged in #222 keep their Skill names: their `update` runs
+   The project-config steps merged in [shlomoa/django-angular3#222](https://github.com/shlomoa/django-angular3/pull/222) keep their Skill names: their `update` runs
    through the workspace and application modification wrappers, for which no Tool contract
    exists (`angular_workspace_scaffold` only scaffolds a fresh workspace), so a rename
    would claim a contract that is not there.
@@ -153,54 +153,57 @@ so the branch can be split into its own PR.
    (stage 3). A `path` create also selects `ngdj_add_data_service` (stage 4). A change to
    an operation, and the `update` or `delete` of a path or schema, would have to update or
    delete data services, which the mapping's `data-service` does not support, so it fails
-   with the mapping's reason and gap. `project_config` is already done (#222) and keeps
+   with the mapping's reason and gap. `project_config` is already done ([shlomoa/django-angular3#222](https://github.com/shlomoa/django-angular3/pull/222)) and keeps
    its behavior. `static_config` follows a subject-to-command table researched from how
    each setting is consumed and from the scenario specification (`angular.workspace.style`
    runs the workspace modification only); it is recorded in the requirements, and
    `create` and `update` are supported, `delete` and `move` fail explicitly.
    `openapi-setup` (`ng_openapi_setup`) has no dedicated Tool; the generic
-   `ngdj_run_schematic` Tool can run it. The translators do not plan it yet: a step names
-   a Tool but carries no schematic name, so planning it through `ngdj_run_schematic`
+   `ngdj_run_schematic` Tool can run it. The translators give it no step yet: a step names
+   a Tool but carries no schematic name, so giving it a step through `ngdj_run_schematic`
    needs the step to carry one. That is a design decision for the owner.
 7. **Wire into `build_app`** (`management/commands/build_app.py`): load the mapping when
    an OpenUI or OpenAPI Change exists, pass it to the translation, print the ordered
    steps in `--dry-run` as JSON, report an unsupported change or a missing package as a
    `CommandError`, and keep the command marked work in progress until step 8 passes.
-   Running the steps is not part of this plan (done in
-   [shlomoa/django-angular3#211](https://github.com/shlomoa/django-angular3/issues/211): the step carries its
-   wrapper and resolved parameters, and the execute path is repaired). The executor hand-off already raised
-   `TypeError` before this work (`command_execution.execute` takes no `force` or
-   `dry_run`, and a step is not an executable command), so a real run still fails.
+   Running the steps was not part of this work. It was done afterwards in [shlomoa/django-angular3#211](https://github.com/shlomoa/django-angular3/issues/211)
+   ([shlomoa/django-angular3#227](https://github.com/shlomoa/django-angular3/pull/227)): the step carries its wrapper and resolved parameters, and the execute
+   path is repaired. Before that, the executor hand-off raised `TypeError`
+   (`command_execution.execute` took no `force` or `dry_run`, and a step was not an
+   executable command), so a real run failed.
 8. **Close the expected failures.** Rewrite the five remaining `expectedFailure` tests
    against the decided identities and remove each decorator only when its assertions pass
-   (the rule in #204); run ruff check and format, the full unittest suite and the Sphinx
+   (the rule in [shlomoa/django-angular3#204](https://github.com/shlomoa/django-angular3/issues/204)); run ruff check and format, the full unittest suite and the Sphinx
    docs build. Done: four tests were rewritten to the decided design (Tool names, a
    path create instead of a schema update, a project name update instead of a move, and a
    mapping that supports deleting a page to test the delete-before-create rule, because
    ngdj supports no OpenUI delete today). The fifth, an empty change set, passes with a
-   code change: an empty change list now plans no commands. It raised an error with an
-   empty message, a leftover of the original scaffold that #202 narrowed but kept.
+   code change: an empty change list now gives no steps. It raised an error with an
+   empty message, a leftover of the original scaffold that [shlomoa/django-angular3#202](https://github.com/shlomoa/django-angular3/issues/202) narrowed but kept.
 9. **Document the boundary** in `README.md`, `docs/commands.md` and `CONTRIBUTING.md`:
    what `build_app` supports from the mapping and what it refuses.
 
 ## 4. Risks
 
-- **A first build cannot plan its OpenUI and OpenAPI steps.** The mapping comes from the
-  installed package, and the package is installed by the plan's own foundation steps, so
-  a workspace that does not exist yet has no mapping. Running a plan will need two
+- **A first build cannot derive its OpenUI and OpenAPI steps.** The mapping comes from the
+  installed package, and the package is installed by the foundation steps of the same list, so
+  a workspace that does not exist yet has no mapping. Running the steps will need two
   phases (foundation first, then the rest once the package is there), or the owner can
   revisit decision 3. `tool.ngAddPackage` must also be a registry name, not a path, for
   the package directory to be found.
 - **Static-configuration changes are never detected.** `ChangeDetector.detect_changes`
   leaves that domain empty, so the static translators have no caller yet; detecting them
   needs a baseline for `django-angular3.json`, which is not defined.
-- **Running a plan.** A step has no arguments for its wrapper: the document path must be
-  made workspace-relative (see step 4), and the wrapper options come from the Change.
+- **Running the steps** (resolved in [shlomoa/django-angular3#211](https://github.com/shlomoa/django-angular3/issues/211)). A step now carries its wrapper command and
+  resolved parameters (document, node id, name, path, project). A document outside the
+  Angular workspace is staged into `.django-angular3/` before the first step that
+  needs it (`django_angular3/step_bridge.py`), because ngdj reads it through the
+  workspace tree.
 
 - The mapping marks most updates and deletes unsupported, so `build_app` stays mostly
   create-only until upstream closes gaps such as
-  `shlomoa/angular-django2#194`, `#198` and `#199`. Do not paper over this locally.
-- This work is much larger than #224's current diff. Land it as one commit per step so
-  it can be reviewed or split into its own PR without rework.
+  [shlomoa/angular-django2#194](https://github.com/shlomoa/angular-django2/issues/194), [shlomoa/angular-django2#198](https://github.com/shlomoa/angular-django2/issues/198) (closed upstream, but the mapping of the pinned 0.7.0 still lists it as a gap) and [shlomoa/angular-django2#199](https://github.com/shlomoa/angular-django2/issues/199). Do not paper over this locally.
+- This work was much larger than the first diff of [shlomoa/django-angular3#224](https://github.com/shlomoa/django-angular3/pull/224). It landed as one commit per
+  step so that it could be reviewed or split into its own pull request without rework.
 - A mapping update upstream (`mappingVersion` 2) must fail loudly in step 2, not parse
   partially.

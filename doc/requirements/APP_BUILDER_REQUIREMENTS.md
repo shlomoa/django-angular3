@@ -20,7 +20,7 @@ python manage.py build_app [options]
 > the ChangeSet (project configuration, OpenAPI and OpenUI; the static-configuration
 > lane is not detected), translates it with `translate_changes` and, with
 > `--dry-run`, prints the ordered steps with their wrapper commands and resolved
-> parameters. OpenUI and OpenAPI changes are planned with the
+> parameters. OpenUI and OpenAPI changes get their steps from the
 > ngdj command mapping (§Change-to-command mapping). Without `--dry-run` the steps run
 > in order through their wrappers (§Step execution), halt at the first failure and
 > leave `build-evidence.json` in `--output`; `--force` is refused, not honored. The
@@ -224,13 +224,13 @@ Every `openapi` change regenerates the typed client from the changed schema. Whe
 OpenUI. The OpenUI commands that depend on an API subject come from the `openui`
 Changes of the same ChangeSet; `build_app` does not derive that dependency from the API
 subject. The ngdj `openapi-setup` schematic (`ng_openapi_setup`) has no dedicated Tool;
-the generic `ngdj_run_schematic` Tool can run it. The translators do not plan it yet, and
+the generic `ngdj_run_schematic` Tool can run it. The translators give no step for it yet, and
 a first build needs it before `angular_api_client_generate`.
 
 `build_app` loads the mapping only when the ChangeSet has an `openui` or `openapi`
 Change, from `<angularWorkspace>/node_modules/<package>/schematics/`, where the package is
-the one `tool.ngAddPackage` names. It must be installed at the pinned version, so a plan
-for a workspace that does not exist yet cannot include these Changes; `build_app` reports
+the one `tool.ngAddPackage` names. It must be installed at the pinned version, so the steps
+of a workspace that does not exist yet cannot be derived for these Changes; `build_app` reports
 that the package must be installed. `--dry-run` prints the ordered steps without running
 them.
 
@@ -283,14 +283,14 @@ A document that lies outside the Angular workspace is copied to
 `<workspace>/.django-angular3/` before the first step that reads it, never in a dry run.
 The final `last-check` gate runs `ng_build` until the terminal validation commands exist.
 
-`--dry-run` resolves the plan and prints it; it runs no wrapper and writes no file. A real
-run refuses a plan with an unresolved option before anything runs. It then executes the
-steps level by level (by `exec_order`) and, within a level, in plan order; the first
+`--dry-run` resolves the steps and prints them; it runs no wrapper and writes no file. A real
+run refuses steps with an unresolved option before anything runs. It then executes the
+steps level by level (by `exec_order`) and, within a level, in list order; the first
 failing call halts the run, the remaining steps are recorded as skipped and `build_app`
 exits with a `CommandError` naming the step. The evidence
 (`<output>/build-evidence.json`, written after a failure too) holds every step with its
 status and each call's argv, exit code and output, and the pinned `tool.ngAddPackage` and
-the mapping and OpenUI spec versions of the mapping the plan used.
+the mapping and OpenUI spec versions of the mapping the steps used.
 
 ### Execution order
 
@@ -314,7 +314,7 @@ deterministic TOOL command only when the selected work is genuinely
 underspecified or requires interpretive refinement. It is not part of the
 required path for validated structured inputs.
 
-Project-level foundation commands are planned once per command and operation,
+Project-level foundation commands are selected once per command and operation,
 not once per `project_config` subject: on a first run `project.name` and
 `artifacts.angularWorkspace` are both created, and each of those commands
 appears once, with every contributing subject listed in its target and reason.
