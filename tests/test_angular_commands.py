@@ -13,15 +13,18 @@ from django.test import override_settings
 
 from django_angular3.angular import (
     AngularInvocation,
+    build_ngdj_schematic_invocations,
 )
 from django_angular3.cli import build_parser, main
 from django_angular3.config import (
     discover_project_config_path,
+    load_project_config,
     project_config_path,
 )
 from django_angular3.management.commands.ng_build import Command as NgBuildCommand
 from django_angular3.settings import (
     DEFAULT_NG_ADD_PACKAGE,
+    AngularCommandError,
     DjangoAngularSettings,
     load_angular_settings,
     load_drf_spectacular_settings,
@@ -1010,3 +1013,57 @@ class AngularManagementCommandTests(unittest.TestCase):
                 plan = json.loads(stdout.getvalue())
                 self.assertEqual(plan["projectConfig"], str(PROJECT_CONFIG_PATH))
                 self.assertIn("argv", plan["invocations"][0])
+
+
+class NgdjSchematicInvocationTests(unittest.TestCase):
+    """``build_ngdj_schematic_invocations`` runs a schematic with no wrapper."""
+
+    def build(self, **options):
+        config = load_project_config(PROJECT_CONFIG_PATH)
+        settings = load_angular_settings({"ng_executable": "ng"})
+        return build_ngdj_schematic_invocations(config, settings, **options)
+
+    def test_the_schematic_runs_from_the_workspace_with_the_document_element(
+        self,
+    ) -> None:
+        (invocation,) = self.build(
+            schematic="tabs", project="shop", document="a.openui.json", node_id="views"
+        )
+
+        self.assertEqual(invocation.command_name, "angular-django2:tabs")
+        self.assertEqual(
+            invocation.argv,
+            (
+                "ng",
+                "generate",
+                "angular-django2:tabs",
+                "--project=shop",
+                "--document=a.openui.json",
+                "--node-id=views",
+            ),
+        )
+
+    def test_name_and_path_are_forwarded_when_given(self) -> None:
+        (invocation,) = self.build(
+            schematic="table",
+            name="orders-grid",
+            path="src/app/shared",
+            document="a.openui.json",
+        )
+
+        self.assertEqual(
+            invocation.argv[3:],
+            ("orders-grid", "--path=src/app/shared", "--document=a.openui.json"),
+        )
+
+    def test_invalid_input_is_refused(self) -> None:
+        for options, message in (
+            ({"schematic": "tabs"}, "needs an OpenUI document"),
+            ({"schematic": "../tabs", "document": "a.json"}, "kebab-case"),
+            ({"schematic": "tabs", "document": "/abs.json"}, "relative path"),
+            ({"schematic": "tabs", "document": "a.json", "path": "../x"}, "relative"),
+            ({"schematic": "tabs", "document": "a.json", "name": "Bad"}, "kebab-case"),
+        ):
+            with self.subTest(options=options):
+                with self.assertRaisesRegex(AngularCommandError, message):
+                    self.build(**options)

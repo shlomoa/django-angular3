@@ -469,6 +469,55 @@ def build_ng_reactive_form_invocations(
     ]
 
 
+NGDJ_COLLECTION = "angular-django2"
+
+
+def build_ngdj_schematic_invocations(
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    schematic: str,
+    document: str | None = None,
+    node_id: str | None = None,
+    name: str | None = None,
+    path: str | None = None,
+    project: str | None = None,
+    **_: Any,
+) -> list[AngularInvocation]:
+    """Build the invocation of an ngdj schematic that compiles an OpenUI element.
+
+    This is not an operator wrapper and has no command of its own: the schematics
+    whose options are a name, a path, a project and a document element (``tabs``,
+    ``dialog``, ``stepper``, ``table``) are run by ``build_app`` straight from its
+    mapping entries, and ngdj owns what the options mean. The caller takes
+    ``schematic`` from the ngdj command mapping, never from input.
+    """
+    _validate_kebab_case_name(schematic, "ngdj schematic")
+    if document is None:
+        raise AngularCommandError(f"{schematic} needs an OpenUI document to compile.")
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        f"{NGDJ_COLLECTION}:{schematic}",
+    ]
+    if name is not None:
+        _validate_kebab_case_name(name, schematic)
+        argv.append(name)
+    if path is not None:
+        _validate_relative_path(path, f"{schematic} path")
+        argv.append(f"--path={path}")
+    if project:
+        argv.append(f"--project={project}")
+    argv.extend(_openui_document_argv(document, node_id, schematic))
+    return [
+        AngularInvocation(
+            command_name=f"{NGDJ_COLLECTION}:{schematic}",
+            argv=tuple(argv),
+            cwd=config.angular_workspace,
+        )
+    ]
+
+
 def build_ng_openapi_gen_invocations(
     config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
 ) -> list[AngularInvocation]:

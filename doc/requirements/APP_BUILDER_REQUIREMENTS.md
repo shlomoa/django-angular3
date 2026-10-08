@@ -180,6 +180,10 @@ not introduce custom behavioral selectors or a duplicate parser.
 | Complex component | TOOL | `ngdj_add_complex_component` | — | Generate an advanced component from an OpenUI element. |
 | Reactive form | TOOL | `ngdj_add_reactive_form` | — | Generate a typed form from an OpenUI `Form` element. |
 | Routed page | TOOL | `ngdj_add_page` | — | Generate a page from an OpenUI page element. |
+| Tabs | TOOL | `ngdj_add_tabs` | — | Generate a Material tabs component from an OpenUI `Tabs` container. |
+| Dialog | TOOL | `ngdj_add_dialog` | — | Generate a Material dialog component from an OpenUI `dialog` element. |
+| Stepper | TOOL | `ngdj_add_stepper` | — | Generate a Material stepper component from an OpenUI `Stepper` container. |
+| Table | TOOL | `ngdj_add_table` | — | Generate a Material table component from an OpenUI `table` element. |
 | Optional interpretive refinement | SKILL | — | — | Handle only selected work that structured inputs and deterministic schematics do not fully specify. |
 | Post-generation verification | HOOK | — | `post-generation` | Record and enforce per-command structural checks. |
 | Session-end audit | HOOK | — | `session-stop` | Archive run information and write a session summary. |
@@ -242,6 +246,10 @@ time and does not keep a copy. `build_app` owns the Tool selection:
 | Root node type | ngdj command | Tool contract | Stage |
 |---|---|---|---|
 | `Application` | `material-app` | `angular_app_scaffold` | 2 |
+| `Tabs` | `tabs` | `ngdj_add_tabs` | 6 |
+| `dialog` | `dialog` | `ngdj_add_dialog` | 6 |
+| `Stepper` | `stepper` | `ngdj_add_stepper` | 6 |
+| `table` | `table` | `ngdj_add_table` | 6 |
 | `SurfaceContainers` (no overlay child) | `component` | `ngdj_add_component` | 7 |
 | `SurfaceContainers` (with an overlay child) | `complex-component` | `ngdj_add_complex_component` | 8 |
 | `Form` | `reactive-form` | `ngdj_add_reactive_form` | 9 |
@@ -250,8 +258,7 @@ time and does not keep a copy. `build_app` owns the Tool selection:
 A change inside an `embedded` node type is an `update` of the root node that compiles it
 (a navigation or route change is an `Application` update). A change at a root node type
 element itself is a `create` or `delete`; a change inside it is an `update`. Node types
-compiled by `form-field`, `field-component`, `tabs`, `dialog`, `stepper`, `table`,
-`html` or `link` (whose update runs through the workspace modification wrapper) have
+compiled by `form-field`, `field-component`, `html` or `link` (whose update runs through the workspace modification wrapper) have
 no djng Tool yet and fail as "no Tool", and so does a node type the mapping does not
 cover. The `SurfaceContainers` condition and the choice of `material-app` for
 `Application` are decided by `build_app`, not by the mapping. With the
@@ -269,7 +276,10 @@ it to its operator wrapper through the crosswalk of `ARCHITECTURE.md` §3.6.4.1
 (`django_angular3/step_bridge.py` keeps a copy that a test compares with the table) and
 resolves the wrapper's options from the project configuration and the ngdj command
 mapping. A step therefore carries its concern key, wrapper (`command`), ngdj command and
-`parameters`. No site identifier comes from ngdj, and each option must be a parameter of
+`parameters`. A crosswalk row without a wrapper (`tabs`, `dialog`, `stepper`, `table`) has
+no operator wrapper to add: the step runs the ngdj command the mapping names,
+`ng generate angular-django2:<command>`, with `document`, `node_id` and `project`, and
+leaves `name` and `path` to the schematic's defaults. No site identifier comes from ngdj, and each option must be a parameter of
 the step's ngdj command in the mapping.
 
 | Option | Resolved from |
@@ -303,9 +313,11 @@ Commands must satisfy this dependency order:
 ```
 
 Stage `0` is the schema export (`openapi_schema_export`); the remaining stages are `4`
-data service (`ngdj_add_data_service`), `7` component,
+data service (`ngdj_add_data_service`), `6` tabs, dialog, stepper and table
+(`ngdj_add_tabs`, `ngdj_add_dialog`, `ngdj_add_stepper`, `ngdj_add_table`), `7` component,
 `8` complex component, `9` reactive form and `10` page, as in the table above, and `12`
-last validation; `5`, `6` and `11` are unassigned. A deterministic `ngdj` operation
+last validation; `5` and `11` are unassigned. Stage `6` precedes the page because a page
+will embed these elements once the mapping allows it. A deterministic `ngdj` operation
 without a Tool contract in `TOOL_CONTRACTS.md` is not added to this order and is not
 claimed as supported by `build_app`.
 

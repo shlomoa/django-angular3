@@ -479,6 +479,7 @@ When a new capability is proposed:
 | `angular_api_client_generate` | Yes | None | No | **TOOL** |
 | `pre-construction` contract validation gate | Yes | None | Yes | **HOOK** wrapping `validate_openapi_schema` |
 | Generate an Angular page or reactive form from validated OpenUI | Yes | None | No | **TOOL** (`ngdj_add_page`, `ngdj_add_reactive_form`) |
+| Generate a tabs, dialog, stepper or table component from validated OpenUI | Yes | None | No | **TOOL** (`ngdj_add_tabs`, `ngdj_add_dialog`, `ngdj_add_stepper`, `ngdj_add_table`) |
 | Interpret underspecified intent or refine generated behavior | No | High | No | Optional **SKILL** |
 | `djng-angular-construction` capability bundle | n/a | n/a | n/a | **PLUGIN** |
 
@@ -562,6 +563,10 @@ construction concern.
 | `angular.complex-component` | `ng_complex_component` | `ngdj_add_complex_component` | `angular-complex-component-composition` |
 | `angular.reactive-form` | `ng_reactive_form` | `ngdj_add_reactive_form` | `angular-reactive-form-composition` |
 | `angular.page` | `ng_page` | `ngdj_add_page` | `angular-page-composition` |
+| `angular.tabs` | — | `ngdj_add_tabs` | — |
+| `angular.dialog` | — | `ngdj_add_dialog` | — |
+| `angular.stepper` | — | `ngdj_add_stepper` | — |
+| `angular.table` | — | `ngdj_add_table` | — |
 | `contract.schema-export` | `export_schema` | `openapi_schema_export` | — |
 | `contract.schema-validate` | — | `validate_openapi_schema` | — |
 | `contract.schema-diff` | — | `oasdiff_diff`, `oasdiff_changelog` | — |

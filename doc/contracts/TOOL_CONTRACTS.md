@@ -709,6 +709,178 @@ target.
 `django_angular3/angular.py` resolves `ng generate angular-django2:data-service`. The
 structured outputs are planned.
 
+#### 15. `ngdj_add_tabs` — tabs component scaffold
+
+**Name**: `ngdj_add_tabs`
+
+**Purpose**: Generate a standalone `OnPush` Angular Material tabs component from
+an OpenUI `Tabs` container and its `tab` children. This is the deterministic contract `ARCHITECTURE.md` §3.6.3 classifies as a TOOL.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `document` | yes | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | first `Tabs` element | `id` of the element of `document` to compile, forwarded as `--node-id`. `build_app` always passes it. |
+| `name` | no | string | dasherized `node_id` | Kebab-case component name. |
+| `path` | no | string (relative path) | ngdj default | Destination directory within the application source root. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `generated_files` | array of string (path) | Files created by this invocation, relative to the workspace. |
+| `command` | string | Exact `angular-django2:tabs` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a missing `document`, a non-kebab-case name and a path outside
+the application source root. `output_invalid` applies when the invocation succeeds but does
+not create the component. A second run on an existing component is rejected by the
+schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
+`external_tool_failed`. The command supports only `create`; the ngdj command mapping marks
+`update`, `delete` and `move` unsupported, and `build_app` fails them explicitly.
+
+**Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
+Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
+from the ngdj command mapping and runs `ng generate angular-django2:tabs` through
+`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
+(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+
+#### 16. `ngdj_add_dialog` — dialog component scaffold
+
+**Name**: `ngdj_add_dialog`
+
+**Purpose**: Generate a standalone `OnPush` Angular Material dialog component from
+an OpenUI `dialog` element and the children of its `header`, `section` and `footer` regions. This is the deterministic contract `ARCHITECTURE.md` §3.6.3 classifies as a TOOL.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `document` | yes | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | first `dialog` element | `id` of the element of `document` to compile, forwarded as `--node-id`. `build_app` always passes it. |
+| `name` | no | string | dasherized `node_id` | Kebab-case component name. |
+| `path` | no | string (relative path) | ngdj default | Destination directory within the application source root. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `generated_files` | array of string (path) | Files created by this invocation, relative to the workspace. |
+| `command` | string | Exact `angular-django2:dialog` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a missing `document`, a non-kebab-case name and a path outside
+the application source root. `output_invalid` applies when the invocation succeeds but does
+not create the component. A second run on an existing component is rejected by the
+schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
+`external_tool_failed`. The command supports only `create`; the ngdj command mapping marks
+`update`, `delete` and `move` unsupported, and `build_app` fails them explicitly.
+
+**Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
+Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
+from the ngdj command mapping and runs `ng generate angular-django2:dialog` through
+`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
+(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+
+#### 17. `ngdj_add_stepper` — stepper component scaffold
+
+**Name**: `ngdj_add_stepper`
+
+**Purpose**: Generate a standalone `OnPush` Angular Material stepper component from
+an OpenUI `Stepper` container and its `step` children. This is the deterministic contract `ARCHITECTURE.md` §3.6.3 classifies as a TOOL.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `document` | yes | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | first `Stepper` element | `id` of the element of `document` to compile, forwarded as `--node-id`. `build_app` always passes it. |
+| `name` | no | string | dasherized `node_id` | Kebab-case component name. |
+| `path` | no | string (relative path) | ngdj default | Destination directory within the application source root. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `generated_files` | array of string (path) | Files created by this invocation, relative to the workspace. |
+| `command` | string | Exact `angular-django2:stepper` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a missing `document`, a non-kebab-case name and a path outside
+the application source root. `output_invalid` applies when the invocation succeeds but does
+not create the component. A second run on an existing component is rejected by the
+schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
+`external_tool_failed`. The command supports only `create`; the ngdj command mapping marks
+`update`, `delete` and `move` unsupported, and `build_app` fails them explicitly.
+
+**Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
+Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
+from the ngdj command mapping and runs `ng generate angular-django2:stepper` through
+`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
+(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+
+#### 18. `ngdj_add_table` — table component scaffold
+
+**Name**: `ngdj_add_table`
+
+**Purpose**: Generate a standalone `OnPush` Angular Material table component from
+an OpenUI `table` element; the host supplies the columns and the rows. This is the deterministic contract `ARCHITECTURE.md` §3.6.3 classifies as a TOOL.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `document` | yes | string (relative path) | — | Workspace-relative path of the validated canonical OpenUI document to compile, forwarded as `--document`. |
+| `node_id` | no | string | first `table` element | `id` of the element of `document` to compile, forwarded as `--node-id`. `build_app` always passes it. |
+| `name` | no | string | dasherized `node_id` | Kebab-case component name. |
+| `path` | no | string (relative path) | ngdj default | Destination directory within the application source root. |
+| `project` | no | string | inferred from `project.name` | Angular project to modify. |
+| `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `generated_files` | array of string (path) | Files created by this invocation, relative to the workspace. |
+| `command` | string | Exact `angular-django2:table` command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a missing `document`, a non-kebab-case name and a path outside
+the application source root. `output_invalid` applies when the invocation succeeds but does
+not create the component. A second run on an existing component is rejected by the
+schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
+`external_tool_failed`. The command supports only `create`; the ngdj command mapping marks
+`update`, `delete` and `move` unsupported, and `build_app` fails them explicitly.
+
+**Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
+Skill session), CLI. Not a HOOK target.
+
+**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
+from the ngdj command mapping and runs `ng generate angular-django2:table` through
+`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
+owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are planned
+(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+
 ### Contract compliance
 
 - `build_app` MUST select the matching **Name** value above when translating a

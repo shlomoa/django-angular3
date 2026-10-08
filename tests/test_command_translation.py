@@ -404,11 +404,45 @@ class OpenUiTranslationTests(unittest.TestCase):
         ):
             self.translate([{"id": "signup", "type": "Form"}], [])
 
-    def test_a_node_whose_command_has_no_djng_tool_fails_as_no_tool(self) -> None:
+    def test_widgets_and_containers_select_the_tool_of_their_ngdj_command(self) -> None:
+        steps = self.translate(
+            [],
+            [
+                {"id": "views", "type": "Tabs"},
+                {"id": "confirm", "type": "dialog"},
+                {"id": "wizard", "type": "Stepper"},
+                {"id": "orders", "type": "table"},
+            ],
+        )
+
+        self.assertEqual(
+            [
+                (step.name_id, step.exec_order, step.node_id, step.ngdj_command)
+                for step in steps[:-1]
+            ],
+            [
+                ("ngdj_add_dialog", 6, "confirm", "dialog"),
+                ("ngdj_add_stepper", 6, "wizard", "stepper"),
+                ("ngdj_add_table", 6, "orders", "table"),
+                ("ngdj_add_tabs", 6, "views", "tabs"),
+            ],
+        )
+
+    def test_a_change_inside_a_tabs_container_is_an_unsupported_update(self) -> None:
         with self.assertRaisesRegex(
-            CommandTranslationError, r"No djng Tool runs the ngdj command \(tabs\)"
+            CommandTranslationError,
+            r"does not support update of OpenUI node type Tabs \(unsupported\)",
         ):
-            self.translate([], [{"id": "views", "type": "Tabs"}])
+            self.translate(
+                [{"id": "views", "type": "Tabs"}],
+                [
+                    {
+                        "id": "views",
+                        "type": "Tabs",
+                        "attrs": {"uses.orientation": "vertical"},
+                    }
+                ],
+            )
 
     def test_commands_chosen_by_an_unevaluated_condition_have_no_djng_tool(
         self,

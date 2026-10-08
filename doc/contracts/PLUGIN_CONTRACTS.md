@@ -225,6 +225,10 @@ them is owned by `djng-angular-construction` (§1) instead.
 | `ngdj_add_page` | Generate a routed page with its route and optional navigation entry. |
 | `ngdj_add_reactive_form` | Generate a typed reactive form. |
 | `ngdj_add_complex_component` | Generate, modify, or delete an advanced Material component. |
+| `ngdj_add_tabs` | Generate a Material tabs component from an OpenUI `Tabs` container. |
+| `ngdj_add_dialog` | Generate a Material dialog component from an OpenUI `dialog` element. |
+| `ngdj_add_stepper` | Generate a Material stepper component from an OpenUI `Stepper` container. |
+| `ngdj_add_table` | Generate a Material table component from an OpenUI `table` element. |
 | `ngdj_add_data_service` | Generate a typed data-service wrapper for a resource. |
 | `ngdj_run_schematic` | Run an explicitly ngdj schematic. |
 

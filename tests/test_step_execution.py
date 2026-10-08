@@ -65,6 +65,18 @@ _DASHBOARD_DOCUMENT = {
     "children": [*_BASE_DOCUMENT["children"], _DASHBOARD_PAGE],
 }
 
+# The base application plus every standalone element ngdj compiles without a wrapper.
+_WIDGETS_DOCUMENT = {
+    **_BASE_DOCUMENT,
+    "children": [
+        *_BASE_DOCUMENT["children"],
+        {"id": "views", "type": "Tabs"},
+        {"id": "confirmDelete", "type": "dialog"},
+        {"id": "setupWizard", "type": "Stepper"},
+        {"id": "orders", "type": "table"},
+    ],
+}
+
 # A stand-in for the Angular CLI: it logs every call, creates the directory of
 # ``ng new`` and fails when FAKE_NG_FAIL occurs in the call.
 FAKE_NG = """\
@@ -375,6 +387,47 @@ class StepResolutionTests(unittest.TestCase):
         with self.assertRaisesRegex(StepBridgeError, "no invocation builder"):
             resolve_steps(steps, self.project.project_config)
 
+    def test_a_widget_step_runs_the_ngdj_command_of_the_mapping_without_a_wrapper(
+        self,
+    ) -> None:
+        self.project.document.write_text(
+            json.dumps(_WIDGETS_DOCUMENT), encoding="utf-8"
+        )
+
+        steps = self.resolve(self.project.change_set())
+
+        widgets = {
+            step.name_id: step for step in steps if step.name_id.startswith("ngdj_add_")
+        }
+        self.assertEqual(
+            {name: (s.concern_key, s.command) for name, s in widgets.items()},
+            {
+                "ngdj_add_tabs": ("angular.tabs", "angular-django2:tabs"),
+                "ngdj_add_dialog": ("angular.dialog", "angular-django2:dialog"),
+                "ngdj_add_stepper": ("angular.stepper", "angular-django2:stepper"),
+                "ngdj_add_table": ("angular.table", "angular-django2:table"),
+            },
+        )
+        self.assertEqual(
+            dict(widgets["ngdj_add_tabs"].parameters),
+            {
+                "project": "shop",
+                "document": f"{STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
+                "node_id": "views",
+            },
+        )
+
+    def test_a_widget_step_is_refused_when_the_command_lacks_an_option(self) -> None:
+        self.project.document.write_text(
+            json.dumps(_WIDGETS_DOCUMENT), encoding="utf-8"
+        )
+        document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        tabs = document["ui"]["commands"]["tabs"]
+        tabs["parameters"] = [p for p in tabs["parameters"] if p["name"] != "project"]
+
+        with self.assertRaisesRegex(StepBridgeError, "has no parameter project"):
+            self.resolve(self.project.change_set(), CommandMapping(document))
+
     def test_element_ids_are_dasherized_as_ngdj_names_them(self) -> None:
         self.assertEqual(
             [dasherize(i) for i in ("home", "dashboardPage", "order_list", "A1b")],
@@ -514,6 +567,33 @@ class RealRunTests(unittest.TestCase):
                 "--project=shop",
                 f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
                 "--node-id=dashboardPage",
+            ],
+        )
+
+    def test_widgets_are_generated_by_the_ngdj_schematic_before_the_pages(self) -> None:
+        self.project.document.write_text(
+            json.dumps(_WIDGETS_DOCUMENT), encoding="utf-8"
+        )
+
+        self.project.run_build(self.project.change_set())
+
+        generated = [c for c in self.project.calls() if c[:1] == ["generate"]]
+        self.assertEqual(
+            [c[1] for c in generated[-4:]],
+            [
+                "angular-django2:dialog",
+                "angular-django2:stepper",
+                "angular-django2:table",
+                "angular-django2:tabs",
+            ],
+        )
+        tabs = next(c for c in generated if c[1] == "angular-django2:tabs")
+        self.assertEqual(
+            tabs[2:],
+            [
+                "--project=shop",
+                f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
+                "--node-id=views",
             ],
         )
 
