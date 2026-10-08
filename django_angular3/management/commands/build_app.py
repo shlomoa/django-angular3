@@ -250,7 +250,7 @@ def load_ngdj_mapping(
 
     OpenUI and OpenAPI Changes are translated with the mapping that the Angular
     workspace's installed ``angular-django2`` package ships. Other Changes need none,
-    so a plan for them does not require the package to be installed.
+    so translating them does not require the package to be installed.
     """
     needs_mapping = any(
         change_set.domains[domain].changes
@@ -264,7 +264,7 @@ def load_ngdj_mapping(
         )
     except CommandMappingError as exc:
         raise CommandError(
-            f"Cannot plan the OpenUI and OpenAPI changes: {exc}"
+            f"Cannot translate the OpenUI and OpenAPI changes: {exc}"
         ) from exc
 
 
@@ -281,7 +281,7 @@ class ChangeExecution:
     def _translate_change_set(
         self, change_set: ChangeSet, mapping: CommandMapping | None = None
     ) -> tuple[AppBuildStep, ...]:
-        """Translate the ChangeSet into an ordered command plan."""
+        """Translate the ChangeSet into ordered steps."""
         changes = tuple(
             change
             for domain in ChangeDomain
@@ -304,18 +304,18 @@ class ChangeExecution:
         settings: DjangoAngularSettings | None = None,
     ) -> ExecutionEvidence:
         """
-        Plan the changes and, unless ``dry_run``, run the plan.
+        Translate the changes into steps and, unless ``dry_run``, run them.
 
-        The plan is bridged to its wrappers and its parameters are resolved from the
-        project configuration and the mapping. A dry run returns that plan as
-        evidence and touches nothing. A real run first refuses a plan with an
+        The steps are bridged to their wrappers and their parameters are resolved from
+        the project configuration and the mapping. A dry run returns those steps as
+        evidence and touches nothing. A real run first refuses steps with an
         unresolved parameter, then runs the steps level by level, halts at the
         first failure, writes the evidence to ``<output_path>/build-evidence.json``
         (also after a failure) and raises ``CommandError`` for the failure.
 
         ``force`` is not honored yet and is refused rather than ignored.
 
-        Raises CommandError if planning or execution fails.
+        Raises CommandError if translation or execution fails.
         """
         logger.debug("Executing change set")
         if force:
@@ -331,7 +331,7 @@ class ChangeExecution:
                 mapping,
             )
         except (StepBridgeError, AngularCommandError, ConfigError) as exc:
-            raise CommandError(f"Failed to plan changes: {exc}") from exc
+            raise CommandError(f"Failed to resolve steps: {exc}") from exc
 
         evidence = new_evidence(
             project_config, settings, mapping, steps, dry_run=dry_run
@@ -342,7 +342,7 @@ class ChangeExecution:
         problems = unresolved_steps(steps)
         if problems:
             raise CommandError(
-                "Cannot run the plan; nothing was executed: "
+                "Cannot run the steps; nothing was executed: "
                 + "; ".join(problems)
                 + "."
             )

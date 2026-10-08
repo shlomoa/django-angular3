@@ -208,7 +208,7 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
             json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
         )
 
-    def test_returns_an_ordered_command_plan(self) -> None:
+    def test_returns_ordered_commands(self) -> None:
         change_set = _change_set(
             openapi=(
                 Change(
@@ -289,8 +289,8 @@ def _project_name_created() -> Change:
     )
 
 
-class BuildAppPlanningTests(unittest.TestCase):
-    """The command mapping reaches the translation, and a dry run reports the plan."""
+class BuildAppTranslationTests(unittest.TestCase):
+    """The command mapping reaches the translation, and a dry run reports the steps."""
 
     def setUp(self) -> None:
         temporary_directory = tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR)
@@ -363,7 +363,7 @@ class BuildAppPlanningTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             CommandError,
-            r"Cannot plan the OpenUI and OpenAPI changes.*Install "
+            r"Cannot translate the OpenUI and OpenAPI changes.*Install "
             r"angular-django2@0\.7\.0",
         ):
             load_ngdj_mapping(_change_set(openui=openui), self.current.project_config)
@@ -379,7 +379,7 @@ class BuildAppPlanningTests(unittest.TestCase):
             [step.name_id for step in steps], ["ngdj_add_page", "last-check"]
         )
 
-    def test_a_dry_run_returns_the_plan_without_running_it(self) -> None:
+    def test_a_dry_run_returns_the_steps_without_running_them(self) -> None:
         change_set = _change_set(project_config=(_project_name_created(),))
 
         with patch(
@@ -396,34 +396,36 @@ class BuildAppPlanningTests(unittest.TestCase):
         )
 
     def test_the_dry_run_command_prints_the_ordered_steps(self) -> None:
-        plan = self.dry_run(_change_set(project_config=(_project_name_created(),)))
+        report = self.dry_run(_change_set(project_config=(_project_name_created(),)))
 
         self.assertEqual(
-            plan["projectConfig"], str(self.current.project_config.config_path)
+            report["projectConfig"], str(self.current.project_config.config_path)
         )
         self.assertEqual(
-            [(step["stage"], step["step"], step["mode"]) for step in plan["steps"]],
+            [(step["stage"], step["step"], step["mode"]) for step in report["steps"]],
             [
                 (1, "angular-workspace-foundation", "create"),
                 (2, "angular-app-composition", "create"),
                 (12, "last-check", "validate"),
             ],
         )
-        self.assertEqual(plan["steps"][0]["target"], "project.name")
-        self.assertIn("Required by project_config create", plan["steps"][0]["reason"])
+        self.assertEqual(report["steps"][0]["target"], "project.name")
+        self.assertIn("Required by project_config create", report["steps"][0]["reason"])
 
     def test_the_dry_run_of_an_empty_change_set_prints_no_steps(self) -> None:
-        plan = self.dry_run(_change_set())
+        report = self.dry_run(_change_set())
 
-        self.assertEqual(plan["steps"], [])
+        self.assertEqual(report["steps"], [])
 
-    def test_the_dry_run_plans_openui_steps_with_the_installed_mapping(self) -> None:
+    def test_the_dry_run_translates_openui_changes_with_the_installed_mapping(
+        self,
+    ) -> None:
         self.install_ngdj()
         openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
 
-        plan = self.dry_run(_change_set(openui=openui))
+        report = self.dry_run(_change_set(openui=openui))
 
-        step = plan["steps"][0]
+        step = report["steps"][0]
         self.assertEqual(
             (step["stage"], step["step"], step["mode"], step["nodeId"], step["domain"]),
             (10, "ngdj_add_page", "create", "home", "openui"),

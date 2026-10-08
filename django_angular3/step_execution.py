@@ -1,9 +1,9 @@
-"""Run the resolved steps of an app build plan and record the evidence.
+"""Run the resolved steps of an app build and record the evidence.
 
-Steps run by ordered level (``exec_order``), in plan order within a level, and the
+Steps run by ordered level (``exec_order``), in step order within a level, and the
 run halts at the first failure. Every external process goes through
 ``command_execution.run_command``. The evidence names the pinned ngdj package and
-the mapping versions the plan was made with, so a run can be reproduced.
+the mapping versions the steps were resolved with, so a run can be reproduced.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ _OUTPUT_TAIL: Final = 4000
 STATUS_SUCCEEDED: Final = "succeeded"
 STATUS_FAILED: Final = "failed"
 STATUS_SKIPPED: Final = "skipped"
-STATUS_PLANNED: Final = "planned"
+STATUS_PENDING: Final = "pending"
 
 
 @dataclass(frozen=True)
@@ -53,17 +53,17 @@ class InvocationRecord:
 
 @dataclass
 class StepRecord:
-    """A step with what happened to it: planned, succeeded, failed or skipped."""
+    """A step with what happened to it: pending, succeeded, failed or skipped."""
 
     step: AppBuildStep
-    status: str = STATUS_PLANNED
+    status: str = STATUS_PENDING
     invocations: list[InvocationRecord] = field(default_factory=list)
     error: str | None = None
 
 
 @dataclass
 class ExecutionEvidence:
-    """What a run (or a dry run) planned, executed and was pinned to."""
+    """What a run (or a dry run) resolved, executed and was pinned to."""
 
     project_config: Path
     ngdj_package: str
@@ -114,7 +114,7 @@ def step_to_dict(
         "unresolved": list(step.unresolved),
         "reason": step.change_reason,
     }
-    if record is not None and record.status != STATUS_PLANNED:
+    if record is not None and record.status != STATUS_PENDING:
         result["status"] = record.status
         result["invocations"] = [i.to_dict() for i in record.invocations]
         if record.error:
@@ -130,7 +130,7 @@ def new_evidence(
     *,
     dry_run: bool,
 ) -> ExecutionEvidence:
-    """Evidence for a plan that nothing has run yet."""
+    """Evidence for steps that nothing has run yet."""
     return ExecutionEvidence(
         project_config=project_config.config_path,
         ngdj_package=settings.ng_add_package,
@@ -142,7 +142,7 @@ def new_evidence(
 
 
 def levels(records: list[StepRecord]) -> Iterator[list[StepRecord]]:
-    """Group the plan into its ordered levels: records of one ``exec_order``."""
+    """Group the steps into their ordered levels: records of one ``exec_order``."""
     level: list[StepRecord] = []
     for record in records:
         if level and level[0].step.exec_order != record.step.exec_order:
@@ -167,7 +167,7 @@ def execute_steps(
     project_config: ProjectConfig,
     settings: DjangoAngularSettings,
 ) -> None:
-    """Run the plan of ``evidence`` level by level, halting at the first failure.
+    """Run the steps of ``evidence`` level by level, halting at the first failure.
 
     Each record is updated in place. After a failure the remaining steps are marked
     skipped and nothing else runs.

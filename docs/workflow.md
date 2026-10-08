@@ -111,7 +111,7 @@ second parser.
 `build_app` constructs the generated app. It detects the changes
 between the previous and the current inputs and, with `--dry-run`, prints the ordered
 steps it would run, with their wrapper commands and parameters, as far as the ngdj command
-mapping supports them (see {ref}`What build_app plans <what-build-app-plans>`). Without
+mapping supports them (see {ref}`What build_app runs and refuses <what-build-app-runs-and-refuses>`). Without
 `--dry-run` it runs the same steps and halts at the first failure. The terminal
 validation beyond building the application, and the steps that are refused, are not
 implemented yet; use the individual wrappers below for those. Its target requirements are

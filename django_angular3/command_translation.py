@@ -1,4 +1,4 @@
-"""Deterministically translate Changes into an ordered plan of AppBuildSteps."""
+"""Deterministically translate Changes into ordered AppBuildSteps."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ class CommandTranslationError(ValueError):
 
 @dataclass(frozen=True)
 class AppBuildStep:
-    """One ordered step of the app build plan: a construction command or gate.
+    """One ordered step of an app build: a construction command or gate.
 
     A step is produced from one atomic Change (a single Change can yield
     several steps, for example an OpenAPI change yields three), except for the
@@ -31,8 +31,8 @@ class AppBuildStep:
     (see ``_merge_project_steps``).
 
     Steps are sorted by ``exec_order``, then ``change_op``, ``change_domain``,
-    ``name_id`` and ``change_target`` (see ``_step_sort_key``) to keep plans
-    deterministic.
+    ``name_id`` and ``change_target`` (see ``_step_sort_key``) to keep the
+    steps deterministic.
 
     Attributes:
         name_id: Identifier of the construction command, or ``last-check`` for
@@ -56,7 +56,7 @@ class AppBuildStep:
             Breaks ties between steps with the same ``exec_order``:
             then update and move, then create, then validate.
         change_reason: Human-readable explanation of which Change required
-            the step, for plan output and debug logs.
+            the step, for dry-run output and debug logs.
         change_target: Identifier of the thing the Change affects (for example
             ``openui:/children/home`` or ``path:/api/items``), or ``changeset``
             for the last gate.
@@ -106,10 +106,10 @@ def translate_changes(
 ) -> tuple[AppBuildStep, ...]:
     """Translate supported changes into ordered commands and a last gate.
 
-    This only plans: it neither invokes wrappers nor changes the
+    This only translates: it neither invokes wrappers nor changes the
     generated-app workspace. Every unsupported semantic subject is rejected.
     ``mapping`` is the ngdj command mapping; OpenUI and OpenAPI Changes need it.
-    An empty change list means nothing changed and plans no commands, not even
+    An empty change list means nothing changed and yields no commands, not even
     the validation gate.
     """
     if not changes:
@@ -122,7 +122,7 @@ def translate_changes(
             name_id="last-check",
             exec_order=12,
             change_op="validate",
-            change_reason="Validate the outputs of all steps in the plan.",
+            change_reason="Validate the outputs of all steps.",
             change_target="changeset",
             change_domain=None,
         )
@@ -191,7 +191,7 @@ def _require_create_or_update(change: Change) -> None:
 
     A configuration value is created (no baseline, or a new setting) or
     updated. ``delete`` and ``move`` have no translation, so they fail
-    explicitly instead of being planned as no work.
+    explicitly instead of being treated as no work.
     """
     if change.operation not in _CONFIG_OPERATIONS:
         raise CommandTranslationError(
@@ -352,7 +352,7 @@ _DATA_SERVICE_COMMAND: Final = "data-service"
 def _translate_openapi_change(
     change: Change, mapping: CommandMapping | None
 ) -> tuple[AppBuildStep, ...]:
-    """Plan the client regeneration and data service an OpenAPI Change needs.
+    """Select the client regeneration and data service an OpenAPI Change needs.
 
     Every change regenerates the typed client from the changed schema. A new path
     (a new resource) also gets its data service. A change to an operation, or to

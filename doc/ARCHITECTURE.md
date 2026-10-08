@@ -791,7 +791,7 @@ verifies the composed generated application.
 bounded input, Angular workspace preconditions, and the construction invariants
 it owns before applying a deterministic mutation. It does not independently
 interpret the generated application's canonical OpenUI document or derive the
-application-wide change plan. Validation by `openui-spec`, `djng`, and `ngdj`
+application-wide ChangeSet. Validation by `openui-spec`, `djng`, and `ngdj`
 therefore applies at distinct, complementary boundaries; validation at one
 boundary does not replace validation at another. See §3.4 for the canonical
 `ngdj` ownership policy and §2.8.2 for source and construction terminology.

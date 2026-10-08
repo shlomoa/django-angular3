@@ -1,4 +1,4 @@
-"""Tests for the step-to-wrapper bridge and the execution of an app build plan."""
+"""Tests for the step-to-wrapper bridge and the execution of an app build."""
 
 from __future__ import annotations
 
@@ -440,12 +440,12 @@ class DryRunTests(unittest.TestCase):
         self.project = _Project(self)
 
     def test_the_dry_run_prints_order_command_parameters_and_reason(self) -> None:
-        plan = json.loads(
+        report = json.loads(
             self.project.run_build(self.project.change_set(), dry_run=True)
         )
 
         self.assertEqual(
-            [(s["stage"], s["step"], s["command"]) for s in plan["steps"]],
+            [(s["stage"], s["step"], s["command"]) for s in report["steps"]],
             [
                 (1, "angular-workspace-foundation", "ng_workspace"),
                 (2, "angular-app-composition", "ng_gen_app"),
@@ -453,19 +453,19 @@ class DryRunTests(unittest.TestCase):
                 (12, "last-check", "ng_build"),
             ],
         )
-        page = plan["steps"][2]
+        page = report["steps"][2]
         self.assertEqual(page["parameters"]["node_id"], "dashboardPage")
         self.assertEqual(page["parameters"]["name"], "dashboard-page")
         self.assertIn("ngdj page compiles DashboardPage dashboardPage", page["reason"])
-        self.assertEqual(plan["dryRun"], True)
+        self.assertEqual(report["dryRun"], True)
 
     def test_the_evidence_pins_the_ngdj_package_and_mapping_versions(self) -> None:
-        plan = json.loads(
+        report = json.loads(
             self.project.run_build(self.project.change_set(), dry_run=True)
         )
 
         self.assertEqual(
-            plan["ngdj"],
+            report["ngdj"],
             {
                 "package": "angular-django2@0.7.0",
                 "mappingVersion": 1,
@@ -497,9 +497,9 @@ class DryRunTests(unittest.TestCase):
             )
         )
 
-        plan = json.loads(self.project.run_build(change_set, dry_run=True))
+        report = json.loads(self.project.run_build(change_set, dry_run=True))
 
-        service = next(s for s in plan["steps"] if s["command"] == "ng_data_service")
+        service = next(s for s in report["steps"] if s["command"] == "ng_data_service")
         self.assertEqual(service["unresolved"], ["resource"])
 
     def test_a_dry_run_still_refuses_what_has_no_wrapper(self) -> None:
@@ -512,7 +512,7 @@ class DryRunTests(unittest.TestCase):
             "b",
         )
 
-        with self.assertRaisesRegex(CommandError, "Failed to plan changes"):
+        with self.assertRaisesRegex(CommandError, "Failed to resolve steps"):
             self.project.run_build(_change_set(static_config=(change,)), dry_run=True)
 
 
@@ -521,13 +521,13 @@ class RealRunTests(unittest.TestCase):
         self.project = _Project(self)
 
     def dry_run_steps(self) -> list[tuple[str, str]]:
-        plan = json.loads(
+        report = json.loads(
             self.project.run_build(self.project.change_set(), dry_run=True)
         )
-        return [(s["command"], s["step"]) for s in plan["steps"]]
+        return [(s["command"], s["step"]) for s in report["steps"]]
 
     def test_a_real_run_executes_the_steps_of_the_dry_run(self) -> None:
-        planned = self.dry_run_steps()
+        previewed = self.dry_run_steps()
 
         self.project.run_build(self.project.change_set())
 
@@ -535,12 +535,12 @@ class RealRunTests(unittest.TestCase):
             (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
         )
         self.assertEqual(
-            [(s["command"], s["step"]) for s in evidence["steps"]], planned
+            [(s["command"], s["step"]) for s in evidence["steps"]], previewed
         )
         self.assertEqual({s["status"] for s in evidence["steps"]}, {"succeeded"})
         self.assertFalse(evidence["dryRun"])
 
-    def test_the_wrappers_call_ng_in_plan_order_in_the_workspace(self) -> None:
+    def test_the_wrappers_call_ng_in_step_order_in_the_workspace(self) -> None:
         self.project.run_build(self.project.change_set())
 
         calls = self.project.calls()

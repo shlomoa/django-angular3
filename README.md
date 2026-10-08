@@ -144,13 +144,13 @@ it resolves commands without executing Angular tooling:
 - `ng_workspace`, `ng_gen_app`, `ng_page`, `ng_component`, `ng_complex_component`, and `ng_reactive_form` accept `--document` (a workspace-relative OpenUI document) and, except `ng_workspace`, `--node-id` to compile an OpenUI element; `ng_openapi_setup` accepts `--auth-scheme bearer|basic`
 - `ng_openapi_gen` runs a locally installed `ng-openapi-gen` for the configured OpenAPI source
 
-`build_app --dry-run` plans these steps from detected OpenAPI, OpenUI and project
-changes, following the command mapping of the installed `angular-django2` package, and
+`build_app --dry-run` translates detected OpenAPI, OpenUI and project changes into these
+steps, following the command mapping of the installed `angular-django2` package, and
 prints each step's order, wrapper command, resolved parameters and reason. Without
 `--dry-run` it runs the same steps in order, halts at the first failure and writes
 `build/build-evidence.json`. It refuses what ngdj cannot do; see
-[What `build_app` plans](https://djangoangular.com/commands/#what-build-app-plans)
-for what is planned and refused.
+[What `build_app` runs and refuses](https://djangoangular.com/commands/#what-build-app-runs-and-refuses)
+for what it runs and what it refuses.
 
 `ng_openapi_gen` resolves to `pnpm exec`, so it only uses dependencies that
 are already installed in the Angular workspace. It does not download and

@@ -39,9 +39,9 @@ not application configuration.
 - Directly constructing and validating the generated app from schema and OpenUI changes (`build_app`).
 - Managing the full Angular workspace lifecycle, including modify and delete operations.
 
-(what-build-app-plans)=
+(what-build-app-runs-and-refuses)=
 
-## What `build_app` plans
+## What `build_app` runs and refuses
 
 `build_app --dry-run` prints the ordered steps for the detected changes. The ngdj command
 mapping that ships in the installed `angular-django2` package decides what ngdj supports,
@@ -49,29 +49,31 @@ so `djng` follows it instead of keeping its own list. The authoritative rules an
 are in `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change-to-command mapping
 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#change-to-command-mapping){.modal-link}.
 
-Planned today:
+Supported today:
 
-- A changed project name or workspace location plans the workspace and application
-  foundation steps. A changed artifact selector plans only the final validation.
-- A new OpenUI page, form, component or complex component plans the matching wrapper step.
-  A change inside the `Application` element, including its routes, navigation and toolbar,
-  plans an update of the application.
-- A new OpenAPI path plans the client regeneration and its data service. A new schema plans
-  the client regeneration.
+- A changed project name or workspace location selects the workspace and application
+  foundation steps. A changed artifact selector selects only the final validation.
+- A new OpenUI page, form, component or complex component selects the matching wrapper step.
+  A new `tabs`, `dialog`, `stepper` or `table` element selects the matching
+  `ng generate angular-django2:<command>` step, which has no wrapper. A change inside the
+  `Application` element, including its routes, navigation and toolbar, selects an update of
+  the application.
+- A new OpenAPI path selects the client regeneration and its data service. A new schema
+  selects the client regeneration.
 
 Refused with an error that quotes the upstream reason and gap issue:
 
 - Updating or deleting any other OpenUI node.
 - A change to an OpenAPI operation, and updating or deleting a path or schema, because ngdj
   cannot update or delete data services.
-- A node type with no `djng` wrapper yet (`tabs`, `dialog`, `stepper`, `table`,
-  `form-field`, `field-component`, `html`, `link`) or one the mapping does not cover.
+- A node type with no `djng` Tool yet (`form-field`, `field-component`, `html`, `link`) or
+  one the mapping does not cover.
 
 Each step names the wrapper that runs it (through the crosswalk of
 `doc/ARCHITECTURE.md` §3.6.4.1) and carries the options it needs, resolved from the project
 configuration and the mapping: `name`, `target_path` and `project` for a page,
 `document` and `node_id` for an OpenUI element, and so on. `--dry-run` prints them and
-changes nothing. Without `--dry-run`, `build_app` first refuses a plan with an unresolved
+changes nothing. Without `--dry-run`, `build_app` first refuses to run steps with an unresolved
 option (a data service has no `resource` until the resource identity rule is decided,
 [shlomoa/django-angular3#207](https://github.com/shlomoa/django-angular3/issues/207)); it then copies an OpenUI
 document that lies outside the Angular workspace to `.django-angular3/` in the workspace,
@@ -81,10 +83,10 @@ output and the pinned `angular-django2` package and mapping versions. `--force` 
 refused until it is implemented. The final `last-check` gate builds the application
 (`ng_build`) until the terminal validation commands exist.
 
-Not implemented yet: planning `ng_openapi_setup`, running a schema export step, and
-detecting changes of `django-angular3.json`. Planning OpenUI and OpenAPI changes needs the `angular-django2`
+Not implemented yet: translating a change into an `ng_openapi_setup` step, running a schema export step, and
+detecting changes of `django-angular3.json`. Translating OpenUI and OpenAPI changes needs the `angular-django2`
 package installed in the Angular workspace at the version `tool.ngAddPackage` pins (a
-registry name such as `angular-django2@0.7.0`, not a path), so it cannot plan them for a
+registry name such as `angular-django2@0.7.0`, not a path), so it cannot translate them for a
 workspace that does not exist yet.
 
 ## Command ownership
@@ -153,7 +155,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one (`api.json` → `api.previous.json`) to provide the baseline file; a previous project configuration selects it through its `artifacts.openapiSchema` for `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app` | Detects project-configuration, OpenAPI and OpenUI changes and, with `--dry-run`, prints the ordered build steps as JSON (stage, step, mode, target, element id, wrapper command, parameters, unresolved parameters and reason). Without `--dry-run` it runs them in order against the Angular workspace, halts at the first failure and writes `build-evidence.json` to `--output`; static-configuration changes are not detected yet. OpenUI and OpenAPI changes are planned with the command mapping of the `angular-django2` package installed in the Angular workspace, so the package must be installed. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run`, `--output <dir>` and `--force start-from-scratch` (not implemented; refused). See {ref}`What build_app plans <what-build-app-plans>`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs){.modal-link} for discovery behavior. |
+| `build_app` | Detects project-configuration, OpenAPI and OpenUI changes and, with `--dry-run`, prints the ordered build steps as JSON (stage, step, mode, target, element id, wrapper command, parameters, unresolved parameters and reason). Without `--dry-run` it runs them in order against the Angular workspace, halts at the first failure and writes `build-evidence.json` to `--output`; static-configuration changes are not detected yet. OpenUI and OpenAPI changes are translated with the command mapping of the `angular-django2` package installed in the Angular workspace, so the package must be installed. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run`, `--output <dir>` and `--force start-from-scratch` (not implemented; refused). See {ref}`What build_app runs and refuses <what-build-app-runs-and-refuses>`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs){.modal-link} for discovery behavior. |
 | `clean` | Remove temporary Python build and package artifacts, including `build`, `dist`, root `*.egg-info`, caches, and Python bytecode. Accepts `--dry-run`. |
 | `distclean` | Run `git clean -f -d` from the current project directory, removing all untracked files and directories while preserving ignored and tracked files. Accepts `--dry-run`, which passes `-n` to Git. |
 | `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |
