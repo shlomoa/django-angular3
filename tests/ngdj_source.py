@@ -39,18 +39,17 @@ NGDJ_PACKAGE_DIR: Path = ngdj_package_dir()
 
 def require_ngdj_source[T: type[unittest.TestCase]](cls: T) -> T:
     """Skip ``cls`` without the ngdj source, or fail when ``DJNG_REQUIRE_NGDJ=1``."""
-    inherited = cls.setUpClass
+    if NGDJ_PACKAGE_DIR.is_dir():
+        return cls
+    message = (
+        f"angular-django2 source not found at {NGDJ_PACKAGE_DIR}; "
+        f"set {NGDJ_ROOT_ENV} or check it out next to this repository"
+    )
+    if not ngdj_required():
+        return unittest.skip(message)(cls)
 
     def setUpClass(klass: type[unittest.TestCase]) -> None:
-        if not NGDJ_PACKAGE_DIR.is_dir():
-            message = (
-                f"angular-django2 source not found at {NGDJ_PACKAGE_DIR}; "
-                f"set {NGDJ_ROOT_ENV} or check it out next to this repository"
-            )
-            if ngdj_required():
-                raise AssertionError(f"{REQUIRE_NGDJ_ENV}=1: {message}")
-            raise unittest.SkipTest(message)
-        inherited()
+        raise AssertionError(f"{REQUIRE_NGDJ_ENV}=1: {message}")
 
     cls.setUpClass = classmethod(setUpClass)  # type: ignore[method-assign]
     return cls
