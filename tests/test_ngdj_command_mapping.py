@@ -17,15 +17,10 @@ from django_angular3.ngdj_command_mapping import (
     load_command_mapping,
     parse_package_spec,
 )
+from tests.ngdj_source import NGDJ_PACKAGE_DIR, ngdj_required, require_ngdj_source
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "ngdj"
-SIBLING_PACKAGE_DIR = (
-    Path(__file__).resolve().parent.parent.parent
-    / "angular-django2"
-    / "projects"
-    / "angular-django2"
-)
 PACKAGE_SPEC = "angular-django2@0.7.0"
 SPEC_VERSION = "0.12.1"
 
@@ -247,27 +242,28 @@ class FixtureVersionTests(unittest.TestCase):
         )
 
 
-@unittest.skipUnless(
-    SIBLING_PACKAGE_DIR.is_dir(), "angular-django2 sibling repository is required"
-)
+@require_ngdj_source
 class FixtureDriftTests(unittest.TestCase):
     def test_the_fixture_equals_the_sibling_mapping_of_the_same_version(self) -> None:
         fixture_version = json.loads(
             (FIXTURE_DIR / "package.json").read_text(encoding="utf-8")
         )["version"]
         sibling_version = json.loads(
-            (SIBLING_PACKAGE_DIR / "package.json").read_text(encoding="utf-8")
+            (NGDJ_PACKAGE_DIR / "package.json").read_text(encoding="utf-8")
         )["version"]
         if sibling_version != fixture_version:
-            self.skipTest(
+            message = (
                 f"sibling is {sibling_version}, fixture is {fixture_version}; "
                 "run tests/fixtures/ngdj/sync_command_mapping.py to refresh it"
             )
+            if ngdj_required():
+                self.fail(message)
+            self.skipTest(message)
 
         for name in ("command-mapping.json", "command-mapping.schema.json"):
             with self.subTest(file=name):
                 self.assertEqual(
                     (FIXTURE_DIR / name).read_bytes(),
-                    (SIBLING_PACKAGE_DIR / "schematics" / name).read_bytes(),
+                    (NGDJ_PACKAGE_DIR / "schematics" / name).read_bytes(),
                     "fixture drifted; run tests/fixtures/ngdj/sync_command_mapping.py",
                 )

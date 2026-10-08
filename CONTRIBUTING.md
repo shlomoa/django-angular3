@@ -192,6 +192,15 @@ validators, and automation skills that orchestrate the frontend tooling:
    - `ruff format --check django_angular3 tests docs`
    - `python -m unittest discover -s tests -p 'test*.py'`
    - Sphinx documentation build: `python -m sphinx docs docs/_build/html -W --keep-going`
+   - ngdj contract and fixture-drift tests. They read the `angular-django2` source, so
+     the default run skips them unless that repository is checked out next to this one.
+     Run them against the pinned release with
+     `ANGULAR_DJANGO2_ROOT=<angular-django2 checkout> DJNG_REQUIRE_NGDJ=1 python -m unittest tests.test_ngdj_requirements tests.test_ngdj_command_mapping -v`
+     (`ANGULAR_DJANGO2_ROOT` defaults to the sibling `../angular-django2`; with
+     `DJNG_REQUIRE_NGDJ=1` a missing source or a sibling of another version fails instead of
+     skipping). The CI job `ngdj-contract` does the same against the tag that
+     `tool.ngAddPackage` pins, so bumping the pin fails that job until
+     `tests/fixtures/ngdj/sync_command_mapping.py` has been run (step 1).
 6. **Release and publish**:
    - Bump the version across `pyproject.toml`, package `__init__.py`, and `docs/conf.py`.
    - Commit, tag with an annotated tag, and push to `origin/main --follow-tags`.
