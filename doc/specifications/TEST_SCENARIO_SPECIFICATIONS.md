@@ -10,6 +10,13 @@ oracles.
 The required boundary between each scenario, its selected inputs, and its
 expected test oracles is defined in [TEST_SCENARIO_CONTRACTS.md].
 
+The real-tools end-to-end flow in `tests/e2e/` is not part of this suite. It runs
+one fixed tutorial flow with the real `drf-spectacular`, Angular CLI, ngdj,
+`ng-openapi-gen` and a browser, and takes none of the scenario fixtures. Its
+stages, evidence and relation to the E2E validation plan are in
+`doc/plan/VERIFICATION_PLAN.md` ("E2E validation") and `CONTRIBUTING.md`
+("End-to-end validation").
+
 This document does not define product behavior, the Change Model, command
 translation, automation contracts, or implementation sequencing. Those are
 owned by [APP_BUILDER_REQUIREMENTS.md], [CHANGE_MODEL_CONTRACTS.md], the

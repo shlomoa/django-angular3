@@ -318,7 +318,9 @@ For example:
 
 The scaffolded first version in this repository already includes example inputs.
 For the contributor workflow around local validation, see
-[Contributing](CONTRIBUTING.md).
+[Contributing](CONTRIBUTING.md); it also describes the opt-in
+[end-to-end validation](CONTRIBUTING.md#end-to-end-validation) that runs the real
+Angular and browser tooling against the tutorial project.
 
 ## Documentation
 

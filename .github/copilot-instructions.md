@@ -43,6 +43,9 @@ the authoritative description of djng's role in the toolchain.
 - `django_angular3/angular.py`: Angular command resolution and execution helpers.
 - `django_angular3/settings.py`: Django setting defaults and compatibility.
 - `tests/`: unittest test suite.
+- `tests/e2e/`: opt-in real-tools end-to-end flow
+	(`DJNG_E2E=1 python -m tests.e2e.run_e2e`); see "End-to-end validation" in
+	`CONTRIBUTING.md`.
 - `tests/fixtures/artifacts/`: reusable OpenAPI, OpenUI, and generator-config fixtures.
 - `doc/requirements/REQUIREMENTS.md`: requirements corpus entry point,
 	product context, user journeys, and system acceptance.
@@ -143,7 +146,10 @@ requirements for the generated app, use `django-admin <command>`.
 	composed application behavior. Verification is iterative — re-verify
 	frontend/backend alignment after schema changes, business-record changes, and
 	each build or verification cycle. Include smoke tests in staging before
-	production release.
+	production release. The opt-in real-tools flow in `tests/e2e/` runs the
+	DRF export, the Angular CLI, ngdj, `ng-openapi-gen` and a browser against
+	Django without mocks; run it for changes to schema export, the wrappers or
+	`build_app` execution.
 
 #### Generated-app development feedback
 

@@ -8,6 +8,25 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Added
+
+- A real-tools end-to-end flow, `DJNG_E2E=1 python -m tests.e2e.run_e2e`: it exports the tutorial
+  project's schema with `drf-spectacular`, creates an Angular workspace and application with the
+  Angular CLI and `angular-django2`, generates the API client with `ng-openapi-gen`, builds the
+  application and drives it with Playwright against Django, optionally followed by a `build_app`
+  run after a document and schema change. It is skipped unless `DJNG_E2E=1` is set. The
+  `End-to-end` GitHub workflow runs it on demand, nightly and on pull requests that touch the
+  package or the flow. See
+  [End-to-end validation](https://github.com/shlomoa/django-angular3/blob/main/CONTRIBUTING.md#end-to-end-validation)
+  ([shlomoa/django-angular3#232](https://github.com/shlomoa/django-angular3/issues/232)).
+
+### Fixed
+
+- `export_schema` applies `drfSpectacular.settings` of `django-angular3.json` again: the exported
+  `info.title` and `info.version` were `""` and `0.0.0` because `drf-spectacular` re-read
+  `REST_FRAMEWORK` instead of `SPECTACULAR_SETTINGS` after the settings were reloaded
+  ([shlomoa/django-angular3#223](https://github.com/shlomoa/django-angular3/issues/223)).
+
 ## [0.3.6]
 
 ### Added

@@ -119,6 +119,11 @@ documented in
 `doc/requirements/APP_BUILDER_REQUIREMENTS.md`
 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md){.modal-link}
 
+To see the whole chain run against the real tools (schema export, Angular CLI,
+`angular-django2`, `ng-openapi-gen`, a build and a browser against Django), use the opt-in
+[end-to-end validation](https://github.com/shlomoa/django-angular3/blob/main/CONTRIBUTING.md#end-to-end-validation)
+of the repository.
+
 ### 5. Run individual Angular wrappers when needed
 
 The `ng_*` commands wrap the Angular toolchain. They require Node.js and pnpm.

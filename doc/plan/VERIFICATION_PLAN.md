@@ -239,6 +239,60 @@ The django-angular3 E2E harness will:
 The E2E implementation issue will select and configure the browser-automation
 runner used for user-facing flows.
 
+### First slice: the tutorial flow
+
+[#232](https://github.com/shlomoa/django-angular3/issues/232) implemented the
+first runnable slice, `DJNG_E2E=1 python -m tests.e2e.run_e2e`, with the
+`End-to-end` workflow (`.github/workflows/e2e.yml`). It runs the bundled
+tutorial project through the real tools and is not driven by the scenario
+matrix. Its stages, prerequisites and environment variables are in
+`CONTRIBUTING.md` ("End-to-end validation"). It selected `@playwright/test` as the
+browser-automation runner; the Python orchestrator starts it.
+
+| Stage | Covered |
+|---|---|
+| Backend and contract | tutorial install, seeded database, `export_schema` with the real `drf-spectacular` (paths, schemas, `info`, rotation to `schema.previous.json`), `validate-openapi` |
+| Construction (wrappers directly, Track W) | `ng_workspace`, `ng_gen_app --document`, `ng_openapi_setup`, `ng_openapi_gen`, `ng_page --document`, the `table` schematic, `ng_data_service` |
+| Compilation | `ng_build` |
+| Runtime | Playwright against `runserver` and `ng serve`: shell and navigation, data alignment with the API and the seed, pagination, the failure path |
+| `build_app` (Track B, phase 2) | after a document and a schema change: the dry run derives the steps, the run succeeds, the evidence pins the ngdj package and mapping versions |
+
+Differences from the harness structure above, to be settled when the scenario
+suite gets its own runner:
+
+- The generated application is created under `scratch/e2e-<id>/` (through
+  `tests/workspace_temp.py`), not `scratch/e2e/<run-id>/`. The area is removed on
+  exit; `E2E_KEEP=1` keeps it, after a success as well as after a failure.
+- Evidence, reports, traces and screenshots go to `build/e2e-evidence/`, not
+  `e2e/test-output/`.
+- The ports are fixed (Django 8000, Angular 4200), not allocated dynamically.
+- Visual targets and `DEMO.md` reproduction entries are not registered.
+- `build_app` from nothing (Track B phase 1) is not covered; it waits on
+  [#209](https://github.com/shlomoa/django-angular3/issues/209) and
+  previous-configuration discovery. The `ng_data_service` step of `build_app`
+  also waits on [#207](https://github.com/shlomoa/django-angular3/issues/207).
+
+#### Findings of the first runs (2026-10-08)
+
+The runs showed these differences between the tools and their documentation or
+the flow's design. The flow works around each one and records the relevant ones
+in the `findings` of its `summary.json`. Each is tracked in the issue named in the
+last column.
+
+| Finding | Owner | Handling in the flow | Issue |
+|---|---|---|---|
+| `export_schema` dropped `drfSpectacular.settings` (`info.title` and `version` were `""` and `0.0.0`) | djng | Fixed ([#223](https://github.com/shlomoa/django-angular3/issues/223)); the flow asserts `info` against the tool configuration | [#223](https://github.com/shlomoa/django-angular3/issues/223) (fixed) |
+| The tutorial's `app.openui.json` puts `DashboardPage` under `Application`, which `material-app --document` rejects | djng (tutorial) | The flow uses an `html` root with the `Application` and its pages as siblings | [#238](https://github.com/shlomoa/django-angular3/issues/238) |
+| A `table` cannot be composed into a `DashboardPage` (supported: `SurfaceContainers`, `Form`, `TextInputs`, `RangeControl`) | ngdj | The table is a sibling element; the host glue places it in the page | [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| `material-app` builds sidenav links from `Navigation` and `NavItem`, not from every `DashboardPage` as its documentation says | ngdj | The document declares `Navigation` | [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| `ng-openapi-gen` 1.x generates the functional client (`api.ts`, `fn/`, `models/`) and no `services/`; djng's `ngOpenApiGen` configuration accepts only `serviceSuffix` and `modelIndex`, and the `data-service` schematic wraps a `<Resource>ApiService` | djng and ngdj | The host glue uses the generated `Api` class; the generated data service is not part of the build | [#240](https://github.com/shlomoa/django-angular3/issues/240) |
+| `ng_openapi_gen` writes the client to `<workspace>/generated/ng-openapi-gen`, replacing the `output` of the `ng-openapi-gen.json` that `ng_openapi_setup` wrote | djng | The glue imports from the configured output | [#239](https://github.com/shlomoa/django-angular3/issues/239) |
+| `openapi-setup` and the `data-service` schematic default to the workspace-root `src/` instead of the application project; the `ng_data_service` wrapper has no `--path` | ngdj and djng | The flow passes explicit project paths to `ng_openapi_setup`; the generated data service stays outside the project | [#239](https://github.com/shlomoa/django-angular3/issues/239), [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| The generated `ResourceAdapter` only logs a failed request; no generated artifact shows an error state | ngdj | The failure spec asserts the log and the host glue's own error state | [angular-django2#212](https://github.com/shlomoa/angular-django2/issues/212) |
+| The tutorial's `shop` app has no migrations, so `migrate` alone creates no tables | djng (tutorial) | The flow uses `migrate --run-syncdb` | [#238](https://github.com/shlomoa/django-angular3/issues/238) |
+| Under CI environment variables pnpm 10 refuses installs that update the lockfile, including the one the Angular CLI runs | tooling | The flow removes the CI markers from the tools' environment | none; documented in `CONTRIBUTING.md` |
+| `oasdiff` is downloaded at first use and fails behind a restrictive egress policy | djng | The flow requires it pre-installed | [#241](https://github.com/shlomoa/django-angular3/issues/241) |
+
 ### Implementation sequence
 
 #### 1. Harness foundation
@@ -382,6 +436,7 @@ then follow the governing requirement order:
 ## Tracked GitHub issues
 
 - [#84 — Implement staged verification across contract, construction, integration, and tests](https://github.com/shlomoa/django-angular3/issues/84) <!-- STEP7-dda276a46eaf -->
+- [#232 — Real-tools end-to-end flow: DRF schema export, generated Angular app, and Playwright through the UI against Django](https://github.com/shlomoa/django-angular3/issues/232)
 - [#162 — Phase 7: implement deterministic TOOL contracts](https://github.com/shlomoa/django-angular3/issues/162)
 - [#163 — Phase 8: implement direct lifecycle HOOK contracts](https://github.com/shlomoa/django-angular3/issues/163)
 - [#160 — Phase 5: add credential-free provider-neutral automation tests](https://github.com/shlomoa/django-angular3/issues/160) <!-- STEP7-33102fa31a8b -->
