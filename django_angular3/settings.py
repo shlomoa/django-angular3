@@ -377,14 +377,21 @@ def validate_drf_spectacular_configuration(document: Mapping[str, object]) -> li
 def use_drf_spectacular_settings(
     derived_settings: Mapping[str, object],
 ) -> Generator[None, None, None]:
-    """Apply derived settings only while invoking drf-spectacular's command."""
+    """Apply derived settings only while invoking drf-spectacular's command.
+
+    drf-spectacular reads its settings through a DRF ``APISettings`` object whose
+    ``reload()`` forgets the user settings it was built with and re-reads
+    ``REST_FRAMEWORK``, not ``SPECTACULAR_SETTINGS``. The derived settings are
+    therefore handed to that object directly after each reload, and the original
+    ones are put back the same way.
+    """
     from django.conf import settings as django_settings
     from drf_spectacular.settings import spectacular_settings
 
     had_original_settings = hasattr(django_settings, "SPECTACULAR_SETTINGS")
     original_settings = getattr(django_settings, "SPECTACULAR_SETTINGS", None)
     django_settings.SPECTACULAR_SETTINGS = dict(derived_settings)
-    spectacular_settings.reload()
+    _reload_spectacular_settings(spectacular_settings, derived_settings)
     try:
         yield
     finally:
@@ -392,4 +399,11 @@ def use_drf_spectacular_settings(
             django_settings.SPECTACULAR_SETTINGS = original_settings
         else:
             delattr(django_settings, "SPECTACULAR_SETTINGS")
-        spectacular_settings.reload()
+        _reload_spectacular_settings(spectacular_settings, original_settings or {})
+
+
+def _reload_spectacular_settings(
+    spectacular_settings: Any, user_settings: Mapping[str, object]
+) -> None:
+    spectacular_settings.reload()
+    spectacular_settings._user_settings = dict(user_settings)

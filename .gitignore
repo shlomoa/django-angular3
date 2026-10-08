@@ -51,3 +51,5 @@ schema.yml
 
 # ruff temporary directory
 .ruff_cache
+# End-to-end Playwright dependencies
+tests/e2e/node_modules/

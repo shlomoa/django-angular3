@@ -59,6 +59,10 @@ line-length = 88
 select = ["E", "F", "W", "I", "UP"]
 ignore = []
 
+[tool.ruff.lint.per-file-ignores]
+# Long failure messages and docstrings of the real-tools flow read better unwrapped.
+"tests/e2e/*.py" = ["E501"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["django_angular3"]
 

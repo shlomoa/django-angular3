@@ -1,0 +1,360 @@
+[
+  {
+    "model": "shop.customer",
+    "pk": 1,
+    "fields": {
+      "name": "Ada Aldridge",
+      "email": "ada.aldridge@example.com",
+      "phone": "+1-555-0100",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 2,
+    "fields": {
+      "name": "Brian Bianchi",
+      "email": "brian.bianchi@example.com",
+      "phone": "+1-555-0101",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 3,
+    "fields": {
+      "name": "Chloe Castillo",
+      "email": "chloe.castillo@example.com",
+      "phone": "+1-555-0102",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 4,
+    "fields": {
+      "name": "Dmitri Dvorak",
+      "email": "dmitri.dvorak@example.com",
+      "phone": "+1-555-0103",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 5,
+    "fields": {
+      "name": "Elena Eriksen",
+      "email": "elena.eriksen@example.com",
+      "phone": "+1-555-0104",
+      "active": false
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 6,
+    "fields": {
+      "name": "Farid Fontaine",
+      "email": "farid.fontaine@example.com",
+      "phone": "+1-555-0105",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 7,
+    "fields": {
+      "name": "Grace Garcia",
+      "email": "grace.garcia@example.com",
+      "phone": "+1-555-0106",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 8,
+    "fields": {
+      "name": "Hugo Hoffmann",
+      "email": "hugo.hoffmann@example.com",
+      "phone": "+1-555-0107",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 9,
+    "fields": {
+      "name": "Ines Ivanova",
+      "email": "ines.ivanova@example.com",
+      "phone": "+1-555-0108",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 10,
+    "fields": {
+      "name": "Jonas Jensen",
+      "email": "jonas.jensen@example.com",
+      "phone": "+1-555-0109",
+      "active": false
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 11,
+    "fields": {
+      "name": "Keiko Kowalski",
+      "email": "keiko.kowalski@example.com",
+      "phone": "+1-555-0110",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 12,
+    "fields": {
+      "name": "Liam Lindgren",
+      "email": "liam.lindgren@example.com",
+      "phone": "+1-555-0111",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 13,
+    "fields": {
+      "name": "Maya Moreau",
+      "email": "maya.moreau@example.com",
+      "phone": "+1-555-0112",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 14,
+    "fields": {
+      "name": "Noah Nakamura",
+      "email": "noah.nakamura@example.com",
+      "phone": "+1-555-0113",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 15,
+    "fields": {
+      "name": "Olga Okafor",
+      "email": "olga.okafor@example.com",
+      "phone": "+1-555-0114",
+      "active": false
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 16,
+    "fields": {
+      "name": "Pavel Petrov",
+      "email": "pavel.petrov@example.com",
+      "phone": "+1-555-0115",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 17,
+    "fields": {
+      "name": "Quinn Quintero",
+      "email": "quinn.quintero@example.com",
+      "phone": "+1-555-0116",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 18,
+    "fields": {
+      "name": "Rosa Rossi",
+      "email": "rosa.rossi@example.com",
+      "phone": "+1-555-0117",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 19,
+    "fields": {
+      "name": "Samir Santos",
+      "email": "samir.santos@example.com",
+      "phone": "+1-555-0118",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 20,
+    "fields": {
+      "name": "Tara Tanaka",
+      "email": "tara.tanaka@example.com",
+      "phone": "+1-555-0119",
+      "active": false
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 21,
+    "fields": {
+      "name": "Umar Ulrich",
+      "email": "umar.ulrich@example.com",
+      "phone": "+1-555-0120",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 22,
+    "fields": {
+      "name": "Vera Varga",
+      "email": "vera.varga@example.com",
+      "phone": "+1-555-0121",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 23,
+    "fields": {
+      "name": "Wen Weber",
+      "email": "wen.weber@example.com",
+      "phone": "+1-555-0122",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 24,
+    "fields": {
+      "name": "Xavier Xu",
+      "email": "xavier.xu@example.com",
+      "phone": "+1-555-0123",
+      "active": true
+    }
+  },
+  {
+    "model": "shop.customer",
+    "pk": 25,
+    "fields": {
+      "name": "Yara Yilmaz",
+      "email": "yara.yilmaz@example.com",
+      "phone": "+1-555-0124",
+      "active": false
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 1,
+    "fields": {
+      "name": "Anvil",
+      "price": 4.5,
+      "sku": "SKU-0001"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 2,
+    "fields": {
+      "name": "Bolt",
+      "price": 6.75,
+      "sku": "SKU-0002"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 3,
+    "fields": {
+      "name": "Clamp",
+      "price": 9.0,
+      "sku": "SKU-0003"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 4,
+    "fields": {
+      "name": "Drill",
+      "price": 11.25,
+      "sku": "SKU-0004"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 5,
+    "fields": {
+      "name": "Edger",
+      "price": 13.5,
+      "sku": "SKU-0005"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 6,
+    "fields": {
+      "name": "File",
+      "price": 15.75,
+      "sku": "SKU-0006"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 7,
+    "fields": {
+      "name": "Gauge",
+      "price": 18.0,
+      "sku": "SKU-0007"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 8,
+    "fields": {
+      "name": "Hammer",
+      "price": 20.25,
+      "sku": "SKU-0008"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 9,
+    "fields": {
+      "name": "Jack",
+      "price": 22.5,
+      "sku": "SKU-0009"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 10,
+    "fields": {
+      "name": "Knife",
+      "price": 24.75,
+      "sku": "SKU-0010"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 11,
+    "fields": {
+      "name": "Level",
+      "price": 27.0,
+      "sku": "SKU-0011"
+    }
+  },
+  {
+    "model": "shop.product",
+    "pk": 12,
+    "fields": {
+      "name": "Mallet",
+      "price": 29.25,
+      "sku": "SKU-0012"
+    }
+  }
+]
