@@ -293,6 +293,39 @@ last column.
 | Under CI environment variables pnpm 10 refuses installs that update the lockfile, including the one the Angular CLI runs | tooling | The flow removes the CI markers from the tools' environment | none; documented in `CONTRIBUTING.md` |
 | `oasdiff` is downloaded at first use and fails behind a restrictive egress policy | djng | The flow requires it pre-installed | [#241](https://github.com/shlomoa/django-angular3/issues/241) |
 
+#### Integration validation run (2026-10-09)
+
+A run of the first slice with `E2E_TRACKS=W` validated that the `ngdj` commands that `djng`
+wraps generate an Angular Material frontend from the tutorial DRF model and configuration,
+and that the browser reads Django data through the REST interface.
+
+| Check | Result |
+|---|---|
+| `python -m unittest discover -s tests -p 'test*.py'` with `DJNG_REQUIRE_NGDJ=1`, `ruff check`, `ruff format --check` | Passed: 298 tests, 4 skipped (Sphinx build absent, `build_app` work in progress, the E2E flow itself) |
+| `ngdj` contract tests against the sibling `angular-django2` 0.7.0 | Passed |
+| E2E Track W, stages 0–6 (backend, schema export, workspace and Material app, API client, build, Playwright P1–P4) | Passed on Node 24.21.0 |
+| `E2E_BREAK=model-field`, `openui-route`, `proxy` | Failed at stages 2, 6 and 6, as required |
+| E2E Track B (`build_app` phase 2) | Not run: `oasdiff` cannot be downloaded behind the egress policy ([#241](https://github.com/shlomoa/django-angular3/issues/241)) |
+
+Stage 0 rejects Node 22.22.0, because `ngdj` requires `^22.22.3 || ^24.15.0 || >=26`; the run
+used Node 24.21.0. Screenshots, traces and the Playwright report are in
+`build/e2e-evidence/`.
+
+The run is the local-development topology of `doc/specifications/SPECIFICATIONS.md` §5.2:
+`ng serve` proxies `/api` to Django, so the browser sees one origin and CORS does not arise.
+The production-like topology of §5.1 is not provided by either repository. A probe of
+`runserver` on the generated workspace after the passing run found:
+
+| Finding | Owner | Evidence |
+|---|---|---|
+| Django has no route for the built application: `GET /` and `GET /customers` return 404, so a hard refresh on an Angular route fails | djng | `build/e2e-evidence/production-topology-probe.txt` |
+| No static-file or base-href strategy: `ng_build` leaves `dist/<app>/browser` with `<base href="/">`, and neither `ngdj` nor `djng` passes `--base-href` or `--deploy-url` | ngdj and djng | same |
+| No CORS configuration (no `corsheaders`), so an Angular origin different from Django's gets no `Access-Control-*` headers; the dev proxy and a same-origin deployment avoid the need | djng | same |
+| The `/ng/build` page that the repository instructions require returns 404 | djng | same |
+| The generated client uses relative `/api/v1/...` paths and the `csrftoken` cookie with the `X-CSRFToken` header, which match Django's defaults | none | same |
+
+The production-like topology stays open under completion criterion 6 below.
+
 ### Implementation sequence
 
 #### 1. Harness foundation
