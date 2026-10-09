@@ -1,37 +1,78 @@
 {
   "id": "root",
   "version": "0.12.0",
-  "type": "Application",
+  "type": "html",
   "children": [
     {
-      "id": "appRouting",
-      "type": "Routing",
+      "id": "crmApp",
+      "type": "Application",
       "children": [
         {
-          "id": "customersRoute",
-          "type": "Route",
-          "attrs": {
-            "uses.path": "\"customers\"",
-            "uses.target": "\"customersPage\""
-          }
+          "id": "appRouting",
+          "type": "Routing",
+          "children": [
+            {
+              "id": "customersRoute",
+              "type": "Route",
+              "attrs": {
+                "uses.path": "\"customers\"",
+                "uses.target": "\"customersPage\"",
+                "uses.title": "\"Customers\""
+              }
+            },
+            {
+              "id": "productsRoute",
+              "type": "Route",
+              "attrs": {
+                "uses.path": "\"products\"",
+                "uses.target": "\"productsPage\"",
+                "uses.title": "\"Products\""
+              }
+            }
+          ]
         },
         {
-          "id": "productsRoute",
-          "type": "Route",
+          "id": "appNavigation",
+          "type": "Navigation",
           "attrs": {
-            "uses.path": "\"products\"",
-            "uses.target": "\"productsPage\""
-          }
+            "uses.ariaLabel": "\"Primary\""
+          },
+          "children": [
+            {
+              "id": "customersNavigation",
+              "type": "NavItem",
+              "attrs": {
+                "uses.label": "\"Customers\"",
+                "uses.route": "\"customersRoute\""
+              }
+            },
+            {
+              "id": "productsNavigation",
+              "type": "NavItem",
+              "attrs": {
+                "uses.label": "\"Products\"",
+                "uses.route": "\"productsRoute\""
+              }
+            }
+          ]
         }
       ]
     },
     {
       "id": "customersPage",
-      "type": "DashboardPage"
+      "type": "DashboardPage",
+      "attrs": {
+        "uses.route": "\"customers\"",
+        "uses.title": "\"Customers\""
+      }
     },
     {
       "id": "productsPage",
-      "type": "DashboardPage"
+      "type": "DashboardPage",
+      "attrs": {
+        "uses.route": "\"products\"",
+        "uses.title": "\"Products\""
+      }
     }
   ]
 }

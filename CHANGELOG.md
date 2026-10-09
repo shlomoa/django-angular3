@@ -22,6 +22,14 @@ package versions. Releases before this file are described on the
 
 ### Fixed
 
+- The tutorial project (`django-angular3 install-tutorial`) works with the tools it names: its
+  `app.openui.json` has the shape `angular-django2` compiles (an `html` root with the
+  `Application` and its pages as siblings, instead of `DashboardPage` elements inside the
+  `Application`, which `ng generate angular-django2:material-app --document` rejected), and its
+  `shop` app ships `migrations/0001_initial.py`, so `python manage.py migrate` creates the
+  `shop_customer` and `shop_product` tables. The tutorial and Example 1 of the scenario suite
+  follow the new document
+  ([shlomoa/django-angular3#238](https://github.com/shlomoa/django-angular3/issues/238)).
 - `export_schema` applies `drfSpectacular.settings` of `django-angular3.json` again: the exported
   `info.title` and `info.version` were `""` and `0.0.0` because `drf-spectacular` re-read
   `REST_FRAMEWORK` instead of `SPECTACULAR_SETTINGS` after the settings were reloaded
