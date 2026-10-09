@@ -249,6 +249,14 @@ the existing `ng_openapi_gen` djng management command so the agent and
 | `schema` | no | string (path) | `artifacts.openapiSchema` | Override path to the OpenAPI artifact to consume. |
 | `dry_run` | no | boolean | `false` | When `true`, compute the generator command line and the expected output directory but do not invoke `ng-openapi-gen`. |
 
+**Output location**: One location, shared by `ng_openapi_setup`, `ng_openapi_gen` and the
+workspace's `generate:api` script, all of which read the `output` of the workspace's
+`ng-openapi-gen.json`. `ng_openapi_setup` writes it (`--output-path`, workspace-relative);
+its default is `app/api` under the application project's source root (`sourceRoot` of
+`angular.json`, else `projects/<project.name>/src` when the workspace has that project, else
+`src`). `ng_openapi_gen` keeps the `output` it finds and replaces only the per-run `input`,
+`$schema` and the global `ngOpenApiGen` settings; without an `output` it uses the same default.
+
 **Outputs**:
 
 | Key | Type | Description |
@@ -685,6 +693,7 @@ client.
 |---|---|---|---|---|
 | `resource` | yes | string | — | Resource name of the generated service. |
 | `project` | no | string | `project.name` | Angular project to modify. |
+| `path` | no | string (relative path) | schematic default | Destination of the service, relative to the project, forwarded as `--path`. Without it the schematic writes to its own default. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 
 **Outputs**:
