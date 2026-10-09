@@ -592,16 +592,14 @@ class Flow:
             "ng_openapi_setup generated no api-integration/django-transport.ts.",
         )
         self.generated_client = output
-        if not (output / "services").exists():
-            self.findings.append(
-                {
-                    "id": "no-generated-services",
-                    "title": "ng-openapi-gen generates no per-tag services",
-                    "detail": f"{output} has the functional client (api.ts, fn/, "
-                    "models/) but no services/ directory, while the ngdj data-service "
-                    "schematic wraps a generated <Resource>ApiService. djng's "
-                    "ngOpenApiGen configuration accepts no `services` option.",
-                }
+        for resource in ("customers", "products"):
+            service = output / "services" / f"{resource}-api.service.ts"
+            self.check(
+                service.is_file()
+                and f"export class {resource.capitalize()}ApiService"
+                in service.read_text(encoding="utf-8"),
+                f"ng-openapi-gen generated no {resource.capitalize()}ApiService in "
+                f"{service}; the ngdj data-service schematic wraps that class.",
             )
 
     # -- stage 4 -----------------------------------------------------------------------
@@ -671,8 +669,9 @@ class Flow:
                     "id": "data-service-outside-project",
                     "title": "ng_data_service writes outside the application project",
                     "detail": f"{service.relative_to(self.workspace).as_posix()} is in the "
-                    "workspace root, not in projects/; it wraps CustomersApiService from "
-                    "../api/services, which does not exist, so it is not part of the build.",
+                    "workspace root, not in projects/, and imports CustomersApiService from "
+                    "../api/services, not from the configured generated output, so it is "
+                    "not part of the build.",
                 }
             )
 

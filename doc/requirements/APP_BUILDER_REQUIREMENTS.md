@@ -215,7 +215,7 @@ build or a new setting, and has the same translation as `update`:
 | `angular.workspace.*` (`packageManager`, `style`, `routing`) | workspace defaults, reapplied by the workspace modification wrapper | `angular-workspace-foundation` | 1 |
 | `tool.ngAddPackage` | the ngdj registration, repeated by the same wrapper | `angular-workspace-foundation` | 1 |
 | `angular.application.*` (`ssr`, `zoneless`) | application generation | `angular-app-composition` | 2 |
-| `ngOpenApiGen.*` (`serviceSuffix`, `modelIndex`) | the derived `ng-openapi-gen.json` | `angular_api_client_generate` | 3 |
+| `ngOpenApiGen.*` (`services`, `serviceSuffix`, `modelIndex`) | the derived `ng-openapi-gen.json` | `angular_api_client_generate` | 3 |
 | `angular.build.*`, `oasdiff.*`, `tool.executables.*` | the build gate, the diff output and the executable lookup | none | — |
 
 The workspace and application steps use Skill-layer names, as the project-config steps

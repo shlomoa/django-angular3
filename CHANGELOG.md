@@ -22,6 +22,13 @@ package versions. Releases before this file are described on the
 
 ### Fixed
 
+- The `ngOpenApiGen` clause of `django-angular3.json` accepts and requires `services`, and the
+  shipped defaults are `services: true` and `serviceSuffix: "ApiService"`. With `ng-openapi-gen`
+  1.x, `ng_openapi_gen` now generates a `<Resource>ApiService` per OpenAPI tag, the class the
+  `angular-django2` `data-service` schematic wraps; before, it generated only the functional
+  client, or classes named `<Resource>Api`. Existing `django-angular3.json` files must add
+  `"services": true` and change `serviceSuffix` to `"ApiService"`
+  ([shlomoa/django-angular3#240](https://github.com/shlomoa/django-angular3/issues/240)).
 - `export_schema` applies `drfSpectacular.settings` of `django-angular3.json` again: the exported
   `info.title` and `info.version` were `""` and `0.0.0` because `drf-spectacular` re-read
   `REST_FRAMEWORK` instead of `SPECTACULAR_SETTINGS` after the settings were reloaded
