@@ -176,7 +176,7 @@ These commands are available through both interfaces. Invoke them as either
 | `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and exactly one of `--document <path>` (a workspace-relative OpenUI document, with optional `--node-id`) or the deprecated `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
 | `ng_openapi_gen` | Run the workspace-local `ng-openapi-gen` via `pnpm exec` for the discovered OpenAPI artifact. |
 | `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path` (workspace-relative; default `app/api` under the application project's source root, which `ng_openapi_gen` and `generate:api` then use too), `--helpers-path`, `--skip-helpers`, `--skip-tests`, and `--auth-scheme` (`bearer` or `basic`). |
-| `ng_data_service` | Generate a typed data-service wrapper. Requires `--resource`; accepts `--project` and `--path` (destination of the service, relative to the project). |
+| `ng_data_service` | Generate a typed data-service wrapper. Requires `--resource`; accepts `--project` and `--path` (workspace-relative destination of the service, such as `projects/<name>/src/app/features/<resource>/services`). |
 | `ng_build` | Build the discovered Angular application. |
 
 All shared wrappers accept `--dry-run`. It reports discovered configuration,

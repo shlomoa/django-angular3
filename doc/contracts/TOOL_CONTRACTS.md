@@ -693,7 +693,7 @@ client.
 |---|---|---|---|---|
 | `resource` | yes | string | — | Resource name of the generated service. |
 | `project` | no | string | `project.name` | Angular project to modify. |
-| `path` | no | string (relative path) | schematic default | Destination of the service, relative to the project, forwarded as `--path`. Without it the schematic writes to its own default. |
+| `path` | no | string (relative path) | schematic default | Destination directory of the service, relative to the Angular workspace (for example `projects/<name>/src/app/features/<resource>/services`), forwarded verbatim as `--path`; the `data-service` schematic ignores `--project` for its location. Without it the schematic writes to its own default under the workspace-root `src/`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 
 **Outputs**:

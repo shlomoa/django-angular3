@@ -662,7 +662,7 @@ class Flow:
             "--resource",
             "customers",
             "--path",
-            "src/app/features/customers/services",
+            f"projects/{PROJECT}/src/app/features/customers/services",
             label="manage.py ng_data_service --path",
         )
         service = next(self.workspace.glob("**/customers.data.service.ts"), None)
