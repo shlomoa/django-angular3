@@ -676,6 +676,19 @@ class Flow:
                 f"ng_data_service --path wrote {service.relative_to(self.workspace)}, "
                 f"outside the application project {self.app_root}.",
             )
+            # The service wraps a <Resource>ApiService that ng-openapi-gen 1.x does
+            # not generate (#240), so inside the project it breaks the build.
+            shutil.rmtree(service.parent)
+            self.findings.append(
+                {
+                    "id": "data-service-not-buildable",
+                    "title": "The generated data service does not compile",
+                    "detail": "customers.data.service.ts imports CustomersApiService "
+                    "from ../api/services, which ng-openapi-gen 1.x does not generate "
+                    "(shlomoa/django-angular3#240); the flow removes it after "
+                    "asserting its location, before the build.",
+                }
+            )
 
         self._wire_host_glue()
         self.findings.append(
