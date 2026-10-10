@@ -20,8 +20,17 @@ package versions. Releases before this file are described on the
   [End-to-end validation](https://github.com/shlomoa/django-angular3/blob/main/CONTRIBUTING.md#end-to-end-validation)
   ([shlomoa/django-angular3#232](https://github.com/shlomoa/django-angular3/issues/232)).
 
+- `ng_data_service --path` (CLI and `manage.py`) forwards the schematic's `--path`, so a
+  data service can be placed inside the application project
+  ([shlomoa/django-angular3#239](https://github.com/shlomoa/django-angular3/issues/239)).
+
 ### Fixed
 
+- `ng_openapi_gen` no longer replaces the `output` of `ng-openapi-gen.json` with
+  `<workspace>/generated/ng-openapi-gen`: it keeps the one `ng_openapi_setup` wrote, which
+  `generate:api` uses too, and `ng_openapi_setup` now defaults to `app/api` under the
+  application project's source root (`src/app/api` in a workspace without one)
+  ([shlomoa/django-angular3#239](https://github.com/shlomoa/django-angular3/issues/239)).
 - `export_schema` applies `drfSpectacular.settings` of `django-angular3.json` again: the exported
   `info.title` and `info.version` were `""` and `0.0.0` because `drf-spectacular` re-read
   `REST_FRAMEWORK` instead of `SPECTACULAR_SETTINGS` after the settings were reloaded
