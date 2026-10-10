@@ -45,7 +45,7 @@ Their ownership is:
 | Main category | Subcategory | Item / file | Owner | Purpose and relationship |
 |---|---|---|---|---|
 | Project configuration | — | `django-angular3-<project_name>.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI concrete UI document, and Angular workspace. |
-| Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from it. |
+| Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration, mandatory with no fallback to a packaged file or to defaults in code (§2.2). `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from it. |
 | Tool configurations | `ng-openapi-gen` | `ngOpenApiGen` clause in `django-angular3.json` | `djng` | Global `ng-openapi-gen` settings, including `serviceSuffix` and `modelIndex`. |
 | Tool configurations | `ng-openapi-gen` | `ng-openapi-gen.json` in the project Angular workspace | `djng` | Derived per-run tool-configuration file. It combines global settings with command run-time `input` and `output` parameters. |
 | Tool configurations | `ng-openapi-gen` | `tests/fixtures/artifacts/ng-openapi-gen/ng-openapi-gen.json` | This repository | Validation-only fixture; it is not production configuration and is not released. |

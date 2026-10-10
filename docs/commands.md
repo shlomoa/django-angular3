@@ -21,7 +21,10 @@ discovery, filename, and baseline-resolution behavior in
 [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/specifications/SPECIFICATIONS.md#22-project-configuration-discovery-and-baseline-resolution){.modal-link}
 
 The static `djng` tool configuration, `django-angular3.json`, supplies derived
-tool settings and is likewise not a command argument. Document validation
+tool settings and is likewise not a command argument. It is mandatory and has no
+fallback: it must exist next to the project configuration, and `ng_*`, `build_app` and
+`export_schema` fail with an error naming the expected path when it is missing or
+incomplete. Document validation
 commands retain their document path because that is the artifact to validate,
 not application configuration.
 

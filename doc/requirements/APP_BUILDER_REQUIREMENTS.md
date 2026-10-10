@@ -73,7 +73,7 @@ provider used by an agent session.
 
 | Input | Source | Format | Notes |
 |---|---|---|---|
-| `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. |
+| `django-angular3.json` | Static tool configuration | JSON | Global `djng` tool settings, including Angular, `ngOpenApiGen`, and `drfSpectacular.settings`; not a project configuration or command argument. Mandatory with no fallback: a missing or invalid file makes every command that reads it fail before any work. |
 | Current project configuration | `--current-config <path>`, otherwise discovered `django-angular3-<project_name>.json` | JSON | Discovery and filename realization are defined in `doc/specifications/SPECIFICATIONS.md` §2.2. |
 | Current OpenAPI schema | `artifacts.openapiSchema` | YAML or JSON (OAS 3.x) | The current schema version. |
 | Previous project configuration | `--previous-config <path>`, otherwise the current configuration path with `.json` replaced by `.previous.json` | JSON | Resolves its own artifact selectors independently of the current configuration. A missing previous configuration starts a build from scratch. |

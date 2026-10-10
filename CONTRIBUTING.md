@@ -64,6 +64,12 @@ Run the existing test suite with explicit discovery:
 python -m unittest discover -s tests -p 'test*.py'
 ```
 
+`django-angular3.json` is mandatory and has no runtime fallback. Tests that run commands
+without a project of their own use the packaged template as their tool configuration
+through discovery: call `use_tool_configuration_template()` from `tests/tool_config.py` in
+`setUpModule`. Do not run the unit tests while the real-tools E2E flow is running: both use
+the git-ignored `scratch/` directory, and the unit tests remove it when they exit.
+
 ## End-to-end validation
 
 The unit tests check generated command lines and use a stand-in `ng`. One opt-in

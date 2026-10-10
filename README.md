@@ -124,7 +124,17 @@ INSTALLED_APPS = [
 The static `django-angular3.json` configures djng's Angular tool settings,
 including executable resolution. `DJANGO_ANGULAR3`
 and `DjangoAngularSettings` are derived from that file; they are not independent
-configuration authorities. The generated app's identity and artifact locations
+configuration authorities.
+
+**`django-angular3.json` is mandatory and has no fallback.** It must exist next to the
+project configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the
+current directory). There is no packaged or in-code default: a command that needs it
+(`ng_*`, `build_app`, `export_schema`, ...) fails with an error naming the expected path, and
+a file without the mandatory `angular.build.browserOutputPath` or `tool.ngAddPackage` is
+rejected. The packaged file is only a template that `django-angular3 install-tutorial`
+copies; start from it and set the values of your own project.
+
+The generated app's identity and artifact locations
 are instead supplied by the project configuration defined in
 `doc/specifications/SPECIFICATIONS.md` §2.1.
 
