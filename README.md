@@ -85,6 +85,18 @@ applies. An attribute value is a string or `null`, or a list of strings and
 number or Boolean is not a value; write it as a string, such as `"true"` or
 `"25"`. A string literal is quoted inside the string, such as `"\"Users\""`.
 
+### The `oasdiff` requirement of `build_app`
+
+`build_app` compares OpenAPI schemas with [`oasdiff`](https://github.com/oasdiff/oasdiff).
+It uses, in order, an executable in the package's `.bin/` directory, an `oasdiff` on
+`PATH`, and otherwise downloads the latest release from the GitHub releases API into
+`.bin/` on first use. The automatic download supports Linux and Windows on amd64 or
+arm64 only; on macOS or any other platform, install `oasdiff` yourself and put it on
+`PATH`. Where the download is blocked (for example by an egress policy), `build_app`
+stops with a `CommandError` that names the cause. Place an `oasdiff` executable at the
+printed path, install it on `PATH`, or allow network access to `api.github.com` and the
+oasdiff GitHub releases.
+
 [openapi-spec-validator]: https://openapi-spec-validator.readthedocs.io/
 [openui-spec]: https://github.com/shlomoa/openui-spec
 

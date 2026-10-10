@@ -27,6 +27,7 @@ from django_angular3.management.commands.build_app import (
     load_ngdj_mapping,
 )
 from django_angular3.ngdj_command_mapping import CommandMapping
+from django_angular3.tools import OasdiffUnavailableError
 from tests.test_command_translation import FIXTURE_MAPPING, _openui_changes
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
@@ -115,6 +116,38 @@ class OpenAPIDiffTests(unittest.TestCase):
                 side_effect=ExternalComparisonError("invalid oasdiff JSON"),
             ),
             self.assertRaisesRegex(CommandError, "Failed to diff OpenAPI schemas"),
+        ):
+            self.detector.diff_openapi_schemas()
+
+    def test_unavailable_oasdiff_is_a_command_error_with_a_remedy(self) -> None:
+        root = Path(self.temporary_directory.name)
+        for name in ("previous", "current"):
+            (root / f"{name}.openapi.json").write_text(
+                json.dumps(
+                    {
+                        "openapi": "3.0.3",
+                        "info": {"title": "t", "version": "1"},
+                        "paths": {
+                            "/ping": {
+                                "get": {"responses": {"200": {"description": "ok"}}}
+                            }
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+        with (
+            patch(
+                "django_angular3.external_comparisons.ensure_oasdiff",
+                side_effect=OasdiffUnavailableError(
+                    "Failed to install oasdiff: HTTP Error 403: Forbidden. "
+                    "To continue, place an 'oasdiff' executable at .bin or "
+                    "install it on PATH."
+                ),
+            ),
+            self.assertRaisesRegex(
+                CommandError, "Failed to diff OpenAPI schemas.*403.*PATH"
+            ),
         ):
             self.detector.diff_openapi_schemas()
 

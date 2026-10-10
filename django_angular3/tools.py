@@ -1,6 +1,7 @@
 import json
 import os
 import platform
+import shutil
 import tarfile
 import urllib.request
 import zipfile
@@ -20,6 +21,22 @@ _OASDIFF_SUPPORTED_PLATFORMS = {
 
 class ToolExecutionError(RuntimeError):
     """Raised when an external tool cannot be executed."""
+
+
+class OasdiffUnavailableError(RuntimeError):
+    """Raised when ``oasdiff`` is neither installed nor downloadable.
+
+    The message names the cause and the remedy.
+    """
+
+
+def _oasdiff_remedy(exe_name: str) -> str:
+    return (
+        f"To continue, place an '{exe_name}' executable at {BIN_DIR / exe_name} or "
+        "install it on PATH (https://github.com/oasdiff/oasdiff#installation), or "
+        "allow network access to api.github.com and the oasdiff GitHub releases so "
+        "it can be downloaded."
+    )
 
 
 def get_system_info() -> tuple[str, str]:
@@ -63,8 +80,9 @@ def get_download_url(
     supported_architectures = _OASDIFF_SUPPORTED_PLATFORMS.get(os_name)
     if supported_architectures is None or arch not in supported_architectures:
         raise RuntimeError(
-            "oasdiff is supported only on Linux or Windows with amd64 or arm64 "
-            f"architecture; received {os_name} {arch}."
+            "Automatic oasdiff download is supported only on Linux or Windows with "
+            f"amd64 or arm64 architecture; received {os_name} {arch}. "
+            "Install oasdiff yourself and put it on PATH."
         )
 
     for asset in release_data.get("assets", []):
@@ -93,17 +111,19 @@ def extract_archive(archive_path: Path, extract_to: Path) -> None:
         raise ValueError(f"Unsupported archive format: {archive_path.name}")
 
 
-def ensure_oasdiff():
+def ensure_oasdiff() -> str:
     """
     Ensures oasdiff is installed and available.
     Returns the absolute path to the oasdiff executable.
+
+    Lookup order: the package ``.bin`` directory, then ``PATH``, then a download
+    from the GitHub releases (Linux and Windows on amd64 or arm64 only).
+
+    Raises:
+        OasdiffUnavailableError: If no executable is found and the download is
+            unsupported or fails. The message names the cause and the remedy.
     """
     os_name, arch = get_system_info()
-    if arch not in _OASDIFF_SUPPORTED_PLATFORMS.get(os_name, set()):
-        get_download_url({"assets": []}, os_name, arch)
-
-    BIN_DIR.mkdir(parents=True, exist_ok=True)
-
     exe_name = "oasdiff.exe" if os_name == "windows" else "oasdiff"
     oasdiff_path = BIN_DIR / exe_name
 
@@ -112,6 +132,20 @@ def ensure_oasdiff():
         if not os.access(oasdiff_path, os.X_OK):
             oasdiff_path.chmod(0o755)
         return str(oasdiff_path)
+
+    on_path = shutil.which("oasdiff")
+    if on_path:
+        return on_path
+
+    if arch not in _OASDIFF_SUPPORTED_PLATFORMS.get(os_name, set()):
+        try:
+            get_download_url({"assets": []}, os_name, arch)
+        except RuntimeError as exc:
+            raise OasdiffUnavailableError(
+                f"oasdiff was not found. {exc} {_oasdiff_remedy(exe_name)}"
+            ) from exc
+
+    BIN_DIR.mkdir(parents=True, exist_ok=True)
 
     print(f"oasdiff not found. Downloading to {BIN_DIR}...")
 
@@ -143,7 +177,9 @@ def ensure_oasdiff():
         return str(oasdiff_path)
 
     except Exception as e:
-        raise RuntimeError(f"Failed to install oasdiff: {e}")
+        raise OasdiffUnavailableError(
+            f"Failed to install oasdiff: {e}. {_oasdiff_remedy(exe_name)}"
+        ) from e
 
 
 if __name__ == "__main__":
