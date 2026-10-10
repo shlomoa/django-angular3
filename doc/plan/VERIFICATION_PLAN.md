@@ -305,7 +305,7 @@ and that the browser reads Django data through the REST interface.
 | `ngdj` contract tests against the sibling `angular-django2` 0.7.0 | Passed |
 | E2E Track W, stages 0–6 (backend, schema export, workspace and Material app, API client, build, Playwright P1–P4) | Passed on Node 24.21.0 |
 | `E2E_BREAK=model-field`, `openui-route`, `proxy` | Failed at stages 2, 6 and 6, as required |
-| E2E Track B (`build_app` phase 2) | Not run: `oasdiff` cannot be downloaded behind the egress policy ([#241](https://github.com/shlomoa/django-angular3/issues/241)) |
+| E2E Track B (`build_app` phase 2) | Not run in that session: `oasdiff` could not be downloaded, because the session's GitHub access did not include `oasdiff/oasdiff` ([#241](https://github.com/shlomoa/django-angular3/issues/241)); run on 2026-10-10, see below |
 
 Stage 0 rejects Node 22.22.0, because `ngdj` requires `^22.22.3 || ^24.15.0 || >=26`; the run
 used Node 24.21.0. Screenshots, traces and the Playwright report are in
@@ -339,7 +339,14 @@ and D1–D6 (`tests/e2e/specs/django-served.spec.ts`).
 | `python -m unittest discover -s tests -p 'test*.py'` with `DJNG_REQUIRE_NGDJ=1`, `ruff check`, `ruff format --check` | Passed: 320 tests, 4 skipped; `tests/test_spa.py` has 12 of them |
 | E2E Track W, stages 0–6b | Passed on Node 24.21.0 (local run and the `e2e` job of the pull request): P1–P4 and D1–D6, 12 of 12 |
 | `E2E_BREAK=django-dist`, `model-field`, `openui-route`, `proxy` | Failed at stages 6b, 2, 6 and 6, as required |
-| E2E Track B (`build_app` phase 2) | Not run locally, as before ([#241](https://github.com/shlomoa/django-angular3/issues/241)) |
+| E2E Track B (`build_app` phase 2) | Passed together with Track W (stages 0–6b and B, 157 s): after a document change (an added `reportsPage`) and a schema change (`Health`), the dry run derives the steps and the run succeeds; `build-evidence.json` pins `angular-django2@0.7.0`, mapping version 1 and `openui-spec` 0.12.1 |
+
+Track B ran with `oasdiff` v1.33.0 built from source in the sandbox (`go install` of that tag
+with the go1.27.1 toolchain, both fetched through the checksum-verified Go module proxy),
+because the session's GitHub access does not include `oasdiff/oasdiff`
+([#241](https://github.com/shlomoa/django-angular3/issues/241)); the GitHub job downloads
+the latest release instead. A source build reports `oasdiff version main`, which is what
+`tool-versions.json` records; `go version -m` on the binary gives the module version.
 
 Findings of the 2026-10-09 probe, as they stand now:
 
