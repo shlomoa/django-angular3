@@ -132,7 +132,7 @@ export class CustomersHostComponent {
       active: true,
     } as Customer;
     try {
-      await this.data.apiService.customersCreate({ body });
+      await this.data.apiService.customersCreate$Json({ body });
       this.load(this.pageIndex());
     } catch (error) {
       const status = (error as { status?: number }).status ?? 'unknown';
