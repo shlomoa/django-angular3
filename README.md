@@ -207,10 +207,42 @@ delete lifecycle handling:
 
 Use `--mode delete --confirm` for deletion.
 
-At the moment this reusable Django app contributes configuration helpers and
-management commands; it does not yet ship models, URLs, templates, static
-assets, or migrations, so there is no extra URL inclusion or migration step for
-the package itself.
+This reusable Django app contributes configuration helpers, management commands and one
+view, `django_angular3.spa`, which serves the built Angular application from Django (see
+[Serving the built application](#serving-the-built-application)). It ships no models,
+templates, static assets, or migrations, so there is no migration step for the package
+itself.
+
+### Serving the built application
+
+`manage.py ng_build` leaves the bundle in `<workspace>/dist/<app>/browser`. To serve it
+from the same origin as the API, as the production deployment of the specification
+requires, point `ANGULAR_DIST_DIR` at it and add the Angular patterns **last** in
+`urls.py`, so that Django's own routes win:
+
+```python
+# settings.py
+ANGULAR_DIST_DIR = BASE_DIR / "build" / "angular" / "dist" / "mysite" / "browser"
+
+# urls.py
+from django_angular3.spa import angular_urlpatterns
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/v1/", include(router.urls)),
+    *angular_urlpatterns(),
+]
+```
+
+A request is answered with the bundle file of that name (`main-*.js`, `styles-*.css`), with
+`index.html` for any other path, so a hard refresh on an Angular route such as
+`/customers` works, and with a 404 for a wrong `/api/`, `/api-auth/`, `/admin/` or
+`/static/` URL or a file that is not in the bundle. A missing build is reported as
+`ImproperlyConfigured`. The generated application uses `<base href="/">` and relative
+`/api/...` paths, so it needs no proxy and no CORS configuration. The view reads the files
+through Django, which suits development, tests and small deployments; behind real traffic,
+serve the same directory with a reverse proxy or a static-file layer such as WhiteNoise.
+The tutorial project (`install-tutorial`) is wired this way.
 
 ## Example
 

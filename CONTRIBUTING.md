@@ -71,7 +71,8 @@ flow runs the real tools instead: it installs the tutorial project, exports its
 schema with `drf-spectacular`, creates an Angular workspace and application with the
 Angular CLI and `angular-django2` (ngdj), generates the API client with
 `ng-openapi-gen`, builds the application, serves it next to Django and drives it
-with Playwright. It does not repeat ngdj's schematic tests.
+with Playwright, and finally serves the built application from Django alone. It does
+not repeat ngdj's schematic tests.
 
 ```bash
 DJNG_E2E=1 python -m tests.e2e.run_e2e
@@ -104,7 +105,8 @@ The flow runs these stages; a failure names its stage:
 | 3 workspace-and-client | `ng_workspace`, `ng_gen_app`, `ng_openapi_setup`, `ng_openapi_gen` |
 | 4 ui-from-openui | `ng_page`, the `table` schematic, `ng_data_service`, the host glue |
 | 5 build | `ng_build` leaves a non-empty `dist/` |
-| 6 browser | Playwright specs P1 shell, P2 data alignment, P3 pagination, P4 failure path |
+| 6 browser | Playwright specs P1 shell, P2 data alignment, P3 pagination, P4 failure path, against `runserver` and the Angular dev server (proxy to Django) |
+| 6b django-serves-build | Django alone serves the built bundle (`django_angular3.spa`, one origin, no proxy, no CORS): P1–P4 again plus D1 hard refresh on `/customers` and `/products`, D2 in-app navigation without a document request, D3 the API stays JSON and a wrong URL is a 404, D4 the admin stays Django, D5 one origin and no CORS headers, D6 assets served and a stale hash is a 404 |
 | B build_app phase 2 | A changed OpenUI document and schema: the dry run derives the steps, the run succeeds |
 
 Track B starts from the workspace the wrappers created; running `build_app` from
@@ -125,7 +127,7 @@ Environment variables:
 | `E2E_ANGULAR_CLI` | Angular CLI range installed when `ng` is missing (default `^22`) |
 | `E2E_CHROMIUM_PATH` | Chromium executable for Playwright |
 | `E2E_PLAYWRIGHT_INSTALL=1` | Run `playwright install chromium` first |
-| `E2E_BREAK` | `model-field`, `openui-route` or `proxy`: inject a deliberate break; the run must fail at stage 2, 6 and 6 (P1, P2) respectively |
+| `E2E_BREAK` | `model-field`, `openui-route`, `proxy` or `django-dist`: inject a deliberate break; the run must fail at stage 2, 6, 6 (P1, P2) and 6b respectively (`django-dist` moves the built bundle away from `ANGULAR_DIST_DIR`) |
 
 The first run showed differences between what the tools do and what their documentation or
 the flow's design assumed; they are recorded in

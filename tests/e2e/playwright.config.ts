@@ -28,6 +28,8 @@ const chromiumPath = process.env['E2E_CHROMIUM_PATH'];
 
 export default defineConfig({
   testDir: './specs',
+  // The Django-served run (playwright.django.config.ts) adds django-served.spec.ts.
+  testIgnore: '**/django-served.spec.ts',
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,

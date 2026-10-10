@@ -26,8 +26,11 @@ export function seedCustomers(): SeedCustomer[] {
     .map((document) => document.fields);
 }
 
+/** Where the screenshots go; the Django-served run keeps its own set (`screenshots-django`). */
+export const screenshotDirectory = process.env['E2E_SCREENSHOT_DIR'] ?? 'screenshots';
+
 export function screenshotPath(name: string): string {
-  return join(evidenceDir, 'screenshots', `${name}.png`);
+  return join(evidenceDir, screenshotDirectory, `${name}.png`);
 }
 
 /** Records the console errors and uncaught page errors of a page. */

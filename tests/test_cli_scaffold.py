@@ -464,6 +464,30 @@ class ScaffoldTests(unittest.TestCase):
             self.assertTrue((dest_path / "app.openui.json").is_file())
             self.assertTrue((dest_path / "simple_crm" / "settings.py").is_file())
 
+    def test_install_tutorial_serves_the_built_angular_application(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            dest = Path(tmp) / "simple_crm"
+            self.assertEqual(_run_install_tutorial(str(dest)), 0)
+            project = json.loads(
+                (dest / TUTORIAL_PROJECT_CONFIG_FILENAME).read_text(encoding="utf-8")
+            )
+            workspace = project["artifacts"]["angularWorkspace"]
+            settings_text = (dest / "simple_crm" / "settings.py").read_text(
+                encoding="utf-8"
+            )
+            urls_text = (dest / "simple_crm" / "urls.py").read_text(encoding="utf-8")
+
+        # The bundle is where `ng_build` leaves it for the project's workspace.
+        expected = " / ".join(
+            f'"{part}"'
+            for part in (*workspace.split("/"), "dist", "simple_crm", "browser")
+        )
+        self.assertIn(f"ANGULAR_DIST_DIR = BASE_DIR / {expected}", settings_text)
+        # Django's routes come first; the Angular catch-all is the last pattern.
+        self.assertIn("from django_angular3.spa import angular_urlpatterns", urls_text)
+        self.assertLess(urls_text.index('path("api/v1/"'), urls_text.index("*angular_"))
+        self.assertTrue(urls_text.rstrip().endswith("*angular_urlpatterns(),\n]"))
+
     def test_install_tutorial_fails_if_dest_exists(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             result = _run_install_tutorial(tmp)
