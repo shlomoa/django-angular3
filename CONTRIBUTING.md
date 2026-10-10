@@ -118,6 +118,12 @@ The flow runs these stages; a failure names its stage:
 Track B starts from the workspace the wrappers created; running `build_app` from
 nothing waits on django-angular3#209 and previous-configuration discovery.
 
+What the flow does not test: authentication and authorization enforcement. The tutorial API
+is open to anonymous users, and DRF enforces CSRF only for a session-authenticated request,
+which is why the write specs (W1-W5) sign in first; the application the flow builds shows no
+sign-in or permission UI. Writing a test for it needs an API that requires authentication.
+The same limit is recorded in `doc/plan/VERIFICATION_PLAN.md`.
+
 The fixtures in `tests/e2e/fixtures` are generated, not edited: run
 `python -m tests.e2e.generate_fixtures`. The same command regenerates the tutorial
 project's `app.openui.json`; the flow's `customers.openui.json` is that document plus a
