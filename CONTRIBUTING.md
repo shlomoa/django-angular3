@@ -86,8 +86,8 @@ several minutes. Prerequisites:
 - A Chromium for Playwright: `cd tests/e2e && npm ci && npx playwright install
   chromium`, or `E2E_PLAYWRIGHT_INSTALL=1`, or `E2E_CHROMIUM_PATH`.
 - `oasdiff` cached once (Track B): `python -c "from django_angular3.tools import
-  ensure_oasdiff; ensure_oasdiff()"`. It is downloaded from the GitHub releases, so
-  pre-install it where egress is restricted.
+  ensure_oasdiff; ensure_oasdiff()"`, or an `oasdiff` on `PATH`. It is downloaded from
+  the GitHub releases, so pre-install it where egress is restricted.
 - Ports 8000 (Django) and 4200 (Angular dev server) free.
 - The flow removes the CI markers (`CI`, `GITHUB_ACTIONS`, ...) from the environment of
   the tools. Under them pnpm 10 refuses an install that has to update the lockfile, which
