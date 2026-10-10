@@ -1,3 +1,4 @@
+import dataclasses
 import io
 import json
 import os
@@ -14,6 +15,7 @@ from django.test import override_settings
 from django_angular3.angular import (
     AngularInvocation,
     build_ngdj_schematic_invocations,
+    resolve_angular_command,
 )
 from django_angular3.cli import build_parser, main
 from django_angular3.config import (
@@ -753,11 +755,65 @@ class AngularCliCommandTests(unittest.TestCase):
             document["input"],
             str(EXAMPLE_OPENAPI),
         )
-        self.assertEqual(
-            document["output"],
-            str(ROOT / "scratch" / "angular" / "generated" / "ng-openapi-gen"),
-        )
+        # The client is inside the application, where ng_openapi_setup puts it.
+        self.assertEqual(document["output"], "src/app/api")
         generated_config.unlink()
+
+    def test_ng_openapi_gen_keeps_the_output_ng_openapi_setup_configured(
+        self,
+    ) -> None:
+        generated_config = ROOT / "scratch" / "angular" / "ng-openapi-gen.json"
+        generated_config.parent.mkdir(parents=True, exist_ok=True)
+        generated_config.write_text(
+            json.dumps({"output": "projects/shop/src/app/api"}), encoding="utf-8"
+        )
+        self.addCleanup(lambda: generated_config.unlink(missing_ok=True))
+
+        exit_code, _, stderr = self.run_cli("ng_openapi_gen", "--dry-run")
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        document = json.loads(generated_config.read_text(encoding="utf-8"))
+        self.assertEqual(document["output"], "projects/shop/src/app/api")
+
+    def test_api_client_output_is_inside_the_application_project(self) -> None:
+        from django_angular3.angular import default_api_client_output
+
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            config = dataclasses.replace(
+                load_project_config(),
+                project_name="shop",
+                angular_workspace=workspace,
+            )
+            self.assertEqual(default_api_client_output(config), "src/app/api")
+
+            (workspace / "projects" / "shop").mkdir(parents=True)
+            self.assertEqual(
+                default_api_client_output(config), "projects/shop/src/app/api"
+            )
+
+            (workspace / "angular.json").write_text(
+                json.dumps({"projects": {"shop": {"sourceRoot": "apps/shop/src"}}}),
+                encoding="utf-8",
+            )
+            self.assertEqual(default_api_client_output(config), "apps/shop/src/app/api")
+
+    def test_ng_openapi_setup_defaults_to_the_project_client_output(self) -> None:
+        from django_angular3.angular import build_ng_openapi_setup_invocations
+
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            (workspace / "projects" / "shop").mkdir(parents=True)
+            config = dataclasses.replace(
+                load_project_config(),
+                project_name="shop",
+                angular_workspace=workspace,
+            )
+            (invocation,) = build_ng_openapi_setup_invocations(
+                config, load_angular_settings()
+            )
+            self.assertIn("--output-path=projects/shop/src/app/api", invocation.argv)
 
     def test_ng_openapi_setup_dry_run_resolves_openapi_setup_schematic(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_openapi_setup", "--dry-run")
@@ -867,6 +923,35 @@ class AngularCliCommandTests(unittest.TestCase):
                 "--project=django-angular3-test",
             ],
         )
+
+    def test_ng_data_service_dry_run_forwards_path(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_data_service",
+            "--resource",
+            "orders",
+            "--path",
+            "projects/shop/src/app/features/orders/services",
+            "--dry-run",
+        )
+
+        ng = load_angular_settings().ng_executable
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            json.loads(stdout)["invocations"][0]["argv"],
+            [
+                ng,
+                "generate",
+                "angular-django2:data-service",
+                "orders",
+                "--project=django-angular3-test",
+                "--path=projects/shop/src/app/features/orders/services",
+            ],
+        )
+
+    def test_ng_data_service_rejects_a_path_outside_the_workspace(self) -> None:
+        with self.assertRaises(AngularCommandError):
+            resolve_angular_command("ng_data_service", resource="orders", path="../x")
 
     def test_ng_material_setup_dry_run_defaults_to_project_name(self) -> None:
         exit_code, stdout, stderr = self.run_cli("ng_material_setup", "--dry-run")

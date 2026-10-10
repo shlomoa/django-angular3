@@ -20,8 +20,17 @@ package versions. Releases before this file are described on the
   [End-to-end validation](https://github.com/shlomoa/django-angular3/blob/main/CONTRIBUTING.md#end-to-end-validation)
   ([shlomoa/django-angular3#232](https://github.com/shlomoa/django-angular3/issues/232)).
 
+- `ng_data_service --path` (CLI and `manage.py`) forwards the schematic's `--path`, so a
+  data service can be placed inside the application project
+  ([shlomoa/django-angular3#239](https://github.com/shlomoa/django-angular3/issues/239)).
+
 ### Fixed
 
+- `ng_openapi_gen` no longer replaces the `output` of `ng-openapi-gen.json` with
+  `<workspace>/generated/ng-openapi-gen`: it keeps the one `ng_openapi_setup` wrote, which
+  `generate:api` uses too, and `ng_openapi_setup` now defaults to `app/api` under the
+  application project's source root (`src/app/api` in a workspace without one)
+  ([shlomoa/django-angular3#239](https://github.com/shlomoa/django-angular3/issues/239)).
 - The `ngOpenApiGen` clause of `django-angular3.json` accepts and requires `services`, and the
   shipped defaults are `services: true` and `serviceSuffix: "ApiService"`. With `ng-openapi-gen`
   1.x, `ng_openapi_gen` now generates a `<Resource>ApiService` per OpenAPI tag, the class the

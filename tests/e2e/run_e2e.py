@@ -574,7 +574,12 @@ class Flow:
         self.manage("ng_openapi_gen", label="manage.py ng_openapi_gen")
 
         generated = self.read_json(self.workspace / "ng-openapi-gen.json")
-        output = Path(generated["output"])
+        output = self.workspace / generated["output"]
+        self.check(
+            output == self.app_root / "api",
+            f"ng-openapi-gen.json names {output}, not the {self.app_root / 'api'} that "
+            "ng_openapi_setup configured inside the application project.",
+        )
         for name in CLIENT_FILES:
             self.check(
                 (output / name).is_file(),
@@ -654,24 +659,33 @@ class Flow:
             "ng_data_service",
             "--resource",
             "customers",
-            label="manage.py ng_data_service",
+            "--path",
+            f"projects/{PROJECT}/src/app/features/customers/services",
+            label="manage.py ng_data_service --path",
         )
         service = next(self.workspace.glob("**/customers.data.service.ts"), None)
         self.check(
             service is not None and "node_modules" not in service.parts,
             "ng_data_service generated no customers.data.service.ts.",
         )
-        if service is not None and not service.is_relative_to(
-            self.workspace / "projects"
-        ):
+        if service is not None:
+            self.check(
+                service.is_relative_to(self.app_root),
+                f"ng_data_service --path wrote {service.relative_to(self.workspace)}, "
+                f"outside the application project {self.app_root}.",
+            )
+            # The service imports the generated services from ../api/services,
+            # relative to its own directory, so inside the project it breaks the build.
+            shutil.rmtree(service.parent)
             self.findings.append(
                 {
-                    "id": "data-service-outside-project",
-                    "title": "ng_data_service writes outside the application project",
-                    "detail": f"{service.relative_to(self.workspace).as_posix()} is in the "
-                    "workspace root, not in projects/, and imports CustomersApiService from "
-                    "../api/services, not from the configured generated output, so it is "
-                    "not part of the build.",
+                    "id": "data-service-not-buildable",
+                    "title": "The generated data service does not compile",
+                    "detail": "customers.data.service.ts imports CustomersApiService "
+                    "from ../api/services, relative to its own directory, while the "
+                    "generated client is in the application's api directory; the "
+                    "ng_data_service wrapper has no --api-path (ngdj apiPath). The flow "
+                    "removes the service after asserting its location, before the build.",
                 }
             )
 

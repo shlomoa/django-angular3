@@ -14,8 +14,11 @@ class Command(AngularBaseCommand):
         super().add_arguments(parser)
         parser.add_argument(
             "--output-path",
-            default="src/app/api",
-            help="Output path for generated API clients (default: src/app/api).",
+            default=None,
+            help=(
+                "Workspace-relative output path for generated API clients "
+                "(default: app/api under the application project's source root)."
+            ),
         )
         parser.add_argument(
             "--helpers-path",

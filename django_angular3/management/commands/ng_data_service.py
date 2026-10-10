@@ -23,8 +23,18 @@ class Command(AngularBaseCommand):
             help="Angular project (defaults to project.name from config).",
         )
 
+        parser.add_argument(
+            "--path",
+            default=None,
+            help=(
+                "Destination path of the generated service, passed to the "
+                "schematic (default: the schematic's own default)."
+            ),
+        )
+
     def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {
             "resource": options.get("resource"),
             "project": options.get("project"),
+            "path": options.get("path"),
         }
