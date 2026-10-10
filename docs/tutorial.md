@@ -14,9 +14,11 @@ django-angular3 install-tutorial simple_crm
 
 This creates:
 - A `simple_crm/` folder containing a Django project (`simple_crm`),
-- A DRF app (`shop`)
+- A DRF app (`shop`) with its initial migration
 - `schema.yaml` exported from the above DRF app.
-- `app.openui.json` containing the OpenUI requirements.
+- `app.openui.json` containing the OpenUI requirements: an `html` root with the
+  `Application` (`Routing` and `Navigation`) and, next to it, the customers and products
+  pages.
 - `django-angular3.json` static tool configuration file.
 - `django-angular3-<project_name>.json` generated-app project configuration file.
 
@@ -90,18 +92,37 @@ cp django-angular3-simple_crm.json django-angular3-simple_crm.previous.json
 
 In `django-angular3-simple_crm.previous.json`, change `openuiSpecification` to
 `"app.previous.openui.json"`. Then add an orders page to `app.openui.json`: a route inside
-`appRouting`, and the page next to the other two.
+`appRouting`, a navigation item inside `appNavigation`, and the page next to the
+`Application`, as a sibling of the other two pages. `angular-django2` compiles the
+`Application` from its `Routing` and `Navigation`; a `DashboardPage` inside the
+`Application` is rejected.
 
 ```json
 {
   "id": "ordersRoute",
   "type": "Route",
-  "attrs": { "uses.path": "\"orders\"", "uses.target": "\"ordersPage\"" }
+  "attrs": {
+    "uses.path": "\"orders\"",
+    "uses.target": "\"ordersPage\"",
+    "uses.title": "\"Orders\""
+  }
 }
 ```
 
 ```json
-{ "id": "ordersPage", "type": "DashboardPage" }
+{
+  "id": "ordersNavigation",
+  "type": "NavItem",
+  "attrs": { "uses.label": "\"Orders\"", "uses.route": "\"ordersRoute\"" }
+}
+```
+
+```json
+{
+  "id": "ordersPage",
+  "type": "DashboardPage",
+  "attrs": { "uses.route": "\"orders\"", "uses.title": "\"Orders\"" }
+}
 ```
 
 Preview the steps. `build_app` downloads `oasdiff` the first time it compares the
@@ -116,11 +137,13 @@ and one entry per step:
 
 | Stage | Step | Mode | Command | Element |
 |---|---|---|---|---|
-| 2 | `angular_app_scaffold` | update | `ng_gen_app` (`material-app`) | `root` |
+| 2 | `angular_app_scaffold` | update | `ng_gen_app` (`material-app`) | `crmApp` (the new navigation item) |
+| 2 | `angular_app_scaffold` | update | `ng_gen_app` (`material-app`) | `crmApp` (the new route) |
 | 10 | `ngdj_add_page` | create | `ng_page` (`page`) | `ordersPage` |
 | 12 | `last-check` | validate | `ng_build` | |
 
-The new route changes the `Application`, so the application is regenerated: only the text
+The new route and navigation item change the `Application`, so the application is
+regenerated: only the text
 between the `openui:begin` and `openui:end` comments in the generated files is replaced,
 and edits you made around it are kept. The new page is generated once. Each step's
 `reason` says what required it and what a second run does on existing output.
@@ -140,7 +163,7 @@ cp app.openui.json app.previous.openui.json
 ```
 
 `build_app` refuses what `angular-django2` cannot do yet instead of skipping it. For
-example, giving `customersPage` a `uses.title` fails with `ngdj does not support update of
+example, changing the `uses.title` of `customersPage` fails with `ngdj does not support update of
 OpenUI node type DashboardPage (unsupported)`, quoting the upstream reason and the issue
 that tracks it. See {ref}`Changes build_app turns into steps <build-app-steps>`
 for what is supported.
