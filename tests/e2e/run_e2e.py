@@ -427,7 +427,7 @@ class Flow:
         self.write_json(self.document, document)
 
         self.manage("check", label="manage.py check")
-        self.manage("migrate", "--run-syncdb", "--noinput", label="manage.py migrate")
+        self.manage("migrate", "--noinput", label="manage.py migrate")
         self.manage("loaddata", str(FIXTURES / "seed.json"), label="manage.py loaddata")
         counts = self.manage(
             "shell",
@@ -442,15 +442,6 @@ class Flow:
             f"The seed loaded {counts.stdout.strip()!r}, expected {CUSTOMER_COUNT} "
             f"customers and {PRODUCT_COUNT} products.",
         )
-        if not (self.project / "shop" / "migrations").exists():
-            self.findings.append(
-                {
-                    "id": "tutorial-without-migrations",
-                    "title": "The tutorial's shop app has no migrations",
-                    "detail": "`manage.py migrate` alone creates no shop tables; the "
-                    "flow uses `migrate --run-syncdb`.",
-                }
-            )
 
     # -- stage 2 -----------------------------------------------------------------------
 

@@ -26,6 +26,14 @@ package versions. Releases before this file are described on the
 
 ### Fixed
 
+- The tutorial project (`django-angular3 install-tutorial`) works with the tools it names: its
+  `app.openui.json` has the shape `angular-django2` compiles (an `html` root with the
+  `Application` and its pages as siblings, instead of `DashboardPage` elements inside the
+  `Application`, which `ng generate angular-django2:material-app --document` rejected), and its
+  `shop` app ships `migrations/0001_initial.py`, so `python manage.py migrate` creates the
+  `shop_customer` and `shop_product` tables. The tutorial and Example 1 of the scenario suite
+  follow the new document
+  ([shlomoa/django-angular3#238](https://github.com/shlomoa/django-angular3/issues/238)).
 - `ng_openapi_gen` no longer replaces the `output` of `ng-openapi-gen.json` with
   `<workspace>/generated/ng-openapi-gen`: it keeps the one `ng_openapi_setup` wrote, which
   `generate:api` uses too, and `ng_openapi_setup` now defaults to `app/api` under the

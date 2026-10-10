@@ -2,8 +2,10 @@
 
 ``fixtures/seed.json`` is the Django fixture of the tutorial project (25 customers, so
 three pages at ``PAGE_SIZE = 10``, and 12 products) and ``fixtures/customers.openui.json``
-is the OpenUI document the generated application is built from. Both are generated,
-never edited by hand::
+is the OpenUI document the generated application is built from. The tutorial project's
+own ``app.openui.json`` is generated here too, from the same parts, so the shipped
+document and the one the flow builds cannot drift apart. All are generated, never edited
+by hand::
 
     python -m tests.e2e.generate_fixtures
 
@@ -17,6 +19,14 @@ from pathlib import Path
 from typing import Any
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
+TUTORIAL_DOCUMENT = (
+    Path(__file__).resolve().parents[2]
+    / "django_angular3"
+    / "examples"
+    / "01_simple_crm"
+    / "app.openui.json"
+)
+OPENUI_VERSION = "0.12.0"
 
 CUSTOMER_COUNT = 25
 PRODUCT_COUNT = 12
@@ -153,69 +163,76 @@ def _page(element_id: str, route: str, title: str) -> dict[str, Any]:
     }
 
 
-def openui_document() -> dict[str, Any]:
-    """The application: routing, navigation, two pages and a paginated table.
+def _application() -> dict[str, Any]:
+    """The ``Application`` of the tutorial project: routing and navigation."""
+    return {
+        "id": "crmApp",
+        "type": "Application",
+        "children": [
+            {
+                "id": "appRouting",
+                "type": "Routing",
+                "children": [
+                    _route("customersRoute", "customers", "customersPage", "Customers"),
+                    _route("productsRoute", "products", "productsPage", "Products"),
+                ],
+            },
+            {
+                "id": "appNavigation",
+                "type": "Navigation",
+                "attrs": {"uses.ariaLabel": json.dumps("Primary")},
+                "children": [
+                    _navigation_item(
+                        "customersNavigation", "Customers", "customersRoute"
+                    ),
+                    _navigation_item("productsNavigation", "Products", "productsRoute"),
+                ],
+            },
+        ],
+    }
+
+
+def tutorial_document() -> dict[str, Any]:
+    """The OpenUI document the tutorial project ships: routing, navigation, two pages.
 
     The root is the ``html`` element ngdj uses for documents that hold an
-    ``Application`` next to its pages. A table cannot be composed into a page, so it is
-    a sibling element that the host places in the customers page.
+    ``Application`` next to its pages; the pages are siblings of the ``Application``,
+    because ``material-app --document`` rejects a ``DashboardPage`` inside it.
     """
     return {
         "id": "root",
-        "version": "0.12.0",
+        "version": OPENUI_VERSION,
         "type": "html",
         "children": [
-            {
-                "id": "crmApp",
-                "type": "Application",
-                "children": [
-                    {
-                        "id": "appRouting",
-                        "type": "Routing",
-                        "children": [
-                            _route(
-                                "customersRoute",
-                                "customers",
-                                "customersPage",
-                                "Customers",
-                            ),
-                            _route(
-                                "productsRoute",
-                                "products",
-                                "productsPage",
-                                "Products",
-                            ),
-                        ],
-                    },
-                    {
-                        "id": "appNavigation",
-                        "type": "Navigation",
-                        "attrs": {"uses.ariaLabel": json.dumps("Primary")},
-                        "children": [
-                            _navigation_item(
-                                "customersNavigation", "Customers", "customersRoute"
-                            ),
-                            _navigation_item(
-                                "productsNavigation", "Products", "productsRoute"
-                            ),
-                        ],
-                    },
-                ],
-            },
+            _application(),
             _page("customersPage", "customers", "Customers"),
-            {
-                "id": "customers",
-                "type": "table",
-                "attrs": {"behaves.paginate": "paginateCustomers($event)"},
-                "children": [
-                    {"id": "customersCaption", "type": "caption"},
-                    {"id": "customersHeader", "type": "thead"},
-                    {"id": "customersRow", "type": "tr"},
-                ],
-            },
             _page("productsPage", "products", "Products"),
         ],
     }
+
+
+def openui_document() -> dict[str, Any]:
+    """The end-to-end application: the tutorial document and a paginated table.
+
+    A table cannot be composed into a page, so it is a sibling element that the host
+    places in the customers page.
+    """
+    document = tutorial_document()
+    children = document["children"]
+    children.insert(
+        2,
+        {
+            "id": "customers",
+            "type": "table",
+            "attrs": {"behaves.paginate": "paginateCustomers($event)"},
+            "children": [
+                {"id": "customersCaption", "type": "caption"},
+                {"id": "customersHeader", "type": "thead"},
+                {"id": "customersRow", "type": "tr"},
+            ],
+        },
+    )
+    return document
 
 
 def _dump(document: object) -> str:
@@ -227,6 +244,7 @@ def generated_files() -> dict[Path, str]:
     return {
         FIXTURES / "seed.json": _dump(seed_documents()),
         FIXTURES / "customers.openui.json": _dump(openui_document()),
+        TUTORIAL_DOCUMENT: _dump(tutorial_document()),
     }
 
 
