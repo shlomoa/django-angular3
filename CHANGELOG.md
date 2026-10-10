@@ -10,6 +10,14 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `django_angular3.spa.angular_urlpatterns()`: a catch-all view that serves the built Angular
+  application (`dist/<app>/browser`, named by `ANGULAR_DIST_DIR`) from Django on the same origin
+  as the API. Bundle files are served by name, any other path gets `index.html` so a hard refresh
+  on an Angular route works, and a wrong `/api/`, `/api-auth/`, `/admin/` or `/static/` URL or a
+  stale asset hash is a 404. A missing build raises `ImproperlyConfigured`. The tutorial project
+  is wired with it, and the real-tools flow has a stage 6b that drives the bundle served by Django
+  alone, with the `django-dist` break variant. See
+  [Serving the built application](https://github.com/shlomoa/django-angular3/blob/main/README.md#serving-the-built-application).
 - A real-tools end-to-end flow, `DJNG_E2E=1 python -m tests.e2e.run_e2e`: it exports the tutorial
   project's schema with `drf-spectacular`, creates an Angular workspace and application with the
   Angular CLI and `angular-django2`, generates the API client with `ng-openapi-gen`, builds the
