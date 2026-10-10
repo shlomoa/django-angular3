@@ -197,8 +197,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ng_openapi_setup.add_argument(
         "--output-path",
-        default="src/app/api",
-        help="Output path for generated API clients (default: src/app/api).",
+        default=None,
+        help=(
+            "Workspace-relative output path for generated API clients (default: "
+            "app/api under the application project's source root)."
+        ),
     )
     ng_openapi_setup.add_argument(
         "--helpers-path",
@@ -247,6 +250,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--project",
         default=None,
         help="Angular project (defaults to project.name from config).",
+    )
+    ng_data_service.add_argument(
+        "--path",
+        default=None,
+        help=(
+            "Destination path of the generated service, passed to the schematic "
+            "(default: the schematic's own default)."
+        ),
     )
     ng_data_service.add_argument(
         "--dry-run",
@@ -389,6 +400,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             plan_options = {
                 "resource": args.resource,
                 "project": args.project,
+                "path": args.path,
             }
         if args.command == "ng_material_setup":
             plan_options = {

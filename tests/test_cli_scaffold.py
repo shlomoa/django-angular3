@@ -437,7 +437,7 @@ class ScaffoldTests(unittest.TestCase):
                     "master/ng-openapi-gen-schema.json"
                 ),
                 "input": "../openapi/example.openapi.json",
-                "output": "../../../../scratch/angular/generated/ng-openapi-gen",
+                "output": "../../../../scratch/angular/src/app/api",
                 "serviceSuffix": "Api",
                 "modelIndex": True,
             },
