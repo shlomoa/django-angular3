@@ -169,6 +169,7 @@ class Flow:
     current_stage: str = "setup"
     last_error: str | None = None
     generated_client: Path = field(init=False)
+    data_service: Path = field(init=False)
 
     # -- paths -------------------------------------------------------------------------
 
@@ -665,20 +666,20 @@ class Flow:
                 f"ng_data_service --path wrote {service.relative_to(self.workspace)}, "
                 f"outside the application project {self.app_root}.",
             )
-            # The service imports the generated services from ../api/services,
-            # relative to its own directory, so inside the project it breaks the build.
-            shutil.rmtree(service.parent)
-            self.findings.append(
-                {
-                    "id": "data-service-not-buildable",
-                    "title": "The generated data service does not compile",
-                    "detail": "customers.data.service.ts imports CustomersApiService "
-                    "from ../api/services, relative to its own directory, while the "
-                    "generated client is in the application's api directory; the "
-                    "ng_data_service wrapper has no --api-path (ngdj apiPath). The flow "
-                    "removes the service after asserting its location, before the build.",
-                }
+            # angular-django2 0.7.1 computes the import of the generated client from the
+            # `output` of ng-openapi-gen.json, so the service compiles inside the project.
+            relative_services = os.path.relpath(
+                self.generated_client / "services", service.parent
+            ).replace(os.sep, "/")
+            content = service.read_text(encoding="utf-8")
+            self.check(
+                "export class CustomersDataService" in content
+                and f"import {{ CustomersApiService }} from '{relative_services}';"
+                in content,
+                f"{service.name} does not import CustomersApiService from "
+                f"'{relative_services}', the generated client of the application project.",
             )
+            self.data_service = service
 
         self._wire_host_glue()
         self.findings.append(
@@ -695,16 +696,23 @@ class Flow:
         """Copy the host glue next to the customers page and wire it in.
 
         The glue is a committed test fixture, not generated: it feeds the generated
-        table from the generated client. The page, the application configuration and the
-        generated client's import path are the only edits.
+        table from the generated data service, which wraps the generated client, so the
+        build compiles both. The page, the application configuration and the import paths
+        of the generated client and data service are the only edits.
         """
         page_dir = self.app_root / "features" / "customers-page"
         relative_client = os.path.relpath(self.generated_client, page_dir).replace(
             os.sep, "/"
         )
+        relative_service = os.path.relpath(
+            self.data_service.with_suffix(""), page_dir
+        ).replace(os.sep, "/")
         glue = (FIXTURES / "customers-host.ts").read_text(encoding="utf-8")
         (page_dir / "customers-host.ts").write_text(
-            glue.replace("__GENERATED_API__", relative_client), encoding="utf-8"
+            glue.replace("__GENERATED_API__", relative_client).replace(
+                "__DATA_SERVICE__", relative_service
+            ),
+            encoding="utf-8",
         )
         self.replace_once(
             page_dir / "customers-page-page.html",

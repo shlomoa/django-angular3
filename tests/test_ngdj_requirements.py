@@ -5,7 +5,7 @@ from typing import Any
 from unittest.mock import patch
 
 from django_angular3.angular import resolve_angular_command
-from tests.ngdj_source import NGDJ_PACKAGE_DIR, require_ngdj_source
+from tests.ngdj_source import NGDJ_PACKAGE_DIR, ngdj_required, require_ngdj_source
 
 ROOT: Path = Path(__file__).resolve().parent.parent
 PROJECT_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.json"
@@ -102,13 +102,44 @@ class NgdjRequirementsContractTests(unittest.TestCase):
                 if has_node_id:
                     self.assertIn("node-id", properties["nodeId"]["aliases"])
 
+    def _require_pinned_version(self) -> None:
+        """Skip (fail when the ngdj source is required) unless the source is the pin."""
+        pinned = json.loads(
+            (ROOT / "tests" / "fixtures" / "ngdj" / "package.json").read_text(
+                encoding="utf-8"
+            )
+        )["version"]
+        source = json.loads(
+            (NGDJ_PACKAGE_DIR / "package.json").read_text(encoding="utf-8")
+        )["version"]
+        if source != pinned:
+            message = f"the ngdj source is {source}, tool.ngAddPackage pins {pinned}"
+            if ngdj_required():
+                self.fail(message)
+            self.skipTest(message)
+
     def test_data_service_schematic_generates_typed_wrapper(self) -> None:
+        self._require_pinned_version()
         ds_index_path = NGDJ_PACKAGE_DIR / "schematics" / "data-service" / "index.ts"
         self.assertTrue(ds_index_path.is_file())
 
         source = ds_index_path.read_text(encoding="utf-8")
         self.assertIn("DataService", source)
-        self.assertIn("generateServiceContent(options, names)", source)
+        self.assertIn("generateServiceContent(options, names, imports)", source)
+
+    def test_data_service_schematic_resolves_the_generated_client(self) -> None:
+        # 0.7.1: the import of the ng-openapi-gen client is computed from the
+        # `output` of ng-openapi-gen.json (#240), not the fixed '../api/services'.
+        self._require_pinned_version()
+        api_client_path = (
+            NGDJ_PACKAGE_DIR / "schematics" / "data-service" / "api-client.ts"
+        )
+        self.assertTrue(api_client_path.is_file())
+
+        source = api_client_path.read_text(encoding="utf-8")
+        self.assertIn("/ng-openapi-gen.json", source)
+        self.assertIn("resolveApiClient", source)
+        self.assertIn("verifyApiClient", source)
 
     def test_data_service_schematic_exposes_search_wrapper(self) -> None:
         ds_templates_path = (

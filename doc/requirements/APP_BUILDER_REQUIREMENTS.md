@@ -262,7 +262,7 @@ compiled by `form-field`, `field-component`, `html` or `link` (whose update runs
 no djng Tool yet and fail as "no Tool", and so does a node type the mapping does not
 cover. The `SurfaceContainers` condition and the choice of `material-app` for
 `Application` are decided by `build_app`, not by the mapping. With the
-mapping of `angular-django2` 0.7.0 only `create` is supported for most node types:
+mapping of `angular-django2` 0.7.1 (unchanged from 0.7.0) only `create` is supported for most node types:
 `update` is supported for `Application`, `html` and `link`, `complex-component` is
 `partial`, and every other `update` and every `delete` fails explicitly. A Tool step
 receives the `document` and `node_id` of its element.

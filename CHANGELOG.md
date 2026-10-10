@@ -24,6 +24,16 @@ package versions. Releases before this file are described on the
   data service can be placed inside the application project
   ([shlomoa/django-angular3#239](https://github.com/shlomoa/django-angular3/issues/239)).
 
+### Changed
+
+- `tool.ngAddPackage` pins `angular-django2@0.7.1` (was `0.7.0`). Its `data-service` schematic computes the
+  import of the generated `ng-openapi-gen` client from the `output` of `ng-openapi-gen.json`, instead of
+  the fixed `../api/services`, so a generated data service compiles against the client `ng_openapi_gen`
+  generates ([shlomoa/angular-django2#213](https://github.com/shlomoa/angular-django2/issues/213)). The
+  command mapping is unchanged. The end-to-end flow now builds with the generated `CustomersDataService`
+  in the application instead of removing it
+  ([shlomoa/django-angular3#240](https://github.com/shlomoa/django-angular3/issues/240)).
+
 ### Fixed
 
 - The tutorial project (`django-angular3 install-tutorial`) works with the tools it names: its
