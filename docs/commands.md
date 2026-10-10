@@ -88,7 +88,7 @@ refused until it is implemented. The final `last-check` gate builds the applicat
 Not implemented yet: a step for `ng_openapi_setup`, running a schema export step, and
 detecting changes of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
 needs the `angular-django2` package installed in the Angular workspace at the version
-`tool.ngAddPackage` pins (a registry name such as `angular-django2@0.7.0`, not a path), so
+`tool.ngAddPackage` pins (a registry name such as `angular-django2@0.7.1`, not a path), so
 it cannot derive them for a workspace that does not exist yet.
 
 ### Behavior on existing output

@@ -11,7 +11,7 @@ read the mapping, not copy it.
 
 ## 1. Starting point
 
-### 1.1 What the upstream mapping says (`angular-django2@0.7.0`, `mappingVersion` 1)
+### 1.1 What the upstream mapping says (`angular-django2@0.7.1`, identical to 0.7.0; `mappingVersion` 1)
 
 - `openuiSpecVersion` is `0.12.1`; the file validates against
   `command-mapping.schema.json`, published beside it.
@@ -215,7 +215,7 @@ so the branch can be split into its own PR.
 
 - The mapping marks most updates and deletes unsupported, so `build_app` stays mostly
   create-only until upstream closes gaps such as
-  [shlomoa/angular-django2#194](https://github.com/shlomoa/angular-django2/issues/194), [shlomoa/angular-django2#198](https://github.com/shlomoa/angular-django2/issues/198) (closed upstream, but the mapping of the pinned 0.7.0 still lists it as a gap) and [shlomoa/angular-django2#199](https://github.com/shlomoa/angular-django2/issues/199). Do not paper over this locally.
+  [shlomoa/angular-django2#194](https://github.com/shlomoa/angular-django2/issues/194), [shlomoa/angular-django2#198](https://github.com/shlomoa/angular-django2/issues/198) (closed upstream, but the mapping of the pinned 0.7.1 still lists it as a gap) and [shlomoa/angular-django2#199](https://github.com/shlomoa/angular-django2/issues/199). Do not paper over this locally.
 - This work was much larger than the first diff of [shlomoa/django-angular3#224](https://github.com/shlomoa/django-angular3/pull/224). It landed as one commit per
   step so that it could be reviewed or split into its own pull request without rework.
 - A mapping update upstream (`mappingVersion` 2) must fail loudly in step 2, not parse

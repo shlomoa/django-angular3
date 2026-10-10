@@ -71,7 +71,7 @@ jobs:
         if match is None:
             sys.exit(
                 f"tool.ngAddPackage is {package!r}: expected a registry spec with a pinned "
-                "version such as 'angular-django2@0.7.0', not a path or an unpinned name"
+                "version such as 'angular-django2@0.7.1', not a path or an unpinned name"
             )
         print(f"ref=v{match.group(1)}")
         PY

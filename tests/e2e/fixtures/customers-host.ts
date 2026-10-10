@@ -3,20 +3,20 @@
  *
  * The generated `customers` table leaves its columns and rows to the host, and nothing
  * binds it to a generated API client, so the end-to-end flow supplies this small host.
- * It loads the page the table requests (`?page=N`) through the client that
- * ng-openapi-gen generated, and feeds the rows and the total to the table. A failed
- * request goes through the generated `ResourceAdapter`, which only logs it, so the
- * error state shown here is the glue's own.
+ * It loads the page the table requests (`?page=N`) through the generated
+ * `CustomersDataService`, which wraps the `CustomersApiService` that ng-openapi-gen
+ * generated, and feeds the rows and the total to the table. A failed request goes
+ * through the generated `ResourceAdapter`, which only logs it, so the error state shown
+ * here is the glue's own.
  *
- * `__GENERATED_API__` is replaced by the run with the import path of the ng-openapi-gen
- * output directory.
+ * The run replaces the two placeholder import paths below with the paths of the generated
+ * data service and of the ng-openapi-gen output directory.
  */
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { from, Observable } from 'rxjs';
 
-import { Api } from '__GENERATED_API__/api';
-import { customersList } from '__GENERATED_API__/fn/customers/customers-list';
 import type { Customer } from '__GENERATED_API__/models/customer';
+import { CustomersDataService } from '__DATA_SERVICE__';
 import {
   ResourceAdapter,
   type PaginatedResult,
@@ -28,13 +28,18 @@ import {
   type CustomersTablePage,
 } from '../../shared/tables/customers-table/customers-table';
 
-/** The customers list of the generated client, behind the generated adapter contract. */
+/**
+ * The customers list of the generated data service, behind the generated adapter contract.
+ * The generated service methods return a Promise, the data service takes an Observable.
+ */
 class CustomersListAdapter extends ResourceAdapter<Customer> {
-  private readonly api = inject(Api);
+  private readonly data = inject(CustomersDataService);
 
   list(query: ResourceQuery = {}): Observable<PaginatedResult<Customer>> {
     return this.adapt(
-      from(this.api.invoke(customersList, { page: query.page })),
+      this.data.list(() =>
+        from(this.data.apiService.customersList$Response({ page: query.page })),
+      ),
       'customers list',
     ) as Observable<PaginatedResult<Customer>>;
   }

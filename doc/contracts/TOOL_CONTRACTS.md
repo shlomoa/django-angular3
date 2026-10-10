@@ -242,6 +242,20 @@ the generated Angular workspace to produce typed Angular API clients. Wraps
 the existing `ng_openapi_gen` djng management command so the agent and
 `build_app` command executor see a structured tool contract instead of raw CLI output.
 
+**Generator configuration**: djng owns the shape of the generated client. The
+derived `ng-openapi-gen.json` carries the `ngOpenApiGen` clause of
+`django-angular3.json`, which accepts exactly `services` (boolean),
+`serviceSuffix` (non-empty string) and `modelIndex` (boolean), plus the per-run
+`input` and `output`. The shipped defaults are `services: true`,
+`serviceSuffix: "ApiService"` and `modelIndex: true`. `ng-openapi-gen` 1.x
+generates the per-tag `services/` directory only when `services` is `true`, and
+names each class `<Tag><serviceSuffix>`, so the defaults produce
+`CustomersApiService` in `services/customers-api.service.ts`, exported by the
+`services.ts` barrel. That is the class the ngdj `data-service` schematic wraps.
+The functional client (`api.ts`, `fn/`) is generated alongside. A project that
+sets `services: false` or another suffix gets a client the `data-service`
+schematic does not compile against.
+
 **Inputs**:
 
 | Key | Required | Type | Default | Description |

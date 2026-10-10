@@ -438,7 +438,8 @@ class ScaffoldTests(unittest.TestCase):
                 ),
                 "input": "../openapi/example.openapi.json",
                 "output": "../../../../scratch/angular/src/app/api",
-                "serviceSuffix": "Api",
+                "services": True,
+                "serviceSuffix": "ApiService",
                 "modelIndex": True,
             },
         )

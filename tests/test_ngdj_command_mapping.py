@@ -21,7 +21,7 @@ from tests.ngdj_source import NGDJ_PACKAGE_DIR, ngdj_required, require_ngdj_sour
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "ngdj"
-PACKAGE_SPEC = "angular-django2@0.7.0"
+PACKAGE_SPEC = "angular-django2@0.7.1"
 SPEC_VERSION = "0.12.1"
 
 
@@ -84,7 +84,7 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         scoped.mkdir()
         shutil.move(str(self.package_dir), str(scoped / "angular-django2"))
 
-        mapping = self.load("@example/angular-django2@0.7.0")
+        mapping = self.load("@example/angular-django2@0.7.1")
 
         self.assertEqual(mapping.mapping_version, 1)
 
@@ -92,7 +92,7 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         shutil.rmtree(self.package_dir)
 
         with self.assertRaisesRegex(
-            CommandMappingError, r"command-mapping\.json.*angular-django2@0\.7\.0"
+            CommandMappingError, r"command-mapping\.json.*angular-django2@0\.7\.1"
         ):
             self.load()
 
@@ -100,7 +100,7 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         self,
     ) -> None:
         with self.assertRaisesRegex(
-            CommandMappingError, r"Installed angular-django2 is 0\.7\.0.*pins 0\.6\.1"
+            CommandMappingError, r"Installed angular-django2 is 0\.7\.1.*pins 0\.6\.1"
         ):
             self.load("angular-django2@0.6.1")
 
