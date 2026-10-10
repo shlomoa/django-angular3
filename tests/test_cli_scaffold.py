@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import cast
 from unittest.mock import patch
 
+from django_angular3.angular import angular_browser_output_dir
 from django_angular3.cli import _run_install_tutorial
 from django_angular3.config import (
     ConfigError,
@@ -16,13 +17,14 @@ from django_angular3.config import (
 )
 from django_angular3.config_changes import compare_static_config
 from django_angular3.documents import load_document
-from django_angular3.settings import DEFAULT_NG_ADD_PACKAGE
+from django_angular3.settings import load_angular_settings
 from django_angular3.validation import (
     validate_openapi_document,
     validate_openui_document,
     validate_project_config,
 )
 from tests.openapi_fixtures import valid_openapi_document
+from tests.tool_config import use_tool_configuration_template
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,6 +46,10 @@ def _example_project_config_path(example_directory: Path) -> Path:
             f"{example_directory}, found {config_paths}."
         )
     return config_paths[0]
+
+
+def setUpModule() -> None:
+    use_tool_configuration_template()
 
 
 class ScaffoldTests(unittest.TestCase):
@@ -105,9 +111,10 @@ class ScaffoldTests(unittest.TestCase):
                 static_config = json.loads(
                     static_config_path.read_text(encoding="utf-8")
                 )
-                self.assertEqual(
+                # A registry name pinned to one exact version, never a range or a path.
+                self.assertRegex(
                     static_config["tool"]["ngAddPackage"],
-                    DEFAULT_NG_ADD_PACKAGE,
+                    r"^angular-django2@\d+\.\d+\.\d+$",
                 )
 
     def test_project_config_resolves_paths(self) -> None:
@@ -486,6 +493,33 @@ class ScaffoldTests(unittest.TestCase):
             self.assertTrue(
                 (dest_path / "shop" / "migrations" / "0001_initial.py").is_file()
             )
+
+    def test_install_tutorial_serves_the_built_angular_application(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            dest = Path(tmp) / "simple_crm"
+            self.assertEqual(_run_install_tutorial(str(dest)), 0)
+            config = load_project_config(dest / TUTORIAL_PROJECT_CONFIG_FILENAME)
+            tool = load_angular_settings(config_path=dest / "django-angular3.json")
+            workspace = json.loads(
+                (dest / TUTORIAL_PROJECT_CONFIG_FILENAME).read_text(encoding="utf-8")
+            )["artifacts"]["angularWorkspace"]
+            settings_text = (dest / "simple_crm" / "settings.py").read_text(
+                encoding="utf-8"
+            )
+            urls_text = (dest / "simple_crm" / "urls.py").read_text(encoding="utf-8")
+            expected_directory = (
+                dest / workspace / "dist" / "simple_crm" / "browser"
+            ).resolve()
+
+        # Both parts are configuration, none is set in the Django settings.
+        self.assertEqual(
+            angular_browser_output_dir(config, tool).resolve(), expected_directory
+        )
+        self.assertNotIn("ANGULAR_DIST_DIR", settings_text)
+        # Django's routes come first; the Angular catch-all is the last pattern.
+        self.assertIn("from django_angular3.spa import angular_urlpatterns", urls_text)
+        self.assertLess(urls_text.index('path("api/v1/"'), urls_text.index("*angular_"))
+        self.assertTrue(urls_text.rstrip().endswith("*angular_urlpatterns(),\n]"))
 
     def test_install_tutorial_fails_if_dest_exists(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:

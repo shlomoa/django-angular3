@@ -12,6 +12,7 @@ from .angular import (
     resolve_angular_command_context,
 )
 from .config import ConfigError, load_project_config
+from .settings import TOOL_CONFIG_FILENAME, TOOL_CONFIG_TEMPLATE_PATH
 from .validation import (
     validate_openapi_file,
     validate_openui_file,
@@ -538,10 +539,7 @@ def _run_install_tutorial(dest: str) -> int:
         dest_path,
         ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
     )
-    shutil.copy2(
-        Path(__file__).parent / "django-angular3.json",
-        dest_path / "django-angular3.json",
-    )
+    shutil.copy2(TOOL_CONFIG_TEMPLATE_PATH, dest_path / TOOL_CONFIG_FILENAME)
     print(f"Tutorial project installed to '{dest_path}'.")
     print()
     print("Next steps:")

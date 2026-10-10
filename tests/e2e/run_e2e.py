@@ -31,8 +31,8 @@ lists the prerequisites. Environment variables:
 ``E2E_PLAYWRIGHT_INSTALL``
     ``1`` runs ``playwright install chromium`` first.
 ``E2E_BREAK``
-    ``model-field``, ``openui-route`` or ``proxy`` injects a deliberate break; the run
-    must fail at the stage that names it.
+    ``model-field``, ``openui-route``, ``proxy`` or ``django-dist`` injects a deliberate
+    break; the run must fail at the stage that names it.
 
 Every command's argv, exit code and output, the exported schemas, the ``build_app`` dry
 run and run, tool versions, the generated tree, the Playwright report and traces and
@@ -58,7 +58,10 @@ from pathlib import Path
 from typing import Any
 
 from django_angular3 import tools
-from django_angular3.angular import build_ngdj_schematic_invocations
+from django_angular3.angular import (
+    angular_browser_output_dir,
+    build_ngdj_schematic_invocations,
+)
 from django_angular3.config import load_project_config
 from django_angular3.settings import load_angular_settings
 from django_angular3.step_bridge import stage_document, workspace_document_path
@@ -74,6 +77,9 @@ SETTINGS_MODULE = f"{PROJECT}.settings"
 PROJECT_CONFIG = f"django-angular3-{PROJECT}.json"
 TOOL_CONFIG = "django-angular3.json"
 DJANGO_URL = "http://127.0.0.1:8000"
+# The user of the sign-in and write specs; it exists only in the flow's temporary database.
+E2E_USER = "e2e"
+E2E_USER_PASSWORD = "e2e-password-1"
 ANGULAR_URL = "http://127.0.0.1:4200"
 
 CUSTOMER_COUNT = 25
@@ -90,7 +96,7 @@ EXPECTED_SCHEMAS = {
     "PatchedCustomer": {"id", "name", "email", "phone", "active"},
     "Product": {"id", "name", "price", "sku"},
 }
-BREAKS = ("model-field", "openui-route", "proxy")
+BREAKS = ("model-field", "openui-route", "proxy", "django-dist")
 # The names the generated client uses for the tutorial's resources, read once from a
 # real run of ng-openapi-gen 1.x and pinned here.
 CLIENT_FILES = (
@@ -430,6 +436,16 @@ class Flow:
         self.manage("check", label="manage.py check")
         self.manage("migrate", "--noinput", label="manage.py migrate")
         self.manage("loaddata", str(FIXTURES / "seed.json"), label="manage.py loaddata")
+        self.manage(
+            "createsuperuser",
+            "--noinput",
+            "--username",
+            E2E_USER,
+            "--email",
+            "e2e@example.com",
+            label="manage.py createsuperuser",
+            extra_env={"DJANGO_SUPERUSER_PASSWORD": E2E_USER_PASSWORD},
+        )
         counts = self.manage(
             "shell",
             "-c",
@@ -787,16 +803,72 @@ class Flow:
             ["npx", "--no-install", "playwright", "test"],
             cwd=E2E_DIR,
             label="playwright test",
+            extra_env=self._playwright_env(),
+            timeout=1500,
+        )
+
+    def _playwright_env(self) -> dict[str, str]:
+        return {
+            "E2E_PYTHON": sys.executable,
+            "E2E_PROJECT_DIR": str(self.project),
+            "E2E_WORKSPACE_DIR": str(self.workspace),
+            "E2E_APPLICATION": PROJECT,
+            "E2E_EVIDENCE_DIR": str(EVIDENCE_DIR),
+            "E2E_DJANGO_URL": DJANGO_URL,
+            "E2E_ANGULAR_URL": ANGULAR_URL,
+            "E2E_SEED": str(FIXTURES / "seed.json"),
+            "E2E_SETTINGS_MODULE": SETTINGS_MODULE,
+            "E2E_USERNAME": E2E_USER,
+            "E2E_PASSWORD": E2E_USER_PASSWORD,
+        }
+
+    # -- stage 6b ----------------------------------------------------------------------
+
+    def stage_6b_django_serves_build(self) -> None:
+        """Django alone serves the built application: the production-like topology.
+
+        Stage 6 used the Angular dev server and its proxy. Here only ``runserver`` runs,
+        and ``django_angular3.spa`` (wired into the tutorial's ``urls.py``) serves the
+        bundle that stage 5 built from the same origin as the API. Besides the read
+        specs it signs in and writes: the generated client must send Django's CSRF
+        token, and the same write without it must be refused (the negative controls).
+        """
+        # Where Django looks is configuration only: artifacts.angularWorkspace of the
+        # project configuration plus the mandatory angular.build.browserOutputPath of the
+        # tool configuration. It must be where stage 5 left the build.
+        bundle = angular_browser_output_dir(
+            load_project_config(self.project / PROJECT_CONFIG),
+            load_angular_settings(config_path=self.project / TOOL_CONFIG),
+        ).resolve()
+        self.check(
+            (bundle / "index.html").is_file(),
+            f"The configuration calculates {bundle} for the browser files, but the "
+            f"build left no {bundle / 'index.html'} there.",
+        )
+        settings_text = (self.project / PROJECT / "settings.py").read_text(
+            encoding="utf-8"
+        )
+        self.check(
+            "ANGULAR_DIST_DIR" not in settings_text,
+            "The installed tutorial settings define the bundle directory.",
+        )
+        if self.break_name == "django-dist":
+            bundle.rename(bundle.with_name("browser.moved"))
+
+        self.run(
+            [
+                "npx",
+                "--no-install",
+                "playwright",
+                "test",
+                "--config",
+                "playwright.django.config.ts",
+            ],
+            cwd=E2E_DIR,
+            label="playwright test (Django serves the build)",
             extra_env={
-                "E2E_PYTHON": sys.executable,
-                "E2E_PROJECT_DIR": str(self.project),
-                "E2E_WORKSPACE_DIR": str(self.workspace),
-                "E2E_APPLICATION": PROJECT,
-                "E2E_EVIDENCE_DIR": str(EVIDENCE_DIR),
-                "E2E_DJANGO_URL": DJANGO_URL,
-                "E2E_ANGULAR_URL": ANGULAR_URL,
-                "E2E_SEED": str(FIXTURES / "seed.json"),
-                "E2E_SETTINGS_MODULE": SETTINGS_MODULE,
+                **self._playwright_env(),
+                "E2E_SCREENSHOT_DIR": "screenshots-django",
             },
             timeout=1500,
         )
@@ -1044,6 +1116,7 @@ class Flow:
             ("4 ui-from-openui", self.stage_4_ui),
             ("5 build", self.stage_5_build),
             ("6 browser", self.stage_6_browser),
+            ("6b django-serves-build", self.stage_6b_django_serves_build),
         ]
         if "B" in self.tracks:
             sequence.append(("B build_app phase 2", self.stage_b_build_app))

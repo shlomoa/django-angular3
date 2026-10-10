@@ -45,7 +45,7 @@ Their ownership is:
 | Main category | Subcategory | Item / file | Owner | Purpose and relationship |
 |---|---|---|---|---|
 | Project configuration | — | `django-angular3-<project_name>.json` | `djng` package user | Defines the generated application's identity and locations of its OAS schema, OpenUI concrete UI document, and Angular workspace. |
-| Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration. `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from it. |
+| Tool configurations | `django-angular3` | `django-angular3.json` | `djng` | Canonical SSOT for global `djng` configuration, mandatory with no fallback to a packaged file or to defaults in code (§2.2). `DJANGO_ANGULAR3` and `DjangoAngularSettings` are derived from it. |
 | Tool configurations | `ng-openapi-gen` | `ngOpenApiGen` clause in `django-angular3.json` | `djng` | Global `ng-openapi-gen` settings: `services`, `serviceSuffix` and `modelIndex`. djng owns the client shape: the defaults (`services: true`, `serviceSuffix: "ApiService"`) make the generator emit one `<Resource>ApiService` per OpenAPI tag, the class the ngdj `data-service` schematic wraps. |
 | Tool configurations | `ng-openapi-gen` | `ng-openapi-gen.json` in the project Angular workspace | `djng` | Derived per-run tool-configuration file. It combines global settings with command run-time `input` and `output` parameters. |
 | Tool configurations | `ng-openapi-gen` | `tests/fixtures/artifacts/ng-openapi-gen/ng-openapi-gen.json` | This repository | Validation-only fixture; it is not production configuration and is not released. |
@@ -75,6 +75,19 @@ Each project configuration resolves `artifacts.openapiSchema`,
 its own containing directory. The current configuration therefore selects the
 candidate artifacts, while the previous configuration independently selects
 the accepted baseline artifacts.
+
+`django-angular3.json`, the static tool configuration, is discovered in the same
+directory as the project configuration (`settings.BASE_DIR` in a configured Django
+runtime, otherwise the current working directory). It is mandatory: there is no
+fallback to a packaged file or to defaults in code, and every command that reads it
+fails when it is missing or invalid. The packaged file is only the template that
+`install-tutorial` copies.
+
+The browser files that `ng_build` leaves, and that `django_angular3.spa` serves from
+Django, are located by configuration only: `artifacts.angularWorkspace` of the project
+configuration plus the mandatory `angular.build.browserOutputPath` of
+`django-angular3.json`, a relative path inside the workspace. The tool configuration has no
+default for it, and every command that runs Angular tooling fails when it is missing.
 
 There is no separate previous-OpenUI argument or `.previous` OpenUI filename
 convention. A project-configuration selector change and a structural change in

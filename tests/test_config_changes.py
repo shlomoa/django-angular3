@@ -23,7 +23,10 @@ def _static_config(*, style: str = "scss") -> dict[str, object]:
         "angular": {
             "workspace": {"packageManager": "pnpm", "style": style, "routing": True},
             "application": {"ssr": False, "zoneless": True},
-            "build": {"configuration": "production"},
+            "build": {
+                "configuration": "production",
+                "browserOutputPath": "dist/portal/browser",
+            },
         },
         "tool": {
             "executables": {"node": "node", "pnpm": "pnpm", "ng": "ng"},
@@ -72,6 +75,7 @@ class StaticConfigComparisonTests(unittest.TestCase):
             (("angular", "application", "ssr"), True),
             (("angular", "application", "zoneless"), False),
             (("angular", "build", "configuration"), "development"),
+            (("angular", "build", "browserOutputPath"), "dist/other/browser"),
             (("tool", "executables", "node"), "node.exe"),
             (("tool", "executables", "pnpm"), "pnpm.cmd"),
             (("tool", "executables", "ng"), "ng.cmd"),

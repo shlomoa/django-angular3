@@ -29,11 +29,17 @@ do not maintain it as production configuration.
   `<Resource>ApiService` per OpenAPI tag, the class the `angular-django2` `data-service`
   schematic wraps;
 - `drfSpectacular.settings`, scoped to schema export;
-- Angular workspace, application, and build defaults; and
-- tool executable names and default `ng add` package.
+- Angular workspace, application, and build settings, including the mandatory
+  `angular.build.browserOutputPath`, the workspace-relative directory that `ng_build`
+  leaves the browser files in; and
+- tool executable names and the pinned `ng add` package (`tool.ngAddPackage`, mandatory).
 
-Start with the packaged `django-angular3.json` template. Commands consume this
-static configuration; they do not accept its path as an argument.
+The file is **mandatory and has no fallback**: it must exist next to the project
+configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the current
+directory), and a command that needs it fails when it is missing or incomplete. Start from
+the packaged `django-angular3.json` template, which `django-angular3 install-tutorial`
+copies, and set the values of your own project. The template is never read at runtime.
+Commands consume this static configuration; they do not accept its path as an argument.
 
 ## Generated-app project configuration
 

@@ -25,7 +25,6 @@ from django_angular3.config import (
 )
 from django_angular3.management.commands.ng_build import Command as NgBuildCommand
 from django_angular3.settings import (
-    DEFAULT_NG_ADD_PACKAGE,
     AngularCommandError,
     DjangoAngularSettings,
     load_angular_settings,
@@ -34,6 +33,7 @@ from django_angular3.settings import (
     validate_ng_openapi_gen_configuration,
     validate_tool_configuration,
 )
+from tests.tool_config import NG_ADD_PACKAGE, use_tool_configuration_template
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,6 +44,10 @@ EXAMPLE_OPENAPI = (
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
 django.setup()
+
+
+def setUpModule() -> None:
+    use_tool_configuration_template()
 
 
 class AngularCliCommandTests(unittest.TestCase):
@@ -72,7 +76,7 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertFalse(settings.ssr)
         self.assertTrue(settings.zoneless)
         self.assertEqual(settings.build_configuration, "production")
-        self.assertEqual(settings.ng_add_package, DEFAULT_NG_ADD_PACKAGE)
+        self.assertEqual(settings.ng_add_package, NG_ADD_PACKAGE)
 
     def test_load_angular_settings_applies_explicit_overrides(self) -> None:
         overridden_settings = load_angular_settings().__dict__ | {
@@ -1008,7 +1012,7 @@ class AngularCliCommandTests(unittest.TestCase):
         plan = json.loads(stdout)
         self.assertEqual(
             plan["invocations"][0]["argv"],
-            [ng, "add", DEFAULT_NG_ADD_PACKAGE, "--skip-confirmation"],
+            [ng, "add", NG_ADD_PACKAGE, "--skip-confirmation"],
         )
 
     def test_ng_add_dry_run_accepts_custom_package(self) -> None:

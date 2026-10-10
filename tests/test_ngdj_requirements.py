@@ -6,12 +6,17 @@ from unittest.mock import patch
 
 from django_angular3.angular import resolve_angular_command
 from tests.ngdj_source import NGDJ_PACKAGE_DIR, ngdj_required, require_ngdj_source
+from tests.tool_config import use_tool_configuration_template
 
 ROOT: Path = Path(__file__).resolve().parent.parent
 PROJECT_CONFIG_PATH = ROOT / "tests" / "fixtures" / "django-angular3-project.json"
 
 
 @require_ngdj_source
+def setUpModule() -> None:
+    use_tool_configuration_template()
+
+
 class NgdjRequirementsContractTests(unittest.TestCase):
     def _collection(self) -> Any:
         collection_path: Path = NGDJ_PACKAGE_DIR / "schematics" / "collection.json"

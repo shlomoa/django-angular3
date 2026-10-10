@@ -64,6 +64,12 @@ Run the existing test suite with explicit discovery:
 python -m unittest discover -s tests -p 'test*.py'
 ```
 
+`django-angular3.json` is mandatory and has no runtime fallback. Tests that run commands
+without a project of their own use the packaged template as their tool configuration
+through discovery: call `use_tool_configuration_template()` from `tests/tool_config.py` in
+`setUpModule`. Do not run the unit tests while the real-tools E2E flow is running: both use
+the git-ignored `scratch/` directory, and the unit tests remove it when they exit.
+
 ## End-to-end validation
 
 The unit tests check generated command lines and use a stand-in `ng`. One opt-in
@@ -71,7 +77,8 @@ flow runs the real tools instead: it installs the tutorial project, exports its
 schema with `drf-spectacular`, creates an Angular workspace and application with the
 Angular CLI and `angular-django2` (ngdj), generates the API client with
 `ng-openapi-gen`, builds the application, serves it next to Django and drives it
-with Playwright. It does not repeat ngdj's schematic tests.
+with Playwright, and finally serves the built application from Django alone. It does
+not repeat ngdj's schematic tests.
 
 ```bash
 DJNG_E2E=1 python -m tests.e2e.run_e2e
@@ -99,16 +106,23 @@ The flow runs these stages; a failure names its stage:
 | Stage | What it proves |
 | :--- | :--- |
 | 0 environment | Tool versions are supported |
-| 1 backend | The tutorial installs, migrates and loads the seed (25 customers, 12 products) |
+| 1 backend | The tutorial installs, migrates, loads the seed (25 customers, 12 products) and gets a test user for the sign-in specs |
 | 2 export-schema | `export_schema` with the real `drf-spectacular`: paths, schemas, `info`, rotation |
 | 3 workspace-and-client | `ng_workspace`, `ng_gen_app`, `ng_openapi_setup`, `ng_openapi_gen` |
 | 4 ui-from-openui | `ng_page`, the `table` schematic, `ng_data_service`, the host glue |
 | 5 build | `ng_build` leaves a non-empty `dist/` |
-| 6 browser | Playwright specs P1 shell, P2 data alignment, P3 pagination, P4 failure path |
+| 6 browser | Playwright specs P1 shell, P2 data alignment, P3 pagination, P4 failure path, against `runserver` and the Angular dev server (proxy to Django) |
+| 6b django-serves-build | Django alone serves the built bundle (`django_angular3.spa`, one origin, no proxy, no CORS): P1–P4 again plus D1 hard refresh on `/customers` and `/products`, D2 in-app navigation without a document request, D3 the API stays JSON and a wrong URL is a 404, D4 the admin stays Django, D5 one origin and no CORS headers, D6 assets served and a stale hash is a 404, then W1 sign-in through Django's session login, W2 a signed-in write through the generated client that must send the CSRF token, W3 and W4 its negative controls (the same write without the token is refused with 403, in the browser and through the API), W5 sign-out |
 | B build_app phase 2 | A changed OpenUI document and schema: the dry run derives the steps, the run succeeds |
 
 Track B starts from the workspace the wrappers created; running `build_app` from
 nothing waits on django-angular3#209 and previous-configuration discovery.
+
+What the flow does not test: authentication and authorization enforcement. The tutorial API
+is open to anonymous users, and DRF enforces CSRF only for a session-authenticated request,
+which is why the write specs (W1-W5) sign in first; the application the flow builds shows no
+sign-in or permission UI. Writing a test for it needs an API that requires authentication.
+The same limit is recorded in `doc/plan/VERIFICATION_PLAN.md`.
 
 The fixtures in `tests/e2e/fixtures` are generated, not edited: run
 `python -m tests.e2e.generate_fixtures`. The same command regenerates the tutorial
@@ -127,7 +141,7 @@ Environment variables:
 | `E2E_ANGULAR_CLI` | Angular CLI range installed when `ng` is missing (default `^22`) |
 | `E2E_CHROMIUM_PATH` | Chromium executable for Playwright |
 | `E2E_PLAYWRIGHT_INSTALL=1` | Run `playwright install chromium` first |
-| `E2E_BREAK` | `model-field`, `openui-route` or `proxy`: inject a deliberate break; the run must fail at stage 2, 6 and 6 (P1, P2) respectively |
+| `E2E_BREAK` | `model-field`, `openui-route`, `proxy` or `django-dist`: inject a deliberate break; the run must fail at stage 2, 6, 6 (P1, P2) and 6b respectively (`django-dist` moves the built browser files away from the configured `angular.build.browserOutputPath`) |
 
 The first run showed differences between what the tools do and what their documentation or
 the flow's design assumed; they are recorded in

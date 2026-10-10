@@ -1,10 +1,12 @@
 import os
+import re
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import Any
 
+from .config import project_directory
 from .documents import DocumentError, load_document
 
 
@@ -14,7 +16,10 @@ class AngularCommandError(RuntimeError):
 
 _is_win = os.name == "nt"
 
-PACKAGE_DEFAULT_CONFIG_PATH = Path(__file__).parent / "django-angular3.json"
+TOOL_CONFIG_FILENAME = "django-angular3.json"
+# The template that install-tutorial copies. It is not read at runtime: the tool
+# configuration is mandatory and has no default.
+TOOL_CONFIG_TEMPLATE_PATH = Path(__file__).parent / TOOL_CONFIG_FILENAME
 
 DEBUG: bool = os.environ.get("DJANGO_DEBUG", "").strip().lower() in (
     "1",
@@ -54,47 +59,35 @@ LOGGING: dict[str, Any] = {
 }
 
 
-def _package_default_tool_config() -> Mapping[str, Any]:
-    if PACKAGE_DEFAULT_CONFIG_PATH.is_file():
-        try:
-            doc = load_document(PACKAGE_DEFAULT_CONFIG_PATH)
-            if isinstance(doc, Mapping):
-                return doc
-        except Exception:
-            pass
-    return {}
-
-
-_pkg_defaults = _package_default_tool_config()
-_pkg_tool = _pkg_defaults.get("tool", {}) if isinstance(_pkg_defaults, Mapping) else {}
-DEFAULT_NG_ADD_PACKAGE: str = (
-    _pkg_tool.get("ngAddPackage", "angular-django2")
-    if isinstance(_pkg_tool, Mapping)
-    else "angular-django2"
-)
-
-DEFAULT_ANGULAR_SETTINGS: dict[str, Any] = {
-    "config_path": "django-angular3.json",
+# The only defaults are the names of the executables, which depend on the platform and
+# are optional in tool.executables. Everything else is read from the configuration.
+_DEFAULT_EXECUTABLES: dict[str, str] = {
     "node_executable": "node.exe" if _is_win else "node",
     "pnpm_executable": "pnpm.cmd" if _is_win else "pnpm",
     "ng_executable": "ng.cmd" if _is_win else "ng",
-    "package_manager": "pnpm",
-    "build_configuration": "production",
-    "style": "scss",
-    "routing": True,
-    "ssr": False,
-    "zoneless": True,
-    "ng_add_package": DEFAULT_NG_ADD_PACKAGE,
 }
 
 
+def discover_tool_config_path() -> Path:
+    """The tool configuration path for this runtime.
+
+    It sits next to the project configuration: ``settings.BASE_DIR`` in a configured
+    Django runtime, otherwise the current directory.
+    """
+    return project_directory() / TOOL_CONFIG_FILENAME
+
+
 def _resolve_tool_config_path(config_path: str | Path | None) -> Path:
-    if config_path:
-        return Path(config_path)
-    default_path = Path(DEFAULT_ANGULAR_SETTINGS["config_path"])
-    if default_path.is_file():
-        return default_path
-    return PACKAGE_DEFAULT_CONFIG_PATH
+    """The existing tool configuration; there is no fallback when it is missing."""
+    path = Path(config_path) if config_path else discover_tool_config_path()
+    if not path.is_file():
+        raise AngularCommandError(
+            f"The django-angular3 tool configuration {path} does not exist. It is "
+            "mandatory and has no default: create it next to the project "
+            f"configuration, starting from the template {TOOL_CONFIG_TEMPLATE_PATH} "
+            "(django-angular3 install-tutorial installs one)."
+        )
+    return path
 
 
 class DjangoAngularSettings(SimpleNamespace):
@@ -107,12 +100,14 @@ class DjangoAngularSettings(SimpleNamespace):
         ng_executable (str): Angular CLI executable name or path.
         package_manager (str): Angular package manager setting.
         build_configuration (str): Angular build configuration name.
+        browser_output_path (str): Workspace-relative directory that ``ng_build``
+            leaves the browser files in. Mandatory: it has no default.
         style (str): Default Angular stylesheet format.
         routing (bool): Whether generated applications enable routing.
         ssr (bool): Whether generated applications enable server-side rendering.
         zoneless (bool): Whether generated applications use zoneless change
             detection.
-        ng_add_package (str): The default package name or path to install for ng_add.
+        ng_add_package (str): The package that ng_add installs (tool.ngAddPackage).
     """
 
 
@@ -121,8 +116,7 @@ def load_angular_settings(
     *,
     config_path: str | Path | None = None,
 ) -> DjangoAngularSettings:
-    data = DEFAULT_ANGULAR_SETTINGS.copy()
-    data.update(_load_tool_configuration(config_path))
+    data = _load_tool_configuration(config_path)
     if overrides:
         data.update(overrides)
     return DjangoAngularSettings(**data)
@@ -132,8 +126,6 @@ def _load_tool_configuration(
     config_path: str | Path | None,
 ) -> dict[str, object]:
     path = _resolve_tool_config_path(config_path)
-    if not path.is_file():
-        return {}
 
     try:
         document = load_document(path)
@@ -157,15 +149,18 @@ def _load_tool_configuration(
     tool = _optional_mapping(document, "tool")
     executables = _optional_mapping(tool, "executables")
 
+    # validate_tool_configuration made every one of these keys mandatory.
     values: dict[str, object] = {
         "config_path": str(path),
-        "package_manager": workspace.get("packageManager", "pnpm"),
-        "style": workspace.get("style", "scss"),
-        "routing": workspace.get("routing", True),
-        "ssr": application.get("ssr", False),
-        "zoneless": application.get("zoneless", True),
-        "build_configuration": build.get("configuration", "production"),
-        "ng_add_package": tool.get("ngAddPackage", DEFAULT_NG_ADD_PACKAGE),
+        **_DEFAULT_EXECUTABLES,
+        "package_manager": workspace["packageManager"],
+        "style": workspace["style"],
+        "routing": workspace["routing"],
+        "ssr": application["ssr"],
+        "zoneless": application["zoneless"],
+        "build_configuration": build["configuration"],
+        "browser_output_path": build["browserOutputPath"],
+        "ng_add_package": tool["ngAddPackage"],
     }
     for config_key, setting_key in (
         ("node", "node_executable"),
@@ -209,13 +204,16 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     _reject_unknown_keys(
         application, {"ssr", "zoneless"}, "angular.application", errors
     )
-    _reject_unknown_keys(build, {"configuration"}, "angular.build", errors)
+    _reject_unknown_keys(
+        build, {"configuration", "browserOutputPath"}, "angular.build", errors
+    )
     _require_string(workspace, "packageManager", "angular.workspace", errors)
     _require_string(workspace, "style", "angular.workspace", errors)
     _require_bool(workspace, "routing", "angular.workspace", errors)
     _require_bool(application, "ssr", "angular.application", errors)
     _require_bool(application, "zoneless", "angular.application", errors)
     _require_string(build, "configuration", "angular.build", errors)
+    _require_workspace_path(build, "browserOutputPath", "angular.build", errors)
 
     executables = _optional_mapping(tool, "executables")
     _reject_unknown_keys(
@@ -230,9 +228,26 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     for key in ("node", "pnpm", "ng"):
         if key in executables:
             _require_string(executables, key, "tool.executables", errors)
-    if "ngAddPackage" in tool:
-        _require_string(tool, "ngAddPackage", "tool", errors)
+    _require_string(tool, "ngAddPackage", "tool", errors)
     return errors
+
+
+def _require_workspace_path(
+    document: Mapping[str, object], key: str, section: str, errors: list[str]
+) -> None:
+    """A non-empty path relative to, and inside, the Angular workspace."""
+    _require_string(document, key, section, errors)
+    value = document.get(key)
+    if not isinstance(value, str) or not value.strip():
+        return
+    normalized = value.replace("\\", "/")
+    outside = (
+        normalized.startswith("/")
+        or re.match(r"[A-Za-z]:", normalized) is not None
+        or ".." in PurePosixPath(normalized).parts
+    )
+    if outside:
+        errors.append(f"{section}.{key} must be a relative path inside the workspace.")
 
 
 def _required_mapping(
@@ -303,8 +318,6 @@ def load_ng_openapi_gen_settings(
 ) -> dict[str, object]:
     """Load global ng-openapi-gen settings from django-angular3.json."""
     path = _resolve_tool_config_path(config_path)
-    if not path.is_file():
-        return {}
     try:
         document = load_document(path)
     except DocumentError as exc:
@@ -350,8 +363,6 @@ def load_drf_spectacular_settings(
 ) -> dict[str, object]:
     """Load global drf-spectacular settings from django-angular3.json."""
     path = _resolve_tool_config_path(config_path)
-    if not path.is_file():
-        return {}
     try:
         document = load_document(path)
     except DocumentError as exc:

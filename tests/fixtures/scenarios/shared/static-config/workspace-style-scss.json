@@ -25,7 +25,8 @@
       "zoneless": true
     },
     "build": {
-      "configuration": "production"
+      "configuration": "production",
+      "browserOutputPath": "dist/simple_crm/browser"
     }
   },
   "tool": {
@@ -33,6 +34,7 @@
       "node": "node",
       "pnpm": "pnpm",
       "ng": "ng"
-    }
+    },
+    "ngAddPackage": "angular-django2@0.7.1"
   }
 }

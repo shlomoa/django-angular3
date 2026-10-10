@@ -293,6 +293,95 @@ last column.
 | Under CI environment variables pnpm 10 refuses installs that update the lockfile, including the one the Angular CLI runs | tooling | The flow removes the CI markers from the tools' environment | none; documented in `CONTRIBUTING.md` |
 | `oasdiff` is downloaded at first use and fails behind a restrictive egress policy | djng | The flow requires it pre-installed | [#241](https://github.com/shlomoa/django-angular3/issues/241) |
 
+#### Integration validation run (2026-10-09)
+
+A run of the first slice with `E2E_TRACKS=W` validated that the `ngdj` commands that `djng`
+wraps generate an Angular Material frontend from the tutorial DRF model and configuration,
+and that the browser reads Django data through the REST interface.
+
+| Check | Result |
+|---|---|
+| `python -m unittest discover -s tests -p 'test*.py'` with `DJNG_REQUIRE_NGDJ=1`, `ruff check`, `ruff format --check` | Passed: 298 tests, 4 skipped (Sphinx build absent, `build_app` work in progress, the E2E flow itself) |
+| `ngdj` contract tests against the sibling `angular-django2` 0.7.0 | Passed |
+| E2E Track W, stages 0–6 (backend, schema export, workspace and Material app, API client, build, Playwright P1–P4) | Passed on Node 24.21.0 |
+| `E2E_BREAK=model-field`, `openui-route`, `proxy` | Failed at stages 2, 6 and 6, as required |
+| E2E Track B (`build_app` phase 2) | Not run in that session: `oasdiff` could not be downloaded, because the session's GitHub access did not include `oasdiff/oasdiff` ([#241](https://github.com/shlomoa/django-angular3/issues/241)); run on 2026-10-10, see below |
+
+Stage 0 rejects Node 22.22.0, because `ngdj` requires `^22.22.3 || ^24.15.0 || >=26`; the run
+used Node 24.21.0. Screenshots, traces and the Playwright report are in
+`build/e2e-evidence/`.
+
+The run is the local-development topology of `doc/specifications/SPECIFICATIONS.md` §5.2:
+`ng serve` proxies `/api` to Django, so the browser sees one origin and CORS does not arise.
+The production-like topology of §5.1 is not provided by either repository. A probe of
+`runserver` on the generated workspace after the passing run found:
+
+| Finding | Owner | Evidence |
+|---|---|---|
+| Django has no route for the built application: `GET /` and `GET /customers` return 404, so a hard refresh on an Angular route fails | djng | `build/e2e-evidence/production-topology-probe.txt` |
+| No static-file or base-href strategy: `ng_build` leaves `dist/<app>/browser` with `<base href="/">`, and neither `ngdj` nor `djng` passes `--base-href` or `--deploy-url` | ngdj and djng | same |
+| No CORS configuration (no `corsheaders`), so an Angular origin different from Django's gets no `Access-Control-*` headers; the dev proxy and a same-origin deployment avoid the need | djng | same |
+| The `/ng/build` page that the repository instructions require returns 404 | djng | same |
+| The generated client uses relative `/api/v1/...` paths and the `csrftoken` cookie with the `X-CSRFToken` header, which match Django's defaults | none | same |
+
+The production-like topology was open at the time of this run; the next section closes it.
+
+#### Django serves the built application (2026-10-10)
+
+`django_angular3.spa` serves the bundle `ng_build` leaves in `dist/<app>/browser` from Django
+on the same origin as the API (README, "Serving the built application"). The tutorial project
+is wired with it, and stage 6b of the real-tools flow starts Django alone, with no Angular dev
+server and no proxy, and drives the bundle with Playwright: the dev-server specs P1–P4 again,
+and D1–D6 (`tests/e2e/specs/django-served.spec.ts`).
+
+| Check | Result |
+|---|---|
+| `python -m unittest discover -s tests -p 'test*.py'` with `DJNG_REQUIRE_NGDJ=1`, `ruff check`, `ruff format --check` | Passed: 320 tests, 4 skipped; `tests/test_spa.py` has 12 of them |
+| E2E Track W, stages 0–6b | Passed on Node 24.21.0 (local run and the `e2e` job of the pull request): P1–P4 and D1–D6, 12 of 12 |
+| `E2E_BREAK=django-dist`, `model-field`, `openui-route`, `proxy` | Failed at stages 6b, 2, 6 and 6, as required |
+| E2E Track B (`build_app` phase 2) | Passed together with Track W (stages 0–6b and B, 157 s): after a document change (an added `reportsPage`) and a schema change (`Health`), the dry run derives the steps and the run succeeds; `build-evidence.json` pins `angular-django2@0.7.0`, mapping version 1 and `openui-spec` 0.12.1 |
+
+Track B ran with `oasdiff` v1.33.0 built from source in the sandbox (`go install` of that tag
+with the go1.27.1 toolchain, both fetched through the checksum-verified Go module proxy),
+because the session's GitHub access does not include `oasdiff/oasdiff`
+([#241](https://github.com/shlomoa/django-angular3/issues/241)); the GitHub job downloads
+the latest release instead. A source build reports `oasdiff version main`, which is what
+`tool-versions.json` records; `go version -m` on the binary gives the module version.
+
+Findings of the 2026-10-09 probe, as they stand now:
+
+| Finding | Status |
+|---|---|
+| `GET /` and `GET /customers` returned 404 | Resolved: 200 with `index.html`; D1 hard-refreshes `/customers` and `/products` |
+| No static-file or base-href strategy | Resolved without a build flag: the bundle is served from the root, which matches the `<base href="/">` that `ngdj` emits. A deployment under a path prefix would still need `--base-href` and `--deploy-url`, which neither repository passes |
+| No CORS configuration | Not needed on one origin: D5 asserts every API call goes to the Django origin and that Django sends no `Access-Control-*` header. A separate Angular origin would still need `corsheaders`, which is not provided |
+| The generated client uses relative `/api/v1/...` paths and the `csrftoken` / `X-CSRFToken` names | Unchanged, and now exercised through Django (D3, D5) |
+| The `/ng/build` page that the repository instructions require | Still open: the page does not exist. `GET /ng/build` now returns the application's `index.html` through the fallback, which is not that page |
+
+The view reads the files through Django. That suits development, tests and small
+deployments; behind real traffic a reverse proxy or a static-file layer serves the same
+directory.
+
+Sign-in and CSRF-protected writes are covered by `tests/e2e/specs/django-writes.spec.ts`, which
+runs in the same stage (W1–W5, 17 of 17 Django-served specs with the read specs):
+
+| Spec | What it proves |
+|---|---|
+| W1 | Django's session login (`api-auth`) sets the `sessionid` and `csrftoken` cookies, and the app shows the data |
+| W2 | A signed-in write through the generated `CustomersApiService` sends `X-CSRFToken` (equal to the cookie), Django answers 201, and the generated table shows the customer |
+| W3 | Negative control in the browser: the same write with the token stripped is refused with 403 (`CSRF Failed`), the app shows its error, and nothing is created |
+| W4 | Negative control through the API: a signed-in POST is 403 without `X-CSRFToken` and 201 with it |
+| W5 | Sign-out removes the session cookie |
+
+Every customer a spec creates is removed again. Still open: authentication and authorization
+enforcement (the tutorial API is open to anonymous users, and DRF enforces CSRF only for a
+session-authenticated request, which is why the specs sign in first), and permission-aware
+navigation (the application the flow builds shows no sign-in or permission UI).
+
+Evidence of the stage is under `build/e2e-evidence/`: `playwright-django-report/`,
+`playwright-django-results/` (traces) and `screenshots-django/` (`D1-refresh-customers`,
+`D1-refresh-products`, `D2-products`, `D4-admin`, and the P1–P4 set).
+
 ### Implementation sequence
 
 #### 1. Harness foundation

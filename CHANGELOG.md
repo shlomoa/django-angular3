@@ -10,6 +10,18 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `django_angular3.spa.angular_urlpatterns()`: a catch-all view that serves the built Angular
+  application from Django on the same origin as the API. Where the files are is configuration, not
+  a Django setting: `artifacts.angularWorkspace` of the project configuration plus the new
+  mandatory `angular.build.browserOutputPath` of `django-angular3.json` (existing tool
+  configurations must add it; every command that runs Angular tooling fails without it).
+  Bundle files are served by name, any other path gets `index.html` so a hard refresh
+  on an Angular route works, and a wrong `/api/`, `/api-auth/`, `/admin/` or `/static/` URL or a
+  stale asset hash is a 404. A missing build raises `ImproperlyConfigured`. The tutorial project
+  is wired with it, and the real-tools flow has a stage 6b that drives the bundle served by Django
+  alone, with the `django-dist` break variant, and signs in and writes through the generated client
+  (the CSRF token must be sent; the same write without it is refused). See
+  [Serving the built application](https://github.com/shlomoa/django-angular3/blob/main/README.md#serving-the-built-application).
 - A real-tools end-to-end flow, `DJNG_E2E=1 python -m tests.e2e.run_e2e`: it exports the tutorial
   project's schema with `drf-spectacular`, creates an Angular workspace and application with the
   Angular CLI and `angular-django2`, generates the API client with `ng-openapi-gen`, builds the
@@ -25,6 +37,16 @@ package versions. Releases before this file are described on the
   ([shlomoa/django-angular3#239](https://github.com/shlomoa/django-angular3/issues/239)).
 
 ### Changed
+
+- **Breaking:** `django-angular3.json` is mandatory and has no fallback. It is found next to the
+  project configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the current
+  directory) and every command that reads it (`ng_*`, `build_app`, `export_schema`, ...) fails with
+  an error naming the expected path when it is missing. Before, a project without one silently
+  used the packaged example (title `Example API`, the tutorial's output path and pin), and the
+  tool configuration was looked up in the current directory only. The packaged file is now only the
+  template `install-tutorial` copies. `tool.ngAddPackage` is mandatory too, and the Python defaults
+  for the Angular settings and the pin are gone; only the platform names of the executables remain
+  as defaults.
 
 - `tool.ngAddPackage` pins `angular-django2@0.7.1` (was `0.7.0`). Its `data-service` schematic computes the
   import of the generated `ng-openapi-gen` client from the `output` of `ng-openapi-gen.json`, instead of

@@ -124,7 +124,17 @@ INSTALLED_APPS = [
 The static `django-angular3.json` configures djng's Angular tool settings,
 including executable resolution. `DJANGO_ANGULAR3`
 and `DjangoAngularSettings` are derived from that file; they are not independent
-configuration authorities. The generated app's identity and artifact locations
+configuration authorities.
+
+**`django-angular3.json` is mandatory and has no fallback.** It must exist next to the
+project configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the
+current directory). There is no packaged or in-code default: a command that needs it
+(`ng_*`, `build_app`, `export_schema`, ...) fails with an error naming the expected path, and
+a file without the mandatory `angular.build.browserOutputPath` or `tool.ngAddPackage` is
+rejected. The packaged file is only a template that `django-angular3 install-tutorial`
+copies; start from it and set the values of your own project.
+
+The generated app's identity and artifact locations
 are instead supplied by the project configuration defined in
 `doc/specifications/SPECIFICATIONS.md` §2.1.
 
@@ -207,10 +217,54 @@ delete lifecycle handling:
 
 Use `--mode delete --confirm` for deletion.
 
-At the moment this reusable Django app contributes configuration helpers and
-management commands; it does not yet ship models, URLs, templates, static
-assets, or migrations, so there is no extra URL inclusion or migration step for
-the package itself.
+This reusable Django app contributes configuration helpers, management commands and one
+view, `django_angular3.spa`, which serves the built Angular application from Django (see
+[Serving the built application](#serving-the-built-application)). It ships no models,
+templates, static assets, or migrations, so there is no migration step for the package
+itself.
+
+### Serving the built application
+
+To serve the browser files that `manage.py ng_build` leaves from the same origin as the API,
+as the production deployment of the specification requires, add the Angular patterns
+**last** in `urls.py`, so that Django's own routes win:
+
+```python
+# urls.py
+from django_angular3.spa import angular_urlpatterns
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("api/v1/", include(router.urls)),
+    *angular_urlpatterns(),
+]
+```
+
+Nothing is set in `settings.py`. Where the files are is configuration, in two places:
+
+- `artifacts.angularWorkspace` of the project configuration, `django-angular3-<project>.json`,
+  is the workspace root (for example `build/angular`);
+- `angular.build.browserOutputPath` of `django-angular3.json` is the directory inside the
+  workspace that `ng_build` leaves the browser files in (for example
+  `dist/simple_crm/browser`). It is **mandatory** and has no default: a tool configuration
+  without it is rejected, and every command that runs Angular tooling (`ng_new`,
+  `ng_build`, ...) fails until it is set. It must be a relative path inside the workspace.
+
+The directory is `<angularWorkspace>/<browserOutputPath>`. The project configuration is found
+from `settings.BASE_DIR`, as for every other command, and the tool configuration is read
+from the same directory. The tutorial project's `django-angular3.json` sets
+`"browserOutputPath": "dist/simple_crm/browser"`; set the value of your own application,
+which is where `ng build` writes the browser files of your Angular project.
+
+A request is answered with the bundle file of that name (`main-*.js`, `styles-*.css`), with
+`index.html` for any other path, so a hard refresh on an Angular route such as
+`/customers` works, and with a 404 for a wrong `/api/`, `/api-auth/`, `/admin/` or
+`/static/` URL or a file that is not in the bundle. A missing build is reported as
+`ImproperlyConfigured`. The generated application uses `<base href="/">` and relative
+`/api/...` paths, so it needs no proxy and no CORS configuration. The view reads the files
+through Django, which suits development, tests and small deployments; behind real traffic,
+serve the same directory with a reverse proxy or a static-file layer such as WhiteNoise.
+The tutorial project (`install-tutorial`) is wired this way.
 
 ## Example
 

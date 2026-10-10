@@ -19,6 +19,7 @@ from django_angular3.config import (
     load_project_config,
     project_config_path,
 )
+from tests.tool_config import use_tool_configuration_template
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,6 +31,10 @@ django.setup()
 # ---------------------------------------------------------------------------
 # Unit tests for the versioning path helper
 # ---------------------------------------------------------------------------
+
+
+def setUpModule() -> None:
+    use_tool_configuration_template()
 
 
 class GetPreviousSchemaPathTests(unittest.TestCase):

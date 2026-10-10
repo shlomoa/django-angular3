@@ -19,7 +19,9 @@ This creates:
 - `app.openui.json` containing the OpenUI requirements: an `html` root with the
   `Application` (`Routing` and `Navigation`) and, next to it, the customers and products
   pages.
-- `django-angular3.json` static tool configuration file.
+- `django-angular3.json` static tool configuration file, copied from the packaged template.
+  The file is mandatory and has no fallback: a real project needs its own next to its
+  project configuration, with its own values.
 - `django-angular3-<project_name>.json` generated-app project configuration file.
 
 The command prints the next steps on success.

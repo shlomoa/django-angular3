@@ -81,6 +81,11 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# django_angular3.spa serves the browser files that `manage.py ng_build` leaves. Where
+# they are is configuration, not a Django setting: artifacts.angularWorkspace of
+# django-angular3-simple_crm.json plus angular.build.browserOutputPath of
+# django-angular3.json.
+
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",

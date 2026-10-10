@@ -11,7 +11,7 @@ on:
           Inject a deliberate break; the run must then fail at the stage that names it.
         type: choice
         default: none
-        options: [none, model-field, openui-route, proxy]
+        options: [none, model-field, openui-route, proxy, django-dist]
       tracks:
         description: Tracks to run (W = wrappers, B = build_app phase 2).
         type: string
