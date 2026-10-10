@@ -360,8 +360,23 @@ Findings of the 2026-10-09 probe, as they stand now:
 
 The view reads the files through Django. That suits development, tests and small
 deployments; behind real traffic a reverse proxy or a static-file layer serves the same
-directory. CSRF-protected writes and sign-in are not covered by this stage: the specs only
-read, and the tutorial API allows anonymous access.
+directory.
+
+Sign-in and CSRF-protected writes are covered by `tests/e2e/specs/django-writes.spec.ts`, which
+runs in the same stage (W1–W5, 17 of 17 Django-served specs with the read specs):
+
+| Spec | What it proves |
+|---|---|
+| W1 | Django's session login (`api-auth`) sets the `sessionid` and `csrftoken` cookies, and the app shows the data |
+| W2 | A signed-in write through the generated `CustomersApiService` sends `X-CSRFToken` (equal to the cookie), Django answers 201, and the generated table shows the customer |
+| W3 | Negative control in the browser: the same write with the token stripped is refused with 403 (`CSRF Failed`), the app shows its error, and nothing is created |
+| W4 | Negative control through the API: a signed-in POST is 403 without `X-CSRFToken` and 201 with it |
+| W5 | Sign-out removes the session cookie |
+
+Every customer a spec creates is removed again. Still open: authentication and authorization
+enforcement (the tutorial API is open to anonymous users, and DRF enforces CSRF only for a
+session-authenticated request, which is why the specs sign in first), and permission-aware
+navigation (the application the flow builds shows no sign-in or permission UI).
 
 Evidence of the stage is under `build/e2e-evidence/`: `playwright-django-report/`,
 `playwright-django-results/` (traces) and `screenshots-django/` (`D1-refresh-customers`,

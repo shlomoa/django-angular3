@@ -106,13 +106,13 @@ The flow runs these stages; a failure names its stage:
 | Stage | What it proves |
 | :--- | :--- |
 | 0 environment | Tool versions are supported |
-| 1 backend | The tutorial installs, migrates and loads the seed (25 customers, 12 products) |
+| 1 backend | The tutorial installs, migrates, loads the seed (25 customers, 12 products) and gets a test user for the sign-in specs |
 | 2 export-schema | `export_schema` with the real `drf-spectacular`: paths, schemas, `info`, rotation |
 | 3 workspace-and-client | `ng_workspace`, `ng_gen_app`, `ng_openapi_setup`, `ng_openapi_gen` |
 | 4 ui-from-openui | `ng_page`, the `table` schematic, `ng_data_service`, the host glue |
 | 5 build | `ng_build` leaves a non-empty `dist/` |
 | 6 browser | Playwright specs P1 shell, P2 data alignment, P3 pagination, P4 failure path, against `runserver` and the Angular dev server (proxy to Django) |
-| 6b django-serves-build | Django alone serves the built bundle (`django_angular3.spa`, one origin, no proxy, no CORS): P1–P4 again plus D1 hard refresh on `/customers` and `/products`, D2 in-app navigation without a document request, D3 the API stays JSON and a wrong URL is a 404, D4 the admin stays Django, D5 one origin and no CORS headers, D6 assets served and a stale hash is a 404 |
+| 6b django-serves-build | Django alone serves the built bundle (`django_angular3.spa`, one origin, no proxy, no CORS): P1–P4 again plus D1 hard refresh on `/customers` and `/products`, D2 in-app navigation without a document request, D3 the API stays JSON and a wrong URL is a 404, D4 the admin stays Django, D5 one origin and no CORS headers, D6 assets served and a stale hash is a 404, then W1 sign-in through Django's session login, W2 a signed-in write through the generated client that must send the CSRF token, W3 and W4 its negative controls (the same write without the token is refused with 403, in the browser and through the API), W5 sign-out |
 | B build_app phase 2 | A changed OpenUI document and schema: the dry run derives the steps, the run succeeds |
 
 Track B starts from the workspace the wrappers created; running `build_app` from

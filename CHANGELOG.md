@@ -19,7 +19,8 @@ package versions. Releases before this file are described on the
   on an Angular route works, and a wrong `/api/`, `/api-auth/`, `/admin/` or `/static/` URL or a
   stale asset hash is a 404. A missing build raises `ImproperlyConfigured`. The tutorial project
   is wired with it, and the real-tools flow has a stage 6b that drives the bundle served by Django
-  alone, with the `django-dist` break variant. See
+  alone, with the `django-dist` break variant, and signs in and writes through the generated client
+  (the CSRF token must be sent; the same write without it is refused). See
   [Serving the built application](https://github.com/shlomoa/django-angular3/blob/main/README.md#serving-the-built-application).
 - A real-tools end-to-end flow, `DJNG_E2E=1 python -m tests.e2e.run_e2e`: it exports the tutorial
   project's schema with `drf-spectacular`, creates an Angular workspace and application with the
