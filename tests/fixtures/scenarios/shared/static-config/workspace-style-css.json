@@ -1,6 +1,7 @@
 {
   "ngOpenApiGen": {
-    "serviceSuffix": "Api",
+    "services": true,
+    "serviceSuffix": "ApiService",
     "modelIndex": true
   },
   "drfSpectacular": {

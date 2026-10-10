@@ -13,7 +13,11 @@ from django_angular3.config_changes import compare_project_config, compare_stati
 
 def _static_config(*, style: str = "scss") -> dict[str, object]:
     return {
-        "ngOpenApiGen": {"serviceSuffix": "Api", "modelIndex": True},
+        "ngOpenApiGen": {
+            "services": True,
+            "serviceSuffix": "ApiService",
+            "modelIndex": True,
+        },
         "drfSpectacular": {"settings": {"TITLE": "Example", "VERSION": "1"}},
         "oasdiff": {"format": "json"},
         "angular": {
@@ -61,6 +65,7 @@ class StaticConfigComparisonTests(unittest.TestCase):
 
     def test_every_mutable_supported_static_field_emits_an_update(self) -> None:
         updates = (
+            (("ngOpenApiGen", "services"), False),
             (("ngOpenApiGen", "serviceSuffix"), "Client"),
             (("ngOpenApiGen", "modelIndex"), False),
             (("drfSpectacular", "settings", "TITLE"), "Updated API"),

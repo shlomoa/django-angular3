@@ -119,7 +119,9 @@ Track B starts from the workspace the wrappers created; running `build_app` from
 nothing waits on django-angular3#209 and previous-configuration discovery.
 
 The fixtures in `tests/e2e/fixtures` are generated, not edited: run
-`python -m tests.e2e.generate_fixtures`. `customers-host.ts` is the exception, a
+`python -m tests.e2e.generate_fixtures`. The same command regenerates the tutorial
+project's `app.openui.json`; the flow's `customers.openui.json` is that document plus a
+`table`. `customers-host.ts` is the exception, a
 hand-written host component marked as test glue, because nothing generated binds the
 generated table to the generated client.
 

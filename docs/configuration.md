@@ -24,7 +24,10 @@ do not maintain it as production configuration.
 
 `django-angular3.json` configures `djng` itself. It supplies:
 
-- global `ngOpenApiGen` options;
+- global `ngOpenApiGen` options (`services`, `serviceSuffix`, `modelIndex`). The defaults
+  `services: true` and `serviceSuffix: "ApiService"` make `ng-openapi-gen` generate one
+  `<Resource>ApiService` per OpenAPI tag, the class the `angular-django2` `data-service`
+  schematic wraps;
 - `drfSpectacular.settings`, scoped to schema export;
 - Angular workspace, application, and build settings, including the mandatory
   `angular.build.browserOutputPath`, the workspace-relative directory that `ng_build`

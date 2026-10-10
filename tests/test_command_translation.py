@@ -637,6 +637,7 @@ class StaticConfigTranslationTests(unittest.TestCase):
             "tool.ngAddPackage": ("angular-workspace-foundation", 1),
             "angular.application.ssr": ("angular-app-composition", 2),
             "angular.application.zoneless": ("angular-app-composition", 2),
+            "ngOpenApiGen.services": ("angular_api_client_generate", 3),
             "ngOpenApiGen.serviceSuffix": ("angular_api_client_generate", 3),
             "ngOpenApiGen.modelIndex": ("angular_api_client_generate", 3),
         }

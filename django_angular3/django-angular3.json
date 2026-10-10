@@ -1,6 +1,7 @@
 {
   "ngOpenApiGen": {
-    "serviceSuffix": "Api",
+    "services": true,
+    "serviceSuffix": "ApiService",
     "modelIndex": true
   },
   "drfSpectacular": {
@@ -34,6 +35,6 @@
       "pnpm": "pnpm",
       "ng": "ng"
     },
-    "ngAddPackage": "angular-django2@0.7.0"
+    "ngAddPackage": "angular-django2@0.7.1"
   }
 }

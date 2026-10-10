@@ -486,7 +486,7 @@ class DryRunTests(unittest.TestCase):
         self.assertEqual(
             report["ngdj"],
             {
-                "package": "angular-django2@0.7.0",
+                "package": "angular-django2@0.7.1",
                 "mappingVersion": 1,
                 "openuiSpecVersion": "0.12.1",
             },
@@ -628,7 +628,7 @@ class RealRunTests(unittest.TestCase):
         evidence = json.loads(
             (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
         )
-        self.assertEqual(evidence["ngdj"]["package"], "angular-django2@0.7.0")
+        self.assertEqual(evidence["ngdj"]["package"], "angular-django2@0.7.1")
         self.assertEqual(evidence["ngdj"]["mappingVersion"], 1)
         self.assertEqual(evidence["ngdj"]["openuiSpecVersion"], "0.12.1")
         call = evidence["steps"][2]["invocations"][0]

@@ -97,6 +97,7 @@ class AngularCliCommandTests(unittest.TestCase):
                 json.dumps(
                     {
                         "ngOpenApiGen": {
+                            "services": True,
                             "serviceSuffix": "Client",
                             "modelIndex": True,
                         },
@@ -111,7 +112,7 @@ class AngularCliCommandTests(unittest.TestCase):
 
             self.assertEqual(
                 load_ng_openapi_gen_settings(config_path),
-                {"serviceSuffix": "Client", "modelIndex": True},
+                {"services": True, "serviceSuffix": "Client", "modelIndex": True},
             )
             self.assertEqual(
                 load_drf_spectacular_settings(config_path),
@@ -120,9 +121,16 @@ class AngularCliCommandTests(unittest.TestCase):
 
     def test_global_generator_configuration_rejects_invalid_values(self) -> None:
         errors = validate_ng_openapi_gen_configuration(
-            {"ngOpenApiGen": {"serviceSuffix": "", "modelIndex": "yes"}}
+            {
+                "ngOpenApiGen": {
+                    "services": "yes",
+                    "serviceSuffix": "",
+                    "modelIndex": "yes",
+                }
+            }
         )
 
+        self.assertIn("ngOpenApiGen.services must be a boolean.", errors)
         self.assertIn("ngOpenApiGen.serviceSuffix must be a non-empty string.", errors)
         self.assertIn("ngOpenApiGen.modelIndex must be a boolean.", errors)
 
@@ -130,6 +138,7 @@ class AngularCliCommandTests(unittest.TestCase):
         errors = validate_ng_openapi_gen_configuration(
             {
                 "ngOpenApiGen": {
+                    "services": True,
                     "serviceSuffix": "Client",
                     "modelIndex": True,
                     "$schema": "https://example.test/schema.json",
@@ -743,7 +752,8 @@ class AngularCliCommandTests(unittest.TestCase):
             "https://raw.githubusercontent.com/cyclosproject/ng-openapi-gen/"
             "master/ng-openapi-gen-schema.json",
         )
-        self.assertEqual(document["serviceSuffix"], "Api")
+        self.assertTrue(document["services"])
+        self.assertEqual(document["serviceSuffix"], "ApiService")
         self.assertTrue(document["modelIndex"])
         self.assertEqual(
             document["input"],

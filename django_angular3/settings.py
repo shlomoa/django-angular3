@@ -342,8 +342,12 @@ def validate_ng_openapi_gen_configuration(
     errors: list[str] = []
     generator = _required_mapping(document, "ngOpenApiGen", errors)
     _reject_unknown_keys(
-        generator, {"serviceSuffix", "modelIndex"}, "ngOpenApiGen", errors
+        generator,
+        {"services", "serviceSuffix", "modelIndex"},
+        "ngOpenApiGen",
+        errors,
     )
+    _require_bool(generator, "services", "ngOpenApiGen", errors)
     _require_string(generator, "serviceSuffix", "ngOpenApiGen", errors)
     _require_bool(generator, "modelIndex", "ngOpenApiGen", errors)
 

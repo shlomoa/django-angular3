@@ -402,7 +402,7 @@ class BuildAppStepTests(unittest.TestCase):
         with self.assertRaisesRegex(
             CommandError,
             r"Cannot derive the steps for the OpenUI and OpenAPI changes.*Install "
-            r"angular-django2@0\.7\.0",
+            r"angular-django2@0\.7\.1",
         ):
             load_ngdj_mapping(_change_set(openui=openui), self.current.project_config)
 

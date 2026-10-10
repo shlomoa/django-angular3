@@ -76,6 +76,25 @@ class ScaffoldTests(unittest.TestCase):
         )
         self.assertEqual(validate_openui_document(document), [])
 
+    def test_tutorial_openui_document_has_the_compilable_shape(self) -> None:
+        # ngdj's material-app rejects a DashboardPage inside the Application: the pages
+        # are siblings of the Application under an html root.
+        document = load_document(
+            ROOT / "django_angular3" / "examples" / "01_simple_crm" / "app.openui.json"
+        )
+        self.assertEqual(document["type"], "html")
+        children = document["children"]
+        applications = [child for child in children if child["type"] == "Application"]
+        self.assertEqual(len(applications), 1)
+        self.assertEqual(
+            [child["type"] for child in applications[0]["children"]],
+            ["Routing", "Navigation"],
+        )
+        self.assertEqual(
+            [child["id"] for child in children if child["type"] == "DashboardPage"],
+            ["customersPage", "productsPage"],
+        )
+
     def test_tutorial_project_config_is_valid(self) -> None:
         config = load_project_config(
             ROOT
@@ -426,7 +445,8 @@ class ScaffoldTests(unittest.TestCase):
                 ),
                 "input": "../openapi/example.openapi.json",
                 "output": "../../../../scratch/angular/src/app/api",
-                "serviceSuffix": "Api",
+                "services": True,
+                "serviceSuffix": "ApiService",
                 "modelIndex": True,
             },
         )
@@ -470,6 +490,9 @@ class ScaffoldTests(unittest.TestCase):
             self.assertTrue((dest_path / TUTORIAL_PROJECT_CONFIG_FILENAME).is_file())
             self.assertTrue((dest_path / "app.openui.json").is_file())
             self.assertTrue((dest_path / "simple_crm" / "settings.py").is_file())
+            self.assertTrue(
+                (dest_path / "shop" / "migrations" / "0001_initial.py").is_file()
+            )
 
     def test_install_tutorial_serves_the_built_angular_application(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
