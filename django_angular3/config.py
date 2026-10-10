@@ -37,18 +37,27 @@ def project_config_path() -> str:
     return project_name
 
 
-def discover_project_config_path() -> Path:
-    """Return the canonical project configuration path for this runtime."""
+def project_directory() -> Path:
+    """The directory of the project's configuration files for this runtime.
+
+    ``settings.BASE_DIR`` in a configured Django runtime, otherwise the current
+    directory. Both the project configuration and the tool configuration live there.
+    """
     from django.core.exceptions import ImproperlyConfigured
 
     try:
         from django.conf import settings as django_settings
 
         if getattr(django_settings, "configured", False):
-            return Path(django_settings.BASE_DIR).resolve() / project_config_path()
+            return Path(django_settings.BASE_DIR).resolve()
     except (ImportError, ImproperlyConfigured, AttributeError):
         pass
-    return Path.cwd().resolve() / project_config_path()
+    return Path.cwd().resolve()
+
+
+def discover_project_config_path() -> Path:
+    """Return the canonical project configuration path for this runtime."""
+    return project_directory() / project_config_path()
 
 
 def load_project_config(path: str | Path | None = None) -> ProjectConfig:

@@ -76,6 +76,13 @@ its own containing directory. The current configuration therefore selects the
 candidate artifacts, while the previous configuration independently selects
 the accepted baseline artifacts.
 
+`django-angular3.json`, the static tool configuration, is discovered in the same
+directory as the project configuration (`settings.BASE_DIR` in a configured Django
+runtime, otherwise the current working directory). It is mandatory: there is no
+fallback to a packaged file or to defaults in code, and every command that reads it
+fails when it is missing or invalid. The packaged file is only the template that
+`install-tutorial` copies.
+
 The browser files that `ng_build` leaves, and that `django_angular3.spa` serves from
 Django, are located by configuration only: `artifacts.angularWorkspace` of the project
 configuration plus the mandatory `angular.build.browserOutputPath` of

@@ -19,7 +19,7 @@ Nothing is set in the Django settings. The directory is configuration, found fro
 ``settings.BASE_DIR`` like every other command: the workspace is
 ``artifacts.angularWorkspace`` of ``django-angular3-<project>.json`` and the rest is the
 mandatory ``angular.build.browserOutputPath`` of ``django-angular3.json``, which sits
-next to it.
+next to it. Neither file has a fallback.
 
 The view reads the files through Django. That suits development, tests and small
 deployments; behind real traffic, serve the same directory with a reverse proxy or a
@@ -40,11 +40,7 @@ from django.views.static import serve
 
 from .angular import angular_browser_output_dir
 from .config import ConfigError, load_project_config
-from .settings import (
-    DEFAULT_ANGULAR_SETTINGS,
-    AngularCommandError,
-    load_angular_settings,
-)
+from .settings import AngularCommandError, load_angular_settings
 
 DEFAULT_RESERVED_PREFIXES: tuple[str, ...] = (
     "api/",
@@ -59,10 +55,7 @@ def _browser_output_dir() -> Path:
     """The existing browser output directory, or what is missing from the setup."""
     try:
         config = load_project_config()
-        tool_config = (
-            config.config_path.parent / DEFAULT_ANGULAR_SETTINGS["config_path"]
-        )
-        settings = load_angular_settings(config_path=tool_config)
+        settings = load_angular_settings()
     except (ConfigError, AngularCommandError, RuntimeError) as exc:
         raise ImproperlyConfigured(
             f"The Angular browser output directory cannot be calculated: {exc}"

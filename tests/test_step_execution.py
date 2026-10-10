@@ -45,6 +45,7 @@ from django_angular3.step_bridge import (
 from django_angular3.step_execution import EVIDENCE_FILE_NAME
 from tests.test_build_app import _change_set, _project_name_created
 from tests.test_command_translation import FIXTURE_MAPPING, _openui_changes
+from tests.tool_config import use_tool_configuration_template
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
@@ -111,6 +112,10 @@ def _tree_digest(root: Path) -> dict[str, str]:
         )
         for path in sorted(root.rglob("*"))
     }
+
+
+def setUpModule() -> None:
+    use_tool_configuration_template()
 
 
 class CrosswalkTests(unittest.TestCase):

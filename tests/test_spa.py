@@ -17,14 +17,13 @@ import django
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, override_settings
 
-from django_angular3.settings import PACKAGE_DEFAULT_CONFIG_PATH
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
 django.setup()
 
+from tests.tool_config import TEMPLATE  # noqa: E402
+
 INDEX_HTML = '<!doctype html><html><head><base href="/"></head><body>app</body></html>'
 OUTPUT = "out/shop/browser"
-PACKAGED = json.loads(PACKAGE_DEFAULT_CONFIG_PATH.read_text(encoding="utf-8"))
 
 
 def write_project(
@@ -49,7 +48,7 @@ def write_project(
         encoding="utf-8",
     )
     if tool_configuration:
-        tool = copy.deepcopy(PACKAGED)
+        tool = copy.deepcopy(TEMPLATE)
         if output is None:
             del tool["angular"]["build"]["browserOutputPath"]
         else:
@@ -167,7 +166,7 @@ class AngularAppViewConfigurationTests(ProjectTestCase):
     def test_the_tool_configuration_is_needed(self) -> None:
         write_project(self.root, tool_configuration=False)
 
-        with self.assertRaisesRegex(ImproperlyConfigured, "browserOutputPath"):
+        with self.assertRaisesRegex(ImproperlyConfigured, "mandatory"):
             self.client.get("/customers")
 
     def test_the_project_configuration_is_needed(self) -> None:

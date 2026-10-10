@@ -8,6 +8,18 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** `django-angular3.json` is mandatory and has no fallback. It is found next to the
+  project configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the current
+  directory) and every command that reads it (`ng_*`, `build_app`, `export_schema`, ...) fails with
+  an error naming the expected path when it is missing. Before, a project without one silently
+  used the packaged example (title `Example API`, the tutorial's output path and pin), and the
+  tool configuration was looked up in the current directory only. The packaged file is now only the
+  template `install-tutorial` copies. `tool.ngAddPackage` is mandatory too, and the Python defaults
+  for the Angular settings and the pin are gone; only the platform names of the executables remain
+  as defaults.
+
 ### Added
 
 - `django_angular3.spa.angular_urlpatterns()`: a catch-all view that serves the built Angular

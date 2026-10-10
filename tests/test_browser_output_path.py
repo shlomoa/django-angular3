@@ -18,30 +18,29 @@ from django_angular3.angular import (
 from django_angular3.cli import main
 from django_angular3.config import load_project_config
 from django_angular3.settings import (
-    PACKAGE_DEFAULT_CONFIG_PATH,
     AngularCommandError,
     load_angular_settings,
     validate_tool_configuration,
 )
+from tests.tool_config import TEMPLATE
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 PROJECT_CONFIG_PATH = (
     Path(__file__).parent / "fixtures" / "django-angular3-project.json"
 )
-PACKAGED = json.loads(PACKAGE_DEFAULT_CONFIG_PATH.read_text(encoding="utf-8"))
 
 
 def tool_configuration(**build: object) -> dict[str, object]:
     """The packaged tool configuration with ``angular.build`` replaced by ``build``."""
-    document = copy.deepcopy(PACKAGED)
+    document = copy.deepcopy(TEMPLATE)
     document["angular"]["build"] = build
     return document
 
 
 class BrowserOutputPathValidationTests(unittest.TestCase):
     def test_the_packaged_configuration_defines_it(self) -> None:
-        self.assertEqual(validate_tool_configuration(PACKAGED), [])
-        self.assertIn("browserOutputPath", PACKAGED["angular"]["build"])
+        self.assertEqual(validate_tool_configuration(TEMPLATE), [])
+        self.assertIn("browserOutputPath", TEMPLATE["angular"]["build"])
 
     def test_it_is_mandatory(self) -> None:
         errors = validate_tool_configuration(tool_configuration(configuration="x"))
@@ -103,12 +102,6 @@ class BrowserOutputPathLoadingTests(unittest.TestCase):
 
         with self.assertRaisesRegex(AngularCommandError, "browserOutputPath"):
             load_angular_settings(config_path=path)
-
-    def test_there_is_no_default_in_code(self) -> None:
-        missing = self.root / "absent" / "django-angular3.json"
-
-        with self.assertRaisesRegex(AngularCommandError, "browserOutputPath"):
-            load_angular_settings(config_path=missing)
 
     def test_the_directory_is_the_workspace_plus_the_setting(self) -> None:
         project = load_project_config(PROJECT_CONFIG_PATH)

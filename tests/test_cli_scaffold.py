@@ -17,13 +17,14 @@ from django_angular3.config import (
 )
 from django_angular3.config_changes import compare_static_config
 from django_angular3.documents import load_document
-from django_angular3.settings import DEFAULT_NG_ADD_PACKAGE, load_angular_settings
+from django_angular3.settings import load_angular_settings
 from django_angular3.validation import (
     validate_openapi_document,
     validate_openui_document,
     validate_project_config,
 )
 from tests.openapi_fixtures import valid_openapi_document
+from tests.tool_config import use_tool_configuration_template
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -45,6 +46,10 @@ def _example_project_config_path(example_directory: Path) -> Path:
             f"{example_directory}, found {config_paths}."
         )
     return config_paths[0]
+
+
+def setUpModule() -> None:
+    use_tool_configuration_template()
 
 
 class ScaffoldTests(unittest.TestCase):
@@ -87,9 +92,10 @@ class ScaffoldTests(unittest.TestCase):
                 static_config = json.loads(
                     static_config_path.read_text(encoding="utf-8")
                 )
-                self.assertEqual(
+                # A registry name pinned to one exact version, never a range or a path.
+                self.assertRegex(
                     static_config["tool"]["ngAddPackage"],
-                    DEFAULT_NG_ADD_PACKAGE,
+                    r"^angular-django2@\d+\.\d+\.\d+$",
                 )
 
     def test_project_config_resolves_paths(self) -> None:
