@@ -324,7 +324,41 @@ The production-like topology of §5.1 is not provided by either repository. A pr
 | The `/ng/build` page that the repository instructions require returns 404 | djng | same |
 | The generated client uses relative `/api/v1/...` paths and the `csrftoken` cookie with the `X-CSRFToken` header, which match Django's defaults | none | same |
 
-The production-like topology stays open under completion criterion 6 below.
+The production-like topology was open at the time of this run; the next section closes it.
+
+#### Django serves the built application (2026-10-10)
+
+`django_angular3.spa` serves the bundle `ng_build` leaves in `dist/<app>/browser` from Django
+on the same origin as the API (README, "Serving the built application"). The tutorial project
+is wired with it, and stage 6b of the real-tools flow starts Django alone, with no Angular dev
+server and no proxy, and drives the bundle with Playwright: the dev-server specs P1–P4 again,
+and D1–D6 (`tests/e2e/specs/django-served.spec.ts`).
+
+| Check | Result |
+|---|---|
+| `python -m unittest discover -s tests -p 'test*.py'` with `DJNG_REQUIRE_NGDJ=1`, `ruff check`, `ruff format --check` | Passed: 320 tests, 4 skipped; `tests/test_spa.py` has 12 of them |
+| E2E Track W, stages 0–6b | Passed on Node 24.21.0 (local run and the `e2e` job of the pull request): P1–P4 and D1–D6, 12 of 12 |
+| `E2E_BREAK=django-dist`, `model-field`, `openui-route`, `proxy` | Failed at stages 6b, 2, 6 and 6, as required |
+| E2E Track B (`build_app` phase 2) | Not run locally, as before ([#241](https://github.com/shlomoa/django-angular3/issues/241)) |
+
+Findings of the 2026-10-09 probe, as they stand now:
+
+| Finding | Status |
+|---|---|
+| `GET /` and `GET /customers` returned 404 | Resolved: 200 with `index.html`; D1 hard-refreshes `/customers` and `/products` |
+| No static-file or base-href strategy | Resolved without a build flag: the bundle is served from the root, which matches the `<base href="/">` that `ngdj` emits. A deployment under a path prefix would still need `--base-href` and `--deploy-url`, which neither repository passes |
+| No CORS configuration | Not needed on one origin: D5 asserts every API call goes to the Django origin and that Django sends no `Access-Control-*` header. A separate Angular origin would still need `corsheaders`, which is not provided |
+| The generated client uses relative `/api/v1/...` paths and the `csrftoken` / `X-CSRFToken` names | Unchanged, and now exercised through Django (D3, D5) |
+| The `/ng/build` page that the repository instructions require | Still open: the page does not exist. `GET /ng/build` now returns the application's `index.html` through the fallback, which is not that page |
+
+The view reads the files through Django. That suits development, tests and small
+deployments; behind real traffic a reverse proxy or a static-file layer serves the same
+directory. CSRF-protected writes and sign-in are not covered by this stage: the specs only
+read, and the tutorial API allows anonymous access.
+
+Evidence of the stage is under `build/e2e-evidence/`: `playwright-django-report/`,
+`playwright-django-results/` (traces) and `screenshots-django/` (`D1-refresh-customers`,
+`D1-refresh-products`, `D2-products`, `D4-admin`, and the P1–P4 set).
 
 ### Implementation sequence
 
