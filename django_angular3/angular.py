@@ -541,7 +541,7 @@ def build_ng_openapi_setup_invocations(
     config: ProjectConfig,
     settings: DjangoAngularSettings,
     *,
-    output_path: str = "src/app/api",
+    output_path: str | None = None,
     helpers_path: str | None = None,
     skip_helpers: bool = False,
     skip_tests: bool = False,
@@ -550,6 +550,10 @@ def build_ng_openapi_setup_invocations(
 ) -> list[AngularInvocation]:
     """Bootstrap ng-openapi-gen and Django integration helpers via the ngdj
     ``openapi-setup`` schematic."""
+    if output_path is None:
+        output_path = default_api_client_output(config)
+    else:
+        _validate_relative_path(output_path, "API client output path")
     argv: list[str] = [
         settings.ng_executable,
         "generate",
@@ -581,21 +585,30 @@ def build_ng_data_service_invocations(
     *,
     resource: str,
     project: str | None = None,
+    path: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     """Generate a typed data-service wrapper for a resource via the ngdj
-    ``data-service`` schematic."""
+    ``data-service`` schematic.
+
+    ``path`` is the destination the schematic receives as ``--path``; without it
+    the schematic writes to its own default under the workspace root.
+    """
     target_project = project or config.project_name
+    argv: list[str] = [
+        settings.ng_executable,
+        "generate",
+        "angular-django2:data-service",
+        resource,
+        f"--project={target_project}",
+    ]
+    if path is not None:
+        _validate_relative_path(path, "Data service path")
+        argv.append(f"--path={path}")
     return [
         AngularInvocation(
             command_name="ng_data_service",
-            argv=(
-                settings.ng_executable,
-                "generate",
-                "angular-django2:data-service",
-                resource,
-                f"--project={target_project}",
-            ),
+            argv=tuple(argv),
             cwd=config.angular_workspace,
         )
     ]
@@ -643,7 +656,9 @@ def _write_ng_openapi_gen_config(
 ) -> Path:
     """Write the derived, per-run ng-openapi-gen configuration file."""
     generated_config_path = config.angular_workspace / "ng-openapi-gen.json"
-    output_path = config.angular_workspace / "generated" / "ng-openapi-gen"
+    output_path = _configured_api_client_output(
+        generated_config_path
+    ) or default_api_client_output(config)
     document: dict[str, object] = {
         **load_ng_openapi_gen_settings(settings.config_path),
         "$schema": (
@@ -651,13 +666,63 @@ def _write_ng_openapi_gen_config(
             "master/ng-openapi-gen-schema.json"
         ),
         "input": str(config.openapi_schema),
-        "output": str(output_path),
+        "output": output_path,
     }
     generated_config_path.parent.mkdir(parents=True, exist_ok=True)
     generated_config_path.write_text(
         json.dumps(document, indent=2) + "\n", encoding="utf-8"
     )
     return generated_config_path
+
+
+def default_api_client_output(config: ProjectConfig) -> str:
+    """The workspace-relative directory of the generated API client.
+
+    It is inside the application project: the project's ``sourceRoot`` from
+    ``angular.json``, else ``projects/<name>/src`` when the workspace has that
+    project directory, else the workspace's own ``src``.
+    """
+    source_root = _project_source_root(config)
+    if source_root is None:
+        project_dir = config.angular_workspace / "projects" / config.project_name
+        source_root = (
+            f"projects/{config.project_name}/src" if project_dir.is_dir() else "src"
+        )
+    return f"{source_root}/app/api"
+
+
+def _project_source_root(config: ProjectConfig) -> str | None:
+    angular_json = config.angular_workspace / "angular.json"
+    try:
+        document = json.loads(angular_json.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    projects = document.get("projects") if isinstance(document, dict) else None
+    project = projects.get(config.project_name) if isinstance(projects, dict) else None
+    if not isinstance(project, dict):
+        return None
+    source_root = project.get("sourceRoot")
+    if not isinstance(source_root, str) or not source_root.strip():
+        return None
+    source_root = source_root.replace("\\", "/").strip("/")
+    try:
+        _validate_relative_path(source_root, "Project sourceRoot")
+    except AngularCommandError:
+        return None
+    return source_root
+
+
+def _configured_api_client_output(config_path: Path) -> str | None:
+    """The ``output`` an earlier ``ng_openapi_setup`` wrote, which ``generate:api``
+    also uses, so that ``ng_openapi_gen`` and ``generate:api`` agree."""
+    try:
+        document = json.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    output = document.get("output") if isinstance(document, dict) else None
+    if isinstance(output, str) and output.strip():
+        return output
+    return None
 
 
 def build_ng_add_invocations(
