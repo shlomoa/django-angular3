@@ -76,10 +76,11 @@ its own containing directory. The current configuration therefore selects the
 candidate artifacts, while the previous configuration independently selects
 the accepted baseline artifacts.
 
-The browser bundle that `ng_build` leaves, and that `django_angular3.spa` serves
-from Django, is calculated from the current configuration as
-`<artifacts.angularWorkspace>/dist/<project.name>/browser`
-(`ProjectConfig.angular_dist`); the `ANGULAR_DIST_DIR` Django setting overrides it.
+The browser files that `ng_build` leaves, and that `django_angular3.spa` serves from
+Django, are located by configuration only: `artifacts.angularWorkspace` of the project
+configuration plus the mandatory `angular.build.browserOutputPath` of
+`django-angular3.json`, a relative path inside the workspace. The tool configuration has no
+default for it, and every command that runs Angular tooling fails when it is missing.
 
 There is no separate previous-OpenUI argument or `.previous` OpenUI filename
 convention. A project-configuration selector change and a structural change in

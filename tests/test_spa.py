@@ -1,5 +1,11 @@
-"""Tests of the view that serves the built Angular application from Django."""
+"""Tests of the view that serves the built Angular application from Django.
 
+Every test builds a project directory of its own: the project configuration, the tool
+configuration and a browser output directory, so the view is exercised on the real
+configuration calculation and nothing is set in the Django settings.
+"""
+
+import copy
 import json
 import os
 import tempfile
@@ -11,31 +17,70 @@ import django
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, override_settings
 
+from django_angular3.settings import PACKAGE_DEFAULT_CONFIG_PATH
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.test_settings")
 django.setup()
 
 INDEX_HTML = '<!doctype html><html><head><base href="/"></head><body>app</body></html>'
+OUTPUT = "out/shop/browser"
+PACKAGED = json.loads(PACKAGE_DEFAULT_CONFIG_PATH.read_text(encoding="utf-8"))
 
 
-class AngularAppViewTests(SimpleTestCase):
-    """The view works on a ``dist/<app>/browser`` directory the test builds itself."""
+def write_project(
+    root: Path, *, output: str | None = OUTPUT, tool_configuration: bool = True
+) -> Path:
+    """Write a ``shop`` project under ``root``; return its browser output directory.
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
-        cls._temporary = tempfile.TemporaryDirectory()
-        cls.addClassCleanup(cls._temporary.cleanup)
-        cls.dist = Path(cls._temporary.name) / "browser"
-        cls.dist.mkdir()
-        (cls.dist / "index.html").write_text(INDEX_HTML, encoding="utf-8")
-        (cls.dist / "main-ABC123.js").write_text("console.log(1);", encoding="utf-8")
-        (cls.dist / "styles-XYZ789.css").write_text("body{}", encoding="utf-8")
-        (Path(cls._temporary.name) / "secret.txt").write_text("secret")
-        cls.override = override_settings(
-            ROOT_URLCONF="tests.spa_urls", ANGULAR_DIST_DIR=cls.dist
+    ``output`` is the ``angular.build.browserOutputPath`` of the tool configuration,
+    left out when ``None``.
+    """
+    (root / "django-angular3-shop.json").write_text(
+        json.dumps(
+            {
+                "project": {"name": "shop"},
+                "artifacts": {
+                    "openapiSchema": "schema.json",
+                    "openuiSpecification": "app.openui.json",
+                    "angularWorkspace": "frontend/ng",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    if tool_configuration:
+        tool = copy.deepcopy(PACKAGED)
+        if output is None:
+            del tool["angular"]["build"]["browserOutputPath"]
+        else:
+            tool["angular"]["build"]["browserOutputPath"] = output
+        (root / "django-angular3.json").write_text(json.dumps(tool), encoding="utf-8")
+    return root / "frontend" / "ng" / (output or OUTPUT)
+
+
+def build(directory: Path) -> None:
+    """Leave a browser output like the one ``ng_build`` leaves."""
+    directory.mkdir(parents=True)
+    (directory / "index.html").write_text(INDEX_HTML, encoding="utf-8")
+    (directory / "main-ABC123.js").write_text("console.log(1);", encoding="utf-8")
+    (directory / "styles-XYZ789.css").write_text("body{}", encoding="utf-8")
+
+
+class ProjectTestCase(SimpleTestCase):
+    """Runs a test inside a project directory found from ``settings.BASE_DIR``."""
+
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        override = override_settings(ROOT_URLCONF="tests.spa_urls", BASE_DIR=self.root)
+        override.enable()
+        self.addCleanup(override.disable)
+        environment = patch.dict(
+            os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}
         )
-        cls.override.enable()
-        cls.addClassCleanup(cls.override.disable)
+        environment.start()
+        self.addCleanup(environment.stop)
 
     def fetch(self, path: str, **extra: object):
         """GET ``path`` and close the file the response streams when the test ends."""
@@ -43,8 +88,16 @@ class AngularAppViewTests(SimpleTestCase):
         self.addCleanup(response.close)
         return response
 
+
+class AngularAppViewTests(ProjectTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        build(write_project(self.root))
+        (self.root / "secret.txt").write_text("secret")
+
     def test_root_serves_index_html(self) -> None:
         response = self.fetch("/")
+
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response["Content-Type"])
         self.assertEqual(b"".join(response.streaming_content).decode(), INDEX_HTML)
@@ -71,8 +124,7 @@ class AngularAppViewTests(SimpleTestCase):
         self.assertEqual(self.fetch("/missing/chunk.css").status_code, 404)
 
     def test_django_routes_declared_before_the_view_win(self) -> None:
-        response = self.fetch("/api/v1/ping/")
-        self.assertEqual(response.json(), {"ok": True})
+        self.assertEqual(self.fetch("/api/v1/ping/").json(), {"ok": True})
 
     def test_unmatched_reserved_prefixes_are_404_not_index_html(self) -> None:
         for route in ("/api/v1/nope/", "/admin/nope/", "/static/nope", "/api-auth/x"):
@@ -82,8 +134,7 @@ class AngularAppViewTests(SimpleTestCase):
     def test_path_traversal_is_refused(self) -> None:
         for route in ("/../secret.txt", "/%2e%2e/secret.txt", "/..%2fsecret.txt"):
             with self.subTest(route=route):
-                response = self.fetch(route)
-                self.assertNotEqual(response.status_code, 200, route)
+                self.assertNotEqual(self.fetch(route).status_code, 200, route)
 
     def test_only_get_and_head_are_allowed(self) -> None:
         head = self.client.head("/customers")
@@ -99,101 +150,44 @@ class AngularAppViewTests(SimpleTestCase):
         self.assertEqual(second.status_code, 304)
 
 
-class AngularAppViewConfigurationTests(SimpleTestCase):
-    """A missing build is reported, not answered with a silent 404."""
+class AngularAppViewConfigurationTests(ProjectTestCase):
+    """What is missing is reported, not answered with a silent 404."""
 
-    def test_unknown_bundle_names_the_setting_and_the_project_configuration(
-        self,
-    ) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            with override_settings(ROOT_URLCONF="tests.spa_urls", BASE_DIR=temporary):
-                with patch.dict(
-                    os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}
-                ):
-                    with self.assertRaises(ImproperlyConfigured) as raised:
-                        self.client.get("/customers")
-        self.assertIn("ANGULAR_DIST_DIR", str(raised.exception))
-        self.assertIn("django-angular3-shop.json", str(raised.exception))
+    def test_the_directory_is_the_workspace_plus_the_configured_path(self) -> None:
+        build(write_project(self.root, output="other/place/browser"))
+
+        self.assertEqual(self.fetch("/customers").status_code, 200)
+
+    def test_the_setting_is_mandatory(self) -> None:
+        build(write_project(self.root, output=None))
+
+        with self.assertRaisesRegex(ImproperlyConfigured, "browserOutputPath"):
+            self.client.get("/customers")
+
+    def test_the_tool_configuration_is_needed(self) -> None:
+        write_project(self.root, tool_configuration=False)
+
+        with self.assertRaisesRegex(ImproperlyConfigured, "browserOutputPath"):
+            self.client.get("/customers")
+
+    def test_the_project_configuration_is_needed(self) -> None:
+        with self.assertRaisesRegex(ImproperlyConfigured, "django-angular3-shop.json"):
+            self.client.get("/customers")
 
     def test_missing_directory_names_the_path_and_the_build_command(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            missing = Path(temporary) / "nowhere"
-            with override_settings(
-                ROOT_URLCONF="tests.spa_urls", ANGULAR_DIST_DIR=missing
-            ):
-                with self.assertRaises(ImproperlyConfigured) as raised:
-                    self.client.get("/customers")
-        self.assertIn(str(missing), str(raised.exception))
+        directory = write_project(self.root)
+
+        with self.assertRaises(ImproperlyConfigured) as raised:
+            self.client.get("/customers")
+
+        self.assertIn(str(directory.resolve()), str(raised.exception))
         self.assertIn("ng_build", str(raised.exception))
 
     def test_directory_without_index_html_is_reported(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            with override_settings(
-                ROOT_URLCONF="tests.spa_urls", ANGULAR_DIST_DIR=Path(temporary)
-            ):
-                with self.assertRaisesRegex(ImproperlyConfigured, "index.html"):
-                    self.client.get("/")
+        write_project(self.root).mkdir(parents=True)
 
-
-class AngularAppViewProjectConfigurationTests(SimpleTestCase):
-    """Without ANGULAR_DIST_DIR the bundle comes from the project configuration."""
-
-    def setUp(self) -> None:
-        temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name)
-        (self.root / "django-angular3-shop.json").write_text(
-            json.dumps(
-                {
-                    "project": {"name": "shop"},
-                    "artifacts": {
-                        "openapiSchema": "schema.json",
-                        "openuiSpecification": "app.openui.json",
-                        "angularWorkspace": "frontend/ng",
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
-        bundle = self.root / "frontend" / "ng" / "dist" / "shop" / "browser"
-        bundle.mkdir(parents=True)
-        (bundle / "index.html").write_text(INDEX_HTML, encoding="utf-8")
-        (bundle / "main-ABC123.js").write_text("console.log(1);", encoding="utf-8")
-
-    def fetch(self, path: str):
-        response = self.client.get(path)
-        self.addCleanup(response.close)
-        return response
-
-    def test_bundle_comes_from_the_project_configuration(self) -> None:
-        with override_settings(ROOT_URLCONF="tests.spa_urls", BASE_DIR=self.root):
-            with patch.dict(os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}):
-                page = self.fetch("/customers")
-                asset = self.fetch("/main-ABC123.js")
-
-        self.assertEqual(b"".join(page.streaming_content).decode(), INDEX_HTML)
-        self.assertEqual(asset.status_code, 200)
-
-    def test_the_setting_overrides_the_project_configuration(self) -> None:
-        other = self.root / "other"
-        other.mkdir()
-        (other / "index.html").write_text("<p>other</p>", encoding="utf-8")
-
-        with override_settings(
-            ROOT_URLCONF="tests.spa_urls", BASE_DIR=self.root, ANGULAR_DIST_DIR=other
-        ):
-            with patch.dict(os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}):
-                page = self.fetch("/customers")
-
-        self.assertEqual(b"".join(page.streaming_content).decode(), "<p>other</p>")
-
-    def test_an_invalid_project_configuration_is_reported(self) -> None:
-        (self.root / "django-angular3-shop.json").write_text("{}", encoding="utf-8")
-
-        with override_settings(ROOT_URLCONF="tests.spa_urls", BASE_DIR=self.root):
-            with patch.dict(os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}):
-                with self.assertRaisesRegex(ImproperlyConfigured, "project"):
-                    self.client.get("/customers")
+        with self.assertRaisesRegex(ImproperlyConfigured, "index.html"):
+            self.client.get("/")
 
 
 if __name__ == "__main__":

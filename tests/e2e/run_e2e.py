@@ -58,7 +58,10 @@ from pathlib import Path
 from typing import Any
 
 from django_angular3 import tools
-from django_angular3.angular import build_ngdj_schematic_invocations
+from django_angular3.angular import (
+    angular_browser_output_dir,
+    build_ngdj_schematic_invocations,
+)
 from django_angular3.config import load_project_config
 from django_angular3.settings import load_angular_settings
 from django_angular3.step_bridge import stage_document, workspace_document_path
@@ -815,24 +818,24 @@ class Flow:
         and ``django_angular3.spa`` (wired into the tutorial's ``urls.py``) serves the
         bundle that stage 5 built from the same origin as the API.
         """
-        # The tutorial settings set no ANGULAR_DIST_DIR: the bundle Django serves is
-        # calculated from the project configuration, and must be the one stage 5 built.
-        bundle = load_project_config(self.project / PROJECT_CONFIG).angular_dist
-        self.check(
-            bundle == (self.workspace / "dist" / PROJECT / "browser").resolve(),
-            f"The project configuration calculates the bundle {bundle}, not the one "
-            f"ng_build builds in {self.workspace}.",
-        )
+        # Where Django looks is configuration only: artifacts.angularWorkspace of the
+        # project configuration plus the mandatory angular.build.browserOutputPath of the
+        # tool configuration. It must be where stage 5 left the build.
+        bundle = angular_browser_output_dir(
+            load_project_config(self.project / PROJECT_CONFIG),
+            load_angular_settings(config_path=self.project / TOOL_CONFIG),
+        ).resolve()
         self.check(
             (bundle / "index.html").is_file(),
-            f"The build left no {bundle / 'index.html'} for Django to serve.",
+            f"The configuration calculates {bundle} for the browser files, but the "
+            f"build left no {bundle / 'index.html'} there.",
         )
         settings_text = (self.project / PROJECT / "settings.py").read_text(
             encoding="utf-8"
         )
         self.check(
-            "\nANGULAR_DIST_DIR" not in settings_text,
-            "The installed tutorial settings hard-code ANGULAR_DIST_DIR.",
+            "ANGULAR_DIST_DIR" not in settings_text,
+            "The installed tutorial settings define the bundle directory.",
         )
         if self.break_name == "django-dist":
             bundle.rename(bundle.with_name("browser.moved"))

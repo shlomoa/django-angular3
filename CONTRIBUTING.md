@@ -127,7 +127,7 @@ Environment variables:
 | `E2E_ANGULAR_CLI` | Angular CLI range installed when `ng` is missing (default `^22`) |
 | `E2E_CHROMIUM_PATH` | Chromium executable for Playwright |
 | `E2E_PLAYWRIGHT_INSTALL=1` | Run `playwright install chromium` first |
-| `E2E_BREAK` | `model-field`, `openui-route`, `proxy` or `django-dist`: inject a deliberate break; the run must fail at stage 2, 6, 6 (P1, P2) and 6b respectively (`django-dist` moves the built bundle away from the directory the project configuration calculates) |
+| `E2E_BREAK` | `model-field`, `openui-route`, `proxy` or `django-dist`: inject a deliberate break; the run must fail at stage 2, 6, 6 (P1, P2) and 6b respectively (`django-dist` moves the built browser files away from the configured `angular.build.browserOutputPath`) |
 
 The first run showed differences between what the tools do and what their documentation or
 the flow's design assumed; they are recorded in

@@ -24,7 +24,8 @@
       "zoneless": true
     },
     "build": {
-      "configuration": "production"
+      "configuration": "production",
+      "browserOutputPath": "dist/simple_crm/browser"
     }
   },
   "tool": {

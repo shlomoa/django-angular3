@@ -215,9 +215,9 @@ itself.
 
 ### Serving the built application
 
-`manage.py ng_build` leaves the bundle in `<workspace>/dist/<project>/browser`. To serve it
-from the same origin as the API, as the production deployment of the specification
-requires, add the Angular patterns **last** in `urls.py`, so that Django's own routes win:
+To serve the browser files that `manage.py ng_build` leaves from the same origin as the API,
+as the production deployment of the specification requires, add the Angular patterns
+**last** in `urls.py`, so that Django's own routes win:
 
 ```python
 # urls.py
@@ -230,12 +230,21 @@ urlpatterns = [
 ]
 ```
 
-There is nothing to configure in `settings.py`: the bundle directory is calculated from the
-project configuration, `django-angular3-<project>.json`, as
-`<artifacts.angularWorkspace>/dist/<project.name>/browser` (`ProjectConfig.angular_dist`),
-the workspace that `ng_build` builds in. The file is found from `settings.BASE_DIR`, as for
-every other command. Set `ANGULAR_DIST_DIR` in the Django settings only to serve a bundle
-from somewhere else; it takes precedence.
+Nothing is set in `settings.py`. Where the files are is configuration, in two places:
+
+- `artifacts.angularWorkspace` of the project configuration, `django-angular3-<project>.json`,
+  is the workspace root (for example `build/angular`);
+- `angular.build.browserOutputPath` of `django-angular3.json` is the directory inside the
+  workspace that `ng_build` leaves the browser files in (for example
+  `dist/simple_crm/browser`). It is **mandatory** and has no default: a tool configuration
+  without it is rejected, and every command that runs Angular tooling (`ng_new`,
+  `ng_build`, ...) fails until it is set. It must be a relative path inside the workspace.
+
+The directory is `<angularWorkspace>/<browserOutputPath>`. The project configuration is found
+from `settings.BASE_DIR`, as for every other command, and the tool configuration is read
+from the same directory. The tutorial project's `django-angular3.json` sets
+`"browserOutputPath": "dist/simple_crm/browser"`; set the value of your own application,
+which is where `ng build` writes the browser files of your Angular project.
 
 A request is answered with the bundle file of that name (`main-*.js`, `styles-*.css`), with
 `index.html` for any other path, so a hard refresh on an Angular route such as

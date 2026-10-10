@@ -75,6 +75,18 @@ def resolve_angular_command_context(
     return config, settings, builder(config, settings, **options)
 
 
+def angular_browser_output_dir(
+    config: ProjectConfig, settings: DjangoAngularSettings
+) -> Path:
+    """The directory ``ng_build`` leaves the browser files in.
+
+    Both parts are configuration: the workspace is ``artifacts.angularWorkspace`` of the
+    project configuration and the rest is ``angular.build.browserOutputPath`` of
+    ``django-angular3.json``.
+    """
+    return config.angular_workspace / settings.browser_output_path
+
+
 def format_invocations(
     invocations: list[AngularInvocation],
     config: ProjectConfig | None = None,

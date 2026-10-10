@@ -25,15 +25,6 @@ class ProjectConfig:
     openui_specification: Path
     angular_workspace: Path
 
-    @property
-    def angular_dist(self) -> Path:
-        """The browser bundle ``ng_build`` leaves for this project.
-
-        ``ng_build`` builds the application named like the project with Angular's
-        default output, so the bundle is ``<workspace>/dist/<project>/browser``.
-        """
-        return self.angular_workspace / "dist" / self.project_name / "browser"
-
 
 def project_config_path() -> str:
     """Return the project name calculated from Django environment"""

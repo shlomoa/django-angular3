@@ -1,7 +1,8 @@
 import os
+import re
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from types import SimpleNamespace
 from typing import Any
 
@@ -107,6 +108,8 @@ class DjangoAngularSettings(SimpleNamespace):
         ng_executable (str): Angular CLI executable name or path.
         package_manager (str): Angular package manager setting.
         build_configuration (str): Angular build configuration name.
+        browser_output_path (str): Workspace-relative directory that ``ng_build``
+            leaves the browser files in. Mandatory: it has no default.
         style (str): Default Angular stylesheet format.
         routing (bool): Whether generated applications enable routing.
         ssr (bool): Whether generated applications enable server-side rendering.
@@ -125,6 +128,12 @@ def load_angular_settings(
     data.update(_load_tool_configuration(config_path))
     if overrides:
         data.update(overrides)
+    if "browser_output_path" not in data:
+        raise AngularCommandError(
+            "angular.build.browserOutputPath is not configured: define it in "
+            "django-angular3.json (the workspace-relative directory that ng_build "
+            "leaves the browser files in)."
+        )
     return DjangoAngularSettings(**data)
 
 
@@ -165,6 +174,7 @@ def _load_tool_configuration(
         "ssr": application.get("ssr", False),
         "zoneless": application.get("zoneless", True),
         "build_configuration": build.get("configuration", "production"),
+        "browser_output_path": build["browserOutputPath"],
         "ng_add_package": tool.get("ngAddPackage", DEFAULT_NG_ADD_PACKAGE),
     }
     for config_key, setting_key in (
@@ -209,13 +219,16 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     _reject_unknown_keys(
         application, {"ssr", "zoneless"}, "angular.application", errors
     )
-    _reject_unknown_keys(build, {"configuration"}, "angular.build", errors)
+    _reject_unknown_keys(
+        build, {"configuration", "browserOutputPath"}, "angular.build", errors
+    )
     _require_string(workspace, "packageManager", "angular.workspace", errors)
     _require_string(workspace, "style", "angular.workspace", errors)
     _require_bool(workspace, "routing", "angular.workspace", errors)
     _require_bool(application, "ssr", "angular.application", errors)
     _require_bool(application, "zoneless", "angular.application", errors)
     _require_string(build, "configuration", "angular.build", errors)
+    _require_workspace_path(build, "browserOutputPath", "angular.build", errors)
 
     executables = _optional_mapping(tool, "executables")
     _reject_unknown_keys(
@@ -233,6 +246,24 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
     if "ngAddPackage" in tool:
         _require_string(tool, "ngAddPackage", "tool", errors)
     return errors
+
+
+def _require_workspace_path(
+    document: Mapping[str, object], key: str, section: str, errors: list[str]
+) -> None:
+    """A non-empty path relative to, and inside, the Angular workspace."""
+    _require_string(document, key, section, errors)
+    value = document.get(key)
+    if not isinstance(value, str) or not value.strip():
+        return
+    normalized = value.replace("\\", "/")
+    outside = (
+        normalized.startswith("/")
+        or re.match(r"[A-Za-z]:", normalized) is not None
+        or ".." in PurePosixPath(normalized).parts
+    )
+    if outside:
+        errors.append(f"{section}.{key} must be a relative path inside the workspace.")
 
 
 def _required_mapping(

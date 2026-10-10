@@ -1,9 +1,9 @@
 """Serve the built Angular application from Django on a single origin.
 
-``ng_build`` leaves the browser bundle in ``<workspace>/dist/<app>/browser``. The
-generated ``index.html`` declares ``<base href="/">`` and the generated client calls
-relative ``/api/...`` paths, so the bundle is served from the root of the same origin as
-the API: no proxy and no CORS configuration are needed.
+The generated ``index.html`` declares ``<base href="/">`` and the generated client calls
+relative ``/api/...`` paths, so the browser files that ``ng_build`` leaves are served
+from the root of the same origin as the API: no proxy and no CORS configuration are
+needed.
 
 Add the patterns last in the project's ``urls.py``, so that Django's own routes win::
 
@@ -15,11 +15,11 @@ Add the patterns last in the project's ``urls.py``, so that Django's own routes 
         *angular_urlpatterns(),
     ]
 
-The bundle directory is calculated from the project configuration
-(``django-angular3-<project>.json``) as
-``<artifacts.angularWorkspace>/dist/<project.name>/browser``, the workspace that
-``ng_build`` builds in. Set ``ANGULAR_DIST_DIR`` in the Django settings only to serve a
-bundle from somewhere else.
+Nothing is set in the Django settings. The directory is configuration, found from
+``settings.BASE_DIR`` like every other command: the workspace is
+``artifacts.angularWorkspace`` of ``django-angular3-<project>.json`` and the rest is the
+mandatory ``angular.build.browserOutputPath`` of ``django-angular3.json``, which sits
+next to it.
 
 The view reads the files through Django. That suits development, tests and small
 deployments; behind real traffic, serve the same directory with a reverse proxy or a
@@ -32,14 +32,19 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404, HttpRequest, HttpResponseBase
 from django.urls import URLPattern, re_path
 from django.views.decorators.http import require_http_methods
 from django.views.static import serve
 
+from .angular import angular_browser_output_dir
 from .config import ConfigError, load_project_config
+from .settings import (
+    DEFAULT_ANGULAR_SETTINGS,
+    AngularCommandError,
+    load_angular_settings,
+)
 
 DEFAULT_RESERVED_PREFIXES: tuple[str, ...] = (
     "api/",
@@ -50,13 +55,23 @@ DEFAULT_RESERVED_PREFIXES: tuple[str, ...] = (
 """Paths that belong to Django: when no route matched them, the answer is a 404."""
 
 
-def _resolve_dist_dir(dist_dir: str | Path | None) -> Path:
-    """Return the existing bundle directory, or explain what is missing."""
-    configured = dist_dir if dist_dir is not None else _configured_dist_dir()
-    root = Path(configured).resolve()
+def _browser_output_dir() -> Path:
+    """The existing browser output directory, or what is missing from the setup."""
+    try:
+        config = load_project_config()
+        tool_config = (
+            config.config_path.parent / DEFAULT_ANGULAR_SETTINGS["config_path"]
+        )
+        settings = load_angular_settings(config_path=tool_config)
+    except (ConfigError, AngularCommandError, RuntimeError) as exc:
+        raise ImproperlyConfigured(
+            f"The Angular browser output directory cannot be calculated: {exc}"
+        ) from exc
+
+    root = angular_browser_output_dir(config, settings).resolve()
     if not root.is_dir():
         raise ImproperlyConfigured(
-            f"The Angular bundle directory {root} does not exist. "
+            f"The Angular browser output directory {root} does not exist. "
             "Build the application with `manage.py ng_build`."
         )
     if not (root / "index.html").is_file():
@@ -67,53 +82,36 @@ def _resolve_dist_dir(dist_dir: str | Path | None) -> Path:
     return root
 
 
-def _configured_dist_dir() -> Path:
-    """The ``ANGULAR_DIST_DIR`` setting, else the project configuration's bundle."""
-    override = getattr(settings, "ANGULAR_DIST_DIR", None)
-    if override:
-        return Path(override)
-    try:
-        return load_project_config().angular_dist
-    except (ConfigError, RuntimeError) as exc:
-        raise ImproperlyConfigured(
-            "The Angular bundle directory is unknown: ANGULAR_DIST_DIR is not set and "
-            f"the project configuration (django-angular3-<project>.json) could not be "
-            f"used: {exc}"
-        ) from exc
-
-
 def angular_urlpatterns(
-    dist_dir: str | Path | None = None,
     reserved: Sequence[str] = DEFAULT_RESERVED_PREFIXES,
 ) -> list[URLPattern]:
-    """Return the catch-all pattern that serves the Angular bundle.
+    """Return the catch-all pattern that serves the Angular browser output.
 
-    ``dist_dir`` defaults to ``settings.ANGULAR_DIST_DIR`` when set, else to the bundle
-    of the project configuration (``ProjectConfig.angular_dist``). It is resolved on
-    each request, so a build made after the server started is picked up. A request is
-    answered by
+    The directory is calculated from the configuration files (see the module
+    docstring) on each request, so a build made after the server started is picked up.
+    A request is answered by
 
-    1. the file of that name in the bundle (``main-*.js``, ``styles-*.css``, ...);
+    1. the file of that name in the directory (``main-*.js``, ``styles-*.css``, ...);
     2. a 404 when the path starts with one of ``reserved`` (a wrong API URL must not
-       answer with HTML) or names a file that is not in the bundle (a stale hash must
-       not answer with HTML either);
+       answer with HTML) or names a file that is not in the directory (a stale hash
+       must not answer with HTML either);
     3. ``index.html`` otherwise, so that a hard refresh on an Angular route works.
     """
     reserved_prefixes = tuple(reserved)
 
     @require_http_methods(["GET", "HEAD"])
     def angular_app(request: HttpRequest, path: str) -> HttpResponseBase:
-        root = _resolve_dist_dir(dist_dir)
+        root = _browser_output_dir()
         if path.startswith(reserved_prefixes):
             raise Http404(f"No Django route matches /{path}")
         if path:
             candidate = (root / path).resolve()
             if not candidate.is_relative_to(root):
-                raise Http404("Outside the Angular bundle")
+                raise Http404("Outside the Angular browser output")
             if candidate.is_file():
                 return serve(request, path, document_root=root)
             if "." in candidate.name:
-                raise Http404(f"{path} is not in the Angular bundle")
+                raise Http404(f"{path} is not in the Angular browser output")
         return serve(request, "index.html", document_root=root)
 
     return [re_path(r"^(?P<path>.*)$", angular_app)]

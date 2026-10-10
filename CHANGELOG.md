@@ -11,10 +11,10 @@ package versions. Releases before this file are described on the
 ### Added
 
 - `django_angular3.spa.angular_urlpatterns()`: a catch-all view that serves the built Angular
-  application from Django on the same origin as the API. The bundle directory is calculated from
-  the project configuration (`ProjectConfig.angular_dist`, i.e.
-  `<artifacts.angularWorkspace>/dist/<project.name>/browser`); the `ANGULAR_DIST_DIR` setting
-  overrides it. Bundle files are served by name, any other path gets `index.html` so a hard refresh
+  application from Django on the same origin as the API. Where the files are is configuration, not
+  a Django setting: `artifacts.angularWorkspace` of the project configuration plus the new
+  mandatory `angular.build.browserOutputPath` of `django-angular3.json` (existing tool
+  configurations must add it; every command that runs Angular tooling fails without it). Bundle files are served by name, any other path gets `index.html` so a hard refresh
   on an Angular route works, and a wrong `/api/`, `/api-auth/`, `/admin/` or `/static/` URL or a
   stale asset hash is a 404. A missing build raises `ImproperlyConfigured`. The tutorial project
   is wired with it, and the real-tools flow has a stage 6b that drives the bundle served by Django

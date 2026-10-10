@@ -81,9 +81,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# django_angular3.spa serves the Angular bundle that `manage.py ng_build` leaves in the
-# workspace of django-angular3-simple_crm.json (artifacts.angularWorkspace), calculated
-# from that file. Set ANGULAR_DIST_DIR here only to serve a bundle from elsewhere.
+# django_angular3.spa serves the browser files that `manage.py ng_build` leaves. Where
+# they are is configuration, not a Django setting: artifacts.angularWorkspace of
+# django-angular3-simple_crm.json plus angular.build.browserOutputPath of
+# django-angular3.json.
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
