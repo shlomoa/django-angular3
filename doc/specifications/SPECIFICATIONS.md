@@ -76,6 +76,11 @@ its own containing directory. The current configuration therefore selects the
 candidate artifacts, while the previous configuration independently selects
 the accepted baseline artifacts.
 
+The browser bundle that `ng_build` leaves, and that `django_angular3.spa` serves
+from Django, is calculated from the current configuration as
+`<artifacts.angularWorkspace>/dist/<project.name>/browser`
+(`ProjectConfig.angular_dist`); the `ANGULAR_DIST_DIR` Django setting overrides it.
+
 There is no separate previous-OpenUI argument or `.previous` OpenUI filename
 convention. A project-configuration selector change and a structural change in
 the selected OpenAPI or OpenUI content are compared and recorded separately.

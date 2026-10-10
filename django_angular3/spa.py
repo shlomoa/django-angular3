@@ -15,7 +15,11 @@ Add the patterns last in the project's ``urls.py``, so that Django's own routes 
         *angular_urlpatterns(),
     ]
 
-and point ``ANGULAR_DIST_DIR`` at the bundle in the project settings.
+The bundle directory is calculated from the project configuration
+(``django-angular3-<project>.json``) as
+``<artifacts.angularWorkspace>/dist/<project.name>/browser``, the workspace that
+``ng_build`` builds in. Set ``ANGULAR_DIST_DIR`` in the Django settings only to serve a
+bundle from somewhere else.
 
 The view reads the files through Django. That suits development, tests and small
 deployments; behind real traffic, serve the same directory with a reverse proxy or a
@@ -35,6 +39,8 @@ from django.urls import URLPattern, re_path
 from django.views.decorators.http import require_http_methods
 from django.views.static import serve
 
+from .config import ConfigError, load_project_config
+
 DEFAULT_RESERVED_PREFIXES: tuple[str, ...] = (
     "api/",
     "api-auth/",
@@ -46,30 +52,34 @@ DEFAULT_RESERVED_PREFIXES: tuple[str, ...] = (
 
 def _resolve_dist_dir(dist_dir: str | Path | None) -> Path:
     """Return the existing bundle directory, or explain what is missing."""
-    configured = dist_dir if dist_dir is not None else _setting()
+    configured = dist_dir if dist_dir is not None else _configured_dist_dir()
     root = Path(configured).resolve()
     if not root.is_dir():
         raise ImproperlyConfigured(
             f"The Angular bundle directory {root} does not exist. "
-            "Build the application with `manage.py ng_build` or correct "
-            "ANGULAR_DIST_DIR."
+            "Build the application with `manage.py ng_build`."
         )
     if not (root / "index.html").is_file():
         raise ImproperlyConfigured(
             f"{root} has no index.html. Build the application with "
-            "`manage.py ng_build` or point ANGULAR_DIST_DIR at dist/<app>/browser."
+            "`manage.py ng_build`."
         )
     return root
 
 
-def _setting() -> str | Path:
-    configured = getattr(settings, "ANGULAR_DIST_DIR", None)
-    if not configured:
+def _configured_dist_dir() -> Path:
+    """The ``ANGULAR_DIST_DIR`` setting, else the project configuration's bundle."""
+    override = getattr(settings, "ANGULAR_DIST_DIR", None)
+    if override:
+        return Path(override)
+    try:
+        return load_project_config().angular_dist
+    except (ConfigError, RuntimeError) as exc:
         raise ImproperlyConfigured(
-            "Set ANGULAR_DIST_DIR to the Angular bundle (dist/<app>/browser) or pass "
-            "dist_dir to angular_urlpatterns()."
-        )
-    return configured
+            "The Angular bundle directory is unknown: ANGULAR_DIST_DIR is not set and "
+            f"the project configuration (django-angular3-<project>.json) could not be "
+            f"used: {exc}"
+        ) from exc
 
 
 def angular_urlpatterns(
@@ -78,8 +88,10 @@ def angular_urlpatterns(
 ) -> list[URLPattern]:
     """Return the catch-all pattern that serves the Angular bundle.
 
-    ``dist_dir`` defaults to ``settings.ANGULAR_DIST_DIR`` and is read on each request,
-    so a build made after the server started is picked up. A request is answered by
+    ``dist_dir`` defaults to ``settings.ANGULAR_DIST_DIR`` when set, else to the bundle
+    of the project configuration (``ProjectConfig.angular_dist``). It is resolved on
+    each request, so a build made after the server started is picked up. A request is
+    answered by
 
     1. the file of that name in the bundle (``main-*.js``, ``styles-*.css``, ...);
     2. a 404 when the path starts with one of ``reserved`` (a wrong API URL must not

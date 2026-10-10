@@ -468,21 +468,21 @@ class ScaffoldTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             dest = Path(tmp) / "simple_crm"
             self.assertEqual(_run_install_tutorial(str(dest)), 0)
-            project = json.loads(
+            config = load_project_config(dest / TUTORIAL_PROJECT_CONFIG_FILENAME)
+            workspace = json.loads(
                 (dest / TUTORIAL_PROJECT_CONFIG_FILENAME).read_text(encoding="utf-8")
-            )
-            workspace = project["artifacts"]["angularWorkspace"]
+            )["artifacts"]["angularWorkspace"]
             settings_text = (dest / "simple_crm" / "settings.py").read_text(
                 encoding="utf-8"
             )
             urls_text = (dest / "simple_crm" / "urls.py").read_text(encoding="utf-8")
+            expected_bundle = (
+                dest / workspace / "dist" / "simple_crm" / "browser"
+            ).resolve()
 
-        # The bundle is where `ng_build` leaves it for the project's workspace.
-        expected = " / ".join(
-            f'"{part}"'
-            for part in (*workspace.split("/"), "dist", "simple_crm", "browser")
-        )
-        self.assertIn(f"ANGULAR_DIST_DIR = BASE_DIR / {expected}", settings_text)
+        # The bundle is calculated from the project configuration, not set by hand.
+        self.assertEqual(config.angular_dist, expected_bundle)
+        self.assertNotIn("\nANGULAR_DIST_DIR", settings_text)
         # Django's routes come first; the Angular catch-all is the last pattern.
         self.assertIn("from django_angular3.spa import angular_urlpatterns", urls_text)
         self.assertLess(urls_text.index('path("api/v1/"'), urls_text.index("*angular_"))

@@ -215,15 +215,11 @@ itself.
 
 ### Serving the built application
 
-`manage.py ng_build` leaves the bundle in `<workspace>/dist/<app>/browser`. To serve it
+`manage.py ng_build` leaves the bundle in `<workspace>/dist/<project>/browser`. To serve it
 from the same origin as the API, as the production deployment of the specification
-requires, point `ANGULAR_DIST_DIR` at it and add the Angular patterns **last** in
-`urls.py`, so that Django's own routes win:
+requires, add the Angular patterns **last** in `urls.py`, so that Django's own routes win:
 
 ```python
-# settings.py
-ANGULAR_DIST_DIR = BASE_DIR / "build" / "angular" / "dist" / "mysite" / "browser"
-
 # urls.py
 from django_angular3.spa import angular_urlpatterns
 
@@ -233,6 +229,13 @@ urlpatterns = [
     *angular_urlpatterns(),
 ]
 ```
+
+There is nothing to configure in `settings.py`: the bundle directory is calculated from the
+project configuration, `django-angular3-<project>.json`, as
+`<artifacts.angularWorkspace>/dist/<project.name>/browser` (`ProjectConfig.angular_dist`),
+the workspace that `ng_build` builds in. The file is found from `settings.BASE_DIR`, as for
+every other command. Set `ANGULAR_DIST_DIR` in the Django settings only to serve a bundle
+from somewhere else; it takes precedence.
 
 A request is answered with the bundle file of that name (`main-*.js`, `styles-*.css`), with
 `index.html` for any other path, so a hard refresh on an Angular route such as

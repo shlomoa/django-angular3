@@ -81,10 +81,9 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-# The Angular bundle that `manage.py ng_build` leaves in the workspace of
-# django-angular3-simple_crm.json (artifacts.angularWorkspace); django_angular3.spa
-# serves it from the same origin as the API.
-ANGULAR_DIST_DIR = BASE_DIR / "build" / "angular" / "dist" / "simple_crm" / "browser"
+# django_angular3.spa serves the Angular bundle that `manage.py ng_build` leaves in the
+# workspace of django-angular3-simple_crm.json (artifacts.angularWorkspace), calculated
+# from that file. Set ANGULAR_DIST_DIR here only to serve a bundle from elsewhere.
 
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

@@ -1,9 +1,11 @@
 """Tests of the view that serves the built Angular application from Django."""
 
+import json
 import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import django
 from django.core.exceptions import ImproperlyConfigured
@@ -100,10 +102,18 @@ class AngularAppViewTests(SimpleTestCase):
 class AngularAppViewConfigurationTests(SimpleTestCase):
     """A missing build is reported, not answered with a silent 404."""
 
-    def test_setting_is_required(self) -> None:
-        with override_settings(ROOT_URLCONF="tests.spa_urls"):
-            with self.assertRaisesRegex(ImproperlyConfigured, "ANGULAR_DIST_DIR"):
-                self.client.get("/customers")
+    def test_unknown_bundle_names_the_setting_and_the_project_configuration(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with override_settings(ROOT_URLCONF="tests.spa_urls", BASE_DIR=temporary):
+                with patch.dict(
+                    os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}
+                ):
+                    with self.assertRaises(ImproperlyConfigured) as raised:
+                        self.client.get("/customers")
+        self.assertIn("ANGULAR_DIST_DIR", str(raised.exception))
+        self.assertIn("django-angular3-shop.json", str(raised.exception))
 
     def test_missing_directory_names_the_path_and_the_build_command(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -123,6 +133,67 @@ class AngularAppViewConfigurationTests(SimpleTestCase):
             ):
                 with self.assertRaisesRegex(ImproperlyConfigured, "index.html"):
                     self.client.get("/")
+
+
+class AngularAppViewProjectConfigurationTests(SimpleTestCase):
+    """Without ANGULAR_DIST_DIR the bundle comes from the project configuration."""
+
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        (self.root / "django-angular3-shop.json").write_text(
+            json.dumps(
+                {
+                    "project": {"name": "shop"},
+                    "artifacts": {
+                        "openapiSchema": "schema.json",
+                        "openuiSpecification": "app.openui.json",
+                        "angularWorkspace": "frontend/ng",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        bundle = self.root / "frontend" / "ng" / "dist" / "shop" / "browser"
+        bundle.mkdir(parents=True)
+        (bundle / "index.html").write_text(INDEX_HTML, encoding="utf-8")
+        (bundle / "main-ABC123.js").write_text("console.log(1);", encoding="utf-8")
+
+    def fetch(self, path: str):
+        response = self.client.get(path)
+        self.addCleanup(response.close)
+        return response
+
+    def test_bundle_comes_from_the_project_configuration(self) -> None:
+        with override_settings(ROOT_URLCONF="tests.spa_urls", BASE_DIR=self.root):
+            with patch.dict(os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}):
+                page = self.fetch("/customers")
+                asset = self.fetch("/main-ABC123.js")
+
+        self.assertEqual(b"".join(page.streaming_content).decode(), INDEX_HTML)
+        self.assertEqual(asset.status_code, 200)
+
+    def test_the_setting_overrides_the_project_configuration(self) -> None:
+        other = self.root / "other"
+        other.mkdir()
+        (other / "index.html").write_text("<p>other</p>", encoding="utf-8")
+
+        with override_settings(
+            ROOT_URLCONF="tests.spa_urls", BASE_DIR=self.root, ANGULAR_DIST_DIR=other
+        ):
+            with patch.dict(os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}):
+                page = self.fetch("/customers")
+
+        self.assertEqual(b"".join(page.streaming_content).decode(), "<p>other</p>")
+
+    def test_an_invalid_project_configuration_is_reported(self) -> None:
+        (self.root / "django-angular3-shop.json").write_text("{}", encoding="utf-8")
+
+        with override_settings(ROOT_URLCONF="tests.spa_urls", BASE_DIR=self.root):
+            with patch.dict(os.environ, {"DJANGO_SETTINGS_MODULE": "shop.settings"}):
+                with self.assertRaisesRegex(ImproperlyConfigured, "project"):
+                    self.client.get("/customers")
 
 
 if __name__ == "__main__":
