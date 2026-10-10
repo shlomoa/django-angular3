@@ -77,6 +77,9 @@ SETTINGS_MODULE = f"{PROJECT}.settings"
 PROJECT_CONFIG = f"django-angular3-{PROJECT}.json"
 TOOL_CONFIG = "django-angular3.json"
 DJANGO_URL = "http://127.0.0.1:8000"
+# The user of the sign-in and write specs; it exists only in the flow's temporary database.
+E2E_USER = "e2e"
+E2E_USER_PASSWORD = "e2e-password-1"
 ANGULAR_URL = "http://127.0.0.1:4200"
 
 CUSTOMER_COUNT = 25
@@ -433,6 +436,16 @@ class Flow:
         self.manage("check", label="manage.py check")
         self.manage("migrate", "--noinput", label="manage.py migrate")
         self.manage("loaddata", str(FIXTURES / "seed.json"), label="manage.py loaddata")
+        self.manage(
+            "createsuperuser",
+            "--noinput",
+            "--username",
+            E2E_USER,
+            "--email",
+            "e2e@example.com",
+            label="manage.py createsuperuser",
+            extra_env={"DJANGO_SUPERUSER_PASSWORD": E2E_USER_PASSWORD},
+        )
         counts = self.manage(
             "shell",
             "-c",
@@ -805,6 +818,8 @@ class Flow:
             "E2E_ANGULAR_URL": ANGULAR_URL,
             "E2E_SEED": str(FIXTURES / "seed.json"),
             "E2E_SETTINGS_MODULE": SETTINGS_MODULE,
+            "E2E_USERNAME": E2E_USER,
+            "E2E_PASSWORD": E2E_USER_PASSWORD,
         }
 
     # -- stage 6b ----------------------------------------------------------------------
@@ -814,7 +829,9 @@ class Flow:
 
         Stage 6 used the Angular dev server and its proxy. Here only ``runserver`` runs,
         and ``django_angular3.spa`` (wired into the tutorial's ``urls.py``) serves the
-        bundle that stage 5 built from the same origin as the API.
+        bundle that stage 5 built from the same origin as the API. Besides the read
+        specs it signs in and writes: the generated client must send Django's CSRF
+        token, and the same write without it must be refused (the negative controls).
         """
         # Where Django looks is configuration only: artifacts.angularWorkspace of the
         # project configuration plus the mandatory angular.build.browserOutputPath of the

@@ -13,6 +13,12 @@ export const djangoUrl = process.env['E2E_DJANGO_URL'] ?? 'http://127.0.0.1:8000
 export const evidenceDir = process.env['E2E_EVIDENCE_DIR'] ?? '.';
 export const PAGE_SIZE = 10;
 
+/** The test user the flow creates in the tutorial project's database (stage 1). */
+export const credentials = {
+  username: process.env['E2E_USERNAME'] ?? '',
+  password: process.env['E2E_PASSWORD'] ?? '',
+};
+
 /** The customers of the committed seed fixture, in primary-key order (the API order). */
 export function seedCustomers(): SeedCustomer[] {
   const documents = JSON.parse(readFileSync(process.env['E2E_SEED'] ?? '', 'utf8')) as {

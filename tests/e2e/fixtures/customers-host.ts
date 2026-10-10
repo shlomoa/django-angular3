@@ -9,6 +9,10 @@
  * through the generated `ResourceAdapter`, which only logs it, so the error state shown
  * here is the glue's own.
  *
+ * The "Add customer" button writes through the generated `CustomersApiService` too, so the
+ * end-to-end flow can check that the generated transport sends Django's CSRF token with a
+ * signed-in write. The glue shows its own error when the write is refused.
+ *
  * The run replaces the two placeholder import paths below with the paths of the generated
  * data service and of the ng-openapi-gen output directory.
  */
@@ -70,6 +74,12 @@ class CustomersListAdapter extends ResourceAdapter<Customer> {
     @if (failed()) {
       <p role="alert" data-testid="customers-error">Customers could not be loaded.</p>
     }
+    <button type="button" data-testid="create-customer" (click)="createCustomer()">
+      Add customer
+    </button>
+    @if (writeError(); as message) {
+      <p role="alert" data-testid="customers-write-error">{{ message }}</p>
+    }
     <app-customers-table
       caption="Customers"
       [columns]="columns"
@@ -98,8 +108,10 @@ export class CustomersHostComponent {
   protected readonly count = signal(0);
   protected readonly pageIndex = signal(0);
   protected readonly failed = signal(false);
+  protected readonly writeError = signal<string | null>(null);
 
   private readonly adapter = new CustomersListAdapter();
+  private readonly data = inject(CustomersDataService);
 
   constructor() {
     this.load(0);
@@ -108,6 +120,24 @@ export class CustomersHostComponent {
   /** The handler the OpenUI document binds: `paginateCustomers($event)`. */
   protected paginateCustomers(page: CustomersTablePage): void {
     this.load(page.pageIndex);
+  }
+
+  /** Creates a customer through the generated service; the transport adds the CSRF token. */
+  protected async createCustomer(): Promise<void> {
+    this.writeError.set(null);
+    const body = {
+      name: 'E2E Written Customer',
+      email: 'e2e.written@example.com',
+      phone: '+1-555-0199',
+      active: true,
+    } as Customer;
+    try {
+      await this.data.apiService.customersCreate({ body });
+      this.load(this.pageIndex());
+    } catch (error) {
+      const status = (error as { status?: number }).status ?? 'unknown';
+      this.writeError.set(`The customer could not be created (HTTP ${status}).`);
+    }
   }
 
   private load(pageIndex: number): void {
