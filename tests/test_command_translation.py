@@ -22,6 +22,7 @@ from django_angular3.openapi_changes import translate_oasdiff_detail
 STATIC_CONFIG = (
     Path(__file__).resolve().parent.parent / "django_angular3" / "django-angular3.json"
 )
+SCENARIOS = Path(__file__).resolve().parent / "fixtures" / "scenarios"
 FIXTURE_MAPPING = (
     Path(__file__).resolve().parent / "fixtures" / "ngdj" / "command-mapping.json"
 )
@@ -484,6 +485,241 @@ class OpenUiTranslationTests(unittest.TestCase):
                 "ngdj_add_page",
                 "last-check",
             ],
+        )
+
+    def test_changes_under_one_command_root_become_one_step(self) -> None:
+        steps = self.translate(
+            [],
+            [],
+            reference_attrs={"uses.title": '"A"', "uses.theme": '"x"'},
+            candidate_attrs={"uses.title": '"B"', "uses.theme": '"y"'},
+        )
+
+        (step, _gate) = steps
+        self.assertEqual(
+            (step.name_id, step.change_op, step.node_id),
+            ("angular_app_scaffold", "update", "root"),
+        )
+        self.assertEqual(
+            step.change_target, "openui:/attrs/uses.theme, openui:/attrs/uses.title"
+        )
+        self.assertIn("openui:/attrs/uses.theme", step.change_reason)
+        self.assertIn("openui:/attrs/uses.title", step.change_reason)
+
+    def test_changes_in_several_embedded_nodes_update_their_application_once(
+        self,
+    ) -> None:
+        reference = [
+            {
+                "id": "routing",
+                "type": "Routing",
+                "children": [
+                    {"id": "r1", "type": "Route", "attrs": {"uses.path": '"a"'}},
+                    {"id": "r2", "type": "Route", "attrs": {"uses.path": '"c"'}},
+                ],
+            }
+        ]
+        candidate = json.loads(json.dumps(reference))
+        candidate[0]["children"][0]["attrs"]["uses.path"] = '"b"'
+        candidate[0]["children"][1]["attrs"]["uses.path"] = '"d"'
+
+        (step, _gate) = self.translate(reference, candidate)
+
+        self.assertEqual(
+            (step.name_id, step.change_op, step.node_id),
+            ("angular_app_scaffold", "update", "root"),
+        )
+        self.assertEqual(step.change_target.count("openui:/children/routing"), 2)
+
+    def test_changes_under_different_command_roots_stay_separate_steps(self) -> None:
+        steps = self.translate(
+            [],
+            [
+                {"id": "home", "type": "DashboardPage"},
+                {"id": "about", "type": "DashboardPage"},
+            ],
+            reference_attrs={"uses.title": '"A"'},
+            candidate_attrs={"uses.title": '"B"'},
+        )
+
+        self.assertEqual(
+            [(step.name_id, step.change_op, step.node_id) for step in steps],
+            [
+                ("angular_app_scaffold", "update", "root"),
+                ("ngdj_add_page", "create", "about"),
+                ("ngdj_add_page", "create", "home"),
+                ("last-check", "validate", None),
+            ],
+        )
+
+    def test_a_form_inside_a_created_page_is_compiled_by_the_page(self) -> None:
+        steps = self.translate(
+            [],
+            [
+                {
+                    "id": "home",
+                    "type": "DashboardPage",
+                    "children": [
+                        {"id": "signup", "type": "Form"},
+                        {"id": "card", "type": "SurfaceContainers"},
+                    ],
+                }
+            ],
+        )
+
+        self.assertEqual(
+            [(step.name_id, step.node_id) for step in steps],
+            [("ngdj_add_page", "home"), ("last-check", None)],
+        )
+
+    def test_a_form_added_to_an_existing_page_fails_as_a_page_update(self) -> None:
+        page = {"id": "home", "type": "DashboardPage"}
+
+        with self.assertRaisesRegex(
+            CommandTranslationError,
+            r"does not support update of OpenUI node type DashboardPage "
+            r"\(unsupported\).*\(shlomoa/angular-django2#\d+\)",
+        ):
+            self.translate(
+                [page], [{**page, "children": [{"id": "f", "type": "Form"}]}]
+            )
+
+    def test_the_dashboard_scenario_adds_a_page_to_an_application_with_a_child(
+        self,
+    ) -> None:
+        shared = SCENARIOS / "shared"
+        base = json.loads((shared / "base.openui.json").read_text(encoding="utf-8"))
+        dashboard = json.loads(
+            (shared / "dashboard.openui.json").read_text(encoding="utf-8")
+        )
+        home = {"id": "home", "type": "EmptyPage"}
+        steps = self.translate(
+            [home], [home, *dashboard["children"]], reference_attrs=base.get("attrs")
+        )
+
+        self.assertEqual(
+            [
+                (step.name_id, step.exec_order, step.change_op, step.node_id)
+                for step in steps
+            ],
+            [
+                ("ngdj_add_page", 10, "create", "dashboardPage"),
+                ("last-check", 12, "validate", None),
+            ],
+        )
+
+
+class OpenUiMappingCoverageTests(unittest.TestCase):
+    """Every operation on every node type of the mapping gives a step or an error.
+
+    The Changes come from the upstream comparison of a document pair built for
+    each node type, so the subjects are the real ones. ``move`` is not a row: the
+    comparison reports a node moved to another parent as a delete and a create, so
+    the delete row covers it.
+    """
+
+    mapping: CommandMapping
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.mapping = _fixture_mapping()
+
+    def _ancestor_types(self, node_type: str) -> list[str]:
+        """The compiling parent chain of a node type, outermost first."""
+        chain: list[str] = []
+        current = node_type
+        while True:
+            parents = [
+                parent
+                for parent in self.mapping.compiled_by(current)
+                if parent != current and parent != "Application" and parent not in chain
+            ]
+            if not parents:
+                return chain
+            chain.insert(0, parents[0])
+            current = parents[0]
+
+    def _documents(
+        self, node_type: str, operation: str
+    ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+        node: dict[str, object] = {"id": "subject", "type": node_type}
+        changed = {**node, "attrs": {"uses.value": '"B"'}}
+        original = {**node, "attrs": {"uses.value": '"A"'}}
+        before = {"create": None, "update": original, "delete": node}[operation]
+        after = {"create": node, "update": changed, "delete": None}[operation]
+
+        chain = self._ancestor_types(node_type)
+
+        def wrap(leaf: dict[str, object] | None) -> list[dict[str, object]]:
+            # The ancestors exist on both sides so that only the node differs.
+            element = leaf
+            for index in reversed(range(len(chain))):
+                element = {
+                    "id": f"ancestor{index}",
+                    "type": chain[index],
+                    "children": [] if element is None else [element],
+                }
+            return [] if element is None else [element]
+
+        return wrap(before), wrap(after)
+
+    def test_every_node_type_and_operation_gives_a_step_or_an_explicit_error(
+        self,
+    ) -> None:
+        outcomes: dict[tuple[str, str], str] = {}
+        for node_type in self.mapping.node_types():
+            if node_type == "Application":
+                continue
+            for operation in ("create", "update", "delete"):
+                with self.subTest(node_type=node_type, operation=operation):
+                    before, after = self._documents(node_type, operation)
+                    changes = _openui_changes(before, after)
+                    self.assertTrue(changes, "the comparison reported no Change")
+                    try:
+                        steps = translate_changes(changes, self.mapping)
+                    except CommandTranslationError as error:
+                        outcomes[(node_type, operation)] = "error"
+                        self.assertTrue(str(error))
+                    else:
+                        outcomes[(node_type, operation)] = "step"
+                        self.assertGreater(len(steps), 1, "the Change disappeared")
+                        self.assertEqual(steps[-1].name_id, "last-check")
+
+        # The mapping decides: an operation the mapping does not mark supported on
+        # the compiling node type never gives a step.
+        for (node_type, operation), outcome in outcomes.items():
+            if outcome != "step":
+                continue
+            owner = node_type
+            if self.mapping.role(node_type) == "embedded":
+                owner = self.mapping.compiled_by(node_type)[0]
+                operation = "update"
+            self.assertEqual(
+                self.mapping.operation_status(owner, operation).status,
+                "supported",
+                f"{node_type} {operation} gave a step the mapping does not support",
+            )
+
+    def test_every_node_type_is_covered_by_a_row(self) -> None:
+        self.assertGreater(len(self.mapping.node_types()), 10)
+        for node_type in self.mapping.node_types():
+            for operation in ("create", "update", "delete", "move"):
+                # The mapping answers every cell, so no operation is left undefined.
+                self.mapping.operation_status(node_type, operation)
+
+    def test_the_application_attribute_update_is_the_one_root_row(self) -> None:
+        (step, _gate) = translate_changes(
+            _openui_changes(
+                [],
+                [],
+                reference_attrs={"uses.value": '"A"'},
+                candidate_attrs={"uses.value": '"B"'},
+            ),
+            self.mapping,
+        )
+
+        self.assertEqual(
+            (step.name_id, step.change_op), ("angular_app_scaffold", "update")
         )
 
 
