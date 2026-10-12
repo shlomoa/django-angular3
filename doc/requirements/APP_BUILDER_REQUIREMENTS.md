@@ -330,7 +330,10 @@ Project-level foundation commands are selected once per command and operation,
 not once per `project_config` subject: on a first run `project.name` and
 `artifacts.angularWorkspace` are both created, and each of those commands
 appears once, with every contributing subject listed in its target and reason.
-Steps from other domains are not merged.
+The same holds for `openui` Changes: those under one command root (for example two
+attributes of the `Application`, or two edits of the `Route` elements it compiles) are one
+intent and give one step per command, operation and root, listing every subject. Steps of
+the same command on different roots, and `openapi` steps, are not merged.
 
 Commands that delete removed resources precede commands that create replacement
 or new resources at the same dependency level. Schema-derived commands precede
