@@ -125,8 +125,14 @@ class Change:
             Populated: configuration domains join the key path tokens with
             ``.``; OpenAPI uses ``path:``, ``operation:<METHOD> <path>`` or
             ``schema:<name>``; OpenUI uses ``openui:`` plus the upstream path.
-            Used for: choosing the command translation callback by prefix and
-            as ``AppBuildStep.change_target``. Must not be empty.
+            Used for: choosing the command translation callback by exact
+            match of the whole subject (project configuration; static
+            configuration matches a key or a key followed by ``.``), reading
+            the ``path:``, ``operation:`` or ``schema:`` kind (OpenAPI), and as
+            ``AppBuildStep.change_target``. An OpenUI subject is a document
+            path, not a key: it does not select a callback, and translation
+            selects the command from the node types of the enclosing elements
+            instead (``CHANGE_MODEL_CONTRACTS.md`` §2.2). Must not be empty.
         path: Location of the change inside its source document.
             Represents: where the value lives.
             Populated: a JSON Pointer for configuration and OpenAPI (for

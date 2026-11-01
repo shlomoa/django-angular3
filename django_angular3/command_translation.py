@@ -28,7 +28,8 @@ class AppBuildStep:
     ``concern_key``, ``command`` and ``parameters`` (see below). Identical steps
     from different Changes are not merged, except
     that project-config steps are merged into one step that lists every subject
-    (see ``_merge_project_steps``).
+    (see ``_merge_project_steps``), and so are the OpenUI steps of one command
+    on one command root (see ``_merge_openui_steps``).
 
     Steps are sorted by ``exec_order``, then ``change_op``, ``change_domain``,
     ``name_id`` and ``change_target`` (see ``_step_sort_key``) to keep the order
@@ -114,8 +115,10 @@ def translate_changes(
     """
     if not changes:
         return ()
-    steps = _merge_project_steps(
-        [step for change in changes for step in _change_steps(change, mapping)]
+    steps = _merge_openui_steps(
+        _merge_project_steps(
+            [step for change in changes for step in _change_steps(change, mapping)]
+        )
     )
     steps.append(
         AppBuildStep(
@@ -168,6 +171,50 @@ def _merged_project_step(step: AppBuildStep, subjects: list[str]) -> AppBuildSte
     return replace(
         step,
         change_reason=f"Required by project_config {step.change_op}: {joined}.",
+        change_target=joined,
+    )
+
+
+def _merge_openui_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
+    """Collapse the OpenUI steps that run one command on one command root.
+
+    Several Changes can land under the same command root (two attributes of the
+    ``Application``, or two ``Route`` edits that the ``Application`` compiles). They
+    are one intent: the command reads the whole element from the document, so
+    running it once per Change would repeat a create-only command on its own
+    output. The merged step lists every subject, in sorted order. Steps of one
+    command on different roots stay separate.
+    """
+    targets: dict[tuple[str, str, str | None], list[str]] = {}
+    merged: list[AppBuildStep] = []
+    for step in steps:
+        if step.change_domain is not ChangeDomain.OPENUI:
+            merged.append(step)
+            continue
+        key = (step.name_id, step.change_op, step.node_id)
+        if key in targets:
+            targets[key].append(step.change_target)
+        else:
+            targets[key] = [step.change_target]
+            merged.append(step)
+    return [
+        _merged_openui_step(step, targets[(step.name_id, step.change_op, step.node_id)])
+        if step.change_domain is ChangeDomain.OPENUI
+        else step
+        for step in merged
+    ]
+
+
+def _merged_openui_step(step: AppBuildStep, subjects: list[str]) -> AppBuildStep:
+    if len(subjects) == 1:
+        return step
+    joined = ", ".join(sorted(subjects))
+    return replace(
+        step,
+        change_reason=(
+            f"Required by openui {step.change_op}: {joined}. ngdj "
+            f"{step.ngdj_command} compiles {step.node_id} once for all of them."
+        ),
         change_target=joined,
     )
 

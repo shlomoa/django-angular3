@@ -58,6 +58,10 @@ package versions. Releases before this file are described on the
 
 ### Fixed
 
+- `build_app` translation gives one step for several OpenUI Changes under the same command
+  root. Two attribute changes of the `Application`, or edits of two `Route` elements that it
+  compiles, used to give the same `angular_app_scaffold` step twice; they now give one step
+  that lists every subject.
 - The tutorial project (`django-angular3 install-tutorial`) works with the tools it names: its
   `app.openui.json` has the shape `angular-django2` compiles (an `html` root with the
   `Application` and its pages as siblings, instead of `DashboardPage` elements inside the
