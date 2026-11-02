@@ -57,10 +57,9 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
-    - name: Derive the pinned angular-django2 tag
-      id: pin
+    - name: Check tool.ngAddPackage is a pinned registry spec
       run: |
-        python - <<'PY' >> "$GITHUB_OUTPUT"
+        python - <<'PY'
         import json
         import re
         import sys
@@ -73,13 +72,14 @@ jobs:
                 f"tool.ngAddPackage is {package!r}: expected a registry spec with a pinned "
                 "version such as 'angular-django2@0.7.1', not a path or an unpinned name"
             )
-        print(f"ref=v{match.group(1)}")
         PY
-    - name: Check out angular-django2 at the pinned release
+    # The contract and fixture track the development head of angular-django2, the
+    # local (adjacent) integration source, not the released tool.ngAddPackage pin.
+    - name: Check out angular-django2
       uses: actions/checkout@v4
       with:
         repository: shlomoa/angular-django2
-        ref: ${{ steps.pin.outputs.ref }}
+        ref: main
         path: ngdj
         sparse-checkout: projects/angular-django2
         fetch-depth: 1

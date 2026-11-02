@@ -22,7 +22,7 @@
     },
     "openuiSpecVersion": {
       "type": "string",
-      "description": "The @shlomoa/openui-spec version the mapping was checked against; it equals the version the package pins."
+      "description": "The OpenUI schema version the mapping was checked against; it equals the SCHEMA_VERSION file shipped by the installed @shlomoa/openui-spec package."
     },
     "ui": {
       "type": "object",

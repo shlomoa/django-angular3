@@ -136,7 +136,8 @@ Environment variables:
 | Variable | Effect |
 | :--- | :--- |
 | `E2E_TRACKS` | `W`, `B` or `W,B` (default) |
-| `E2E_NGDJ_TARBALL` | Install a locally packed ngdj (`npm pack ./projects/angular-django2/dist`) instead of the pinned release |
+| `E2E_NGDJ_TARBALL` | Install a locally packed ngdj (`npm pack ./projects/angular-django2/dist`) instead of the local checkout or the pinned release |
+| `E2E_NGDJ_LOCAL` | Unset, the local ngdj checkout (`ANGULAR_DJANGO2_ROOT` or the sibling `../angular-django2`) is packed and installed when present (a present but unbuilt checkout fails the run; without one the pinned release installs); `1` requires the checkout, `0` forces the pinned release |
 | `E2E_KEEP=1` | Keep the temporary area under `scratch/` |
 | `E2E_ANGULAR_CLI` | Angular CLI range installed when `ng` is missing (default `^22`) |
 | `E2E_CHROMIUM_PATH` | Chromium executable for Playwright |
@@ -267,13 +268,17 @@ defined by the specification:
 The backend package provides Django integration, CLI wrappers, schema
 validators, and automation skills that orchestrate the frontend tooling:
 
-1. **Consume upstream library**: Update the pinned upstream package dependency
-   or configuration (e.g., `ngAddPackage` in tool configuration). When you change
-   the `angular-django2` pin, regenerate the command-mapping test fixture from that
-   version with
+1. **Consume upstream library**: For rapid development and integration the
+   `angular-django2` source of truth is the local (adjacent) checkout
+   (`ANGULAR_DJANGO2_ROOT` or the sibling `../angular-django2`): the real-tools
+   e2e flow packs and installs its built package by default, and the
+   command-mapping test fixture follows it. Whenever the checkout's mapping or
+   version moves, regenerate the fixture with
    `python tests/fixtures/ngdj/sync_command_mapping.py <angular-django2>/projects/angular-django2`
    (never edit it by hand) and read the mapping's operation statuses: what `build_app`
    supports and refuses follows them (`docs/commands.md`, "Changes `build_app` turns into steps").
+   The released `tool.ngAddPackage` pin only names what the shipped tutorial installs;
+   bump it when the upstream release is live on npm.
 2. **Update commands and wrappers**:
    - Update argument parsers, execution builders, and
      management commands.
@@ -291,12 +296,12 @@ validators, and automation skills that orchestrate the frontend tooling:
    - Sphinx documentation build: `python -m sphinx docs docs/_build/html -W --keep-going`
    - ngdj contract and fixture-drift tests. They read the `angular-django2` source, so
      the default run skips them unless that repository is checked out next to this one.
-     Run them against the pinned release with
+     Run them against the local checkout with
      `ANGULAR_DJANGO2_ROOT=<angular-django2 checkout> DJNG_REQUIRE_NGDJ=1 python -m unittest tests.test_ngdj_requirements tests.test_ngdj_command_mapping -v`
      (`ANGULAR_DJANGO2_ROOT` defaults to the sibling `../angular-django2`; with
-     `DJNG_REQUIRE_NGDJ=1` a missing source or a sibling of another version fails instead of
-     skipping). The CI job `ngdj-contract` does the same against the tag that
-     `tool.ngAddPackage` pins, so bumping the pin fails that job until
+     `DJNG_REQUIRE_NGDJ=1` a missing source fails instead of skipping). The CI job
+     `ngdj-contract` does the same against the `main` branch of `angular-django2`:
+     when its head moves past the fixture, that job fails until
      `tests/fixtures/ngdj/sync_command_mapping.py` has been run (step 1).
 6. **Release and publish**:
    - Bump the version across `pyproject.toml`, package `__init__.py`, and `docs/conf.py`.

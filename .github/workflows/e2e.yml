@@ -55,6 +55,20 @@ jobs:
       - name: Install pnpm and the Angular CLI
         run: npm install --global pnpm@10 @angular/cli@22
 
+      # Local-first integration: the flow installs the development head of
+      # angular-django2 (the sibling checkout run_e2e discovers), not the released
+      # tool.ngAddPackage pin. Its root manifest links the local openui-spec build
+      # at ../openui-spec/dist/openui-spec, so that sibling is built first.
+      - name: Build angular-django2 and its linked openui-spec
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/shlomoa/openui-spec.git ../openui-spec
+          npm ci --prefix ../openui-spec
+          npm run build --prefix ../openui-spec
+          git clone --depth 1 https://github.com/shlomoa/angular-django2.git ../angular-django2
+          npm ci --prefix ../angular-django2
+          npm run build --prefix ../angular-django2
+
       - name: Cache the pnpm store
         uses: actions/cache@v4
         with:

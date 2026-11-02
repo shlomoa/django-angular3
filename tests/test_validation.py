@@ -9,23 +9,22 @@ from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 class OpenUiValidationTests(unittest.TestCase):
     def test_accepts_a_valid_openui_document(self) -> None:
-        document = {"version": "0.12.0", "id": "root", "type": "Application"}
+        document = {"id": "root", "type": "Application"}
 
         self.assertEqual(validate_openui_document(document), [])
 
-    def test_reports_schema_validation_errors_from_openui_spec(self) -> None:
-        document = {"version": "not-a-version", "id": "root", "type": "Application"}
+    def test_rejects_a_document_that_declares_a_version(self) -> None:
+        # The schema version is managed by the installed openui-spec package
+        # (its SCHEMA_VERSION file); an OpenUI document is versionless.
+        document = {"version": "0.12.0", "id": "root", "type": "Application"}
 
         self.assertEqual(
             validate_openui_document(document),
-            [
-                "/version: grammar/invalid-version: 'not-a-version' does not match "
-                "'^[0-9]+\\\\.[0-9]+\\\\.[0-9]+$'"
-            ],
+            ["/version: grammar/unknown-property: unknown member version"],
         )
 
     def test_reports_unknown_catalog_type_from_openui_spec(self) -> None:
-        document = {"version": "0.12.0", "id": "root", "type": "UnknownType"}
+        document = {"id": "root", "type": "UnknownType"}
 
         self.assertEqual(
             validate_openui_document(document),
@@ -43,7 +42,6 @@ class OpenUiValidationTests(unittest.TestCase):
             ("statusIndicator", "StatusIndicator"),
         )
         document = {
-            "version": "0.12.0",
             "id": "root",
             "type": "Application",
             "children": [
@@ -67,7 +65,6 @@ class OpenUiValidationTests(unittest.TestCase):
             with self.subTest(object_type=singular_type):
                 plural_type = f"{singular_type}s"
                 document = {
-                    "version": "0.12.0",
                     "id": "root",
                     "type": "Application",
                     "children": [{"id": "legacy", "type": plural_type}],
@@ -81,22 +78,8 @@ class OpenUiValidationTests(unittest.TestCase):
                     ],
                 )
 
-    def test_rejects_document_versions_other_than_the_installed_openui_spec(
-        self,
-    ) -> None:
-        document = {"version": "0.1.1", "id": "root", "type": "Application"}
-
-        self.assertEqual(
-            validate_openui_document(document),
-            [
-                "/version: document/unsupported-version: spec version 0.1.1 is "
-                "not 0.12.0, the version this tool implements"
-            ],
-        )
-
     def test_reports_duplicate_ids_from_openui_spec(self) -> None:
         document = {
-            "version": "0.12.0",
             "id": "root",
             "type": "Application",
             "children": [
@@ -121,7 +104,7 @@ class OpenUiValidationTests(unittest.TestCase):
         self.assertIn("cannot load JSON document", errors[0])
 
     def test_validates_openui_files_through_openui_spec(self) -> None:
-        document = {"version": "0.12.0", "id": "root", "type": "Application"}
+        document = {"id": "root", "type": "Application"}
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as temporary_directory:
             path = Path(temporary_directory) / "document.openui.json"
             path.write_text(json.dumps(document), encoding="utf-8")

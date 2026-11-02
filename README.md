@@ -73,10 +73,12 @@ required.
 
 OpenAPI documents are validated against the full OpenAPI specification using
 `openapi-spec-validator`; OpenUI documents are validated through
-`openui-spec`. The bundled 0.12.1 integration requires each OpenUI document's
-`version` to match `0.12.0` and every `type` to be an exact, case-sensitive
-literal from its canonical catalog. Use `id` for instance identity and `attrs`
-for configuration rather than aliases, selectors, or implementation names.
+`openui-spec`. An OpenUI document is versionless: the OpenUI schema version is
+declared solely by the `SCHEMA_VERSION` file of the installed `openui-spec`
+package — managed by the tooling, like the OpenAPI schema version — and every
+`type` must be an exact, case-sensitive literal from its canonical catalog. Use
+`id` for instance identity and `attrs` for configuration rather than aliases,
+selectors, or implementation names.
 
 An attribute key is categorized: `uses.<name>` configures the element,
 `produces.<name>` is an event it emits, and `behaves.<name>` is a behavior it
@@ -363,7 +365,6 @@ For example:
 ```json
 {
   "id": "root",
-  "version": "0.12.0",
   "type": "Application",
   "children": [
     {

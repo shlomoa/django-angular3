@@ -2,27 +2,43 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
+import re
 import shutil
 import tempfile
+import types
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
+from unittest.mock import patch
 
+from django_angular3 import ngdj_command_mapping
 from django_angular3.changes import ChangeOperation
 from django_angular3.ngdj_command_mapping import (
     CommandMapping,
     CommandMappingError,
     NodeCommand,
+    installed_openui_schema_version,
     load_command_mapping,
     parse_package_spec,
 )
-from tests.ngdj_source import NGDJ_PACKAGE_DIR, ngdj_required, require_ngdj_source
+from tests.ngdj_fixture import (
+    FIXTURE_DIR,
+    fixture_openui_spec_version,
+    fixture_package_spec,
+    fixture_version,
+)
+from tests.ngdj_source import NGDJ_PACKAGE_DIR, require_ngdj_source
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
-FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "ngdj"
-PACKAGE_SPEC = "angular-django2@0.7.1"
-SPEC_VERSION = "0.12.1"
+# The identities of the staged package come from the fixture, which follows the
+# adjacent angular-django2 checkout; nothing here names a release.
+PACKAGE_SPEC = fixture_package_spec()
+SPEC_VERSION = fixture_openui_spec_version()
+_MAJOR, _MINOR = SPEC_VERSION.split(".")[:2]
+PATCH_DIFFERENT_SPEC_VERSION = f"{_MAJOR}.{_MINOR}.999"
+MINOR_DIFFERENT_SPEC_VERSION = f"{_MAJOR}.{int(_MINOR) + 1}.0"
 
 
 class CommandMappingTestCase(unittest.TestCase):
@@ -69,6 +85,87 @@ class ParsePackageSpecTests(unittest.TestCase):
         )
 
 
+class InstalledOpenUiSchemaVersionTests(unittest.TestCase):
+    def stub_package(self, root: Path) -> types.ModuleType:
+        package_dir = root / "openui_spec"
+        package_dir.mkdir()
+        (package_dir / "__init__.py").touch()
+        stub = types.ModuleType("openui_spec")
+        stub.__file__ = str(package_dir / "__init__.py")
+        stub.__version__ = "9.9.9"
+        return stub
+
+    def patches(self, stub: types.ModuleType, distribution: object | None = None):
+        """Replace the module and its installed distribution with the stubs."""
+        if distribution is None:
+            lookup = patch.object(
+                ngdj_command_mapping.metadata,
+                "distribution",
+                side_effect=ngdj_command_mapping.metadata.PackageNotFoundError(
+                    "openui-spec"
+                ),
+            )
+        else:
+            lookup = patch.object(
+                ngdj_command_mapping.metadata,
+                "distribution",
+                return_value=distribution,
+            )
+        return (patch.object(ngdj_command_mapping, "openui_spec", stub), lookup)
+
+    def test_reads_schema_version_from_the_distribution_record(self) -> None:
+        # The released wheel ships SCHEMA_VERSION as a data file; it is found
+        # through the distribution's record.
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+            data = Path(tmp) / "share" / "openui-spec" / "SCHEMA_VERSION"
+            data.parent.mkdir(parents=True)
+            data.write_text("1.2.3\n", encoding="utf-8")
+            entry = PurePosixPath("../share/openui-spec/SCHEMA_VERSION")
+            distribution = types.SimpleNamespace(
+                files=[entry], locate_file=lambda record_entry: data
+            )
+
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub, distribution):
+                    stack.enter_context(patcher)
+                self.assertEqual(installed_openui_schema_version(), "1.2.3")
+
+    def test_reads_schema_version_shipped_as_package_data(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+            (Path(tmp) / "openui_spec" / "SCHEMA_VERSION").write_text(
+                "1.2.3\n", encoding="utf-8"
+            )
+
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub):
+                    stack.enter_context(patcher)
+                self.assertEqual(installed_openui_schema_version(), "1.2.3")
+
+    def test_reads_schema_version_of_a_source_checkout(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+            (Path(tmp) / "SCHEMA_VERSION").write_text("1.2.3\n", encoding="utf-8")
+
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub):
+                    stack.enter_context(patcher)
+                self.assertEqual(installed_openui_schema_version(), "1.2.3")
+
+    def test_a_package_without_schema_version_names_the_package(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub):
+                    stack.enter_context(patcher)
+                with self.assertRaisesRegex(
+                    CommandMappingError, r"openui-spec 9\.9\.9.*SCHEMA_VERSION"
+                ):
+                    installed_openui_schema_version()
+
+
 class LoadCommandMappingTests(CommandMappingTestCase):
     def test_loads_the_mapping_of_the_installed_package(self) -> None:
         mapping = self.load()
@@ -84,7 +181,7 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         scoped.mkdir()
         shutil.move(str(self.package_dir), str(scoped / "angular-django2"))
 
-        mapping = self.load("@example/angular-django2@0.7.1")
+        mapping = self.load(f"@example/{PACKAGE_SPEC}")
 
         self.assertEqual(mapping.mapping_version, 1)
 
@@ -92,7 +189,8 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         shutil.rmtree(self.package_dir)
 
         with self.assertRaisesRegex(
-            CommandMappingError, r"command-mapping\.json.*angular-django2@0\.7\.1"
+            CommandMappingError,
+            rf"command-mapping\.json.*{re.escape(PACKAGE_SPEC)}",
         ):
             self.load()
 
@@ -100,9 +198,11 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         self,
     ) -> None:
         with self.assertRaisesRegex(
-            CommandMappingError, r"Installed angular-django2 is 0\.7\.1.*pins 0\.6\.1"
+            CommandMappingError,
+            rf"Installed angular-django2 is {re.escape(fixture_version())}"
+            r".*pins 0\.0\.1",
         ):
-            self.load("angular-django2@0.6.1")
+            self.load("angular-django2@0.0.1")
 
     def test_a_mapping_that_breaks_the_schema_is_rejected(self) -> None:
         path = self.package_dir / "schematics" / "command-mapping.json"
@@ -122,17 +222,20 @@ class LoadCommandMappingTests(CommandMappingTestCase):
     def test_a_different_openui_spec_version_names_both(self) -> None:
         with self.assertRaisesRegex(
             CommandMappingError,
-            r"OpenUI spec 0\.12\.1.*installed openui-spec is 0\.13\.0",
+            rf"OpenUI spec {re.escape(SPEC_VERSION)}"
+            rf".*installed openui-spec is {re.escape(MINOR_DIFFERENT_SPEC_VERSION)}",
         ):
             load_command_mapping(
                 self.workspace,
                 PACKAGE_SPEC,
-                installed_openui_spec_version="0.13.0",
+                installed_openui_spec_version=MINOR_DIFFERENT_SPEC_VERSION,
             )
 
     def test_a_patch_difference_in_the_openui_spec_version_is_accepted(self) -> None:
         mapping = load_command_mapping(
-            self.workspace, PACKAGE_SPEC, installed_openui_spec_version="0.12.0"
+            self.workspace,
+            PACKAGE_SPEC,
+            installed_openui_spec_version=PATCH_DIFFERENT_SPEC_VERSION,
         )
 
         self.assertEqual(mapping.openui_spec_version, SPEC_VERSION)
@@ -223,43 +326,28 @@ class CommandMappingAccessorTests(CommandMappingTestCase):
             self.mapping.operation_status("Application", "teleport")
 
 
-class FixtureVersionTests(unittest.TestCase):
-    def test_the_fixture_is_the_version_the_shipped_configuration_pins(self) -> None:
-        shipped = json.loads(
-            (
-                Path(__file__).resolve().parent.parent
-                / "django_angular3"
-                / "django-angular3.json"
-            ).read_text(encoding="utf-8")
-        )["tool"]["ngAddPackage"]
-        fixture = json.loads((FIXTURE_DIR / "package.json").read_text(encoding="utf-8"))
-
-        self.assertEqual(
-            (fixture["name"], fixture["version"]),
-            parse_package_spec(shipped),
-            "tool.ngAddPackage changed; regenerate the fixture with "
-            "tests/fixtures/ngdj/sync_command_mapping.py",
-        )
-
-
 @require_ngdj_source
 class FixtureDriftTests(unittest.TestCase):
-    def test_the_fixture_equals_the_sibling_mapping_of_the_same_version(self) -> None:
-        fixture_version = json.loads(
-            (FIXTURE_DIR / "package.json").read_text(encoding="utf-8")
-        )["version"]
+    """The fixture must equal the adjacent checkout it is synced from.
+
+    Development and integration run against the local ``angular-django2``
+    (``ANGULAR_DJANGO2_ROOT`` or the sibling checkout), not a released pin; a
+    mismatch means the fixture must be refreshed.
+    """
+
+    def test_the_fixture_is_the_version_of_the_adjacent_checkout(self) -> None:
         sibling_version = json.loads(
             (NGDJ_PACKAGE_DIR / "package.json").read_text(encoding="utf-8")
         )["version"]
-        if sibling_version != fixture_version:
-            message = (
-                f"sibling is {sibling_version}, fixture is {fixture_version}; "
-                "run tests/fixtures/ngdj/sync_command_mapping.py to refresh it"
-            )
-            if ngdj_required():
-                self.fail(message)
-            self.skipTest(message)
 
+        self.assertEqual(
+            fixture_version(),
+            sibling_version,
+            "the fixture does not match the adjacent angular-django2; "
+            "run tests/fixtures/ngdj/sync_command_mapping.py to refresh it",
+        )
+
+    def test_the_fixture_equals_the_sibling_mapping(self) -> None:
         for name in ("command-mapping.json", "command-mapping.schema.json"):
             with self.subTest(file=name):
                 self.assertEqual(
