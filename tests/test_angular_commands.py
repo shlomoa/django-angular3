@@ -1004,7 +1004,8 @@ class AngularCliCommandTests(unittest.TestCase):
         )
 
     def test_ng_add_dry_run_defaults_to_angular_django2(self) -> None:
-        exit_code, stdout, stderr = self.run_cli("ng_add", "--dry-run")
+        with patch("django_angular3.angular.local_ngdj_package", return_value=None):
+            exit_code, stdout, stderr = self.run_cli("ng_add", "--dry-run")
 
         ng = load_angular_settings().ng_executable
         self.assertEqual(exit_code, 0)
@@ -1014,6 +1015,41 @@ class AngularCliCommandTests(unittest.TestCase):
             plan["invocations"][0]["argv"],
             [ng, "add", NG_ADD_PACKAGE, "--skip-confirmation"],
         )
+
+    def test_ng_add_dry_run_prefers_the_local_ngdj_build(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            dist = Path(tmp) / "projects" / "angular-django2" / "dist"
+            dist.mkdir(parents=True)
+            (dist / "package.json").write_text(
+                '{"name": "angular-django2", "version": "9.9.9"}', encoding="utf-8"
+            )
+
+            with patch.dict(os.environ, {"ANGULAR_DJANGO2_ROOT": tmp}):
+                exit_code, stdout, stderr = self.run_cli("ng_add", "--dry-run")
+
+            ng = load_angular_settings().ng_executable
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(stderr, "")
+            plan = json.loads(stdout)
+            self.assertEqual(
+                plan["invocations"][0]["argv"],
+                [ng, "add", str(dist), "--skip-confirmation"],
+            )
+
+    def test_ng_add_dry_run_without_a_local_build_uses_the_registry_name(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            # A checkout without a built package: the registry name applies.
+            with patch.dict(os.environ, {"ANGULAR_DJANGO2_ROOT": tmp}):
+                exit_code, stdout, stderr = self.run_cli("ng_add", "--dry-run")
+
+            ng = load_angular_settings().ng_executable
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(stderr, "")
+            plan = json.loads(stdout)
+            self.assertEqual(
+                plan["invocations"][0]["argv"],
+                [ng, "add", NG_ADD_PACKAGE, "--skip-confirmation"],
+            )
 
     def test_ng_add_dry_run_accepts_custom_package(self) -> None:
         exit_code, stdout, stderr = self.run_cli(

@@ -105,16 +105,16 @@ class ScaffoldTests(unittest.TestCase):
         )
         self.assertEqual(validate_project_config(config), [])
 
-    def test_shipped_static_configs_pin_ngdj_package(self) -> None:
+    def test_shipped_static_configs_name_the_unpinned_ngdj_package(self) -> None:
         for static_config_path in (ROOT / "django_angular3" / "django-angular3.json",):
             with self.subTest(static_config=static_config_path):
                 static_config = json.loads(
                     static_config_path.read_text(encoding="utf-8")
                 )
-                # A registry name pinned to one exact version, never a range or a path.
-                self.assertRegex(
-                    static_config["tool"]["ngAddPackage"],
-                    r"^angular-django2@\d+\.\d+\.\d+$",
+                # The unpinned registry name: no hard-coded version, range or path.
+                # The installed openui-spec schema version guards compatibility.
+                self.assertEqual(
+                    static_config["tool"]["ngAddPackage"], "angular-django2"
                 )
 
     def test_project_config_resolves_paths(self) -> None:

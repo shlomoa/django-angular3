@@ -165,8 +165,10 @@ it resolves commands without executing Angular tooling:
 - `ng_new` creates an empty Angular workspace
 - `ng_workspace` runs the upstream-aligned workspace bootstrap flow: `ng new`, workspace defaults, `ng add angular-django2`, and `ng generate angular-django2:workspace-setup`
 - `ng_config` applies workspace defaults such as package manager, style, and routing
-- `ng_add` installs and registers the configured `angular-django2` package (pinned via `tool.ngAddPackage`), whose OpenUI
-  integration requires validated 0.12.0 canonical-catalog documents
+- `ng_add` installs and registers the configured `angular-django2` package (named, without a
+  hard-coded version, by `tool.ngAddPackage`; a local checkout's build is preferred when one
+  is present), whose OpenUI integration requires validated versionless canonical-catalog
+  documents
 - `ng_gen_app` generates an Angular application inside the configured workspace via the `angular-django2:material-app` schematic, forwarding `--ssr`, `--zoneless`, and `--defaults` to align with the Angular CLI `ng new` defaults
 - `ng_material_setup` configures Angular Material in an existing project via the `angular-django2:material-setup` schematic, forwarding optional `--theme`, `--typography`, and `--animations`
 - `ng_page`, `ng_component`, and `ng_reactive_form` wrap the matching `angular-django2` schematics without changing their deterministic behavior

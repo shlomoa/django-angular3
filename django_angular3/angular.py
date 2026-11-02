@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -9,6 +10,7 @@ from typing import Any
 
 from . import command_execution, tools
 from .config import ProjectConfig, load_project_config
+from .ngdj_command_mapping import parse_package_spec
 from .settings import (
     AngularCommandError,
     DjangoAngularSettings,
@@ -737,6 +739,29 @@ def _configured_api_client_output(config_path: Path) -> str | None:
     return None
 
 
+def local_ngdj_package() -> Path | None:
+    """The built package of a local ``angular-django2`` checkout, when present.
+
+    The checkout is named by ``ANGULAR_DJANGO2_ROOT``, or is the sibling
+    ``../angular-django2`` of a django-angular3 source checkout; a wheel
+    install has no sibling. The package must be built (``npm run build`` in
+    the checkout gives ``projects/angular-django2/dist``); otherwise the
+    configured registry name applies.
+    """
+    override = os.environ.get("ANGULAR_DJANGO2_ROOT", "").strip()
+    if override:
+        root = Path(override)
+    else:
+        repository = Path(__file__).resolve().parents[1]
+        if not (repository / "pyproject.toml").is_file():
+            return None
+        root = repository.parent / "angular-django2"
+    dist = root / "projects" / "angular-django2" / "dist"
+    if (dist / "package.json").is_file():
+        return dist
+    return None
+
+
 def build_ng_add_invocations(
     config: ProjectConfig,
     settings: DjangoAngularSettings,
@@ -744,7 +769,20 @@ def build_ng_add_invocations(
     package: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
+    """``ng add`` of the ngdj package, preferring a local checkout's build.
+
+    An explicit ``package`` is used verbatim. The configured unpinned registry
+    name ``angular-django2`` resolves to the built package of a local checkout
+    when one is present (``local_ngdj_package``); a pinned spec or a path is an
+    explicit choice and is kept.
+    """
     target_package = package or settings.ng_add_package
+    if package is None:
+        name, pinned = parse_package_spec(target_package)
+        if pinned is None and name == "angular-django2":
+            local = local_ngdj_package()
+            if local is not None:
+                target_package = str(local)
     return [
         AngularInvocation(
             command_name="ng_add",

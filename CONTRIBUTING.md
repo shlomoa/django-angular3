@@ -277,8 +277,10 @@ validators, and automation skills that orchestrate the frontend tooling:
    `python tests/fixtures/ngdj/sync_command_mapping.py <angular-django2>/projects/angular-django2`
    (never edit it by hand) and read the mapping's operation statuses: what `build_app`
    supports and refuses follows them (`docs/commands.md`, "Changes `build_app` turns into steps").
-   The released `tool.ngAddPackage` pin only names what the shipped tutorial installs;
-   bump it when the upstream release is live on npm.
+   The shipped `tool.ngAddPackage` is the unpinned registry name `angular-django2` (no
+   hard-coded version): `ng_add` installs the built package of the local checkout when
+   one is present, otherwise the latest release, and the installed `openui-spec`
+   schema version guards compatibility.
 2. **Update commands and wrappers**:
    - Update argument parsers, execution builders, and
      management commands.
