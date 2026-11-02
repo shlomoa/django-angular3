@@ -8,6 +8,8 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+## [0.5.0]
+
 ### Changed
 
 - **Breaking:** the shipped `tool.ngAddPackage` is the unpinned registry name
