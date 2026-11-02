@@ -10,6 +10,11 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `E2E_NGDJ_LOCAL=1` for the real-tools end-to-end flow: packs the local
+  `angular-django2` checkout (`ANGULAR_DJANGO2_ROOT` or the sibling
+  `../angular-django2`, built first with `npm run build`) and installs it instead
+  of the pinned registry release, for fast cross-repository integration.
+  `E2E_NGDJ_TARBALL` still names a pre-packed tarball and wins when both are set.
 - `django_angular3.spa.angular_urlpatterns()`: a catch-all view that serves the built Angular
   application from Django on the same origin as the API. Where the files are is configuration, not
   a Django setting: `artifacts.angularWorkspace` of the project configuration plus the new
@@ -38,6 +43,16 @@ package versions. Releases before this file are described on the
 
 ### Changed
 
+- **Breaking:** the OpenUI schema version is managed by the installed `openui-spec`
+  package, not inside OpenUI documents, mirroring how the OpenAPI schema version is
+  owned by the OpenAPI tooling. An OpenUI document no longer declares a root
+  `version` member (openui-spec 0.15.0 rejects one as an unknown member), the
+  `openui-spec` dependency is no longer pinned, and the ngdj command-mapping
+  compatibility check compares `openuiSpecVersion` against the `SCHEMA_VERSION`
+  file shipped with the installed `openui-spec` package
+  (`django_angular3.ngdj_command_mapping.installed_openui_schema_version()`)
+  instead of `openui_spec.__version__`. The bundled example and fixture documents
+  are versionless.
 - **Breaking:** `django-angular3.json` is mandatory and has no fallback. It is found next to the
   project configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the current
   directory) and every command that reads it (`ng_*`, `build_app`, `export_schema`, ...) fails with
@@ -58,6 +73,9 @@ package versions. Releases before this file are described on the
 
 ### Fixed
 
+- The real-tools end-to-end flow runs on Windows: it drops the tutorial template's
+  POSIX `tool.executables` names (`ng`, `pnpm`) from the staged tool configuration
+  there, so the platform defaults of the settings (`ng.cmd`, `pnpm.cmd`) apply.
 - `build_app` translation gives one step for several OpenUI Changes under the same command
   root. Two attribute changes of the `Application`, or edits of two `Route` elements that it
   compiles, used to give the same `angular_app_scaffold` step twice; they now give one step

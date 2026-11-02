@@ -281,7 +281,6 @@ def _openui_changes(
 
     def document(children: list[dict[str, object]], attrs: dict[str, str] | None):
         result: dict[str, object] = {
-            "version": "0.12.0",
             "id": "root",
             "type": "Application",
             "children": children,

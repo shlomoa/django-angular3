@@ -213,7 +213,7 @@ class ScaffoldTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "app.openui.json").write_text(
-                json.dumps({"version": "0.12.0", "id": "root", "type": "UnknownType"}),
+                json.dumps({"id": "root", "type": "UnknownType"}),
                 encoding="utf-8",
             )
             config_path = root / TEST_PROJECT_CONFIG_FILENAME
@@ -473,7 +473,7 @@ class ScaffoldTests(unittest.TestCase):
             "django-filter",
             "drf-spectacular",
             "claude-agent-sdk",
-            "openui-spec==0.12.1",
+            "openui-spec",
             "openapi-spec-validator>=0.7",
             "jsonschema>=4.18",
         }

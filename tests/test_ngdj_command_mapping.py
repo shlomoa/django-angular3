@@ -5,15 +5,19 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
+import types
 import unittest
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
+from django_angular3 import ngdj_command_mapping
 from django_angular3.changes import ChangeOperation
 from django_angular3.ngdj_command_mapping import (
     CommandMapping,
     CommandMappingError,
     NodeCommand,
+    installed_openui_schema_version,
     load_command_mapping,
     parse_package_spec,
 )
@@ -22,7 +26,7 @@ from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "ngdj"
 PACKAGE_SPEC = "angular-django2@0.7.1"
-SPEC_VERSION = "0.12.1"
+SPEC_VERSION = "0.1.0"
 
 
 class CommandMappingTestCase(unittest.TestCase):
@@ -67,6 +71,47 @@ class ParsePackageSpecTests(unittest.TestCase):
             parse_package_spec("@example/angular-django2"),
             ("@example/angular-django2", None),
         )
+
+
+class InstalledOpenUiSchemaVersionTests(unittest.TestCase):
+    def stub_package(self, root: Path) -> types.ModuleType:
+        package_dir = root / "openui_spec"
+        package_dir.mkdir()
+        (package_dir / "__init__.py").touch()
+        stub = types.ModuleType("openui_spec")
+        stub.__file__ = str(package_dir / "__init__.py")
+        stub.__version__ = "9.9.9"
+        return stub
+
+    def test_reads_schema_version_shipped_as_package_data(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+            (Path(tmp) / "openui_spec" / "SCHEMA_VERSION").write_text(
+                "1.2.3\n", encoding="utf-8"
+            )
+
+            with patch.object(ngdj_command_mapping, "openui_spec", stub):
+                self.assertEqual(installed_openui_schema_version(), "1.2.3")
+
+    def test_reads_schema_version_of_a_source_checkout(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+            (Path(tmp) / "SCHEMA_VERSION").write_text("1.2.3\n", encoding="utf-8")
+
+            with patch.object(ngdj_command_mapping, "openui_spec", stub):
+                self.assertEqual(installed_openui_schema_version(), "1.2.3")
+
+    def test_a_package_without_schema_version_names_the_package(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+
+            with (
+                patch.object(ngdj_command_mapping, "openui_spec", stub),
+                self.assertRaisesRegex(
+                    CommandMappingError, r"openui-spec 9\.9\.9.*SCHEMA_VERSION"
+                ),
+            ):
+                installed_openui_schema_version()
 
 
 class LoadCommandMappingTests(CommandMappingTestCase):
@@ -122,17 +167,17 @@ class LoadCommandMappingTests(CommandMappingTestCase):
     def test_a_different_openui_spec_version_names_both(self) -> None:
         with self.assertRaisesRegex(
             CommandMappingError,
-            r"OpenUI spec 0\.12\.1.*installed openui-spec is 0\.13\.0",
+            r"OpenUI spec 0\.1\.0.*installed openui-spec is 0\.2\.0",
         ):
             load_command_mapping(
                 self.workspace,
                 PACKAGE_SPEC,
-                installed_openui_spec_version="0.13.0",
+                installed_openui_spec_version="0.2.0",
             )
 
     def test_a_patch_difference_in_the_openui_spec_version_is_accepted(self) -> None:
         mapping = load_command_mapping(
-            self.workspace, PACKAGE_SPEC, installed_openui_spec_version="0.12.0"
+            self.workspace, PACKAGE_SPEC, installed_openui_spec_version="0.1.1"
         )
 
         self.assertEqual(mapping.openui_spec_version, SPEC_VERSION)

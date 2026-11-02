@@ -21,6 +21,11 @@ lists the prerequisites. Environment variables:
 ``E2E_NGDJ_TARBALL``
     Path of a locally packed ngdj (``npm pack ./projects/angular-django2/dist``) to
     install instead of the pinned registry release.
+``E2E_NGDJ_LOCAL``
+    ``1`` packs the local ngdj checkout (``ANGULAR_DJANGO2_ROOT`` or the sibling
+    ``../angular-django2``) and installs it instead of the pinned registry release.
+    The checkout must be built first (``npm run build``). ``E2E_NGDJ_TARBALL`` wins
+    when both are set.
 ``E2E_KEEP``
     ``1`` keeps the temporary area.
 ``E2E_ANGULAR_CLI``
@@ -65,6 +70,7 @@ from django_angular3.angular import (
 from django_angular3.config import load_project_config
 from django_angular3.settings import load_angular_settings
 from django_angular3.step_bridge import stage_document, workspace_document_path
+from tests.ngdj_source import ngdj_package_dir
 from tests.workspace_temp import WORKSPACE_TEMP_DIR, keep_workspace_temp
 
 REPOSITORY = Path(__file__).resolve().parents[2]
@@ -174,6 +180,7 @@ class Flow:
     findings: list[dict[str, str]] = field(default_factory=list)
     current_stage: str = "setup"
     last_error: str | None = None
+    ngdj_tarball: Path | None = None
     generated_client: Path = field(init=False)
     data_service: Path = field(init=False)
 
@@ -401,6 +408,38 @@ class Flow:
         )
         self.run(["ng", "version"], cwd=self.work, label="ng version")
 
+    def _ngdj_tarball(self) -> Path | None:
+        """The ngdj tarball to install instead of the pinned release, when configured.
+
+        ``E2E_NGDJ_TARBALL`` names a pre-packed tarball and wins; ``E2E_NGDJ_LOCAL=1``
+        packs the built package of the local checkout (``tests.ngdj_source``).
+        """
+        tarball = os.environ.get("E2E_NGDJ_TARBALL")
+        if tarball:
+            tarball_path = Path(tarball).resolve()
+            self.check(tarball_path.is_file(), f"E2E_NGDJ_TARBALL not found: {tarball}")
+            return tarball_path
+        if os.environ.get("E2E_NGDJ_LOCAL", "").strip() != "1":
+            return None
+        dist = ngdj_package_dir() / "dist"
+        self.check(
+            (dist / "package.json").is_file(),
+            f"E2E_NGDJ_LOCAL=1: no built ngdj package at {dist}; "
+            "run npm run build in the angular-django2 checkout first.",
+        )
+        pack = self.run(
+            ["npm", "pack", str(dist), "--pack-destination", str(self.work)],
+            cwd=self.work,
+            label="npm pack angular-django2",
+        )
+        lines = [line.strip() for line in pack.stdout.splitlines() if line.strip()]
+        self.check(lines, "npm pack reported no tarball name.")
+        tarball_path = self.work / lines[-1]
+        self.check(
+            tarball_path.is_file(), f"npm pack produced no tarball: {tarball_path}"
+        )
+        return tarball_path
+
     # -- stage 1 -----------------------------------------------------------------------
 
     def stage_1_backend(self) -> None:
@@ -420,13 +459,15 @@ class Flow:
         config["artifacts"]["openuiSpecification"] = self.document.name
         self.write_json(self.project_config, config)
 
-        tarball = os.environ.get("E2E_NGDJ_TARBALL")
-        if tarball:
-            tarball_path = Path(tarball).resolve()
-            self.check(tarball_path.is_file(), f"E2E_NGDJ_TARBALL not found: {tarball}")
-            tool = self.read_json(self.tool_config)
-            tool["tool"]["ngAddPackage"] = str(tarball_path)
-            self.write_json(self.tool_config, tool)
+        self.ngdj_tarball = self._ngdj_tarball()
+        tool = self.read_json(self.tool_config)
+        if os.name == "nt":
+            # The tutorial template names POSIX executables (ng, pnpm); drop them so
+            # the platform defaults of settings.py (ng.cmd, pnpm.cmd) apply.
+            tool["tool"].pop("executables", None)
+        if self.ngdj_tarball is not None:
+            tool["tool"]["ngAddPackage"] = str(self.ngdj_tarball)
+        self.write_json(self.tool_config, tool)
 
         document = self.read_json(FIXTURES / "customers.openui.json")
         if self.break_name == "openui-route":
@@ -539,16 +580,16 @@ class Flow:
         self.check(package.is_file(), "ng add did not install angular-django2.")
         installed = self.read_json(package)["version"]
         pinned = self.read_json(self.tool_config)["tool"]["ngAddPackage"]
-        if "@" in pinned and not os.environ.get("E2E_NGDJ_TARBALL"):
-            self.check(
-                pinned.endswith(f"@{installed}"),
-                f"angular-django2 {installed} is installed, but ngAddPackage is {pinned}.",
-            )
-        elif os.environ.get("E2E_NGDJ_TARBALL"):
+        if self.ngdj_tarball is not None:
             # build_app locates the package by name and version, not by tarball path.
             tool = self.read_json(self.tool_config)
             tool["tool"]["ngAddPackage"] = f"angular-django2@{installed}"
             self.write_json(self.tool_config, tool)
+        elif "@" in pinned:
+            self.check(
+                pinned.endswith(f"@{installed}"),
+                f"angular-django2 {installed} is installed, but ngAddPackage is {pinned}.",
+            )
 
         config = load_project_config(self.project_config)
         stage_document(config)

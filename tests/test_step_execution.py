@@ -61,7 +61,6 @@ _DASHBOARD_PAGE = json.loads(
     (SHARED / "dashboard.openui.json").read_text(encoding="utf-8")
 )["children"][0]
 _BASE_DOCUMENT = {
-    "version": "0.12.0",
     "id": "root",
     "type": "Application",
     "children": [{"id": "home", "type": "EmptyPage"}],
@@ -488,7 +487,7 @@ class DryRunTests(unittest.TestCase):
             {
                 "package": "angular-django2@0.7.1",
                 "mappingVersion": 1,
-                "openuiSpecVersion": "0.12.1",
+                "openuiSpecVersion": "0.1.0",
             },
         )
 
@@ -630,7 +629,7 @@ class RealRunTests(unittest.TestCase):
         )
         self.assertEqual(evidence["ngdj"]["package"], "angular-django2@0.7.1")
         self.assertEqual(evidence["ngdj"]["mappingVersion"], 1)
-        self.assertEqual(evidence["ngdj"]["openuiSpecVersion"], "0.12.1")
+        self.assertEqual(evidence["ngdj"]["openuiSpecVersion"], "0.1.0")
         call = evidence["steps"][2]["invocations"][0]
         self.assertEqual(call["returncode"], 0)
 

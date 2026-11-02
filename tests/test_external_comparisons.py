@@ -158,7 +158,6 @@ class OpenUiComparisonTranslationTests(unittest.TestCase):
 def _element_documents() -> tuple[dict[str, object], dict[str, object]]:
     """Small reference and candidate documents for path-resolution tests."""
     reference: dict[str, object] = {
-        "version": "0.12.0",
         "id": "root",
         "type": "Application",
         "children": [

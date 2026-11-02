@@ -26,8 +26,6 @@ TUTORIAL_DOCUMENT = (
     / "01_simple_crm"
     / "app.openui.json"
 )
-OPENUI_VERSION = "0.12.0"
-
 CUSTOMER_COUNT = 25
 PRODUCT_COUNT = 12
 PAGE_SIZE = 10
@@ -201,7 +199,6 @@ def tutorial_document() -> dict[str, Any]:
     """
     return {
         "id": "root",
-        "version": OPENUI_VERSION,
         "type": "html",
         "children": [
             _application(),

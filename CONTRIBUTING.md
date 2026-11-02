@@ -137,6 +137,7 @@ Environment variables:
 | :--- | :--- |
 | `E2E_TRACKS` | `W`, `B` or `W,B` (default) |
 | `E2E_NGDJ_TARBALL` | Install a locally packed ngdj (`npm pack ./projects/angular-django2/dist`) instead of the pinned release |
+| `E2E_NGDJ_LOCAL=1` | Pack and install the local ngdj checkout (`ANGULAR_DJANGO2_ROOT` or the sibling `../angular-django2`, built first with `npm run build`) instead of the pinned release; `E2E_NGDJ_TARBALL` wins when both are set |
 | `E2E_KEEP=1` | Keep the temporary area under `scratch/` |
 | `E2E_ANGULAR_CLI` | Angular CLI range installed when `ng` is missing (default `^22`) |
 | `E2E_CHROMIUM_PATH` | Chromium executable for Playwright |

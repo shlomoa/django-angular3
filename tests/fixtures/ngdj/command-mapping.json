@@ -1,7 +1,7 @@
 {
   "$schema": "./command-mapping.schema.json",
   "mappingVersion": 1,
-  "openuiSpecVersion": "0.12.1",
+  "openuiSpecVersion": "0.1.0",
   "ui": {
     "commands": {
       "reactive-form": {

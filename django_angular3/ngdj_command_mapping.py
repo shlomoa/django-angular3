@@ -60,9 +60,30 @@ def parse_package_spec(spec: str) -> tuple[str, str | None]:
 
 
 def _spec_version(version: str) -> tuple[str, str]:
-    """Major and minor of an OpenUI spec or package version, the spec identity."""
+    """Major and minor of an OpenUI schema version, the spec identity."""
     parts = version.split(".")
     return parts[0], parts[1] if len(parts) > 1 else ""
+
+
+def installed_openui_schema_version() -> str:
+    """The OpenUI schema version declared by the installed ``openui-spec`` package.
+
+    The package's ``SCHEMA_VERSION`` file is the sole schema-version declaration
+    (openui-spec ``RELEASING.md``); it is independent of the package release
+    version, and an OpenUI document declares no version of its own.
+    """
+    package_dir = Path(cast(str, openui_spec.__file__)).resolve().parent
+    candidates = (
+        package_dir / "SCHEMA_VERSION",  # shipped as openui_spec package data
+        package_dir.parent / "SCHEMA_VERSION",  # a source checkout (editable install)
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate.read_text(encoding="utf-8").strip()
+    raise CommandMappingError(
+        f"The installed openui-spec {openui_spec.__version__} ships no "
+        "SCHEMA_VERSION file; install an openui-spec distribution that does."
+    )
 
 
 def load_command_mapping(
@@ -76,7 +97,8 @@ def load_command_mapping(
     ``package_spec`` is the configured ``tool.ngAddPackage``. When it pins a version,
     the installed package must have exactly that version. The mapping must validate
     against the schema shipped beside it, use a supported ``mappingVersion`` and target
-    the same OpenUI spec version (major and minor) as the installed ``openui-spec``.
+    the same OpenUI schema version (major and minor) as the ``SCHEMA_VERSION`` of the
+    installed ``openui-spec``.
     """
     name, pinned = parse_package_spec(package_spec)
     package_dir = workspace / "node_modules" / name
@@ -115,7 +137,7 @@ def load_command_mapping(
             f"{location}: {first.message}"
         )
 
-    expected = installed_openui_spec_version or openui_spec.__version__
+    expected = installed_openui_spec_version or installed_openui_schema_version()
     declared = document["openuiSpecVersion"]
     if _spec_version(declared) != _spec_version(expected):
         raise CommandMappingError(
