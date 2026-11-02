@@ -59,9 +59,10 @@ package versions. Releases before this file are described on the
   `openui-spec` dependency is no longer pinned, and the ngdj command-mapping
   compatibility check compares `openuiSpecVersion` against the `SCHEMA_VERSION`
   file shipped with the installed `openui-spec` package
-  (`django_angular3.ngdj_command_mapping.installed_openui_schema_version()`)
-  instead of `openui_spec.__version__`. The bundled example and fixture documents
-  are versionless.
+  (`django_angular3.ngdj_command_mapping.installed_openui_schema_version()`: the
+  distribution record of the released wheel, `openui_spec` package data, or the
+  root of a source checkout) instead of `openui_spec.__version__`. The bundled
+  example and fixture documents are versionless.
 - **Breaking:** `django-angular3.json` is mandatory and has no fallback. It is found next to the
   project configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the current
   directory) and every command that reads it (`ng_*`, `build_app`, `export_schema`, ...) fails with

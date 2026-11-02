@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import shutil
 import tempfile
 import types
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 from unittest.mock import patch
 
@@ -94,6 +95,42 @@ class InstalledOpenUiSchemaVersionTests(unittest.TestCase):
         stub.__version__ = "9.9.9"
         return stub
 
+    def patches(self, stub: types.ModuleType, distribution: object | None = None):
+        """Replace the module and its installed distribution with the stubs."""
+        if distribution is None:
+            lookup = patch.object(
+                ngdj_command_mapping.metadata,
+                "distribution",
+                side_effect=ngdj_command_mapping.metadata.PackageNotFoundError(
+                    "openui-spec"
+                ),
+            )
+        else:
+            lookup = patch.object(
+                ngdj_command_mapping.metadata,
+                "distribution",
+                return_value=distribution,
+            )
+        return (patch.object(ngdj_command_mapping, "openui_spec", stub), lookup)
+
+    def test_reads_schema_version_from_the_distribution_record(self) -> None:
+        # The released wheel ships SCHEMA_VERSION as a data file; it is found
+        # through the distribution's record.
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            stub = self.stub_package(Path(tmp))
+            data = Path(tmp) / "share" / "openui-spec" / "SCHEMA_VERSION"
+            data.parent.mkdir(parents=True)
+            data.write_text("1.2.3\n", encoding="utf-8")
+            entry = PurePosixPath("../share/openui-spec/SCHEMA_VERSION")
+            distribution = types.SimpleNamespace(
+                files=[entry], locate_file=lambda record_entry: data
+            )
+
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub, distribution):
+                    stack.enter_context(patcher)
+                self.assertEqual(installed_openui_schema_version(), "1.2.3")
+
     def test_reads_schema_version_shipped_as_package_data(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             stub = self.stub_package(Path(tmp))
@@ -101,7 +138,9 @@ class InstalledOpenUiSchemaVersionTests(unittest.TestCase):
                 "1.2.3\n", encoding="utf-8"
             )
 
-            with patch.object(ngdj_command_mapping, "openui_spec", stub):
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub):
+                    stack.enter_context(patcher)
                 self.assertEqual(installed_openui_schema_version(), "1.2.3")
 
     def test_reads_schema_version_of_a_source_checkout(self) -> None:
@@ -109,20 +148,22 @@ class InstalledOpenUiSchemaVersionTests(unittest.TestCase):
             stub = self.stub_package(Path(tmp))
             (Path(tmp) / "SCHEMA_VERSION").write_text("1.2.3\n", encoding="utf-8")
 
-            with patch.object(ngdj_command_mapping, "openui_spec", stub):
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub):
+                    stack.enter_context(patcher)
                 self.assertEqual(installed_openui_schema_version(), "1.2.3")
 
     def test_a_package_without_schema_version_names_the_package(self) -> None:
         with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
             stub = self.stub_package(Path(tmp))
 
-            with (
-                patch.object(ngdj_command_mapping, "openui_spec", stub),
-                self.assertRaisesRegex(
+            with contextlib.ExitStack() as stack:
+                for patcher in self.patches(stub):
+                    stack.enter_context(patcher)
+                with self.assertRaisesRegex(
                     CommandMappingError, r"openui-spec 9\.9\.9.*SCHEMA_VERSION"
-                ),
-            ):
-                installed_openui_schema_version()
+                ):
+                    installed_openui_schema_version()
 
 
 class LoadCommandMappingTests(CommandMappingTestCase):

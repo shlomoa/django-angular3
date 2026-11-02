@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
+from importlib import metadata
 from pathlib import Path
 from typing import Any, Final, cast
 
@@ -70,13 +71,25 @@ def installed_openui_schema_version() -> str:
 
     The package's ``SCHEMA_VERSION`` file is the sole schema-version declaration
     (openui-spec ``RELEASING.md``); it is independent of the package release
-    version, and an OpenUI document declares no version of its own.
+    version, and an OpenUI document declares no version of its own. The file is
+    looked up in the installed distribution's record (the wheel ships it as a
+    data file), as ``openui_spec`` package data, and at the root of a source
+    checkout (an editable install).
     """
+    candidates: list[Path] = []
+    try:
+        distribution = metadata.distribution("openui-spec")
+    except metadata.PackageNotFoundError:
+        distribution = None
+    if distribution is not None:
+        candidates.extend(
+            Path(str(distribution.locate_file(entry)))
+            for entry in distribution.files or ()
+            if entry.name == "SCHEMA_VERSION"
+        )
     package_dir = Path(cast(str, openui_spec.__file__)).resolve().parent
-    candidates = (
-        package_dir / "SCHEMA_VERSION",  # shipped as openui_spec package data
-        package_dir.parent / "SCHEMA_VERSION",  # a source checkout (editable install)
-    )
+    candidates.append(package_dir / "SCHEMA_VERSION")  # openui_spec package data
+    candidates.append(package_dir.parent / "SCHEMA_VERSION")  # a source checkout
     for candidate in candidates:
         if candidate.is_file():
             return candidate.read_text(encoding="utf-8").strip()
