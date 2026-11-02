@@ -8,6 +8,18 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** the shipped `tool.ngAddPackage` is the unpinned registry name
+  `angular-django2` — no hard-coded version, following the schema-version scheme:
+  `ng_add` installs the built package of a local `angular-django2` checkout when
+  one is present (`ANGULAR_DJANGO2_ROOT` or the sibling of a django-angular3
+  source checkout, built with `npm run build`), otherwise the latest release, and
+  `build_app`'s command-mapping check against the installed `openui-spec`
+  `SCHEMA_VERSION` guards compatibility. A project configuration may still pin
+  (`angular-django2@X.Y.Z`), and the loader then requires the installed package
+  to match; the packaged template and the CI guard no longer name a release.
+
 ## [0.4.0]
 
 ### Added

@@ -233,7 +233,8 @@ a first build needs it before `angular_api_client_generate`.
 
 `build_app` loads the mapping only when the ChangeSet has an `openui` or `openapi`
 Change, from `<angularWorkspace>/node_modules/<package>/schematics/`, where the package is
-the one `tool.ngAddPackage` names. It must be installed at the pinned version, so the steps
+the one `tool.ngAddPackage` names. It must be installed there (and match the version when
+the configuration pins one), so the steps
 of a workspace that does not exist yet cannot be derived for these Changes; `build_app` reports
 that the package must be installed. `--dry-run` prints the ordered steps without running
 them.

@@ -32,7 +32,8 @@ do not maintain it as production configuration.
 - Angular workspace, application, and build settings, including the mandatory
   `angular.build.browserOutputPath`, the workspace-relative directory that `ng_build`
   leaves the browser files in; and
-- tool executable names and the pinned `ng add` package (`tool.ngAddPackage`, mandatory).
+- tool executable names and the `ng add` package (`tool.ngAddPackage`, mandatory: the
+  unpinned registry name; the installed `openui-spec` schema version guards compatibility).
 
 The file is **mandatory and has no fallback**: it must exist next to the project
 configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the current

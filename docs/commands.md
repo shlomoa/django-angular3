@@ -90,9 +90,10 @@ refused until it is implemented. The final `last-check` gate builds the applicat
 
 Not implemented yet: a step for `ng_openapi_setup`, running a schema export step, and
 detecting changes of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
-needs the `angular-django2` package installed in the Angular workspace at the version
-`tool.ngAddPackage` pins (a registry name such as `angular-django2@0.7.1`, not a path), so
-it cannot derive them for a workspace that does not exist yet.
+needs the `angular-django2` package `tool.ngAddPackage` names (a registry name, not a path;
+no hard-coded version) installed in the Angular workspace, at a version whose command
+mapping targets the installed OpenUI schema version, so it cannot derive them for a
+workspace that does not exist yet.
 
 ### Behavior on existing output
 
@@ -170,7 +171,7 @@ These commands are available through both interfaces. Invoke them as either
 | `ng_new` | Create an empty Angular workspace. |
 | `ng_workspace` | Bootstrap the configured workspace: `ng new`, workspace defaults, ngdj registration, and schematic generation. Accepts `--document <path>`, a workspace-relative OpenUI document for the workspace setup. |
 | `ng_config` | Apply workspace defaults such as package manager, style, and routing. |
-| `ng_add` | Run `ng add`; accepts `--package <name>` and otherwise uses the derived `ngAddPackage` setting. |
+| `ng_add` | Run `ng add`; accepts `--package <name>` and otherwise uses the derived `ngAddPackage` setting. The unpinned name `angular-django2` resolves to the built package of a local checkout when one is present (`ANGULAR_DJANGO2_ROOT` or the sibling `../angular-django2` of a django-angular3 source checkout). |
 | `ng_gen_app` | Generate the configured Angular application. Accepts `--app-name <name>`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`); SSR and zoneless behavior come from derived tool settings. |
 | `ng_material_setup` | Configure Angular Material. Accepts `--project`, `--theme`, `--typography`/`--no-typography`, and `--animations`/`--no-animations`; unset options use ngdj defaults. |
 | `ng_page` | Generate a routed page. Requires `--name` and `--target-path`; accepts `--project`, `--route-path`, `--access`, `--auth-guard`, `--navigation-label`, `--navigation-icon`, `--document <path>` (a workspace-relative OpenUI document) and `--node-id` (requires `--document`). |

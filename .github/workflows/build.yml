@@ -57,20 +57,19 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"
-    - name: Check tool.ngAddPackage is a pinned registry spec
+    - name: Check tool.ngAddPackage is the unpinned registry name
       run: |
         python - <<'PY'
         import json
-        import re
         import sys
 
         with open("django_angular3/django-angular3.json", encoding="utf-8") as handle:
             package = json.load(handle)["tool"]["ngAddPackage"]
-        match = re.fullmatch(r"angular-django2@(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?)", package)
-        if match is None:
+        if package != "angular-django2":
             sys.exit(
-                f"tool.ngAddPackage is {package!r}: expected a registry spec with a pinned "
-                "version such as 'angular-django2@0.7.1', not a path or an unpinned name"
+                f"tool.ngAddPackage is {package!r}: expected the unpinned registry name "
+                "'angular-django2' - no hard-coded version and no path. The installed "
+                "openui-spec SCHEMA_VERSION check guards compatibility."
             )
         PY
     # The contract and fixture track the development head of angular-django2, the
