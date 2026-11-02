@@ -8,6 +8,8 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+## [0.4.0]
+
 ### Added
 
 - Local-first `angular-django2` integration for the real-tools end-to-end flow: when
