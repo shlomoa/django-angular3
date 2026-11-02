@@ -22,10 +22,11 @@ lists the prerequisites. Environment variables:
     Path of a locally packed ngdj (``npm pack ./projects/angular-django2/dist``) to
     install instead of the pinned registry release.
 ``E2E_NGDJ_LOCAL``
-    ``1`` packs the local ngdj checkout (``ANGULAR_DJANGO2_ROOT`` or the sibling
-    ``../angular-django2``) and installs it instead of the pinned registry release.
-    The checkout must be built first (``npm run build``). ``E2E_NGDJ_TARBALL`` wins
-    when both are set.
+    Unset, the local ngdj checkout (``ANGULAR_DJANGO2_ROOT`` or the sibling
+    ``../angular-django2``) is packed and installed when it is present; a present
+    but unbuilt checkout (``npm run build``) fails the run, and without a checkout
+    the pinned registry release is installed. ``1`` requires the checkout, ``0``
+    forces the pinned release. ``E2E_NGDJ_TARBALL`` wins when both are set.
 ``E2E_KEEP``
     ``1`` keeps the temporary area.
 ``E2E_ANGULAR_CLI``
@@ -409,23 +410,39 @@ class Flow:
         self.run(["ng", "version"], cwd=self.work, label="ng version")
 
     def _ngdj_tarball(self) -> Path | None:
-        """The ngdj tarball to install instead of the pinned release, when configured.
+        """The ngdj tarball to install instead of the pinned release, when available.
 
-        ``E2E_NGDJ_TARBALL`` names a pre-packed tarball and wins; ``E2E_NGDJ_LOCAL=1``
-        packs the built package of the local checkout (``tests.ngdj_source``).
+        ``E2E_NGDJ_TARBALL`` names a pre-packed tarball and wins. Otherwise the local
+        checkout (``tests.ngdj_source``) is the default integration source: when it is
+        present its built package is packed, and a present but unbuilt checkout fails
+        the stage. ``E2E_NGDJ_LOCAL=1`` requires the checkout; ``E2E_NGDJ_LOCAL=0``
+        forces the pinned registry release.
         """
         tarball = os.environ.get("E2E_NGDJ_TARBALL")
         if tarball:
             tarball_path = Path(tarball).resolve()
             self.check(tarball_path.is_file(), f"E2E_NGDJ_TARBALL not found: {tarball}")
             return tarball_path
-        if os.environ.get("E2E_NGDJ_LOCAL", "").strip() != "1":
+        local = os.environ.get("E2E_NGDJ_LOCAL", "").strip()
+        if local == "0":
             return None
-        dist = ngdj_package_dir() / "dist"
+        package_dir = ngdj_package_dir()
+        if not package_dir.is_dir():
+            self.check(
+                local != "1",
+                f"E2E_NGDJ_LOCAL=1: no angular-django2 checkout at {package_dir}.",
+            )
+            print(
+                f"ngdj: no local checkout at {package_dir}; using the pinned release.",
+                flush=True,
+            )
+            return None
+        dist = package_dir / "dist"
         self.check(
             (dist / "package.json").is_file(),
-            f"E2E_NGDJ_LOCAL=1: no built ngdj package at {dist}; "
-            "run npm run build in the angular-django2 checkout first.",
+            f"No built ngdj package at {dist}; run npm run build in the "
+            "angular-django2 checkout first, or set E2E_NGDJ_LOCAL=0 to use "
+            "the pinned release.",
         )
         pack = self.run(
             ["npm", "pack", str(dist), "--pack-destination", str(self.work)],

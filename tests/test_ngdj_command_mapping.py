@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import tempfile
 import types
@@ -21,12 +22,22 @@ from django_angular3.ngdj_command_mapping import (
     load_command_mapping,
     parse_package_spec,
 )
-from tests.ngdj_source import NGDJ_PACKAGE_DIR, ngdj_required, require_ngdj_source
+from tests.ngdj_fixture import (
+    FIXTURE_DIR,
+    fixture_openui_spec_version,
+    fixture_package_spec,
+    fixture_version,
+)
+from tests.ngdj_source import NGDJ_PACKAGE_DIR, require_ngdj_source
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
 
-FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "ngdj"
-PACKAGE_SPEC = "angular-django2@0.7.1"
-SPEC_VERSION = "0.1.0"
+# The identities of the staged package come from the fixture, which follows the
+# adjacent angular-django2 checkout; nothing here names a release.
+PACKAGE_SPEC = fixture_package_spec()
+SPEC_VERSION = fixture_openui_spec_version()
+_MAJOR, _MINOR = SPEC_VERSION.split(".")[:2]
+PATCH_DIFFERENT_SPEC_VERSION = f"{_MAJOR}.{_MINOR}.999"
+MINOR_DIFFERENT_SPEC_VERSION = f"{_MAJOR}.{int(_MINOR) + 1}.0"
 
 
 class CommandMappingTestCase(unittest.TestCase):
@@ -129,7 +140,7 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         scoped.mkdir()
         shutil.move(str(self.package_dir), str(scoped / "angular-django2"))
 
-        mapping = self.load("@example/angular-django2@0.7.1")
+        mapping = self.load(f"@example/{PACKAGE_SPEC}")
 
         self.assertEqual(mapping.mapping_version, 1)
 
@@ -137,7 +148,8 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         shutil.rmtree(self.package_dir)
 
         with self.assertRaisesRegex(
-            CommandMappingError, r"command-mapping\.json.*angular-django2@0\.7\.1"
+            CommandMappingError,
+            rf"command-mapping\.json.*{re.escape(PACKAGE_SPEC)}",
         ):
             self.load()
 
@@ -145,9 +157,11 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         self,
     ) -> None:
         with self.assertRaisesRegex(
-            CommandMappingError, r"Installed angular-django2 is 0\.7\.1.*pins 0\.6\.1"
+            CommandMappingError,
+            rf"Installed angular-django2 is {re.escape(fixture_version())}"
+            r".*pins 0\.0\.1",
         ):
-            self.load("angular-django2@0.6.1")
+            self.load("angular-django2@0.0.1")
 
     def test_a_mapping_that_breaks_the_schema_is_rejected(self) -> None:
         path = self.package_dir / "schematics" / "command-mapping.json"
@@ -167,17 +181,20 @@ class LoadCommandMappingTests(CommandMappingTestCase):
     def test_a_different_openui_spec_version_names_both(self) -> None:
         with self.assertRaisesRegex(
             CommandMappingError,
-            r"OpenUI spec 0\.1\.0.*installed openui-spec is 0\.2\.0",
+            rf"OpenUI spec {re.escape(SPEC_VERSION)}"
+            rf".*installed openui-spec is {re.escape(MINOR_DIFFERENT_SPEC_VERSION)}",
         ):
             load_command_mapping(
                 self.workspace,
                 PACKAGE_SPEC,
-                installed_openui_spec_version="0.2.0",
+                installed_openui_spec_version=MINOR_DIFFERENT_SPEC_VERSION,
             )
 
     def test_a_patch_difference_in_the_openui_spec_version_is_accepted(self) -> None:
         mapping = load_command_mapping(
-            self.workspace, PACKAGE_SPEC, installed_openui_spec_version="0.1.1"
+            self.workspace,
+            PACKAGE_SPEC,
+            installed_openui_spec_version=PATCH_DIFFERENT_SPEC_VERSION,
         )
 
         self.assertEqual(mapping.openui_spec_version, SPEC_VERSION)
@@ -268,43 +285,28 @@ class CommandMappingAccessorTests(CommandMappingTestCase):
             self.mapping.operation_status("Application", "teleport")
 
 
-class FixtureVersionTests(unittest.TestCase):
-    def test_the_fixture_is_the_version_the_shipped_configuration_pins(self) -> None:
-        shipped = json.loads(
-            (
-                Path(__file__).resolve().parent.parent
-                / "django_angular3"
-                / "django-angular3.json"
-            ).read_text(encoding="utf-8")
-        )["tool"]["ngAddPackage"]
-        fixture = json.loads((FIXTURE_DIR / "package.json").read_text(encoding="utf-8"))
-
-        self.assertEqual(
-            (fixture["name"], fixture["version"]),
-            parse_package_spec(shipped),
-            "tool.ngAddPackage changed; regenerate the fixture with "
-            "tests/fixtures/ngdj/sync_command_mapping.py",
-        )
-
-
 @require_ngdj_source
 class FixtureDriftTests(unittest.TestCase):
-    def test_the_fixture_equals_the_sibling_mapping_of_the_same_version(self) -> None:
-        fixture_version = json.loads(
-            (FIXTURE_DIR / "package.json").read_text(encoding="utf-8")
-        )["version"]
+    """The fixture must equal the adjacent checkout it is synced from.
+
+    Development and integration run against the local ``angular-django2``
+    (``ANGULAR_DJANGO2_ROOT`` or the sibling checkout), not a released pin; a
+    mismatch means the fixture must be refreshed.
+    """
+
+    def test_the_fixture_is_the_version_of_the_adjacent_checkout(self) -> None:
         sibling_version = json.loads(
             (NGDJ_PACKAGE_DIR / "package.json").read_text(encoding="utf-8")
         )["version"]
-        if sibling_version != fixture_version:
-            message = (
-                f"sibling is {sibling_version}, fixture is {fixture_version}; "
-                "run tests/fixtures/ngdj/sync_command_mapping.py to refresh it"
-            )
-            if ngdj_required():
-                self.fail(message)
-            self.skipTest(message)
 
+        self.assertEqual(
+            fixture_version(),
+            sibling_version,
+            "the fixture does not match the adjacent angular-django2; "
+            "run tests/fixtures/ngdj/sync_command_mapping.py to refresh it",
+        )
+
+    def test_the_fixture_equals_the_sibling_mapping(self) -> None:
         for name in ("command-mapping.json", "command-mapping.schema.json"):
             with self.subTest(file=name):
                 self.assertEqual(

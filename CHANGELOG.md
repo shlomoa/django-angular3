@@ -10,11 +10,13 @@ package versions. Releases before this file are described on the
 
 ### Added
 
-- `E2E_NGDJ_LOCAL=1` for the real-tools end-to-end flow: packs the local
-  `angular-django2` checkout (`ANGULAR_DJANGO2_ROOT` or the sibling
-  `../angular-django2`, built first with `npm run build`) and installs it instead
-  of the pinned registry release, for fast cross-repository integration.
-  `E2E_NGDJ_TARBALL` still names a pre-packed tarball and wins when both are set.
+- Local-first `angular-django2` integration for the real-tools end-to-end flow: when
+  the local checkout (`ANGULAR_DJANGO2_ROOT` or the sibling `../angular-django2`) is
+  present, its built package (`npm run build`) is packed and installed instead of the
+  pinned registry release; a present but unbuilt checkout fails the run, and without a
+  checkout the pinned release installs. `E2E_NGDJ_LOCAL=1` requires the checkout,
+  `E2E_NGDJ_LOCAL=0` forces the pinned release, and `E2E_NGDJ_TARBALL` still names a
+  pre-packed tarball and wins.
 - `django_angular3.spa.angular_urlpatterns()`: a catch-all view that serves the built Angular
   application from Django on the same origin as the API. Where the files are is configuration, not
   a Django setting: `artifacts.angularWorkspace` of the project configuration plus the new
@@ -43,6 +45,13 @@ package versions. Releases before this file are described on the
 
 ### Changed
 
+- The ngdj command-mapping test fixture follows the local (adjacent) `angular-django2`
+  checkout instead of the released `tool.ngAddPackage` pin, for rapid cross-repository
+  integration: the drift tests fail (instead of skipping) when the fixture does not
+  match the checkout, the tests derive the staged package spec and the declared OpenUI
+  schema version from the fixture, and the `ngdj-contract` CI job checks out
+  `angular-django2` at `main` rather than at the pinned release tag. The shipped
+  `tool.ngAddPackage` pin still names the released package the tutorial installs.
 - **Breaking:** the OpenUI schema version is managed by the installed `openui-spec`
   package, not inside OpenUI documents, mirroring how the OpenAPI schema version is
   owned by the OpenAPI tooling. An OpenUI document no longer declares a root

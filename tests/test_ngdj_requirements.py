@@ -107,8 +107,8 @@ class NgdjRequirementsContractTests(unittest.TestCase):
                 if has_node_id:
                     self.assertIn("node-id", properties["nodeId"]["aliases"])
 
-    def _require_pinned_version(self) -> None:
-        """Skip (fail when the ngdj source is required) unless the source is the pin."""
+    def _require_fixture_version(self) -> None:
+        """Skip (fail when the source is required) unless it matches the fixture."""
         pinned = json.loads(
             (ROOT / "tests" / "fixtures" / "ngdj" / "package.json").read_text(
                 encoding="utf-8"
@@ -118,13 +118,13 @@ class NgdjRequirementsContractTests(unittest.TestCase):
             (NGDJ_PACKAGE_DIR / "package.json").read_text(encoding="utf-8")
         )["version"]
         if source != pinned:
-            message = f"the ngdj source is {source}, tool.ngAddPackage pins {pinned}"
+            message = f"the ngdj source is {source}, the fixture targets {pinned}"
             if ngdj_required():
                 self.fail(message)
             self.skipTest(message)
 
     def test_data_service_schematic_generates_typed_wrapper(self) -> None:
-        self._require_pinned_version()
+        self._require_fixture_version()
         ds_index_path = NGDJ_PACKAGE_DIR / "schematics" / "data-service" / "index.ts"
         self.assertTrue(ds_index_path.is_file())
 
@@ -135,7 +135,7 @@ class NgdjRequirementsContractTests(unittest.TestCase):
     def test_data_service_schematic_resolves_the_generated_client(self) -> None:
         # 0.7.1: the import of the ng-openapi-gen client is computed from the
         # `output` of ng-openapi-gen.json (#240), not the fixed '../api/services'.
-        self._require_pinned_version()
+        self._require_fixture_version()
         api_client_path = (
             NGDJ_PACKAGE_DIR / "schematics" / "data-service" / "api-client.ts"
         )

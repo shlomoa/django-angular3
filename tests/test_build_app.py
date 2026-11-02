@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 import shutil
 import tempfile
 import unittest
@@ -27,7 +28,9 @@ from django_angular3.management.commands.build_app import (
     load_ngdj_mapping,
 )
 from django_angular3.ngdj_command_mapping import CommandMapping
+from django_angular3.settings import load_angular_settings
 from django_angular3.tools import OasdiffUnavailableError
+from tests.ngdj_fixture import fixture_package_spec
 from tests.test_command_translation import FIXTURE_MAPPING, _openui_changes
 from tests.tool_config import use_tool_configuration_template
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
@@ -339,6 +342,15 @@ class BuildAppStepTests(unittest.TestCase):
         self.mapping = CommandMapping(
             json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
         )
+        # The staged ngdj is the fixture, which follows the adjacent checkout; pin
+        # the settings to its version so the installed-equals-pinned check holds.
+        settings = load_angular_settings({"ng_add_package": fixture_package_spec()})
+        patcher = patch(
+            "django_angular3.management.commands.build_app.load_angular_settings",
+            return_value=settings,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def _configuration(self, name: str) -> Configuration:
         path = self.root / f"{name}.json"
@@ -402,7 +414,7 @@ class BuildAppStepTests(unittest.TestCase):
         with self.assertRaisesRegex(
             CommandError,
             r"Cannot derive the steps for the OpenUI and OpenAPI changes.*Install "
-            r"angular-django2@0\.7\.1",
+            + re.escape(fixture_package_spec()),
         ):
             load_ngdj_mapping(_change_set(openui=openui), self.current.project_config)
 

@@ -43,6 +43,7 @@ from django_angular3.step_bridge import (
     wrapper_for,
 )
 from django_angular3.step_execution import EVIDENCE_FILE_NAME
+from tests.ngdj_fixture import fixture_openui_spec_version, fixture_package_spec
 from tests.test_build_app import _change_set, _project_name_created
 from tests.test_command_translation import FIXTURE_MAPPING, _openui_changes
 from tests.tool_config import use_tool_configuration_template
@@ -263,7 +264,12 @@ class _Project:
             ng.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{script}" "$@"\n')
             ng.chmod(0o755)
         self.log = self.root / "ng.log"
-        self.settings = load_angular_settings({"ng_executable": str(ng)})
+        # The staged ngdj is the fixture; pin the settings to its version so the
+        # mapping loader's installed-equals-pinned check holds as the fixture
+        # follows the adjacent checkout.
+        self.settings = load_angular_settings(
+            {"ng_executable": str(ng), "ng_add_package": fixture_package_spec()}
+        )
         environment = patch.dict(os.environ, {"FAKE_NG_LOG": str(self.log)})
         environment.start()
         test.addCleanup(environment.stop)
@@ -485,9 +491,9 @@ class DryRunTests(unittest.TestCase):
         self.assertEqual(
             report["ngdj"],
             {
-                "package": "angular-django2@0.7.1",
+                "package": fixture_package_spec(),
                 "mappingVersion": 1,
-                "openuiSpecVersion": "0.1.0",
+                "openuiSpecVersion": fixture_openui_spec_version(),
             },
         )
 
@@ -627,9 +633,11 @@ class RealRunTests(unittest.TestCase):
         evidence = json.loads(
             (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
         )
-        self.assertEqual(evidence["ngdj"]["package"], "angular-django2@0.7.1")
+        self.assertEqual(evidence["ngdj"]["package"], fixture_package_spec())
         self.assertEqual(evidence["ngdj"]["mappingVersion"], 1)
-        self.assertEqual(evidence["ngdj"]["openuiSpecVersion"], "0.1.0")
+        self.assertEqual(
+            evidence["ngdj"]["openuiSpecVersion"], fixture_openui_spec_version()
+        )
         call = evidence["steps"][2]["invocations"][0]
         self.assertEqual(call["returncode"], 0)
 
