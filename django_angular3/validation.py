@@ -11,6 +11,7 @@ from openapi_spec_validator.validation.exceptions import (
 )
 
 from .config import ProjectConfig
+from .consistency import reference_index
 from .documents import DocumentError, load_document
 
 
@@ -128,6 +129,9 @@ def validate_project_config(config: ProjectConfig) -> list[str]:
     else:
         errors.extend(validate_openui_file(config.openui_specification))
 
+    if not errors:
+        errors.extend(validate_consistency(config))
+
     if config.angular_workspace.exists() and not config.angular_workspace.is_dir():
         errors.append(
             "Angular output path must be a directory when it exists: "
@@ -135,3 +139,20 @@ def validate_project_config(config: ProjectConfig) -> list[str]:
         )
 
     return errors
+
+
+def validate_consistency(config: ProjectConfig) -> list[str]:
+    """Return the OpenUI bindings that name OpenAPI services or operations the
+    contract does not have, each with the node id and the attribute.
+
+    Unreadable inputs are reported by the per-file validators, so they add nothing
+    here.
+    """
+    try:
+        openapi = load_document(config.openapi_schema)
+        openui = load_document(config.openui_specification)
+    except DocumentError:
+        return []
+    if not isinstance(openapi, dict) or not isinstance(openui, dict):
+        return []
+    return list(reference_index(openui, openapi).errors)

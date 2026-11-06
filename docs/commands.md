@@ -157,7 +157,7 @@ Invoked as `django-angular3 <command> [args]`.
 |---|---|
 | `validate-openapi <path>` | Validate an OpenAPI source document. |
 | `validate-openui <path>` | Validate a canonical OpenUI JSON UI-definition document through `openui-spec`. |
-| `validate-project` | Validate the discovered project configuration. |
+| `validate-project` | Validate the discovered project configuration, including that the OpenUI `uses.data` and `behaves.submit` bindings (`<artifact>#<Symbol>[.<method>]`) name services and operations the OpenAPI contract has. |
 | `install-tutorial [dest]` | Copy the bundled `simple_crm` tutorial project to `dest` (default: `simple_crm`). Prints migration and run steps on success. |
 
 ## Shared Angular wrappers

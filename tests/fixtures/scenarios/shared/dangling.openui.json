@@ -1,0 +1,27 @@
+{
+  "id": "root",
+  "type": "Form",
+  "attrs": {
+    "title": "\"Users\"",
+    "behaves.submit": "src/app/api/services#UsersApiService.deleteUser"
+  },
+  "children": [
+    {
+      "id": "usersGrid",
+      "type": "DataGrid",
+      "attrs": {
+        "uses.data": "src/app/api/services#OrdersApiService"
+      },
+      "children": [
+        {
+          "id": "usersGridHeader",
+          "type": "thead"
+        },
+        {
+          "id": "usersGridRow",
+          "type": "tr"
+        }
+      ]
+    }
+  ]
+}

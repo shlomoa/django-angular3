@@ -223,6 +223,13 @@ do, because no Tool contract modifies a workspace or application. A schema expor
 not by itself change the OpenAPI subjects: any resulting difference in the schema comes
 from the `openapi` Changes.
 
+`build_app` gates on cross-input consistency before it derives any step: an OpenUI
+`uses.data` (`<apiPath>#<ApiService>`) or `behaves.submit` (`<artifact>#<Symbol>.<method>`)
+binding that names a service no OpenAPI tag generates, or an operation (the camel-cased
+`operationId`) the service lacks, fails with the node id and the attribute
+(`django_angular3/consistency.py`, the same check as `validate_project`). Its reference
+index (node to OpenAPI operations) is the reusable component for impact analysis.
+
 Every `openapi` change regenerates the typed client from the changed schema; the
 regenerations of one ChangeSet are one step listing every subject. Whether
 `data-service` supports an operation is read from the upstream command mapping, as for
