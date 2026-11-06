@@ -51,6 +51,7 @@ from django_angular3.step_execution import (
     unresolved_steps,
     write_evidence,
 )
+from django_angular3.validation import validate_consistency
 
 from ...config import ConfigError, load_project_config
 
@@ -429,6 +430,12 @@ class Command(BaseCommand):
             previous_config = Configuration(options["previous_config"])
             detector = ChangeDetector(current_config, previous_config)
             change_set: ChangeSet = detector.detect_changes()
+            consistency_errors = validate_consistency(current_config.project_config)
+            if consistency_errors:
+                raise CommandError(
+                    "The OpenUI bindings do not match the OpenAPI contract: "
+                    + "; ".join(consistency_errors)
+                )
             mapping = load_ngdj_mapping(change_set, current_config.project_config)
             executor = ChangeExecution()
             evidence = executor.execute(

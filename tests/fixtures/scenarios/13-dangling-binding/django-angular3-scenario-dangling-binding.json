@@ -1,0 +1,10 @@
+{
+  "project": {
+    "name": "scenario-dangling-binding"
+  },
+  "artifacts": {
+    "openapiSchema": "../shared/bindings.openapi.json",
+    "openuiSpecification": "../shared/dangling.openui.json",
+    "angularWorkspace": "build/angular"
+  }
+}

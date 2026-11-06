@@ -588,6 +588,29 @@ class DryRunTests(unittest.TestCase):
         )
         self.assertEqual(steps["ng_data_service"]["parameters"]["resource"], "v1")
 
+    def test_the_dry_run_refuses_openui_bindings_the_contract_lacks(self) -> None:
+        shutil.copyfile(
+            SHARED / "bindings.openapi.json", self.project.root / "api.openapi.json"
+        )
+        shutil.copyfile(SHARED / "dangling.openui.json", self.project.document)
+
+        with self.assertRaisesRegex(CommandError, "node 'usersGrid', uses.data"):
+            self.project.run_build(self.project.change_set(), dry_run=True)
+
+    def test_the_dry_run_accepts_bindings_the_contract_has(self) -> None:
+        shutil.copyfile(
+            SHARED / "bindings.openapi.json", self.project.root / "api.openapi.json"
+        )
+        shutil.copyfile(SHARED / "bindings.openui.json", self.project.document)
+
+        report = json.loads(
+            self.project.run_build(
+                self._creates(SHARED / "bindings.openapi.json"), dry_run=True
+            )
+        )
+
+        self.assertTrue(report["steps"])
+
     def test_the_dry_run_lists_what_is_unresolved(self) -> None:
         change_set = _change_set(
             openapi=(

@@ -1,0 +1,33 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Bindings API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/users/": {
+      "get": {
+        "operationId": "list_users",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of users."
+          }
+        }
+      },
+      "post": {
+        "operationId": "create_user",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "201": {
+            "description": "Created."
+          }
+        }
+      }
+    }
+  }
+}
