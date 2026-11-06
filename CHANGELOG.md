@@ -8,6 +8,15 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Added
+
+- Cross-input consistency gate
+  ([shlomoa/django-angular3#216](https://github.com/shlomoa/django-angular3/issues/216)):
+  `validate_project` and `build_app` (also `--dry-run`) fail when an OpenUI `uses.data` or
+  `behaves.submit` binding names a generated service or operation the OpenAPI contract
+  lacks, with the node id and the attribute. `django_angular3.consistency.reference_index`
+  exposes the node-to-operations index.
+
 ### Changed
 
 - `build_app` routes OpenAPI `create` Changes to the API lane
