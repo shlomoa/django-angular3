@@ -107,12 +107,12 @@ same thing (`django_angular3/resource_identity.py` is the single owner of the ru
 - The tag is the identity because it is what the generator and the schematic already
   group by; `operationId` names a method of the service, not a service, and a path
   segment is the heuristic §2.2 excludes. No explicit identity field is added.
-- A subject leads to exactly one tag. An untagged operation (generated into the
-  service `ApiApiService`), an operation with several tags (generated into each of
-  their services), a path whose operations have different tags, and a tag that is not
-  letters and digits joined by hyphens (where the generator's class name and the
-  schematic's `classify` could differ) have no resource: the step bridge fails with
-  the reason, naming the Change.
+- A subject leads to exactly one tag. An untagged operation is in the generator's
+  default tag `Api`, so its resource is `api` and its class `ApiApiService`. An
+  operation with several tags (generated into each of their services), a path whose
+  operations have different tags, and a tag that is not letters and digits joined by
+  hyphens (where the generator's class name and the schematic's `classify` could
+  differ) have no resource: the step bridge fails with the reason, naming the Change.
 - The tag is read from the OpenAPI document of the project (`artifacts.openapiSchema`),
   the candidate for a `create`. A `schema:` subject has no resource of its own. A subject the
   document does not hold leaves the `resource` option of the `ng_data_service` step

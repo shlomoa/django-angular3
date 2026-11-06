@@ -417,23 +417,6 @@ class StepResolutionTests(unittest.TestCase):
         self.assertEqual(service.unresolved, ())
         self.assertEqual(service.parameters["resource"], "customers")
 
-    def test_an_untagged_path_stops_the_bridge_with_the_reason(self) -> None:
-        change_set = _change_set(
-            openapi=(
-                Change(
-                    ChangeDomain.OPENAPI,
-                    "path:/api/users/",
-                    "/paths/~1api~1users~1",
-                    ChangeOperation.CREATE,
-                    None,
-                    {},
-                ),
-            )
-        )
-
-        with self.assertRaisesRegex(StepBridgeError, "no tag"):
-            self.resolve(change_set)
-
     def test_an_option_the_ngdj_command_does_not_accept_is_refused(self) -> None:
         document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
         page = document["ui"]["commands"]["page"]

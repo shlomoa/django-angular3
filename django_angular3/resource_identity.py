@@ -22,6 +22,9 @@ _HTTP_METHODS: Final = frozenset(
 _TAG: Final = re.compile(r"^[A-Za-z][A-Za-z0-9]*(-[A-Za-z0-9]+)*$")
 
 
+UNTAGGED: Final = "api"
+
+
 class ResourceIdentityError(ValueError):
     """Raised when an OpenAPI subject has no single, nameable resource."""
 
@@ -66,9 +69,9 @@ def resource_identity(
     """The resource of a ``path:`` or ``operation:`` Change subject.
 
     The tag comes from the document that holds the path (the candidate for a create).
-    The subject must lead to exactly one tag: an untagged operation lands in a
-    service named ``Api``, and an operation with several tags is generated into each
-    of their services, so neither names one data service.
+    The subject must lead to exactly one tag. An untagged operation is in the tag
+    ``api`` (the generator's default, class ``ApiApiService``). An operation with
+    several tags is generated into each of their services, so it names no one.
     """
     kind, _, value = subject.partition(":")
     if kind == "path":
@@ -91,9 +94,9 @@ def resource_identity(
             continue
         operation_tags = operation.get("tags")
         if not isinstance(operation_tags, list) or not operation_tags:
-            raise ResourceIdentityError(
-                f"{method.upper()} {path} has no tag, so it has no resource."
-            )
+            # ng-openapi-gen puts an untagged operation in the tag ``Api``.
+            tags.add(UNTAGGED)
+            continue
         if len(operation_tags) > 1:
             raise ResourceIdentityError(
                 f"{method.upper()} {path} has several tags "

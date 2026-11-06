@@ -37,8 +37,9 @@ class GeneratedServiceNameTests(unittest.TestCase):
             with self.assertRaises(ResourceIdentityError):
                 service_class_name(tag, "ApiService")
         expected = {service_class_name(tag, "ApiService") for tag in tagged - outside}
-        # An untagged operation is generated into "ApiApiService"; the rule refuses it.
-        self.assertEqual(expected, generated - {"ApiApiService", "MyTagXApiService"})
+        expected.add(resource_identity("path:/p5/", document).api_service)
+        self.assertEqual(expected, generated - {"MyTagXApiService"})
+        self.assertEqual(resource_identity("path:/p5/", document).resource, "api")
 
     def test_the_reviewed_contract_has_one_resource_named_v1(self) -> None:
         document = load_document(FIXTURES / "gardens.schema.yaml")
@@ -65,10 +66,12 @@ class RuleTests(unittest.TestCase):
     def test_the_suffix_is_the_generator_service_suffix(self) -> None:
         self.assertEqual(service_class_name("users", "Service"), "UsersService")
 
-    def test_an_untagged_operation_has_no_resource(self) -> None:
+    def test_an_untagged_operation_is_in_the_default_api_tag(self) -> None:
         document = self.document(**{"/a": {"get": {}}})
-        with self.assertRaisesRegex(ResourceIdentityError, "no tag"):
-            resource_identity("path:/a", document)
+        identity = resource_identity("path:/a", document)
+        self.assertEqual(
+            (identity.resource, identity.api_service), ("api", "ApiApiService")
+        )
 
     def test_several_tags_on_an_operation_have_no_single_resource(self) -> None:
         document = self.document(**{"/a": {"get": {"tags": ["x", "y"]}}})
