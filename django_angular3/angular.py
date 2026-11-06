@@ -568,6 +568,8 @@ def build_ng_openapi_setup_invocations(
         output_path = default_api_client_output(config)
     else:
         _validate_relative_path(output_path, "API client output path")
+    if helpers_path is not None:
+        _validate_relative_path(helpers_path, "API helpers path")
     argv: list[str] = [
         settings.ng_executable,
         "generate",

@@ -173,9 +173,9 @@ so the branch can be split into its own PR.
    runs the workspace modification only); it is recorded in the requirements, and
    `create` and `update` are supported, `delete` and `move` fail explicitly.
    `openapi-setup` (`ng_openapi_setup`) has no dedicated Tool; the generic
-   `ngdj_run_schematic` Tool can run it. The translators give it no step yet: a step names
-   a Tool but carries no schematic name, so giving it a step through `ngdj_run_schematic`
-   needs the step to carry one. That is a design decision for the owner.
+   `ngdj_run_schematic` Tool runs it: a step names the Tool and carries the ngdj command
+   (`ngdj_command`), and the step bridge maps `openapi-setup` to the `ng_openapi_setup`
+   wrapper ([shlomoa/django-angular3#218](https://github.com/shlomoa/django-angular3/issues/218)).
 7. **Wire into `build_app`** (`management/commands/build_app.py`): load the mapping when
    an OpenUI or OpenAPI Change exists, pass it to the translation, print the ordered
    steps in `--dry-run` as JSON, report an unsupported change or a missing package as a

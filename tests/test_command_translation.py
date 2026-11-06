@@ -50,6 +50,7 @@ class CommandTranslationTests(unittest.TestCase):
         self.assertEqual(
             [command.name_id for command in commands[:-1]],
             [
+                "ngdj_run_schematic",
                 "angular_api_client_generate",
                 "ngdj_add_data_service",
                 "ngdj_add_page",
@@ -736,6 +737,41 @@ class OpenApiTranslationTests(unittest.TestCase):
             (_change(ChangeDomain.OPENAPI, subject, operation),), self.mapping
         )
 
+    def test_every_api_command_and_operation_yields_a_step_or_an_explicit_error(
+        self,
+    ) -> None:
+        """Table over the ``api`` section: the status decides, with the gap quoted."""
+        document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        carriers = {"openapi-setup": "schema:Pet", "data-service": "path:/pets"}
+        for command, entry in document["api"]["commands"].items():
+            for operation, status in entry["operations"].items():
+                with self.subTest(command=command, operation=operation):
+                    subject = carriers[command]
+                    if operation == "move":
+                        with self.assertRaises(ValueError):
+                            self.translate(subject, ChangeOperation(operation))
+                        continue
+                    change_op = ChangeOperation(operation)
+                    if status["status"] == "supported":
+                        steps = self.translate(subject, change_op)
+                        self.assertIn(command, {s.ngdj_command for s in steps})
+                    else:
+                        with self.assertRaisesRegex(
+                            CommandTranslationError, status["gap"]
+                        ):
+                            self.translate(subject, change_op)
+
+    def test_the_stages_must_agree_with_the_mapping_order(self) -> None:
+        document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
+        document["api"]["commands"]["data-service"]["before"] = ["openapi-setup"]
+        mapping = CommandMapping(document)
+
+        with self.assertRaisesRegex(CommandTranslationError, "before openapi-setup"):
+            translate_changes(
+                (_change(ChangeDomain.OPENAPI, "path:/pets", ChangeOperation.CREATE),),
+                mapping,
+            )
+
     def test_a_new_path_regenerates_the_client_and_creates_its_data_service(
         self,
     ) -> None:
@@ -744,6 +780,7 @@ class OpenApiTranslationTests(unittest.TestCase):
         self.assertEqual(
             [(step.name_id, step.exec_order, step.change_op) for step in steps],
             [
+                ("ngdj_run_schematic", 2, "create"),
                 ("angular_api_client_generate", 3, "create"),
                 ("ngdj_add_data_service", 4, "create"),
                 ("last-check", 12, "validate"),
@@ -752,14 +789,16 @@ class OpenApiTranslationTests(unittest.TestCase):
         for step in steps[:-1]:
             self.assertEqual(step.change_target, "path:/pets")
             self.assertIs(step.change_domain, ChangeDomain.OPENAPI)
-        self.assertIn("on existing output: skip", steps[1].change_reason)
+        self.assertEqual(steps[0].ngdj_command, "openapi-setup")
+        self.assertIn("on existing output: skip", steps[0].change_reason)
+        self.assertIn("on existing output: skip", steps[2].change_reason)
 
     def test_a_new_schema_only_regenerates_the_client(self) -> None:
         steps = self.translate("schema:Pet", ChangeOperation.CREATE)
 
         self.assertEqual(
             [step.name_id for step in steps],
-            ["angular_api_client_generate", "last-check"],
+            ["ngdj_run_schematic", "angular_api_client_generate", "last-check"],
         )
 
     def test_changes_that_would_update_or_delete_data_services_fail_explicitly(
@@ -817,6 +856,7 @@ class OpenApiTranslationTests(unittest.TestCase):
         self.assertEqual(
             [step.name_id for step in steps],
             [
+                "ngdj_run_schematic",
                 "angular_api_client_generate",
                 "ngdj_add_data_service",
                 "ngdj_add_page",
@@ -844,8 +884,8 @@ class OpenApiTranslationTests(unittest.TestCase):
         self.assertEqual(
             [(step.name_id, step.change_target) for step in steps],
             [
-                ("angular_api_client_generate", "path:/pets"),
-                ("angular_api_client_generate", "schema:Pet"),
+                ("ngdj_run_schematic", "path:/pets, schema:Pet"),
+                ("angular_api_client_generate", "path:/pets, schema:Pet"),
                 ("ngdj_add_data_service", "path:/pets"),
                 ("last-check", "changeset"),
             ],

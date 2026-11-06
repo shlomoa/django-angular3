@@ -120,6 +120,10 @@ def translate_changes(
             [step for change in changes for step in _change_steps(change, mapping)]
         )
     )
+    steps = _merge_openapi_steps(steps)
+    setup = _api_setup_step(steps, mapping)
+    if setup is not None:
+        steps.append(setup)
     steps.append(
         AppBuildStep(
             name_id="last-check",
@@ -131,6 +135,113 @@ def translate_changes(
         )
     )
     return tuple(sorted(steps, key=_step_sort_key))
+
+
+_API_CLIENT_NAME: Final = "angular_api_client_generate"
+_API_SETUP_COMMAND: Final = "openapi-setup"
+_API_SETUP_STAGE: Final = 2
+_API_CLIENT_STAGE: Final = 3
+_DATA_SERVICE_STAGE: Final = 4
+
+
+def _is_openapi_client(step: AppBuildStep) -> bool:
+    return (
+        step.name_id == _API_CLIENT_NAME and step.change_domain is ChangeDomain.OPENAPI
+    )
+
+
+def _merge_openapi_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
+    """Collapse the client regenerations of one ChangeSet into one step.
+
+    The client is generated from the whole document, so one run serves every
+    OpenAPI Change; running it once per Change would repeat it. The merged step
+    lists every subject, in sorted order.
+    """
+    subjects = sorted(step.change_target for step in steps if _is_openapi_client(step))
+    merged: list[AppBuildStep] = []
+    for step in steps:
+        if not _is_openapi_client(step):
+            merged.append(step)
+        elif not any(_is_openapi_client(m) for m in merged):
+            joined = ", ".join(subjects)
+            merged.append(
+                step
+                if len(subjects) == 1
+                else replace(
+                    step,
+                    change_reason=(
+                        f"Required by openapi {step.change_op}: {joined}. "
+                        "The typed client is regenerated from the changed schema."
+                    ),
+                    change_target=joined,
+                )
+            )
+    return merged
+
+
+def _api_setup_step(
+    steps: list[AppBuildStep], mapping: CommandMapping | None
+) -> AppBuildStep | None:
+    """The one ``openapi-setup`` step of a ChangeSet that has OpenAPI steps.
+
+    The API lane is the ngdj ``api`` section: ``openapi-setup`` bootstraps the
+    generator configuration and the Django helpers once per workspace, before
+    ``ng-openapi-gen`` and before the data services. The fixed stages above
+    must agree with the ``before`` / ``after`` the mapping declares, or the
+    translation fails rather than running the lane out of order. Its existing
+    output is skipped by ngdj, so a second run is harmless.
+    """
+    targets = [step.change_target for step in steps if _is_openapi_client(step)]
+    if not targets:
+        return None
+    if mapping is None:
+        raise CommandTranslationError(
+            "OpenAPI Change translation needs the ngdj command mapping."
+        )
+    status = mapping.command_operation_status(_API_SETUP_COMMAND, "create")
+    if status.status != "supported":
+        detail = f": {status.reason}" if status.reason else ""
+        gap = f" ({status.gap})" if status.gap else ""
+        raise CommandTranslationError(
+            f"ngdj does not support create of {_API_SETUP_COMMAND} "
+            f"({status.status}){detail}{gap}."
+        )
+    _check_api_lane_order(mapping)
+    joined = targets[0]
+    return AppBuildStep(
+        name_id="ngdj_run_schematic",
+        exec_order=_API_SETUP_STAGE,
+        change_op="create",
+        change_reason=(
+            f"Required by openapi create: {joined}. ngdj {_API_SETUP_COMMAND} "
+            "bootstraps the generator configuration and the Django helpers "
+            f"once, before the client (on existing output: "
+            f"{mapping.on_existing(_API_SETUP_COMMAND)})."
+        ),
+        change_target=joined,
+        change_domain=ChangeDomain.OPENAPI,
+        ngdj_command=_API_SETUP_COMMAND,
+    )
+
+
+def _check_api_lane_order(mapping: CommandMapping) -> None:
+    """The stages of the API lane must follow the mapping's declared order."""
+    stages = {
+        _API_SETUP_COMMAND: _API_SETUP_STAGE,
+        "ng-openapi-gen": _API_CLIENT_STAGE,
+        _DATA_SERVICE_COMMAND: _DATA_SERVICE_STAGE,
+    }
+    pairs = []
+    for command in (_API_SETUP_COMMAND, _DATA_SERVICE_COMMAND):
+        before, after = mapping.order(command)
+        pairs += [(command, later) for later in before]
+        pairs += [(earlier, command) for earlier in after]
+    for earlier, later in pairs:
+        if earlier in stages and later in stages and stages[earlier] >= stages[later]:
+            raise CommandTranslationError(
+                f"The mapping runs {earlier} before {later}, which the "
+                "translation stages do not."
+            )
 
 
 def _merge_project_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:

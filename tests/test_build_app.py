@@ -269,6 +269,7 @@ class ChangeExecutionTranslationTests(unittest.TestCase):
         self.assertEqual(
             [command.name_id for command in commands],
             [
+                "ngdj_run_schematic",
                 "angular_api_client_generate",
                 "ngdj_add_data_service",
                 "ngdj_add_page",
