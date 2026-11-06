@@ -32,9 +32,19 @@ class Command(AngularBaseCommand):
             ),
         )
 
+        parser.add_argument(
+            "--api-service",
+            default=None,
+            help=(
+                "Generated API service class to wrap, passed to the schematic "
+                "(default: the schematic infers it from the resource)."
+            ),
+        )
+
     def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {
             "resource": options.get("resource"),
             "project": options.get("project"),
             "path": options.get("path"),
+            "api_service": options.get("api_service"),
         }

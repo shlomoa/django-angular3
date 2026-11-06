@@ -25,7 +25,13 @@ from .angular import (
 )
 from .command_translation import AppBuildStep
 from .config import ProjectConfig
+from .documents import DocumentError, load_document
 from .ngdj_command_mapping import CommandMapping, CommandMappingError
+from .resource_identity import (
+    ResourceIdentityError,
+    SubjectNotInDocument,
+    resource_identity,
+)
 from .settings import DjangoAngularSettings
 
 # The djng-owned part of the OpenUI document hand-off: an ngdj schematic reads the
@@ -146,6 +152,7 @@ _MAPPING_PARAMETERS: Final[dict[str, str]] = {
     "document": "document",
     "node_id": "nodeId",
     "resource": "name",
+    "api_service": "apiService",
 }
 
 # Where a page or a complex component is generated, from the ngdj documentation of
@@ -295,10 +302,13 @@ def _step_parameters(
     elif wrapper == "ng_gen_app":
         parameters["app_name"] = project
     elif wrapper == "ng_data_service":
-        # The resource identity rule across OpenAPI changes, ngdj data-service names
-        # and OpenUI bindings is not decided (shlomoa/django-angular3#207).
+        # The resource is the OpenAPI tag of the subject (``resource_identity``). A
+        # subject the document does not hold yet leaves it unresolved.
         parameters["project"] = project
-        unresolved = ("resource",)
+        try:
+            parameters["resource"] = _resource_of(step, project_config)
+        except SubjectNotInDocument:
+            unresolved = ("resource",)
     elif wrapper in {
         "ng_page",
         "ng_component",
@@ -327,6 +337,21 @@ def _step_parameters(
         parameters["document"] = workspace_document_path(project_config)
         parameters["node_id"] = step.node_id
     return parameters, unresolved
+
+
+def _resource_of(step: AppBuildStep, project_config: ProjectConfig) -> str:
+    try:
+        document = load_document(project_config.openapi_schema)
+    except DocumentError as exc:
+        raise SubjectNotInDocument(str(exc)) from exc
+    if not isinstance(document, Mapping):
+        raise SubjectNotInDocument("The OpenAPI document is not an object.")
+    try:
+        return resource_identity(step.change_target, document).resource
+    except SubjectNotInDocument:
+        raise
+    except ResourceIdentityError as exc:
+        raise StepBridgeError(f"{step.name_id}: {exc}") from exc
 
 
 def _check_against_mapping(

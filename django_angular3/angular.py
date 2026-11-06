@@ -600,10 +600,14 @@ def build_ng_data_service_invocations(
     resource: str,
     project: str | None = None,
     path: str | None = None,
+    api_service: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     """Generate a typed data-service wrapper for a resource via the ngdj
     ``data-service`` schematic.
+
+    ``api_service`` is forwarded as ``--api-service``; without it the schematic wraps
+    ``classify(resource)`` plus the ``serviceSuffix`` of ``ng-openapi-gen.json``.
 
     ``path`` is the destination the schematic receives as ``--path``; without it
     the schematic writes to its own default under the workspace root.
@@ -619,6 +623,8 @@ def build_ng_data_service_invocations(
     if path is not None:
         _validate_relative_path(path, "Data service path")
         argv.append(f"--path={path}")
+    if api_service is not None:
+        argv.append(f"--api-service={api_service}")
     return [
         AngularInvocation(
             command_name="ng_data_service",

@@ -705,8 +705,9 @@ client.
 
 | Key | Required | Type | Default | Description |
 |---|---|---|---|---|
-| `resource` | yes | string | — | Resource name of the generated service. |
+| `resource` | yes | string | — | Resource name of the generated service: the OpenAPI tag (see `CHANGE_MODEL_CONTRACTS.md` §2.2.1). |
 | `project` | no | string | `project.name` | Angular project to modify. |
+| `api_service` | no | string | schematic default | Generated API service class to wrap, forwarded as `--api-service`; without it the schematic wraps `classify(resource)` plus the `serviceSuffix` of `ng-openapi-gen.json`. |
 | `path` | no | string (relative path) | schematic default | Destination directory of the service, relative to the Angular workspace (for example `projects/<name>/src/app/features/<resource>/services`), forwarded verbatim as `--path`; the `data-service` schematic ignores `--project` for its location. Without it the schematic writes to its own default under the workspace-root `src/`. |
 | `dry_run` | no | boolean | `false` | When `true`, validate inputs and return the resolved invocation without modifying the workspace. |
 

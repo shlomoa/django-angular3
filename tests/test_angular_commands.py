@@ -953,6 +953,23 @@ class AngularCliCommandTests(unittest.TestCase):
             ],
         )
 
+    def test_ng_data_service_dry_run_forwards_api_service(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_data_service",
+            "--resource",
+            "v1",
+            "--api-service",
+            "V1ApiService",
+            "--dry-run",
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(stderr, "")
+        argv = json.loads(stdout)["invocations"][0]["argv"]
+        self.assertEqual(
+            argv[-2:], ["--project=django-angular3-test", "--api-service=V1ApiService"]
+        )
+
     def test_ng_data_service_rejects_a_path_outside_the_workspace(self) -> None:
         with self.assertRaises(AngularCommandError):
             resolve_angular_command("ng_data_service", resource="orders", path="../x")
