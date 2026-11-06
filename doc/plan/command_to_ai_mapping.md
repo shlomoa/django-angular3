@@ -44,14 +44,14 @@ The names are owned elsewhere and are not redefined here:
 | `ng_component` | angular.component | `ngdj_add_component` | `angular-component-composition` | Existing | Tool structured outputs planned. |
 | `ng_complex_component` | angular.complex-component | `ngdj_add_complex_component` | `angular-complex-component-composition` | Existing | Tool structured outputs planned. |
 | `ng_reactive_form` | angular.reactive-form | `ngdj_add_reactive_form` | `angular-reactive-form-composition` | Existing | Tool structured outputs planned. |
-| `ng_data_service` | angular.data-service | `ngdj_add_data_service` | `angular-data-service-composition` | Not fully implemented | `build_app` refuses the step until the resource identity rule is decided ([#207](https://github.com/shlomoa/django-angular3/issues/207)). |
+| `ng_data_service` | angular.data-service | `ngdj_add_data_service` | `angular-data-service-composition` | Existing | The resource is the OpenAPI tag of the subject ([#207](https://github.com/shlomoa/django-angular3/issues/207)); a path the OpenAPI document lacks leaves it unresolved. |
 | `ng_openapi_gen` | angular.api-client | `angular_api_client_generate` | `angular-api-integration` | Existing | |
-| `ng_openapi_setup` | none | none (`ngdj_run_schematic` could run it) | none | Not fully implemented | No `build_app` step. Whether a step can carry a schematic name is an open owner decision. |
+| `ng_openapi_setup` | none | `ngdj_run_schematic` (step carries `openapi-setup`) | none | Existing | `build_app` adds one step before the client for OpenAPI changes. |
 | `export_schema` | contract.schema-export | `openapi_schema_export` | none | Not fully implemented | `build_app` cannot run a schema-export step yet. |
 | `validate-openapi` (CLI) | contract.schema-validate | `validate_openapi_schema` † | none | Not fully implemented | The CLI exists, but the Tool wrapper and the `pre-construction` Hook are planned. |
 | `validate-openui`, `validate-project` | none | none | none | Existing | Outside the crosswalk. |
 | `ng_config`, `ng_material_setup`, `ng_build` | none | none | none | Existing | Outside the crosswalk. `ng_build` is the temporary `last-check` gate in `build_app`. |
-| `build_app` | orchestrator | all the OpenUI and API Tools | all, through the planned guided session | Not fully implemented | Static-configuration changes are not detected, `--force` is refused, and there is no `ng_openapi_setup` or schema-export step. It cannot derive OpenUI or OpenAPI steps for a workspace that does not exist yet. Guided Skill sessions are not implemented. |
+| `build_app` | orchestrator | all the OpenUI and API Tools | all, through the planned guided session | Not fully implemented | Static-configuration changes are not detected, `--force` is refused, and there is no schema-export step. It cannot derive OpenUI or OpenAPI steps for a workspace that does not exist yet. Guided Skill sessions are not implemented. |
 | `clean`, `distclean`, `install-tutorial` | none | none | none | Existing | Utility commands. |
 | none (tabs) | angular.tabs | `ngdj_add_tabs` | none | Missing | `build_app` runs `ng generate angular-django2:tabs` directly. |
 | none (dialog) | angular.dialog | `ngdj_add_dialog` | none | Missing | Same as tabs. |

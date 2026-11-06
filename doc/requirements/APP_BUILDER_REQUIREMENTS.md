@@ -223,13 +223,20 @@ do, because no Tool contract modifies a workspace or application. A schema expor
 not by itself change the OpenAPI subjects: any resulting difference in the schema comes
 from the `openapi` Changes.
 
-Every `openapi` change regenerates the typed client from the changed schema. Whether
+Every `openapi` change regenerates the typed client from the changed schema; the
+regenerations of one ChangeSet are one step listing every subject. Whether
 `data-service` supports an operation is read from the upstream command mapping, as for
 OpenUI. The OpenUI commands that depend on an API subject come from the `openui`
 Changes of the same ChangeSet; `build_app` does not derive that dependency from the API
-subject. The ngdj `openapi-setup` schematic (`ng_openapi_setup`) has no dedicated Tool;
-the generic `ngdj_run_schematic` Tool can run it. The translators give no step for it yet, and
-a first build needs it before `angular_api_client_generate`.
+subject. The ngdj `openapi-setup` schematic has no dedicated Tool: a ChangeSet with OpenAPI
+changes gets one `ngdj_run_schematic` step that carries the ngdj command
+`openapi-setup` (stage 2, before `angular_api_client_generate`), and the step bridge runs
+it through the `ng_openapi_setup` wrapper. The scheme of its `--auth-scheme` is read from
+the contract's one HTTP security scheme (`basic` or `bearer`), never from a table.
+The stages of the API lane (setup 2, client 3, data services 4) must agree with the
+`before` / `after` of the mapping's `api` section, or the translation fails. Data
+service steps are resolved per resource (`CHANGE_MODEL_CONTRACTS.md` §2.2.1); paths of
+one tag share one step.
 
 `build_app` loads the mapping only when the ChangeSet has an `openui` or `openapi`
 Change, from `<angularWorkspace>/node_modules/<package>/schematics/`, where the package is

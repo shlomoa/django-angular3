@@ -237,6 +237,11 @@ class CommandMapping:
             entry["name"] for entry in self._command(command).get("parameters", ())
         )
 
+    def order(self, command: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """The commands (or tools) this one runs ``before`` and ``after``."""
+        entry = self._command(command)
+        return tuple(entry.get("before", ())), tuple(entry.get("after", ()))
+
     def on_existing(self, command: str) -> str:
         """What a second run does: ``skip``, ``reject``, ``rewrite`` and so on."""
         return cast(str, self._command(command)["onExisting"]["outcome"])

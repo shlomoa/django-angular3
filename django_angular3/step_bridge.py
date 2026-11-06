@@ -153,6 +153,11 @@ _MAPPING_PARAMETERS: Final[dict[str, str]] = {
     "node_id": "nodeId",
     "resource": "name",
     "api_service": "apiService",
+    "output_path": "outputPath",
+    "helpers_path": "helpersPath",
+    "skip_helpers": "skipHelpers",
+    "skip_tests": "skipTests",
+    "auth_scheme": "authScheme",
 }
 
 # Where a page or a complex component is generated, from the ngdj documentation of
@@ -169,8 +174,23 @@ def crosswalk_row(name_id: str) -> CrosswalkRow | None:
     return None
 
 
+# The generic schematic runner Tool carries the ngdj command of its step; a command
+# with a djng wrapper runs through it, which adds the project paths the schematic
+# would otherwise default to the workspace root.
+_SCHEMATIC_RUNNER: Final = "ngdj_run_schematic"
+_SCHEMATIC_WRAPPERS: Final[dict[str, str]] = {"openapi-setup": "ng_openapi_setup"}
+
+
 def wrapper_for(step: AppBuildStep) -> tuple[str | None, str]:
     """The concern key and operator wrapper that run a step, through the crosswalk."""
+    if step.name_id == _SCHEMATIC_RUNNER:
+        runner = _SCHEMATIC_WRAPPERS.get(step.ngdj_command or "")
+        if runner is None:
+            raise StepBridgeError(
+                f"{step.name_id} has no operator wrapper for the ngdj command "
+                f"{step.ngdj_command}: {step.change_target}."
+            )
+        return None, runner
     gate = _GATE_WRAPPERS.get(step.name_id)
     if gate is not None:
         return None, gate
@@ -259,7 +279,36 @@ def resolve_steps(
     Pure: nothing is run or written. A step that has no wrapper, or whose options
     the ngdj command does not accept, raises ``StepBridgeError``.
     """
-    return tuple(_resolve_step(step, project_config, mapping) for step in steps)
+    return _merge_data_services(
+        tuple(_resolve_step(step, project_config, mapping) for step in steps)
+    )
+
+
+def _merge_data_services(steps: tuple[AppBuildStep, ...]) -> tuple[AppBuildStep, ...]:
+    """One data service step per resource: paths of one tag share the service.
+
+    Resolved steps of ``ng_data_service`` with the same parameters are one command;
+    the kept step lists every subject that required it.
+    """
+    kept: dict[str, AppBuildStep] = {}
+    result: list[AppBuildStep] = []
+    for step in steps:
+        key = repr(sorted(step.parameters.items()))
+        if step.command != "ng_data_service" or step.unresolved:
+            result.append(step)
+        elif key not in kept:
+            kept[key] = step
+            result.append(step)
+        else:
+            first = kept[key]
+            merged = replace(
+                first,
+                change_target=f"{first.change_target}, {step.change_target}",
+                change_reason=f"{first.change_reason} Also: {step.change_target}.",
+            )
+            result[result.index(first)] = merged
+            kept[key] = merged
+    return tuple(result)
 
 
 def _resolve_step(
@@ -299,6 +348,10 @@ def _step_parameters(
                 f"{step.change_target}."
             )
         parameters["project"] = project
+    elif wrapper == "ng_openapi_setup":
+        scheme = _auth_scheme_of(project_config)
+        if scheme is not None:
+            parameters["auth_scheme"] = scheme
     elif wrapper == "ng_gen_app":
         parameters["app_name"] = project
     elif wrapper == "ng_data_service":
@@ -337,6 +390,31 @@ def _step_parameters(
         parameters["document"] = workspace_document_path(project_config)
         parameters["node_id"] = step.node_id
     return parameters, unresolved
+
+
+def _auth_scheme_of(project_config: ProjectConfig) -> str | None:
+    """The transport scheme the contract's one HTTP security scheme asks for.
+
+    Read from the OpenAPI document (``components.securitySchemes``), never from a
+    table: ``basic`` or ``bearer`` when the contract declares exactly one HTTP scheme
+    of that kind, else ``None`` and the schematic's own default applies.
+    """
+    try:
+        document = load_document(project_config.openapi_schema)
+    except DocumentError:
+        return None
+    components = document.get("components") if isinstance(document, Mapping) else None
+    schemes = (
+        components.get("securitySchemes") if isinstance(components, Mapping) else None
+    )
+    found = {
+        str(scheme.get("scheme", "")).lower()
+        for scheme in (schemes.values() if isinstance(schemes, Mapping) else ())
+        if isinstance(scheme, Mapping) and scheme.get("type") == "http"
+    }
+    return (
+        next(iter(found)) if len(found) == 1 and found <= {"basic", "bearer"} else None
+    )
 
 
 def _resource_of(step: AppBuildStep, project_config: ProjectConfig) -> str:

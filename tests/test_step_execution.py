@@ -535,6 +535,59 @@ class DryRunTests(unittest.TestCase):
         self.assertFalse((self.project.root / "build").exists())
         self.assertFalse((self.project.workspace / STAGED_DOCUMENT_DIRECTORY).exists())
 
+    def _creates(self, schema: Path):
+        from django_angular3.documents import load_document
+        from django_angular3.openapi_changes import compare_openapi_files
+
+        (self.project.root / "api.openapi.json").write_text(
+            json.dumps(load_document(schema)), encoding="utf-8"
+        )
+        return _change_set(
+            openapi=compare_openapi_files(None, self.project.root / "api.openapi.json")
+        )
+
+    def test_the_dry_run_of_scenario_add_order_shows_the_api_lane(self) -> None:
+        report = json.loads(
+            self.project.run_build(
+                self._creates(SHARED / "add-order.openapi.json"), dry_run=True
+            )
+        )
+
+        lane = [
+            (s["command"], dict(s["parameters"]), s["unresolved"])
+            for s in report["steps"]
+            if s["command"] in {"ng_openapi_setup", "ng_openapi_gen", "ng_data_service"}
+        ]
+        self.assertEqual(
+            [command for command, _, _ in lane],
+            ["ng_openapi_setup", "ng_openapi_gen", "ng_data_service"],
+        )
+        self.assertEqual(lane[2][1]["resource"], "api")
+        self.assertEqual(lane[2][2], [])
+        self.assertTrue(all(s["reason"] for s in report["steps"]))
+
+    def test_the_dry_run_of_the_poc_contract_binds_basic_and_the_v1_resource(
+        self,
+    ) -> None:
+        report = json.loads(
+            self.project.run_build(
+                self._creates(
+                    REPOSITORY
+                    / "tests"
+                    / "fixtures"
+                    / "service-names"
+                    / "gardens.schema.yaml"
+                ),
+                dry_run=True,
+            )
+        )
+
+        steps = {s["command"]: s for s in report["steps"]}
+        self.assertEqual(
+            steps["ng_openapi_setup"]["parameters"]["auth_scheme"], "basic"
+        )
+        self.assertEqual(steps["ng_data_service"]["parameters"]["resource"], "v1")
+
     def test_the_dry_run_lists_what_is_unresolved(self) -> None:
         change_set = _change_set(
             openapi=(

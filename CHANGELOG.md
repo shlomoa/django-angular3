@@ -8,6 +8,16 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Changed
+
+- `build_app` routes OpenAPI `create` Changes to the API lane
+  ([shlomoa/django-angular3#218](https://github.com/shlomoa/django-angular3/issues/218)):
+  one `ngdj_run_schematic` step for `openapi-setup` (run by `ng_openapi_setup`, with the
+  `--auth-scheme` read from the contract's HTTP security scheme) before the client, one
+  client regeneration for the whole ChangeSet, and one data service step per resource.
+  The translation fails if the API lane stages contradict the `before` / `after` of the
+  ngdj mapping's `api` section.
+
 ### Added
 
 - The resource identity rule across OpenAPI changes, ngdj data-service names and OpenUI
