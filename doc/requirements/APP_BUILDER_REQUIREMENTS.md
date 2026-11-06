@@ -243,7 +243,8 @@ the contract's one HTTP security scheme (`basic` or `bearer`), never from a tabl
 The stages of the API lane (setup 2, client 3, data services 4) must agree with the
 `before` / `after` of the mapping's `api` section, or the translation fails. Data
 service steps are resolved per resource (`CHANGE_MODEL_CONTRACTS.md` §2.2.1); paths of
-one tag share one step.
+one tag share one step, and each gets its `--path` inside the application project
+(`<sourceRoot>/app/features/<resource>/services`).
 
 `build_app` loads the mapping only when the ChangeSet has an `openui` or `openapi`
 Change, from `<angularWorkspace>/node_modules/<package>/schematics/`, where the package is

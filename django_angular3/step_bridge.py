@@ -22,6 +22,7 @@ from .angular import (
     NGDJ_COLLECTION,
     AngularInvocation,
     build_ngdj_schematic_invocations,
+    default_data_service_path,
 )
 from .command_translation import AppBuildStep
 from .config import ProjectConfig
@@ -152,6 +153,7 @@ _MAPPING_PARAMETERS: Final[dict[str, str]] = {
     "document": "document",
     "node_id": "nodeId",
     "resource": "name",
+    "path": "path",
     "api_service": "apiService",
     "output_path": "outputPath",
     "helpers_path": "helpersPath",
@@ -359,9 +361,12 @@ def _step_parameters(
         # subject the document does not hold yet leaves it unresolved.
         parameters["project"] = project
         try:
-            parameters["resource"] = _resource_of(step, project_config)
+            resource = _resource_of(step, project_config)
         except SubjectNotInDocument:
             unresolved = ("resource",)
+        else:
+            parameters["resource"] = resource
+            parameters["path"] = default_data_service_path(project_config, resource)
     elif wrapper in {
         "ng_page",
         "ng_component",

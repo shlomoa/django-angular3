@@ -8,6 +8,15 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Changed
+
+- The `ng_data_service` step of `build_app` now gets its `path` as well as its `resource`
+  ([shlomoa/django-angular3#210](https://github.com/shlomoa/django-angular3/issues/210)):
+  `<sourceRoot>/app/features/<resource>/services` inside the application project
+  (`projects/<name>/src` when the workspace has no `angular.json` yet), validated as a
+  relative path, so a real run no longer stops on an unresolved parameter and the service
+  lands inside `projects/<name>/`.
+
 ### Added
 
 - Cross-input consistency gate

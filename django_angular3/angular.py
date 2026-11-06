@@ -713,6 +713,20 @@ def default_api_client_output(config: ProjectConfig) -> str:
     return f"{source_root}/app/api"
 
 
+def default_data_service_path(config: ProjectConfig, resource: str) -> str:
+    """The workspace-relative directory of the data service of a resource.
+
+    Inside the application project, which a first build creates at
+    ``projects/<name>``: its ``sourceRoot`` from ``angular.json`` when the workspace
+    has one, else ``projects/<name>/src``. The ``data-service`` schematic ignores
+    ``--project`` for its location, so the path is always given.
+    """
+    source_root = _project_source_root(config) or f"projects/{config.project_name}/src"
+    path = f"{source_root}/app/features/{resource}/services"
+    _validate_relative_path(path, "Data service path")
+    return path
+
+
 def _project_source_root(config: ProjectConfig) -> str | None:
     angular_json = config.angular_workspace / "angular.json"
     try:
