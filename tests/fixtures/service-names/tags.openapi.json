@@ -1,0 +1,84 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Tags",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/p0/": {
+      "get": {
+        "operationId": "operation0",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        },
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/p1/": {
+      "get": {
+        "operationId": "operation1",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        },
+        "tags": [
+          "user-management"
+        ]
+      }
+    },
+    "/p2/": {
+      "get": {
+        "operationId": "operation2",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/p3/": {
+      "get": {
+        "operationId": "operation3",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        },
+        "tags": [
+          "userProfiles"
+        ]
+      }
+    },
+    "/p4/": {
+      "get": {
+        "operationId": "operation4",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        },
+        "tags": [
+          "my tag_x"
+        ]
+      }
+    },
+    "/p5/": {
+      "get": {
+        "operationId": "operation5",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    }
+  }
+}

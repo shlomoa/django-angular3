@@ -261,6 +261,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     ng_data_service.add_argument(
+        "--api-service",
+        default=None,
+        help=(
+            "Generated API service class to wrap, passed to the schematic "
+            "(default: the schematic infers it from the resource)."
+        ),
+    )
+    ng_data_service.add_argument(
         "--dry-run",
         action="store_true",
         help=(
@@ -402,6 +410,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "resource": args.resource,
                 "project": args.project,
                 "path": args.path,
+                "api_service": args.api_service,
             }
         if args.command == "ng_material_setup":
             plan_options = {

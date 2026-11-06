@@ -1,0 +1,12 @@
+{
+  "generator": "ng-openapi-gen@1.1.0",
+  "suffix": "ApiService",
+  "classes": [
+    "ApiApiService",
+    "MyTagXApiService",
+    "UserManagementApiService",
+    "UserProfilesApiService",
+    "UsersApiService",
+    "V1ApiService"
+  ]
+}

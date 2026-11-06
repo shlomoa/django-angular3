@@ -8,6 +8,19 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Added
+
+- The resource identity rule across OpenAPI changes, ngdj data-service names and OpenUI
+  bindings ([shlomoa/django-angular3#207](https://github.com/shlomoa/django-angular3/issues/207)):
+  a resource is an OpenAPI tag, and `django_angular3.resource_identity` derives the
+  ngdj resource, the `ng-openapi-gen` service class and the `uses.data` service from it
+  (recorded in `doc/contracts/CHANGE_MODEL_CONTRACTS.md` §2.2.1). The step bridge now
+  resolves the `resource` of an `ng_data_service` step from the project's OpenAPI
+  document, `ng_data_service` accepts `--api-service`, and the tag rule is checked against
+  the real `ng-openapi-gen` output (`python -m tests.generate_service_names`).
+  The reviewed user-management contract has the single tag `v1`, so its one resource is
+  `v1` (`V1ApiService`).
+
 ## [0.5.0]
 
 ### Changed

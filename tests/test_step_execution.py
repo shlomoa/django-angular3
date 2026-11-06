@@ -389,6 +389,51 @@ class StepResolutionTests(unittest.TestCase):
         client = next(step for step in steps if step.command == "ng_openapi_gen")
         self.assertEqual(client.unresolved, ())
 
+    def test_a_data_service_step_takes_the_resource_from_the_tag_of_the_path(
+        self,
+    ) -> None:
+        schema = self.project.root / "api.openapi.json"
+        document = json.loads(schema.read_text(encoding="utf-8"))
+        document["paths"]["/customers"] = {
+            "get": {"tags": ["customers"], "responses": {"200": {"description": "ok"}}}
+        }
+        schema.write_text(json.dumps(document), encoding="utf-8")
+        change_set = _change_set(
+            openapi=(
+                Change(
+                    ChangeDomain.OPENAPI,
+                    "path:/customers",
+                    "/paths/~1customers",
+                    ChangeOperation.CREATE,
+                    None,
+                    {},
+                ),
+            )
+        )
+
+        steps = self.resolve(change_set)
+
+        service = next(step for step in steps if step.command == "ng_data_service")
+        self.assertEqual(service.unresolved, ())
+        self.assertEqual(service.parameters["resource"], "customers")
+
+    def test_an_untagged_path_stops_the_bridge_with_the_reason(self) -> None:
+        change_set = _change_set(
+            openapi=(
+                Change(
+                    ChangeDomain.OPENAPI,
+                    "path:/api/users/",
+                    "/paths/~1api~1users~1",
+                    ChangeOperation.CREATE,
+                    None,
+                    {},
+                ),
+            )
+        )
+
+        with self.assertRaisesRegex(StepBridgeError, "no tag"):
+            self.resolve(change_set)
+
     def test_an_option_the_ngdj_command_does_not_accept_is_refused(self) -> None:
         document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
         page = document["ui"]["commands"]["page"]
