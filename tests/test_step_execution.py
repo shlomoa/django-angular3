@@ -417,6 +417,41 @@ class StepResolutionTests(unittest.TestCase):
         self.assertEqual(service.unresolved, ())
         self.assertEqual(service.parameters["resource"], "customers")
 
+    def test_a_data_service_step_runs_with_resource_and_path(self) -> None:
+        from django_angular3.step_bridge import build_invocations
+
+        shutil.copyfile(
+            SHARED / "add-order.openapi.json", self.project.root / "api.openapi.json"
+        )
+        steps = self.resolve(
+            _change_set(
+                openapi=(
+                    Change(
+                        ChangeDomain.OPENAPI,
+                        "path:/api/orders/",
+                        "/paths/~1api~1orders~1",
+                        ChangeOperation.CREATE,
+                        None,
+                        {},
+                    ),
+                )
+            )
+        )
+
+        service = next(s for s in steps if s.command == "ng_data_service")
+        argv = build_invocations(
+            service, self.project.project_config, self.project.settings
+        )[0].argv
+
+        self.assertEqual(
+            argv[3:],
+            (
+                "api",
+                "--project=shop",
+                "--path=projects/shop/src/app/features/api/services",
+            ),
+        )
+
     def test_an_option_the_ngdj_command_does_not_accept_is_refused(self) -> None:
         document = json.loads(FIXTURE_MAPPING.read_text(encoding="utf-8"))
         page = document["ui"]["commands"]["page"]
@@ -563,6 +598,9 @@ class DryRunTests(unittest.TestCase):
             ["ng_openapi_setup", "ng_openapi_gen", "ng_data_service"],
         )
         self.assertEqual(lane[2][1]["resource"], "api")
+        self.assertEqual(
+            lane[2][1]["path"], "projects/shop/src/app/features/api/services"
+        )
         self.assertEqual(lane[2][2], [])
         self.assertTrue(all(s["reason"] for s in report["steps"]))
 
