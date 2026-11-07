@@ -30,6 +30,9 @@ class ProjectConfig:
     #: ``angular.helpersPath``: the workspace-relative folder of the generated Django
     #: integration helpers (``openapi-setup --helpers-path``); ``None`` when unset.
     helpers_path: str | None = None
+    #: ``artifacts.angularSiteSources``: a directory of the site's own source files,
+    #: copied into the application project before the terminal build; ``None`` if unset.
+    angular_site_sources: Path | None = None
 
 
 def project_config_path() -> str:
@@ -92,7 +95,12 @@ def _load_project_configuration(
     _reject_unknown_keys(project, {"name"}, "project")
     _reject_unknown_keys(
         artifacts,
-        {"openapiSchema", "openuiSpecification", "angularWorkspace"},
+        {
+            "openapiSchema",
+            "openuiSpecification",
+            "angularWorkspace",
+            "angularSiteSources",
+        },
         "artifacts",
     )
     angular: dict[str, Any] = (
@@ -123,6 +131,14 @@ def _load_project_configuration(
         helpers_path=(
             _require_string(angular, "helpersPath", section="angular")
             if "helpersPath" in angular
+            else None
+        ),
+        angular_site_sources=(
+            _resolve_path(
+                root,
+                _require_string(artifacts, "angularSiteSources", section="artifacts"),
+            )
+            if "angularSiteSources" in artifacts
             else None
         ),
     )

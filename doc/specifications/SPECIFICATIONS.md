@@ -94,6 +94,12 @@ workspace-relative module of the site's route guard. `build_app` records it in t
 parameters of the application scaffold step, and the `ng_gen_app` wrapper passes it to
 `material-app` as `--auth-guard-path`; without the key the option is not passed.
 
+The optional `artifacts.angularSiteSources` names, relative to the project configuration,
+a directory of the site's own source files. `build_app` copies its tree into
+`projects/<project>/src/app/` of the workspace in a `site-sources` step between the last
+generating step and the terminal build, overwriting generated files of the same path; a
+missing or empty directory fails before any step runs.
+
 The optional `angular.helpersPath` is the workspace-relative folder of the Django
 integration helpers. The `ng_openapi_setup` step of `build_app` writes the API client to
 `projects/<project>/src/app/api` and the helpers to `angular.helpersPath`, else

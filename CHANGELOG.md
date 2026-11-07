@@ -10,6 +10,10 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `artifacts.angularSiteSources` in the project configuration: `build_app` copies the
+  site's own source files into `projects/<project>/src/app/` in a `site-sources` step
+  before the terminal build, shown by `--dry-run` and recorded in the evidence
+  ([shlomoa/django-angular3#273](https://github.com/shlomoa/django-angular3/issues/273)).
 - A failing end-to-end Playwright stage names the failing tests and their assertions
   (from the JSON report) and shows the tails of both output streams, instead of only the
   server's access log

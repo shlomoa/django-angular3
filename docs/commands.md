@@ -95,6 +95,15 @@ project: the client to `projects/<project>/src/app/api` (where `reactive-form` a
 project configuration, else `projects/<project>/src/app/api-integration`. Both appear as
 `output_path` and `helpers_path` in `build_app --dry-run`.
 
+A site that maintains source files its generated code imports (a route guard, an
+authentication service) names the directory in `artifacts.angularSiteSources` of the project
+configuration, relative to that file. `build_app` then adds a `site-sources` step after the
+last generating step and before the terminal build: it copies the tree into
+`projects/<project>/src/app/` of the workspace, overwriting generated files of the same
+path, and the evidence lists the copied files. `--dry-run` shows the step with its source and
+destination. A missing or empty directory fails before any step runs, and without the key
+there is no such step.
+
 A first build starts without a workspace, and the steps of OpenUI and OpenAPI changes are
 derived from the command mapping that the installed `angular-django2` package ships. So a
 real run first creates the workspace and installs the package (`ng new`, the package
