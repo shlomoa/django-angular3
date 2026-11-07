@@ -82,7 +82,9 @@ configured Angular application.
 Once the workspace exists, `ng_workspace` has installed `angular-django2` in it, and
 `build_app` can work out what a change to the OpenUI document needs. It compares the
 current inputs with a baseline, translates the differences into ordered steps, and runs
-them. The baseline is not discovered yet: you pass it with `--previous-config`.
+them. The baseline is the previous project configuration: `build_app` looks for
+`django-angular3-simple_crm.previous.json` next to the current one, and `--previous-config`
+names another file.
 
 Keep a copy of the OpenUI document as it is now, and a copy of the project configuration
 that points at it. Name the second file `django-angular3-simple_crm.previous.json`:

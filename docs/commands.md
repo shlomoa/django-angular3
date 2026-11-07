@@ -89,8 +89,8 @@ runs the steps level by level, halts at the first failure and writes
 output and the pinned `angular-django2` package and mapping versions. The final `last-check` gate builds the application
 (`ng_build`) until the terminal validation commands exist.
 
-Not implemented yet: a step for `ng_openapi_setup`, running a schema export step, and
-detecting changes of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
+Not implemented yet: running a schema export step and detecting changes
+of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
 needs the `angular-django2` package `tool.ngAddPackage` names (a registry specification, `name`, `name@version`,
 `@scope/name` or `@scope/name@version` with an exact version, or a local package
 directory or packed archive (`.tgz`), relative to the Angular workspace or absolute,
