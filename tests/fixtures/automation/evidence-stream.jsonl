@@ -1,0 +1,5 @@
+{"dry_run":false,"kind":"run","project":"shop","run_id":"run-1","seq":1,"timestamp":"2026-01-01T00:00:01Z"}
+{"family":"pre-tool","kind":"hook","name":"pre-construction","ok":true,"run_id":"run-1","seq":2,"timestamp":"2026-01-01T00:00:02Z"}
+{"kind":"tool","name":"openapi_schema_export","ok":true,"output":{"n":1},"run_id":"run-1","seq":3,"timestamp":"2026-01-01T00:00:03Z"}
+{"family":"post-tool","kind":"hook","name":"post-generation","ok":true,"run_id":"run-1","seq":4,"timestamp":"2026-01-01T00:00:04Z"}
+{"criteria":["built","typed"],"decision":"accepted","kind":"acceptance","run_id":"run-1","seq":5,"timestamp":"2026-01-01T00:00:05Z"}

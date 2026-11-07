@@ -83,6 +83,18 @@ boundary, so no caller redacts on its own and the rules are defined once.
 Command output captured from Tool and wrapper calls is a record field like any
 other and is subject to the same policy.
 
+#### Stream format and prior events
+
+The stream is `automation-evidence.jsonl` below the selected build output. Each
+line is one event with the recorder-owned fields `kind` (`run`, `tool`, `hook` or
+`acceptance`), `run_id`, `seq` (consecutive from 1) and `timestamp`; the run
+identifier and the clock are injected. A dry run records nothing.
+
+A prior event that is not valid (not JSON, not an object, or without a known
+`kind`, as after a run cut off mid-line) is never rewritten or removed. The recorder
+continues the sequence after the valid events and starts its next event on a line of
+its own; the reader skips the malformed line and reports its line number.
+
 ### 3.2. Hook artifacts
 
 Hook implementations use these durable artifact locations:
