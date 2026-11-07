@@ -810,6 +810,11 @@
             "flag": "--auth-guard",
             "type": "string"
           },
+          {
+            "name": "authGuardPath",
+            "flag": "--auth-guard-path",
+            "type": "string"
+          },
           { "name": "document", "flag": "--document", "type": "string" },
           { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
         ],
@@ -856,6 +861,7 @@
         },
         "notes": [
           "Route paths have two unsynchronized sources: page registers DashboardPage uses.route and material-app links to Route uses.path.",
+          "--auth-guard-path (a project-relative module path without extension) makes material-app add the import of the guard to app.routes.ts when it lacks one, so a first generation with protected routes succeeds; the guard file does not have to exist yet.",
           "A Route with uses.access protected gets the existing guard (--auth-guard, default authGuard) in canActivate of the generated route with the same path, and its NavItem is shown only to a visitor the guard lets in. The guard must be imported by app.routes.ts; the command never creates it and fails naming it when it is missing."
         ]
       },
@@ -1086,7 +1092,10 @@
           "ToolBarRow",
           "ToolAction"
         ],
-        "attributes": { "supported": [] }
+        "attributes": { "supported": [] },
+        "notes": [
+          "A Form or page node that a Route targets through uses.target may sit among the Application children; the shell does not compile it (reactive-form and page do). Any other unsupported child is rejected."
+        ]
       },
       "html": {
         "scope": "application/indexHtml",
