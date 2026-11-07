@@ -27,6 +27,9 @@ class ProjectConfig:
     #: ``angular.authGuardPath``: the workspace-relative module of the site's route
     #: guard, passed to ``material-app`` as ``--auth-guard-path``; ``None`` when unset.
     auth_guard_path: str | None = None
+    #: ``angular.helpersPath``: the workspace-relative folder of the generated Django
+    #: integration helpers (``openapi-setup --helpers-path``); ``None`` when unset.
+    helpers_path: str | None = None
 
 
 def project_config_path() -> str:
@@ -95,7 +98,7 @@ def _load_project_configuration(
     angular: dict[str, Any] = (
         _require_mapping(document, "angular") if "angular" in document else {}
     )
-    _reject_unknown_keys(angular, {"authGuardPath"}, "angular")
+    _reject_unknown_keys(angular, {"authGuardPath", "helpersPath"}, "angular")
     root = config_path.parent
 
     return ProjectConfig(
@@ -115,6 +118,11 @@ def _load_project_configuration(
         auth_guard_path=(
             _require_string(angular, "authGuardPath", section="angular")
             if "authGuardPath" in angular
+            else None
+        ),
+        helpers_path=(
+            _require_string(angular, "helpersPath", section="angular")
+            if "helpersPath" in angular
             else None
         ),
     )

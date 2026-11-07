@@ -355,6 +355,28 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertEqual(exit_code, 0, stderr)
         self.assertIn("--auth-guard-path=src/app/auth/guard", stdout)
 
+    def test_ng_openapi_setup_helpers_default_follows_the_configuration(self) -> None:
+        import dataclasses
+
+        from django_angular3.angular import build_ng_openapi_setup_invocations
+        from django_angular3.config import load_project_config
+
+        config = load_project_config(PROJECT_CONFIG_PATH)
+        settings = load_angular_settings()
+
+        plain = build_ng_openapi_setup_invocations(config, settings)[0].argv
+        self.assertFalse([a for a in plain if a.startswith("--helpers-path")])
+
+        configured = dataclasses.replace(config, helpers_path="src/app/django")
+        argv = build_ng_openapi_setup_invocations(configured, settings)[0].argv
+        self.assertIn("--helpers-path=src/app/django", argv)
+
+        explicit = build_ng_openapi_setup_invocations(
+            configured, settings, helpers_path="src/app/other"
+        )[0].argv
+        self.assertIn("--helpers-path=src/app/other", explicit)
+        self.assertNotIn("--helpers-path=src/app/django", explicit)
+
     def test_ng_complex_component_dry_run_resolves_ngdj_schematic(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
             "ng_complex_component",

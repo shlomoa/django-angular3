@@ -23,7 +23,10 @@ class Command(AngularBaseCommand):
         parser.add_argument(
             "--helpers-path",
             default=None,
-            help="Output path for generated Django integration helpers.",
+            help=(
+                "Workspace-relative output path for generated Django integration "
+                "helpers (default: angular.helpersPath of the project configuration)."
+            ),
         )
         parser.add_argument(
             "--skip-helpers",

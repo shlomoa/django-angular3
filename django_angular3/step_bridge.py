@@ -21,6 +21,8 @@ from .angular import (
     _COMMAND_BUILDERS,
     NGDJ_COLLECTION,
     AngularInvocation,
+    application_api_client_output,
+    application_helpers_path,
     build_ngdj_schematic_invocations,
     default_data_service_path,
 )
@@ -352,6 +354,8 @@ def _step_parameters(
             )
         parameters["project"] = project
     elif wrapper == "ng_openapi_setup":
+        parameters["output_path"] = application_api_client_output(project_config)
+        parameters["helpers_path"] = application_helpers_path(project_config)
         scheme = _auth_scheme_of(project_config)
         if scheme is not None:
             parameters["auth_scheme"] = scheme

@@ -89,6 +89,12 @@ runs the steps level by level, halts at the first failure and writes
 output and the pinned `angular-django2` package and mapping versions. The final `last-check` gate builds the application
 (`ng_build`) until the terminal validation commands exist.
 
+In `build_app`, the `ng_openapi_setup` step always writes inside the application
+project: the client to `projects/<project>/src/app/api` (where `reactive-form` and
+`data-service` look for it) and the Django helpers to `angular.helpersPath` of the
+project configuration, else `projects/<project>/src/app/api-integration`. Both appear as
+`output_path` and `helpers_path` in `build_app --dry-run`.
+
 A first build starts without a workspace, and the steps of OpenUI and OpenAPI changes are
 derived from the command mapping that the installed `angular-django2` package ships. So a
 real run first creates the workspace and installs the package (`ng new`, the package
@@ -196,7 +202,7 @@ These commands are available through both interfaces. Invoke them as either
 | `ng_complex_component` | Generate, modify, or delete an advanced Material component. Requires `--name`, `--target-path`, and `--features`; accepts `--project`, `--mode {create,modify,delete}`, delete confirmation via `--confirm`, `--document <path>` (a workspace-relative OpenUI document; requires `--mode create`) and `--node-id` (requires `--document`). |
 | `ng_reactive_form` | Generate a typed reactive form. Requires `--name` and exactly one of `--document <path>` (a workspace-relative OpenUI document, with optional `--node-id`) or the deprecated `--definition`; accepts `--target-path`, `--project`, and `--primitives-path`. |
 | `ng_openapi_gen` | Run the workspace-local `ng-openapi-gen` via `pnpm exec` for the discovered OpenAPI artifact. |
-| `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path` (workspace-relative; default `app/api` under the application project's source root, which `ng_openapi_gen` and `generate:api` then use too), `--helpers-path`, `--skip-helpers`, `--skip-tests`, and `--auth-scheme` (`bearer` or `basic`). |
+| `ng_openapi_setup` | Configure OpenAPI client generation and Django integration helpers. Accepts `--output-path` (workspace-relative; default `app/api` under the application project's source root, which `ng_openapi_gen` and `generate:api` then use too), `--helpers-path` (default: `angular.helpersPath` of the project configuration), `--skip-helpers`, `--skip-tests`, and `--auth-scheme` (`bearer` or `basic`). |
 | `ng_data_service` | Generate a typed data-service wrapper. Requires `--resource`; accepts `--project`, `--api-service` (generated API service class to wrap; by default the schematic infers it from the resource) and `--path` (workspace-relative destination of the service, such as `projects/<name>/src/app/features/<resource>/services`). |
 | `ng_build` | Build the discovered Angular application. |
 
