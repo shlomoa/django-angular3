@@ -219,12 +219,14 @@ Status: the foundation of Phases 1–5 is implemented under
 `django_angular3/automation/` and tested without credentials, a provider SDK or a
 network: the immutable result, failure and adapter-result contracts and the evidence
 redaction policy (`contracts.py`), the append-only JSON Lines evidence recorder
-(`evidence.py`) and the synchronous direct-execution controller with the pre-tool,
-post-tool and session-stop consequences (`execution.py`). `build_app` does not use the
-controller yet. Still open: the executable Tool contracts (Phase 7), the lifecycle Hooks
-(Phase 8), moving `build_app` onto the controller with terminal validation and global
-acceptance (Phase 9), and everything provider-related (Phase 10). The known open tests
-and gaps are listed in the status block of `APP_BUILDER_REQUIREMENTS.md`.
+(`evidence.py`), the synchronous direct-execution controller with the pre-tool,
+post-tool and session-stop consequences (`execution.py`), the 18 Tool implementations
+(`tool_catalog.py`, `tools.py`) and the lifecycle Hooks with their registry (`hooks.py`).
+`build_app` runs its steps on the controller with the Hooks and the evidence recorder.
+Still open: the steps calling the structured Tool implementations instead of the
+wrappers, the schema export step, terminal validation and global acceptance beyond the
+`ng_build` gate (Phase 9), and everything provider-related (Phase 10). The known gaps are
+listed in the status block of `APP_BUILDER_REQUIREMENTS.md`.
 
 ## Dependency-ordered implementation phases
 

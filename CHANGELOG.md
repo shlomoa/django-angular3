@@ -10,6 +10,12 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `build_app` runs its steps on the provider-neutral direct-execution controller with the
+  lifecycle Hooks and the evidence recorder: a missing, stale or invalid schema blocks a
+  generation step, a failing structural check halts the run, the session is archived, the
+  ordered events go to `automation-evidence.jsonl`, `build-evidence.json` gains the Hook
+  outcomes and the exit code, and a Hook failure exits with `3`
+  ([shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
 - Provider-neutral lifecycle Hooks (`django_angular3/automation/hooks.py`): the registry
   keyed by canonical name and lifecycle family, the four catalogued Hooks
   (`pre-construction`, `migration-triggered`, `post-generation`, `session-stop`) with their

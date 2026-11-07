@@ -82,8 +82,9 @@ _WIDGETS_DOCUMENT = {
     ],
 }
 
-# A stand-in for the Angular CLI: it logs every call, creates the directory of
-# ``ng new`` and fails when FAKE_NG_FAIL occurs in the call.
+# A stand-in for the Angular CLI: it logs every call, creates the workspace of
+# ``ng new`` (the directory, ``angular.json`` and ``package.json``), the application
+# project of ``material-app`` and fails when FAKE_NG_FAIL occurs in the call.
 FAKE_NG = """\
 import json
 import os
@@ -95,7 +96,12 @@ with open(os.environ["FAKE_NG_LOG"], "a", encoding="utf-8") as log:
     log.write(json.dumps({"argv": argv, "cwd": os.getcwd()}) + "\\n")
 if argv[:1] == ["new"]:
     directory = next(a for a in argv if a.startswith("--directory="))
-    (Path.cwd() / directory.split("=", 1)[1]).mkdir(exist_ok=True)
+    workspace = Path.cwd() / directory.split("=", 1)[1]
+    workspace.mkdir(exist_ok=True)
+    (workspace / "angular.json").write_text("{}", encoding="utf-8")
+    (workspace / "package.json").write_text("{}", encoding="utf-8")
+if argv[:2] == ["generate", "angular-django2:material-app"]:
+    (Path.cwd() / "projects" / argv[2] / "src").mkdir(parents=True, exist_ok=True)
 marker = os.environ.get("FAKE_NG_FAIL")
 if marker and marker in " ".join(argv):
     sys.stderr.write("simulated ng failure\\n")

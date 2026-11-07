@@ -113,6 +113,18 @@ scaffold created the application. The step runs through `ng_workspace_modify`, w
 `--dry-run` shows the `document` and `project` parameters (`--project` makes the schematic find the `index.html` in the application project's source root, not at the workspace root). The workspace foundation step stays as it was,
 without a document. Without such a node there is no such step.
 
+A real run executes the steps on the direct-execution controller with the lifecycle Hooks
+(`doc/contracts/HOOK_CONTRACTS.md`): `pre-construction` blocks a generation step (the
+workspace, the application, the API client) when the OpenAPI schema is missing, older than
+the newest migration or invalid, and `post-generation` checks what a generation step left
+(the workspace files, the application project, the generated client services) and halts
+the run when the check fails. A blocked step has the status `blocked` in
+`build-evidence.json`, which also lists the Hook outcomes and the exit code. The exit code
+is `0` on success, `1` when a step fails and `3` when a Hook fails. The ordered events of
+the run (steps, Hooks, the acceptance decision) are in `automation-evidence.jsonl`, and at
+the end the `session-stop` Hook archives `hook-log.jsonl` and `verification.log` into
+`history/<timestamp>/` of `--output` and adds the run to `session-log.json`.
+
 A first build starts without a workspace, and the steps of OpenUI and OpenAPI changes are
 derived from the command mapping that the installed `angular-django2` package ships. So a
 real run first creates the workspace and installs the package (`ng new`, the package
