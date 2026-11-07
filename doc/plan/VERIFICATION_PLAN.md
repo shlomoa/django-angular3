@@ -60,10 +60,11 @@ GitHub owns issue scope and tracking.
 - **Provider adapters** (Phase 5) first share a credential-free stub matrix; <!-- STEP7-37293ce82449 -->
 - each real adapter then runs that matrix plus provider-specific rendering and lifecycle checks in an isolated, explicitly opted-in runtime suite. Missing credentials or SDKs skip live tests without prompting or exposing values. <!-- STEP7-e005967aff29 -->
 - The default verification path remains credential-free: <!-- STEP7-bdd9f4471cda -->
-- `ruff format django_angular3 tests` <!-- STEP7-055b07f996cc -->
+- `ruff format --check django_angular3 tests` <!-- STEP7-055b07f996cc -->
 - `ruff check django_angular3 tests` <!-- STEP7-2476e5b3fffe -->
 - focused tests for the affected automation/build boundaries <!-- STEP7-924f34f342bd -->
 - `python -m unittest discover -s tests -p 'test*.py'` <!-- STEP7-526734476145 -->
+- `python -m sphinx docs docs/_build/html -W --keep-going` (the documentation build; `pip install -e ".[dev,docs]"`)
 - generated-app-compatible `django-admin build_app --dry-run` coverage <!-- STEP7-b9002c79c218 -->
 - Update implementation status, capability metadata, and the backlog only from actual test evidence. Provider-neutral stub success alone does not establish provider support. <!-- STEP7-be20b23163a3 -->
 

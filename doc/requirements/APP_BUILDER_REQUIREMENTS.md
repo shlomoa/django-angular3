@@ -16,21 +16,28 @@ django-admin build_app [options]
 python manage.py build_app [options]
 ```
 
-> **Implementation status:** `handle()` loads the project configurations, derives
-> the ChangeSet (project configuration, OpenAPI and OpenUI; the static-configuration
-> lane is not detected), translates it with `translate_changes` and, with
+> **Implementation status:** `handle()` loads the project configurations (a missing
+> previous configuration is a first run), derives the ChangeSet (project configuration,
+> OpenAPI and OpenUI; the static-configuration lane is empty in a real run because the
+> tool configuration has no baseline artifact), checks the OpenUI bindings against the
+> OpenAPI contract, translates the ChangeSet with `translate_changes` and, with
 > `--dry-run`, prints the ordered steps with their wrapper commands and resolved
-> parameters. OpenUI and OpenAPI changes get their steps from the
-> ngdj command mapping (§Change-to-command mapping). Without `--dry-run` the steps run
-> in order through their wrappers (§Step execution), halt at the first failure and
-> leave `build-evidence.json` in `--output`; `--force start-from-scratch` ignores the previous configuration. The
-> `export_schema` wrapper has no invocation builder, so a schema export step is refused,
-> and a data service step cannot run until its `resource` is defined
-> ([shlomoa/django-angular3#207](https://github.com/shlomoa/django-angular3/issues/207)). The
-> static-configuration change lane, the implementation of the deterministic TOOL
-> commands, hooks, and terminal validation are not implemented. This document
-> specifies the target behavior; it must not be read as a claim that those target
-> behaviors are already available.
+> parameters. OpenUI and OpenAPI changes get their steps from the ngdj command mapping
+> (§Change-to-command mapping). Without `--dry-run` a first build creates the workspace
+> and installs ngdj before the steps are derived; the steps then run in order through
+> their wrappers (§Step execution), a configured directory of the site's own sources is
+> copied in before the terminal build, the run halts at the first failure and leaves
+> `build-evidence.json` in `--output`; `--force start-from-scratch` ignores the previous
+> configuration. The provider-neutral foundation exists as library code, not yet as the
+> controller of `build_app`: the immutable contracts, the evidence recorder and the
+> direct-execution primitives under `django_angular3/automation/`. `build_app` does not
+> use them yet, so its only evidence is `build-evidence.json`. Not implemented: the
+> deterministic TOOL commands as executable contracts, the lifecycle Hooks, the schema
+> export step (the `export_schema` wrapper has no invocation builder), terminal validation
+> beyond the `ng_build` of the `last-check` gate, and global acceptance. Update and
+> delete changes, and `move`, fail explicitly. This document specifies the target
+> behavior; it must not be read as a claim that those target behaviors are already
+> available.
 
 ### Build algorithm
 
