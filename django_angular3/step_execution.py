@@ -20,6 +20,7 @@ from .command_translation import AppBuildStep
 from .config import ProjectConfig
 from .ngdj_command_mapping import CommandMapping
 from .settings import AngularCommandError, DjangoAngularSettings
+from .site_sources import SITE_SOURCES_COMMAND, SiteSourcesError, copy_site_sources
 from .step_bridge import StepBridgeError, build_invocations, stage_document
 
 EVIDENCE_FILE_NAME: Final = "build-evidence.json"
@@ -217,6 +218,8 @@ def _run_step(
 ) -> bool:
     """Run one step; ``False`` when it failed."""
     step = record.step
+    if step.command == SITE_SOURCES_COMMAND:
+        return _run_site_sources(record, project_config)
     try:
         if "document" in step.parameters:
             stage_document(project_config)
@@ -228,6 +231,22 @@ def _run_step(
         record.invocations.append(outcome)
         if outcome.returncode != 0:
             return _fail(record, _failure_message(step, outcome))
+    record.status = STATUS_SUCCEEDED
+    return True
+
+
+def _run_site_sources(record: StepRecord, project_config: ProjectConfig) -> bool:
+    """The copy step: no subprocess, the copied files are the recorded output."""
+    parameters = record.step.parameters
+    argv = ("copy", str(parameters["source"]), str(parameters["destination"]))
+    try:
+        copied = copy_site_sources(project_config)
+    except SiteSourcesError as exc:
+        record.invocations.append(InvocationRecord(argv, "", 1, stderr=str(exc)))
+        return _fail(record, str(exc))
+    record.invocations.append(
+        InvocationRecord(argv, "", 0, stdout="\n".join(copied)[-_OUTPUT_TAIL:])
+    )
     record.status = STATUS_SUCCEEDED
     return True
 

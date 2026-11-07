@@ -43,6 +43,7 @@ from django_angular3.settings import (
     DjangoAngularSettings,
     load_angular_settings,
 )
+from django_angular3.site_sources import SiteSourcesError, with_site_sources_step
 from django_angular3.step_bridge import StepBridgeError, resolve_steps
 from django_angular3.step_execution import (
     EVIDENCE_FILE_NAME,
@@ -393,12 +394,20 @@ class ChangeExecution:
         logger.debug("Executing change set")
         try:
             settings = settings or load_angular_settings()
-            steps = resolve_steps(
-                self._translate_change_set(change_set, mapping),
+            steps = with_site_sources_step(
+                resolve_steps(
+                    self._translate_change_set(change_set, mapping),
+                    project_config,
+                    mapping,
+                ),
                 project_config,
-                mapping,
             )
-        except (StepBridgeError, AngularCommandError, ConfigError) as exc:
+        except (
+            StepBridgeError,
+            AngularCommandError,
+            ConfigError,
+            SiteSourcesError,
+        ) as exc:
             raise CommandError(f"Failed to resolve the steps: {exc}") from exc
 
         evidence = new_evidence(
