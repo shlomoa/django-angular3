@@ -408,6 +408,9 @@ they are not a substitute for execution.
   or modifying the generated-app workspace.
 - The preview must be human-readable and include command order, mode, inputs,
   and reason.
+- A dry run records no evidence: it writes no `build-evidence.json` and no
+  other file, and `--output` is not touched. The printed preview is its only
+  output (AIR-8).
 
 ### FR-4: Initial-state force mode
 
