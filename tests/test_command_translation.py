@@ -1090,7 +1090,7 @@ class InitialBuildTranslationTests(unittest.TestCase):
         self.assertEqual(
             [(s.exec_order, s.name_id, s.change_op, s.node_id) for s in steps],
             [
-                (1, "angular-workspace-foundation", "create", None),
+                (1, "angular-workspace-foundation", "create", "root"),
                 (2, "angular_app_scaffold", "create", "crmApp"),
                 (10, "ngdj_add_page", "create", "contact"),
                 (10, "ngdj_add_page", "create", "home"),

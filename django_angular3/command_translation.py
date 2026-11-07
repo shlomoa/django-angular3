@@ -357,8 +357,19 @@ def _fold_foundation_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
                     f"{dropped.change_target}."
                 )
             subjects = ", ".join(sorted({kept.change_target, dropped.change_target}))
+            # The workspace foundation step compiles the document (``workspace-setup
+            # --document``), so it takes over the element of the folded step.
+            element = (
+                {}
+                if keep_openui
+                else {
+                    "node_id": dropped.node_id,
+                    "ngdj_command": dropped.ngdj_command,
+                }
+            )
             result[result.index(kept)] = replace(
                 kept,
+                **element,
                 change_target=subjects,
                 change_reason=(
                     f"{kept.change_reason} Also required by "

@@ -630,6 +630,59 @@ class DryRunTests(unittest.TestCase):
         self.assertEqual(lane[2][2], [])
         self.assertTrue(all(s["reason"] for s in report["steps"]))
 
+    HTML_DOCUMENT = {
+        "id": "root",
+        "type": "html",
+        "children": [
+            {"id": "shopApp", "type": "Application"},
+            {"id": "home", "type": "DashboardPage"},
+        ],
+    }
+
+    def _initial_build(self):
+        """The create set of an initial build over a document with an html root."""
+        self.project.document.write_text(
+            json.dumps(self.HTML_DOCUMENT), encoding="utf-8"
+        )
+        return _change_set(
+            project_config=(_project_name_created(),),
+            openui=compare_openui_files(None, self.project.document),
+        )
+
+    def test_the_foundation_step_passes_the_document_with_an_html_node(self) -> None:
+        report = json.loads(self.project.run_build(self._initial_build(), dry_run=True))
+
+        foundation = report["steps"][0]
+        self.assertEqual(foundation["step"], "angular-workspace-foundation")
+        self.assertEqual(foundation["command"], "ng_workspace")
+        self.assertEqual(
+            foundation["parameters"],
+            {"document": f"{STAGED_DOCUMENT_DIRECTORY}/app.openui.json"},
+        )
+
+    def test_the_foundation_step_has_no_document_without_html_or_link_nodes(
+        self,
+    ) -> None:
+        change_set = _change_set(project_config=(_project_name_created(),))
+
+        report = json.loads(self.project.run_build(change_set, dry_run=True))
+
+        foundation = report["steps"][0]
+        self.assertEqual(foundation["step"], "angular-workspace-foundation")
+        self.assertEqual(foundation["parameters"], {})
+
+    def test_workspace_setup_runs_with_the_document(self) -> None:
+        with patch("django_angular3.angular.package_installed", return_value=False):
+            self.project.run_build(self._initial_build())
+
+        setup = next(
+            call
+            for call in self.project.calls()
+            if call[:2] == ["generate", "angular-django2:workspace-setup"]
+        )
+        self.assertIn(f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json", setup)
+        self.assertFalse([arg for arg in setup if arg.startswith("--node-id")])
+
     def _setup_parameters(self) -> dict:
         report = json.loads(
             self.project.run_build(

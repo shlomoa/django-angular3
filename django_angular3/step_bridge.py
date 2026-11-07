@@ -400,7 +400,9 @@ def _step_parameters(
 
     if step.node_id is not None and wrapper != "ng_data_service":
         parameters["document"] = workspace_document_path(project_config)
-        parameters["node_id"] = step.node_id
+        # ``workspace-setup`` reads the whole document: no ``--node-id``.
+        if wrapper != "ng_workspace":
+            parameters["node_id"] = step.node_id
     return parameters, unresolved
 
 

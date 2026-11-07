@@ -104,6 +104,12 @@ path, and the evidence lists the copied files. `--dry-run` shows the step with i
 destination. A missing or empty directory fails before any step runs, and without the key
 there is no such step.
 
+When the OpenUI document of an initial build has an `html` or `link` node, the workspace
+foundation step compiles it: the step passes the staged document as `document` to
+`ng_workspace`, so `workspace-setup --document` sets the page language, direction and title
+(`lang`, `dir` and the title of `index.html`). `--dry-run` shows the parameter. Without such a
+node the step passes nothing.
+
 A first build starts without a workspace, and the steps of OpenUI and OpenAPI changes are
 derived from the command mapping that the installed `angular-django2` package ships. So a
 real run first creates the workspace and installs the package (`ng new`, the package
