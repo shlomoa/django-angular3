@@ -120,6 +120,16 @@ command strings or provider-native event names. Direct dispatch and provider
 event adapters normalize observations to the same registry identity before a
 Hook runs.
 
+The registry is `HookRegistry` in `django_angular3/automation/hooks.py`; `default_registry()`
+registers the four catalogued Hooks. An observation is normalized to its identity before
+matching: `observation_from_provider` maps the provider events (`PreToolUse`,
+`PostToolUse`, `Stop`; `on_pre_tool_use`, `on_post_tool_use`) to a lifecycle family and
+reads the canonical Tool name from the payload, and `command_identity` identifies a shell
+command by its argument tokens (`manage.py` or `django-admin` followed by `makemigrations`),
+so a `makemigrations` substring of another command or a path never matches. A Hook failure
+exits with the Hook-failure code `3`, distinct from the Tool-failure code `1`
+(`HOOK_CONTRACTS.md`, "Exit codes").
+
 Duplicate lifecycle observations use the registration's idempotency behavior
 so destructive work is not repeated and conflicting acceptance evidence is not
 emitted.

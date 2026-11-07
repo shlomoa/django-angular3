@@ -138,9 +138,7 @@ command.
 **Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
 `angular_app_scaffold`, future generation tools.
 
-**Implementation reference**: planned handler `hooks/pre-construction.sh`.
-It wraps `validate_openapi_schema` via its tool contract and is registered by
-the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:pre_construction_hook`, registered by `default_registry()`; it wraps `validate_openapi_schema` through `invoke_tool`. Failures are written to stderr and to `hook-log.jsonl` below the selected build output (`build/` by default) with a `reason` of `missing`, `stale`, `invalid` or `tool_failed`; a pass appends `{ hook, pass: true, schema_path }`.
 
 ### Mid-run triggers
 
@@ -152,9 +150,12 @@ the applicable provider adapter.
 the OpenAPI schema artifact is re-exported so downstream construction always
 sees a contract that matches the current data model.
 
-**Trigger event**: `post-tool` scoped to any tool invocation that runs
-`python manage.py makemigrations` (e.g. a `bash` tool call detected by the
-`makemigrations` substring in its command).
+**Trigger event**: `post-tool` scoped to the external command with the canonical
+identity `makemigrations`, i.e. any tool invocation that runs
+`python manage.py makemigrations` or `django-admin makemigrations`. The identity is
+derived from the command's argument tokens, not from a substring of a shell string
+(`AI_AUTOMATION_SPECIFICATIONS.md` §4); a command that merely mentions
+`makemigrations` is not that command.
 
 **Deterministic action**:
 
@@ -181,9 +182,7 @@ sees a contract that matches the current data model.
 **Allowed wrapped tools**: any tool invocation that calls
 `manage.py makemigrations`. The hook MUST NOT fire for unrelated tool calls.
 
-**Implementation reference**: planned handler `hooks/migration-triggered.sh`.
-It wraps `openapi_schema_export` via its tool contract and is registered by
-the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:migration_triggered_hook`, registered by `default_registry()`; it wraps `openapi_schema_export` through `invoke_tool`. The hook runner captures the pre-call snapshot with `snapshot_migrations` and passes it as `migrations_before` in the observation inputs. The wrapped command has the canonical identity `makemigrations`, derived from the command's tokens (`command_identity`: `manage.py` or `django-admin` followed by `makemigrations`), never from a substring of a shell string.
 
 ### Post-generation enforcement
 
@@ -228,8 +227,7 @@ generation tool contract.
 **Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
 `angular_app_scaffold`, future generation tools.
 
-**Implementation reference**: planned handler `hooks/post-generation.sh`,
-registered by the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:post_generation_hook`, registered by `default_registry()`. The `angular_api_client_generate` check runs `pnpm exec tsc --noEmit` in the workspace through `command_execution`; the scaffold checks assert `angular.json` and `package.json` (workspace) or `projects/<project>/src` (application). Entries go to `verification.log`.
 
 ### Session lifecycle
 
@@ -270,8 +268,15 @@ unconditionally.
 
 **Allowed wrapped tools**: not applicable — `session-stop` is not scoped to a tool.
 
-**Implementation reference**: planned handler `hooks/session-stop.sh`,
-registered by the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:session_stop_hook`, registered by `default_registry()`. The artifacts are archived below the selected build output (`history/<timestamp>/`), the timestamp persists in `session-timestamp.txt`, and the summary entries in `session-log.json` are keyed by timestamp.
+
+### Exit codes
+
+A direct `build_app` run exits `0` when it succeeds, `1` when a Tool fails and `3` when
+a Hook fails (`pre-tool` blocked, `post-tool` halted); a `session-stop` failure only warns
+and leaves the decided code unchanged. The code `3` is distinct from the Tool-failure
+code (and from `2`, which argument parsers use). The decided code is recorded as
+`exit_code` in the `session-stop` summary.
 
 ### Provider adapter hook mappings
 

@@ -10,6 +10,13 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- Provider-neutral lifecycle Hooks (`django_angular3/automation/hooks.py`): the registry
+  keyed by canonical name and lifecycle family, the four catalogued Hooks
+  (`pre-construction`, `migration-triggered`, `post-generation`, `session-stop`) with their
+  artifacts (`hook-log.jsonl`, `verification.log`, `session-log.json`, `history/`), the
+  normalization of provider-shaped lifecycle events and of `makemigrations` commands by
+  tokens, idempotent duplicate observations, and the Hook-failure exit code `3`
+  ([shlomoa/django-angular3#163](https://github.com/shlomoa/django-angular3/issues/163)).
 - The Django-served end-to-end stage no longer races: the customers host applies only the
   response of the latest request, and the write spec waits for the list reload before it
   changes the page
