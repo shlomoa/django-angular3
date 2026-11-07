@@ -1,0 +1,1 @@
+{"consequence":"halt","failure":{"category":"external_tool_failed","details":{"exit_code":2,"tool":"oasdiff_diff"},"message":"oasdiff exited with status 2"},"family":"post-tool","hook":"post-generation","ok":false}
