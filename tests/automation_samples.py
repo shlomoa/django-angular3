@@ -33,3 +33,20 @@ SAMPLES = {
         AdapterStatus.ACCEPTED, {"criteria": ["built", "typed"], "session": "s-1"}
     ),
 }
+
+
+def fake_run_events() -> list[tuple[str, dict]]:
+    """A fake run: a run record, Tool, Hook and acceptance events in order."""
+    return [
+        ("run", {"project": "shop", "dry_run": False}),
+        ("hook", {"name": "pre-construction", "family": "pre-tool", "ok": True}),
+        ("tool", {"name": "openapi_schema_export", "ok": True, "output": {"n": 1}}),
+        ("hook", {"name": "post-generation", "family": "post-tool", "ok": True}),
+        ("acceptance", {"decision": "accepted", "criteria": ["built", "typed"]}),
+    ]
+
+
+def fixed_clock():
+    """A deterministic injected clock: one second per call."""
+    ticks = iter(range(1, 1000))
+    return lambda: f"2026-01-01T00:00:{next(ticks):02d}Z"

@@ -10,6 +10,12 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- Durable provider-independent evidence (`django_angular3/automation/evidence.py`): an
+  append-only, injected `JsonLinesEvidenceRecorder` writing ordered run, Tool, Hook and
+  acceptance events as stable UTF-8 JSON Lines, a no-op recorder, structured write
+  failures, the redaction policy at the write boundary, and a reader that sets aside
+  malformed prior events
+  ([shlomoa/django-angular3#158](https://github.com/shlomoa/django-angular3/issues/158)).
 - A real `build_app --force start-from-scratch` on a clean checkout: it creates the
   workspace and installs `angular-django2` before deriving the steps, records those calls
   as `bootstrap` in the evidence, and the workspace foundation step no longer repeats
