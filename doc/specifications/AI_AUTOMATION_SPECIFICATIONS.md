@@ -62,6 +62,27 @@ The recorder excludes secrets, credentials, request headers, and
 provider-native payloads. A provider adapter returns its normalized result to
 `build_app`; it does not write directly to the authoritative evidence stream.
 
+#### Redaction policy
+
+The recorder is the only component that applies the policy, at the write
+boundary, so no caller redacts on its own and the rules are defined once.
+
+- **Redacted:** a record field whose lower-cased name is, or ends with,
+  `authorization`, `cookie`, `set-cookie`, `password`, `secret`, `token`,
+  `api-key` or `credential(s)`, and any `headers` or `request_headers`
+  mapping, keeps its key and its value is replaced by the constant
+  `[REDACTED]`. String values that contain a `Bearer ` or `Basic ` credential
+  are redacted the same way.
+- **Rejected:** a record that carries a provider-native payload (a field named
+  `provider_payload`, `raw_response` or `native`) is not written. The recorder
+  returns the structured direct-execution failure of the evidence-rejected
+  category, because such a payload cannot be redacted field by field.
+- Redaction is deterministic: it depends only on field names and the value
+  patterns above, so identical inputs give identical bytes (AIR-NFR-1).
+
+Command output captured from Tool and wrapper calls is a record field like any
+other and is subject to the same policy.
+
 ### 3.2. Hook artifacts
 
 Hook implementations use these durable artifact locations:
