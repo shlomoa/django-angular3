@@ -93,6 +93,14 @@ def build_parser() -> argparse.ArgumentParser:
     ng_gen_app.add_argument(
         "--app-name", default=None, help="Optional Angular application name."
     )
+    ng_gen_app.add_argument(
+        "--auth-guard-path",
+        default=None,
+        help=(
+            "Workspace-relative module of the site's route guard "
+            "(default: angular.authGuardPath of the project configuration)."
+        ),
+    )
     _add_openui_document_arguments(ng_gen_app)
     ng_gen_app.add_argument(
         "--dry-run",
@@ -393,6 +401,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             plan_options["document"] = args.document
         if args.command == "ng_gen_app":
             plan_options["app_name"] = args.app_name
+            plan_options["auth_guard_path"] = args.auth_guard_path
             plan_options["document"] = args.document
             plan_options["node_id"] = args.node_id
         if args.command == "ng_add":

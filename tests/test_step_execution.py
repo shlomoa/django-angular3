@@ -545,6 +545,33 @@ class DryRunTests(unittest.TestCase):
         self.assertIn("ngdj page compiles DashboardPage dashboardPage", page["reason"])
         self.assertEqual(report["dryRun"], True)
 
+    def _configure_guard(self) -> None:
+        path = self.project.config.project_config.config_path
+        document = json.loads(path.read_text(encoding="utf-8"))
+        document["angular"] = {"authGuardPath": "src/app/auth/auth.guard"}
+        path.write_text(json.dumps(document), encoding="utf-8")
+        self.project.project_config = Configuration(path).project_config
+
+    def test_the_dry_run_shows_the_auth_guard_path_of_the_configuration(self) -> None:
+        self._configure_guard()
+
+        report = json.loads(
+            self.project.run_build(self.project.change_set(), dry_run=True)
+        )
+
+        scaffold = next(s for s in report["steps"] if s["command"] == "ng_gen_app")
+        self.assertEqual(
+            scaffold["parameters"]["auth_guard_path"], "src/app/auth/auth.guard"
+        )
+
+    def test_a_dry_run_without_the_key_has_no_auth_guard_path(self) -> None:
+        report = json.loads(
+            self.project.run_build(self.project.change_set(), dry_run=True)
+        )
+
+        scaffold = next(s for s in report["steps"] if s["command"] == "ng_gen_app")
+        self.assertNotIn("auth_guard_path", scaffold["parameters"])
+
     def test_the_evidence_pins_the_ngdj_package_and_mapping_versions(self) -> None:
         report = json.loads(
             self.project.run_build(self.project.change_set(), dry_run=True)

@@ -24,6 +24,9 @@ class ProjectConfig:
     openapi_schema: Path
     openui_specification: Path
     angular_workspace: Path
+    #: ``angular.authGuardPath``: the workspace-relative module of the site's route
+    #: guard, passed to ``material-app`` as ``--auth-guard-path``; ``None`` when unset.
+    auth_guard_path: str | None = None
 
 
 def project_config_path() -> str:
@@ -78,7 +81,9 @@ def load_project_config(path: str | Path | None = None) -> ProjectConfig:
 def _load_project_configuration(
     document: dict[str, Any], config_path: Path
 ) -> ProjectConfig:
-    _reject_unknown_keys(document, {"project", "artifacts"}, "Project configuration")
+    _reject_unknown_keys(
+        document, {"project", "artifacts", "angular"}, "Project configuration"
+    )
     project: dict[str, Any] = _require_mapping(document, "project")
     artifacts: dict[str, Any] = _require_mapping(document, "artifacts")
     _reject_unknown_keys(project, {"name"}, "project")
@@ -87,6 +92,10 @@ def _load_project_configuration(
         {"openapiSchema", "openuiSpecification", "angularWorkspace"},
         "artifacts",
     )
+    angular: dict[str, Any] = (
+        _require_mapping(document, "angular") if "angular" in document else {}
+    )
+    _reject_unknown_keys(angular, {"authGuardPath"}, "angular")
     root = config_path.parent
 
     return ProjectConfig(
@@ -102,6 +111,11 @@ def _load_project_configuration(
         angular_workspace=_resolve_path(
             root,
             _require_string(artifacts, "angularWorkspace", section="artifacts"),
+        ),
+        auth_guard_path=(
+            _require_string(angular, "authGuardPath", section="angular")
+            if "authGuardPath" in angular
+            else None
         ),
     )
 

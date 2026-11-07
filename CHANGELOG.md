@@ -10,6 +10,11 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `angular.authGuardPath` in the project configuration and `--auth-guard-path` on
+  `ng_gen_app`: the route guard module is passed to `material-app` so a first generation
+  of protected routes imports it, and `build_app --dry-run` shows it in the application
+  scaffold step
+  ([shlomoa/django-angular3#265](https://github.com/shlomoa/django-angular3/issues/265)).
 - Durable provider-independent evidence (`django_angular3/automation/evidence.py`): an
   append-only, injected `JsonLinesEvidenceRecorder` writing ordered run, Tool, Hook and
   acceptance events as stable UTF-8 JSON Lines, a no-op recorder, structured write

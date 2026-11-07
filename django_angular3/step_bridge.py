@@ -160,6 +160,7 @@ _MAPPING_PARAMETERS: Final[dict[str, str]] = {
     "skip_helpers": "skipHelpers",
     "skip_tests": "skipTests",
     "auth_scheme": "authScheme",
+    "auth_guard_path": "authGuardPath",
 }
 
 # Where a page or a complex component is generated, from the ngdj documentation of
@@ -356,6 +357,8 @@ def _step_parameters(
             parameters["auth_scheme"] = scheme
     elif wrapper == "ng_gen_app":
         parameters["app_name"] = project
+        if project_config.auth_guard_path:
+            parameters["auth_guard_path"] = project_config.auth_guard_path
     elif wrapper == "ng_data_service":
         # The resource is the OpenAPI tag of the subject (``resource_identity``). A
         # subject the document does not hold yet leaves it unresolved.
