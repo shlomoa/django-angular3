@@ -41,6 +41,11 @@ from .execution import (
     HookObservation,
     normalize_failure,
 )
+from .migrations import (
+    migration_modules,
+    migrations_fingerprint,
+    read_record,
+)
 from .tools import invoke_tool
 
 HOOK_LOG: Final = "hook-log.jsonl"
@@ -63,10 +68,6 @@ PRE_CONSTRUCTION: Final = "pre-construction"
 MIGRATION_TRIGGERED: Final = "migration-triggered"
 POST_GENERATION: Final = "post-generation"
 SESSION_STOP: Final = "session-stop"
-
-_IGNORED_DIRECTORIES: Final = frozenset(
-    {"node_modules", ".git", ".venv", "venv", "build", "dist", "__pycache__"}
-)
 
 Clock = Callable[[], str]
 
@@ -278,14 +279,9 @@ def _project_root(context: ExecutionContext) -> Path:
 def _migration_files(root: Path) -> dict[str, tuple[int, int]]:
     """Size and mtime of every migration module below ``root``."""
     files: dict[str, tuple[int, int]] = {}
-    for path in sorted(root.rglob("migrations/*.py")):
-        relative = path.relative_to(root)
-        if path.name == "__init__.py" or any(
-            part in _IGNORED_DIRECTORIES for part in relative.parts
-        ):
-            continue
+    for path in migration_modules(root):
         stat = path.stat()
-        files[relative.as_posix()] = (stat.st_size, stat.st_mtime_ns)
+        files[path.relative_to(root).as_posix()] = (stat.st_size, stat.st_mtime_ns)
     return files
 
 
@@ -313,14 +309,15 @@ def pre_construction_hook(
                 reason="missing",
                 schema_path=str(schema),
             )
-        migrations = _migration_files(_project_root(context))
-        newest = max((m for _, m in migrations.values()), default=0)
-        if schema.stat().st_mtime_ns < newest:
+        recorded = read_record(schema)
+        if recorded is not None and recorded != migrations_fingerprint(
+            _project_root(context)
+        ):
             raise _fail(
                 PRE_CONSTRUCTION,
                 context,
                 stderr,
-                f"the schema {schema} is older than the newest migration",
+                f"the schema {schema} was exported against other migrations",
                 reason="stale",
                 schema_path=str(schema),
             )
@@ -399,15 +396,26 @@ def migration_triggered_hook(
 
 
 def post_generation_hook(
-    clock: Clock = utc_timestamp, stderr: TextIO | None = None
+    clock: Clock = utc_timestamp,
+    stderr: TextIO | None = None,
+    client_check: str = "tsc",
 ) -> Callable[[ExecutionContext, HookObservation], None]:
-    """Check the structure a generation Tool left and log the result; never repairs."""
+    """Check the structure a generation Tool left and log the result; never repairs.
+
+    ``client_check`` selects the check after ``angular_api_client_generate``: ``tsc``
+    (the contract: ``tsc --noEmit`` in the workspace) or ``structure`` (the generated
+    client files exist). ``build_app`` uses ``structure``: in the middle of a build the
+    application cannot compile yet, and compilation is checked once by the terminal
+    validation (``ng_build``).
+    """
+    if client_check not in {"tsc", "structure"}:
+        raise ValueError(f"unknown client_check {client_check!r}")
 
     def run(context: ExecutionContext, observation: HookObservation) -> None:
         tool = observation.tool or ""
         output = observation.result.output if observation.result else {}
         generated = list(output.get("generated_files", ()))
-        passed, details = _structural_check(tool, context, output)
+        passed, details = _structural_check(tool, context, output, client_check)
         _append_line(
             context.output_dir / VERIFICATION_LOG,
             {
@@ -431,11 +439,31 @@ def post_generation_hook(
     return run
 
 
+def _client_structure(workspace: Path) -> tuple[bool, str]:
+    """The generated client exists: services below the output of ``ng-openapi-gen``."""
+    try:
+        generated = json.loads(
+            (workspace / "ng-openapi-gen.json").read_text(encoding="utf-8")
+        )
+        output = workspace / str(generated["output"])
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return False, f"the ng-openapi-gen configuration cannot be read: {exc}"
+    services = sorted(output.rglob("*.service.ts")) if output.is_dir() else []
+    if not services:
+        return False, f"no generated client service below {output}"
+    return True, f"{len(services)} generated client service file(s) below {output}"
+
+
 def _structural_check(
-    tool: str, context: ExecutionContext, output: Mapping[str, Any]
+    tool: str,
+    context: ExecutionContext,
+    output: Mapping[str, Any],
+    client_check: str = "tsc",
 ) -> tuple[bool, str]:
     config = context.project_config
     workspace: Path = config.angular_workspace
+    if tool == "angular_api_client_generate" and client_check == "structure":
+        return _client_structure(workspace)
     if tool == "angular_api_client_generate":
         settings = context.settings
         if settings is None:
@@ -572,9 +600,16 @@ def _schema_version() -> str | None:
 
 
 def default_registry(
-    clock: Clock = utc_timestamp, stderr: TextIO | None = None
+    clock: Clock = utc_timestamp,
+    stderr: TextIO | None = None,
+    client_check: str = "structure",
 ) -> HookRegistry:
-    """The four catalogued Hooks, registered under their canonical names."""
+    """The four catalogued Hooks, registered under their canonical names.
+
+    ``client_check`` is the ``post-generation`` check after the client generation (see
+    ``post_generation_hook``); the default is the structure check that fits the middle
+    of a build.
+    """
     registry = HookRegistry()
     registry.register(
         HookRegistration(
@@ -596,7 +631,7 @@ def default_registry(
         HookRegistration(
             POST_GENERATION,
             HookFamily.POST_TOOL,
-            post_generation_hook(clock, stderr),
+            post_generation_hook(clock, stderr, client_check),
             GENERATION_TOOLS,
         )
     )

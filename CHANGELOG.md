@@ -15,7 +15,10 @@ package versions. Releases before this file are described on the
   (`pre-construction`, `migration-triggered`, `post-generation`, `session-stop`) with their
   artifacts (`hook-log.jsonl`, `verification.log`, `session-log.json`, `history/`), the
   normalization of provider-shaped lifecycle events and of `makemigrations` commands by
-  tokens, idempotent duplicate observations, and the Hook-failure exit code `3`
+  tokens, idempotent duplicate observations, and the Hook-failure exit code `3`; the
+  pre-construction Hook judges a schema stale by a recorded migrations fingerprint (written
+  on export), not by file times, so a checkout or copy cannot block a freshly installed
+  schema; the post-generation Hook checks the client structure only (`tsc` is opt-in)
   ([shlomoa/django-angular3#163](https://github.com/shlomoa/django-angular3/issues/163)).
 - The Django-served end-to-end stage no longer races: the customers host applies only the
   response of the latest request, and the write spec waits for the list reload before it

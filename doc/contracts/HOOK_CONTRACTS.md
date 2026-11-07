@@ -105,8 +105,8 @@ lifecycle** fires when the agent session ends.
 **Name**: `pre-construction`
 
 **Purpose**: Guarantee that the OpenAPI schema artifact exists, is valid
-OAS 3.1, and is at least as fresh as the latest Django migration before any
-Angular generation tool is allowed to run.
+OAS 3.1, and was not exported against other Django migrations than the current
+ones before any Angular generation tool is allowed to run.
 
 **Trigger event**: `pre-tool` scoped to the Angular generation tools
 `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`
@@ -117,15 +117,19 @@ command.
 **Deterministic action**:
 
 1. Read `artifacts.openapiSchema` from the discovered project configuration.
-2. Assert the schema file exists and its modification timestamp is greater
-   than or equal to the newest migration file under the configured Django
-   apps' `migrations/` directories.
+2. Assert the schema file exists and, when the migrations fingerprint recorded
+   beside it by `openapi_schema_export` (`<schema stem>.migrations.json`) differs
+   from the fingerprint of the migration modules under the project (path and content
+   of every `migrations/*.py`), fail as stale. File times are not compared, because a
+   checkout or a copy orders them at random; a schema with no recorded fingerprint
+   (for example a committed schema that was never exported here) cannot be judged
+   and is not blocked.
 3. Invoke the `validate_openapi_schema` tool contract with the schema path.
 4. If `valid: true`, allow the wrapped tool to run (exit 0).
 
 **Failure behavior**:
 
-- If the schema file is missing, stale, or `validate_openapi_schema` returns
+- If the schema file is missing, stale (exported against other migrations), or `validate_openapi_schema` returns
   `valid: false`, write a structured error
   `{ hook: "pre-construction", category, message, schema_path, ... }` to
   stderr **and** to `build/hook-log.jsonl`, and block the wrapped tool.
@@ -205,7 +209,11 @@ generation tool contract.
    array returned by `angular_api_client_generate`) from the run's artifact location.
 2. Run a lightweight structural check appropriate to the wrapped tool:
    - For `angular_api_client_generate`: `tsc --noEmit` in the generated app workspace
-     (`artifacts.angularWorkspace`).
+     (`artifacts.angularWorkspace`) when the hook runs on its own. Inside a `build_app`
+     run the check is structural (the generated client services exist below the
+     `ng-openapi-gen` output), because the application cannot compile before its pages,
+     forms and site sources are in place; compilation is checked once by terminal
+     validation (`ng_build`).
    - For `angular_workspace_scaffold` / `angular_app_scaffold`: assert the expected
      workspace/app directories and files exist on disk.
 3. Append a verification entry

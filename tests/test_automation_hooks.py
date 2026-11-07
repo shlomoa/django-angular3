@@ -39,6 +39,11 @@ from django_angular3.automation.hooks import (
     observation_from_provider,
     snapshot_migrations,
 )
+from django_angular3.automation.migrations import (
+    migrations_fingerprint,
+    read_record,
+    write_record,
+)
 from tests.test_step_execution import _Project
 from tests.tool_config import use_tool_configuration_template
 
@@ -132,15 +137,49 @@ class PreConstructionTests(HookTestCase):
         self.assertEqual(json.loads(self.stderr.getvalue().splitlines()[0]), record)
         self.assertEqual(result.exit_code, EXIT_HOOK_FAILURE)
 
-    def test_a_schema_older_than_a_migration_is_stale(self) -> None:
+    def test_a_schema_exported_against_other_migrations_is_stale(self) -> None:
+        self.add_migration()
+        write_record(self.schema, self.root)
+        self.add_migration("0002_more.py")
+
+        result, ran = self.run_scaffold()
+
+        self.assertEqual(ran, [])
+        self.assertEqual(self.log()[0]["reason"], "stale")
+        self.assertEqual(result.exit_code, EXIT_HOOK_FAILURE)
+
+    def test_a_schema_with_a_matching_record_passes_whatever_the_file_times(
+        self,
+    ) -> None:
+        migration = self.add_migration()
+        write_record(self.schema, self.root)
+        # A checkout or a copy orders the file times at random.
+        os.utime(self.schema, ns=(1_000_000_000, 1_000_000_000))
+        os.utime(migration, ns=(9_000_000_000, 9_000_000_000))
+
+        result, ran = self.run_scaffold()
+
+        self.assertEqual(ran, [1])
+        self.assertTrue(result.steps[0].hooks[0].ok, result.steps[0].hooks[0].failure)
+
+    def test_a_schema_without_a_record_is_never_blocked_as_stale(self) -> None:
         migration = self.add_migration()
         os.utime(self.schema, ns=(1_000_000_000, 1_000_000_000))
         os.utime(migration, ns=(9_000_000_000, 9_000_000_000))
 
         result, ran = self.run_scaffold()
 
-        self.assertEqual(ran, [])
-        self.assertEqual(self.log()[0]["reason"], "stale")
+        self.assertEqual(ran, [1])
+        self.assertTrue(result.steps[0].hooks[0].ok, result.steps[0].hooks[0].failure)
+
+    def test_a_changed_migration_content_changes_the_fingerprint(self) -> None:
+        migration = self.add_migration()
+        before = migrations_fingerprint(self.root)
+
+        migration.write_text("# changed\n", encoding="utf-8")
+
+        self.assertNotEqual(migrations_fingerprint(self.root), before)
+        self.assertEqual(read_record(self.schema), None)
 
     def test_an_invalid_schema_blocks_and_the_hook_never_repairs_it(self) -> None:
         self.schema.write_text(json.dumps({"openapi": "3.1.0"}), encoding="utf-8")
@@ -285,6 +324,9 @@ class PostGenerationTests(HookTestCase):
             calls.append(list(argv))
             return command_execution.CommandResult(0, "", "")
 
+        self.registry = default_registry(
+            lambda: "20260101T000000Z", self.stderr, client_check="tsc"
+        )
         tool = ToolCall(
             "angular_api_client_generate", lambda c, i: {"generated_files": []}
         )
@@ -300,6 +342,9 @@ class PostGenerationTests(HookTestCase):
         def run(argv, cwd=None, check=True, **_):
             return command_execution.CommandResult(2, "error TS2304", "")
 
+        self.registry = default_registry(
+            lambda: "20260101T000000Z", self.stderr, client_check="tsc"
+        )
         tool = ToolCall(
             "angular_api_client_generate", lambda c, i: {"generated_files": []}
         )
@@ -310,6 +355,47 @@ class PostGenerationTests(HookTestCase):
 
         self.assertFalse(result.ok)
         self.assertIn("TS2304", self.log(VERIFICATION_LOG)[0]["details"])
+
+
+class ClientStructureTests(HookTestCase):
+    def generate(self, create: bool):
+        workspace = self.project.workspace
+        output = "projects/shop/src/app/api"
+
+        def tool(context, inputs):
+            (workspace / "ng-openapi-gen.json").write_text(
+                json.dumps({"output": output}), encoding="utf-8"
+            )
+            if create:
+                services = workspace / output / "services"
+                services.mkdir(parents=True, exist_ok=True)
+                (services / "customers.service.ts").write_text("x", encoding="utf-8")
+            return {}
+
+        def no_tsc(argv, cwd=None, check=True, **_):
+            raise AssertionError("tsc must not run in the middle of a build")
+
+        with patch(
+            "django_angular3.automation.hooks.command_execution.run_command", no_tsc
+        ):
+            return self.executor().run([ToolCall("angular_api_client_generate", tool)])
+
+    def test_the_default_check_after_the_client_is_structural_not_tsc(self) -> None:
+        result = self.generate(create=True)
+
+        self.assertTrue(result.ok, result.failure)
+        (entry,) = self.log(VERIFICATION_LOG)
+        self.assertIs(entry["pass"], True)
+        self.assertIn("1 generated client service", entry["details"])
+
+    def test_a_client_without_services_halts(self) -> None:
+        result = self.generate(create=False)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.exit_code, EXIT_HOOK_FAILURE)
+        self.assertIn(
+            "no generated client service", self.log(VERIFICATION_LOG)[0]["details"]
+        )
 
 
 class SessionStopTests(HookTestCase):
