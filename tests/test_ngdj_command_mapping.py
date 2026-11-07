@@ -19,9 +19,12 @@ from django_angular3.changes import ChangeOperation
 from django_angular3.ngdj_command_mapping import (
     CommandMapping,
     CommandMappingError,
+    CommandMappingNotInstalledError,
     NodeCommand,
     installed_openui_schema_version,
     load_command_mapping,
+    local_package_location,
+    package_installed,
     parse_package_spec,
 )
 from tests.ngdj_fixture import (
@@ -250,6 +253,22 @@ class LoadCommandMappingTests(CommandMappingTestCase):
             CommandMappingError, r"node_modules/@example/other.*command-mapping"
         ):
             self.load(f"../{source.name}")
+
+    def test_a_dotdot_path_below_a_missing_workspace_is_normalized(self) -> None:
+        source = self._local_package()
+        missing = self.workspace.parent / "not-yet" / "deeper"
+        spec = f"../../{self.workspace.name}-ngdj-source"
+
+        self.assertFalse(missing.exists())
+        self.assertEqual(local_package_location(missing, spec), source)
+        with self.assertRaises(CommandMappingNotInstalledError):
+            load_command_mapping(missing, spec)
+
+    def test_package_installed_follows_the_node_modules_of_the_workspace(self) -> None:
+        self.assertTrue(package_installed(self.workspace, PACKAGE_SPEC))
+        shutil.rmtree(self.package_dir)
+        self.assertFalse(package_installed(self.workspace, PACKAGE_SPEC))
+        self.assertFalse(package_installed(self.workspace / "missing", "../nope"))
 
     def test_a_missing_package_names_the_path_and_the_package(self) -> None:
         shutil.rmtree(self.package_dir)

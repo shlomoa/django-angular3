@@ -10,6 +10,7 @@ exposes read-only accessors. It keeps no copy of the inventory.
 from __future__ import annotations
 
 import json
+import os
 import tarfile
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -30,6 +31,10 @@ _COMMAND_SECTIONS: Final = ("ui", "api", "tooling")
 
 class CommandMappingError(ValueError):
     """Raised when the ngdj command mapping is missing, invalid or unexpected."""
+
+
+class CommandMappingNotInstalledError(CommandMappingError):
+    """The ngdj package is not installed in the workspace yet (no mapping to read)."""
 
 
 @dataclass(frozen=True)
@@ -124,12 +129,14 @@ def load_command_mapping(
     """
     name, pinned = parse_package_spec(package_spec)
     if is_package_path(package_spec):
-        name = _package_name_at(workspace / package_path(package_spec), package_spec)
+        name = _package_name_at(
+            local_package_location(workspace, package_spec), package_spec
+        )
     package_dir = workspace / "node_modules" / name
     schematics_dir = package_dir / "schematics"
     mapping_path = schematics_dir / MAPPING_FILE_NAME
     if not mapping_path.is_file():
-        raise CommandMappingError(
+        raise CommandMappingNotInstalledError(
             f"ngdj command mapping not found: {mapping_path}. "
             f"Install {package_spec} in the Angular workspace (ng_add)."
         )
@@ -169,6 +176,30 @@ def load_command_mapping(
             f"openui-spec is {expected}."
         )
     return CommandMapping(document)
+
+
+def local_package_location(workspace: Path, spec: str) -> Path:
+    """Where a local ``tool.ngAddPackage`` path points, as ``ng add`` sees it.
+
+    The path is relative to the Angular workspace. Before the workspace exists,
+    the operating system cannot follow a ``..`` below it, so the path is then
+    normalized lexically; once it exists the real location is resolved.
+    """
+    location = workspace / package_path(spec)
+    if workspace.is_dir():
+        return location.resolve()
+    return Path(os.path.normpath(location))
+
+
+def package_installed(workspace: Path, spec: str) -> bool:
+    """Whether the package of ``tool.ngAddPackage`` is installed in the workspace."""
+    try:
+        name, _ = parse_package_spec(spec)
+        if is_package_path(spec):
+            name = _package_name_at(local_package_location(workspace, spec), spec)
+    except CommandMappingError:
+        return False
+    return (workspace / "node_modules" / name / "package.json").is_file()
 
 
 def _package_name_at(directory: Path, spec: str) -> str:

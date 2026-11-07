@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Final
 
 from . import command_execution
-from .angular import AngularInvocation
+from .angular import AngularInvocation, build_ng_workspace_bootstrap_invocations
 from .command_translation import AppBuildStep
 from .config import ProjectConfig
 from .ngdj_command_mapping import CommandMapping
@@ -71,6 +71,8 @@ class ExecutionEvidence:
     openui_spec_version: str | None
     dry_run: bool
     records: list[StepRecord]
+    bootstrap: list[InvocationRecord] = field(default_factory=list)
+    bootstrap_error: str | None = None
 
     @property
     def steps(self) -> tuple[AppBuildStep, ...]:
@@ -81,7 +83,7 @@ class ExecutionEvidence:
         return next((r for r in self.records if r.status == STATUS_FAILED), None)
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        result: dict[str, object] = {
             "projectConfig": str(self.project_config),
             "dryRun": self.dry_run,
             "ngdj": {
@@ -89,8 +91,14 @@ class ExecutionEvidence:
                 "mappingVersion": self.mapping_version,
                 "openuiSpecVersion": self.openui_spec_version,
             },
-            "steps": [step_to_dict(r.step, r) for r in self.records],
         }
+        if self.bootstrap or self.bootstrap_error:
+            result["bootstrap"] = {
+                "invocations": [i.to_dict() for i in self.bootstrap],
+                "error": self.bootstrap_error,
+            }
+        result["steps"] = [step_to_dict(r.step, r) for r in self.records]
+        return result
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), indent=2)
@@ -139,6 +147,28 @@ def new_evidence(
         dry_run=dry_run,
         records=[StepRecord(step) for step in steps],
     )
+
+
+def bootstrap_workspace(
+    project_config: ProjectConfig, settings: DjangoAngularSettings
+) -> tuple[list[InvocationRecord], str | None]:
+    """Create the workspace and install ngdj when the first build needs the mapping.
+
+    Deriving the steps of OpenUI and OpenAPI changes reads the command mapping of the
+    installed ngdj package, which only exists once the workspace is created and the
+    package added. This first phase runs just those calls (``ng new``, the package
+    manager configuration and ``ng add``, minus what is already done), halting at the
+    first failure. Returns the recorded calls and the failure message, if any.
+    """
+    records: list[InvocationRecord] = []
+    for invocation in build_ng_workspace_bootstrap_invocations(
+        project_config, settings
+    ):
+        outcome = _run_invocation(invocation)
+        records.append(outcome)
+        if outcome.returncode != 0:
+            return records, _failure_message(None, outcome)
+    return records, None
 
 
 def levels(records: list[StepRecord]) -> Iterator[list[StepRecord]]:
@@ -219,7 +249,7 @@ def _run_invocation(invocation: AngularInvocation) -> InvocationRecord:
     )
 
 
-def _failure_message(step: AppBuildStep, outcome: InvocationRecord) -> str:
+def _failure_message(step: AppBuildStep | None, outcome: InvocationRecord) -> str:
     code = (
         "did not start"
         if outcome.returncode is None

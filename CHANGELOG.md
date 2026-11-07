@@ -10,6 +10,12 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- A real `build_app --force start-from-scratch` on a clean checkout: it creates the
+  workspace and installs `angular-django2` before deriving the steps, records those calls
+  as `bootstrap` in the evidence, and the workspace foundation step no longer repeats
+  `ng new` or `ng add`; a local `tool.ngAddPackage` path with `..` below a missing
+  directory is normalized
+  ([shlomoa/django-angular3#263](https://github.com/shlomoa/django-angular3/issues/263)).
 - Provider-neutral automation contracts (`django_angular3/automation/contracts.py`):
   immutable, deterministically serialized failure, Tool result, Hook outcome and
   adapter result models, a non-mutating adapter protocol, and the evidence redaction

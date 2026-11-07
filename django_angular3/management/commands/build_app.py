@@ -31,6 +31,7 @@ from django_angular3.external_comparisons import (
 from django_angular3.ngdj_command_mapping import (
     CommandMapping,
     CommandMappingError,
+    CommandMappingNotInstalledError,
     load_command_mapping,
 )
 from django_angular3.openapi_changes import (
@@ -46,6 +47,8 @@ from django_angular3.step_bridge import StepBridgeError, resolve_steps
 from django_angular3.step_execution import (
     EVIDENCE_FILE_NAME,
     ExecutionEvidence,
+    InvocationRecord,
+    bootstrap_workspace,
     execute_steps,
     new_evidence,
     unresolved_steps,
@@ -291,13 +294,22 @@ def previous_configuration(
 
 
 def load_ngdj_mapping(
-    change_set: ChangeSet, project_config: ProjectConfig
+    change_set: ChangeSet,
+    project_config: ProjectConfig,
+    *,
+    dry_run: bool = False,
+    bootstrap: list[InvocationRecord] | None = None,
 ) -> CommandMapping | None:
     """Load the ngdj command mapping when a Change needs it.
 
     OpenUI and OpenAPI Changes are translated with the mapping that the Angular
     workspace's installed ``angular-django2`` package ships. Other Changes need none,
     so deriving their steps does not require the package to be installed.
+
+    On a first build the package is not installed yet: a real run then creates the
+    workspace and installs the package first (``bootstrap_workspace``, appended to
+    ``bootstrap``) and reads the mapping afterwards. A dry run changes nothing, so
+    it reports that the package is missing instead.
     """
     needs_mapping = any(
         change_set.domains[domain].changes
@@ -305,10 +317,26 @@ def load_ngdj_mapping(
     )
     if not needs_mapping:
         return None
+    settings = load_angular_settings()
     try:
-        return load_command_mapping(
-            project_config.angular_workspace, load_angular_settings().ng_add_package
-        )
+        try:
+            return load_command_mapping(
+                project_config.angular_workspace, settings.ng_add_package
+            )
+        except CommandMappingNotInstalledError:
+            if dry_run:
+                raise
+            records, error = bootstrap_workspace(project_config, settings)
+            if bootstrap is not None:
+                bootstrap.extend(records)
+            if error is not None:
+                raise CommandError(
+                    "Cannot install the ngdj package in the Angular workspace "
+                    f"before deriving the steps: {error}"
+                ) from None
+            return load_command_mapping(
+                project_config.angular_workspace, settings.ng_add_package
+            )
     except CommandMappingError as exc:
         raise CommandError(
             f"Cannot derive the steps for the OpenUI and OpenAPI changes: {exc}"
@@ -348,6 +376,7 @@ class ChangeExecution:
         dry_run: bool,
         mapping: CommandMapping | None = None,
         settings: DjangoAngularSettings | None = None,
+        bootstrap: list[InvocationRecord] | None = None,
     ) -> ExecutionEvidence:
         """
         Derive the steps of the changes and, unless ``dry_run``, run them.
@@ -375,6 +404,7 @@ class ChangeExecution:
         evidence = new_evidence(
             project_config, settings, mapping, steps, dry_run=dry_run
         )
+        evidence.bootstrap = list(bootstrap or [])
         if dry_run:
             return evidence
 
@@ -478,7 +508,13 @@ class Command(BaseCommand):
                     "The OpenUI bindings do not match the OpenAPI contract: "
                     + "; ".join(consistency_errors)
                 )
-            mapping = load_ngdj_mapping(change_set, current_config.project_config)
+            bootstrap: list[InvocationRecord] = []
+            mapping = load_ngdj_mapping(
+                change_set,
+                current_config.project_config,
+                dry_run=options["dry_run"],
+                bootstrap=bootstrap,
+            )
             executor = ChangeExecution()
             evidence = executor.execute(
                 change_set,
@@ -486,6 +522,7 @@ class Command(BaseCommand):
                 options["output"],
                 options["dry_run"],
                 mapping=mapping,
+                bootstrap=bootstrap,
             )
             if options["dry_run"]:
                 self.stdout.write(evidence.to_json())

@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import django
@@ -31,6 +32,7 @@ from django_angular3.management.commands.build_app import (
 )
 from django_angular3.ngdj_command_mapping import CommandMapping
 from django_angular3.settings import load_angular_settings
+from django_angular3.step_execution import InvocationRecord
 from django_angular3.tools import OasdiffUnavailableError
 from tests.ngdj_fixture import fixture_package_spec
 from tests.test_command_translation import FIXTURE_MAPPING, _openui_changes
@@ -419,7 +421,141 @@ class BuildAppStepTests(unittest.TestCase):
             r"Cannot derive the steps for the OpenUI and OpenAPI changes.*Install "
             + re.escape(fixture_package_spec()),
         ):
+            load_ngdj_mapping(
+                _change_set(openui=openui),
+                self.current.project_config,
+                dry_run=True,
+            )
+
+    def test_a_dry_run_does_not_install_the_missing_package(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+
+        with (
+            patch(
+                "django_angular3.step_execution.command_execution.run_command"
+            ) as run_command,
+            self.assertRaises(CommandError),
+        ):
+            load_ngdj_mapping(
+                _change_set(openui=openui),
+                self.current.project_config,
+                dry_run=True,
+            )
+
+        run_command.assert_not_called()
+
+    def _fake_ng(self, fail_on: str | None = None):
+        """Stand-in ``run_command``: ``ng new`` makes the workspace, ``ng add`` ngdj."""
+        calls: list[tuple[str, ...]] = []
+        workspace = self.current.project_config.angular_workspace
+
+        def run(argv, cwd=None, check=True, **_):
+            calls.append(tuple(argv))
+            verb = argv[1]
+            if verb == fail_on:
+                return SimpleNamespace(returncode=1, stdout="", stderr=f"{verb} failed")
+            if verb == "new":
+                workspace.mkdir(parents=True, exist_ok=True)
+                (workspace / "angular.json").write_text("{}", encoding="utf-8")
+            elif verb == "add":
+                self.install_ngdj()
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        return calls, run
+
+    def test_a_first_build_installs_the_package_before_reading_its_mapping(
+        self,
+    ) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+        calls, run = self._fake_ng()
+        bootstrap: list = []
+
+        with patch("django_angular3.step_execution.command_execution.run_command", run):
+            mapping = load_ngdj_mapping(
+                _change_set(openui=openui),
+                self.current.project_config,
+                bootstrap=bootstrap,
+            )
+
+        assert mapping is not None
+        self.assertEqual(
+            [c[1] for c in calls], ["new", "config", "config", "config", "add"]
+        )
+        self.assertEqual(len(bootstrap), 5)
+
+    def test_the_bootstrap_skips_what_the_workspace_already_has(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+        calls, run = self._fake_ng()
+        workspace = self.current.project_config.angular_workspace
+        workspace.mkdir(parents=True)
+        (workspace / "angular.json").write_text("{}", encoding="utf-8")
+
+        with patch("django_angular3.step_execution.command_execution.run_command", run):
             load_ngdj_mapping(_change_set(openui=openui), self.current.project_config)
+
+        self.assertNotIn("new", [c[1] for c in calls])
+        self.assertIn("add", [c[1] for c in calls])
+
+    def test_an_installed_package_needs_no_bootstrap(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+        self.install_ngdj()
+
+        with patch(
+            "django_angular3.step_execution.command_execution.run_command"
+        ) as run_command:
+            load_ngdj_mapping(_change_set(openui=openui), self.current.project_config)
+
+        run_command.assert_not_called()
+
+    def test_a_failing_bootstrap_stops_before_the_steps_are_derived(self) -> None:
+        openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])
+        calls, run = self._fake_ng(fail_on="add")
+        bootstrap: list = []
+
+        with (
+            patch("django_angular3.step_execution.command_execution.run_command", run),
+            self.assertRaisesRegex(CommandError, r"add failed"),
+        ):
+            load_ngdj_mapping(
+                _change_set(openui=openui),
+                self.current.project_config,
+                bootstrap=bootstrap,
+            )
+
+        self.assertEqual(bootstrap[-1].returncode, 1)
+
+    def test_the_workspace_wrapper_is_idempotent(self) -> None:
+        from django_angular3.angular import build_ng_workspace_invocations
+
+        settings = load_angular_settings({"ng_add_package": fixture_package_spec()})
+        config = self.current.project_config
+
+        fresh = build_ng_workspace_invocations(config, settings)
+        self.assertEqual(
+            [i.argv[1] for i in fresh],
+            ["new", "config", "config", "config", "add", "generate"],
+        )
+
+        self.install_ngdj()
+        (config.angular_workspace / "angular.json").write_text("{}", encoding="utf-8")
+        again = build_ng_workspace_invocations(config, settings)
+        self.assertEqual([i.argv[1] for i in again], ["generate"])
+
+    def test_the_evidence_records_the_bootstrap(self) -> None:
+        change_set = _change_set(project_config=(_project_name_created(),))
+        bootstrap = [InvocationRecord(("ng", "new"), "/w", 0)]
+
+        evidence = ChangeExecution().execute(
+            change_set,
+            self.current.project_config,
+            str(self.root / "out"),
+            True,
+            bootstrap=bootstrap,
+        )
+
+        self.assertEqual(
+            evidence.to_dict()["bootstrap"]["invocations"][0]["argv"], ["ng", "new"]
+        )
 
     def test_the_mapping_reaches_the_translation(self) -> None:
         openui = _openui_changes([], [{"id": "home", "type": "DashboardPage"}])

@@ -10,7 +10,7 @@ from typing import Any
 
 from . import command_execution, tools
 from .config import ProjectConfig, load_project_config
-from .ngdj_command_mapping import parse_package_spec
+from .ngdj_command_mapping import package_installed, parse_package_spec
 from .settings import (
     AngularCommandError,
     DjangoAngularSettings,
@@ -819,6 +819,11 @@ def build_ng_add_invocations(
     ]
 
 
+def workspace_exists(config: ProjectConfig) -> bool:
+    """Whether the Angular workspace has been created (it has an ``angular.json``)."""
+    return (config.angular_workspace / "angular.json").is_file()
+
+
 def build_ng_workspace_invocations(
     config: ProjectConfig,
     settings: DjangoAngularSettings,
@@ -826,21 +831,42 @@ def build_ng_workspace_invocations(
     document: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
-    """Create and bootstrap an Angular workspace with angular-django2 defaults."""
-    invocations = _relabel_invocations(
-        build_ng_new_invocations(config, settings), "ng_workspace"
-    )
-    invocations.extend(
-        _relabel_invocations(
-            build_ng_config_invocations(config, settings), "ng_workspace"
-        )
-    )
-    invocations.extend(
-        _relabel_invocations(build_ng_add_invocations(config, settings), "ng_workspace")
-    )
+    """Create and bootstrap an Angular workspace with angular-django2 defaults.
+
+    Idempotent: ``ng new`` is skipped when the workspace already exists, and the
+    package configuration and ``ng add`` are skipped when ``tool.ngAddPackage`` is
+    already installed there (as after the bootstrap of a first ``build_app`` run).
+    The workspace schematic always runs.
+    """
+    invocations = build_ng_workspace_bootstrap_invocations(config, settings)
     invocations.extend(
         build_ng_workspace_schematic_invocations(config, settings, document=document)
     )
+    return invocations
+
+
+def build_ng_workspace_bootstrap_invocations(
+    config: ProjectConfig, settings: DjangoAngularSettings
+) -> list[AngularInvocation]:
+    """The calls that create the workspace and install ngdj, minus what is done."""
+    invocations: list[AngularInvocation] = []
+    if not workspace_exists(config):
+        invocations.extend(
+            _relabel_invocations(
+                build_ng_new_invocations(config, settings), "ng_workspace"
+            )
+        )
+    if not package_installed(config.angular_workspace, settings.ng_add_package):
+        invocations.extend(
+            _relabel_invocations(
+                build_ng_config_invocations(config, settings), "ng_workspace"
+            )
+        )
+        invocations.extend(
+            _relabel_invocations(
+                build_ng_add_invocations(config, settings), "ng_workspace"
+            )
+        )
     return invocations
 
 
