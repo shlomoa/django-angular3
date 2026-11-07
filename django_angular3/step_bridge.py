@@ -367,6 +367,10 @@ def _step_parameters(
         scheme = _auth_scheme_of(project_config)
         if scheme is not None:
             parameters["auth_scheme"] = scheme
+    elif wrapper == "ng_workspace_modify" and step.node_id is not None:
+        # ``workspace-setup --document`` resolves ``index.html`` in the source root of
+        # this project; without it the file is looked up at the workspace root.
+        parameters["project"] = project
     elif wrapper == "ng_gen_app":
         parameters["app_name"] = project
         if project_config.auth_guard_path:

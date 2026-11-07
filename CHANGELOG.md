@@ -14,7 +14,7 @@ package versions. Releases before this file are described on the
   own, after the application scaffold and before the pages and forms
   (`workspace-setup --document` through `ng_workspace_modify`, which with a document runs
   only that schematic), so `index.html` gets the document's `lang`, `dir` and title;
-  `--dry-run` shows the `document` parameter
+  `--dry-run` shows the `document` and `project` parameters
   ([shlomoa/django-angular3#278](https://github.com/shlomoa/django-angular3/issues/278)).
 - Deterministic Tool implementations (`django_angular3/automation/tool_catalog.py` and
   `tools.py`): the 18 Tools of `TOOL_CONTRACTS.md` with validated structured inputs,

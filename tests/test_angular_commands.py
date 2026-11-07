@@ -344,7 +344,14 @@ class AngularCliCommandTests(unittest.TestCase):
         argv = with_document[0].argv
         self.assertEqual(argv[1:3], ("generate", "angular-django2:workspace-setup"))
         self.assertIn("--document=.django-angular3/app.openui.json", argv)
+        self.assertIn(f"--project={config.project_name}", argv)
         self.assertEqual(with_document[0].command_name, "ng_workspace_modify")
+
+        other = build_ng_workspace_modify_invocations(
+            config, settings, document="d.json", project="other"
+        )[0].argv
+        self.assertIn("--project=other", other)
+        self.assertNotIn(f"--project={config.project_name}", other)
 
     def test_ng_gen_app_passes_the_auth_guard_path_only_when_given(self) -> None:
         import dataclasses

@@ -667,7 +667,10 @@ class DryRunTests(unittest.TestCase):
         self.assertEqual(foundation["parameters"], {})
         self.assertEqual(
             setup["parameters"],
-            {"document": f"{STAGED_DOCUMENT_DIRECTORY}/app.openui.json"},
+            {
+                "project": "shop",
+                "document": f"{STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
+            },
         )
 
     def test_there_is_no_workspace_setup_step_without_html_or_link_nodes(self) -> None:
@@ -707,6 +710,7 @@ class DryRunTests(unittest.TestCase):
         ]
         (setup,) = with_document
         self.assertIn(f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json", setup)
+        self.assertIn("--project=shop", setup)
         self.assertFalse([arg for arg in setup if arg.startswith("--node-id")])
         # The modify wrapper with a document runs no `ng config` and no `ng add`.
         later = calls[calls.index(setup) - 1 :]
