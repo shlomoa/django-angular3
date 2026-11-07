@@ -229,7 +229,64 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
         if key in executables:
             _require_string(executables, key, "tool.executables", errors)
     _require_string(tool, "ngAddPackage", "tool", errors)
+    spec = tool.get("ngAddPackage")
+    if isinstance(spec, str) and spec.strip():
+        problem = package_spec_error(spec)
+        if problem:
+            errors.append(f"tool.ngAddPackage {problem}")
     return errors
+
+
+_PACKAGE_NAME = re.compile(r"^(?:@[a-z0-9][a-z0-9._~-]*/)?[a-z0-9][a-z0-9._~-]*$")
+_PACKAGE_VERSION = re.compile(
+    r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$"
+)
+
+
+def is_package_path(spec: str) -> bool:
+    """Whether ``tool.ngAddPackage`` names a local package directory.
+
+    A path starts with ``./``, ``../`` or ``/``, or with ``file:`` followed by a path.
+    A scoped name (``@scope/name``) is never a path.
+    """
+    return spec.startswith(("./", "../", "/", "file:"))
+
+
+def package_path(spec: str) -> str:
+    """The directory of a path specification, without the ``file:`` prefix."""
+    return spec.removeprefix("file:")
+
+
+def package_spec_error(spec: str) -> str | None:
+    """Why ``spec`` is not a package specification, or ``None`` if it is.
+
+    ``tool.ngAddPackage`` is a registry specification (``name``, ``name@version``,
+    ``@scope/name`` or ``@scope/name@version`` with an exact semantic version) or a
+    local package directory or packed archive (``.tgz``, ``.tar.gz``; relative to the
+    Angular workspace, where ``ng add`` runs, or absolute; ``file:`` form allowed).
+    A version is optional: without one,
+    ``build_app`` skips the installed-version check and ``ng_add`` installs the local
+    ``angular-django2`` build, or else the latest release. A URL, a version range and a
+    dist-tag are not accepted. The command mapping is read from
+    ``node_modules/<name>``, where ``<name>`` is the name in the
+    ``package.json`` of the directory or archive for a path.
+    """
+    if is_package_path(spec):
+        path = package_path(spec)
+        if not path or path.startswith("//") or "://" in path:
+            return f"must not be a URL, not {spec!r}."
+        return None
+    at = spec.rfind("@")
+    name, version = (spec, None) if at <= 0 else (spec[:at], spec[at + 1 :])
+    if not _PACKAGE_NAME.fullmatch(name):
+        return (
+            "must be a registry package specification (name, name@version, "
+            "@scope/name or @scope/name@version) or a local package directory, "
+            f"not {spec!r}."
+        )
+    if version is not None and not _PACKAGE_VERSION.fullmatch(version):
+        return f"has the version {version!r}; pin an exact version such as 1.2.3."
+    return None
 
 
 def _require_workspace_path(

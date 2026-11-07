@@ -1768,6 +1768,16 @@ Remove an Angular Material application completely from the workspace, including 
 - Workspace remains valid and functional
 - Confirmation message listing what was deleted
 
+#### OpenUI document options
+
+When the work comes from an OpenUI element, `build_app` runs the ngdj command with
+`--document <path>` (the OpenUI document, relative to the Angular workspace; a document
+outside the workspace is staged in `.django-angular3/` first) and `--node-id <id>` (the
+element to compile) instead of explicit options, and ngdj reads the element's attributes
+and children from the document. Pass explicit options only for a manual run with no
+OpenUI element. The `--document` / `--node-id` pair and explicit options are not mixed:
+the document is the single source of the element's description.
+
 #### Context Files
 
 See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
@@ -2047,6 +2057,14 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 **Output**:
 - Removed output directory
 - Confirmation message
+
+#### Authentication scheme option
+
+The `openapi-setup` step runs with `--auth-scheme <basic|bearer>`. `build_app` reads it
+from the OpenAPI contract: it is `basic` or `bearer` when `components.securitySchemes`
+declares exactly one HTTP security scheme of that kind, and is omitted (the schematic's
+own default applies) when the contract declares none or several. Pass it explicitly only
+for a manual run, and only with one of those two values.
 
 #### Context Files
 
@@ -4420,6 +4438,16 @@ selector, the import, the `imports` array entry, or the `on<Output>()` handler
 stubs. Rebuild after embedding (`ng build <project.name>`) to verify the
 composition compiles.
 
+#### OpenUI document options
+
+When the work comes from an OpenUI element, `build_app` runs the ngdj command with
+`--document <path>` (the OpenUI document, relative to the Angular workspace; a document
+outside the workspace is staged in `.django-angular3/` first) and `--node-id <id>` (the
+element to compile) instead of explicit options, and ngdj reads the element's attributes
+and children from the document. Pass explicit options only for a manual run with no
+OpenUI element. The `--document` / `--node-id` pair and explicit options are not mixed:
+the document is the single source of the element's description.
+
 #### Context Files
 
 See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
@@ -4864,6 +4892,16 @@ Command-level inputs:
 - Theme mixin usage removed from `styles.scss`
 - CDK providers and imports cleaned up
 - Remaining manual cleanup locations reported if unrelated templates still reference the deleted selectors
+
+#### OpenUI document options
+
+When the work comes from an OpenUI element, `build_app` runs the ngdj command with
+`--document <path>` (the OpenUI document, relative to the Angular workspace; a document
+outside the workspace is staged in `.django-angular3/` first) and `--node-id <id>` (the
+element to compile) instead of explicit options, and ngdj reads the element's attributes
+and children from the document. Pass explicit options only for a manual run with no
+OpenUI element. The `--document` / `--node-id` pair and explicit options are not mixed:
+the document is the single source of the element's description.
 
 #### Context Files
 
@@ -5397,6 +5435,16 @@ Command-level inputs:
 - Confirmation of deletion
 - List of references that require manual cleanup (routes, parent component usage)
 
+#### OpenUI document options
+
+When the work comes from an OpenUI element, `build_app` runs the ngdj command with
+`--document <path>` (the OpenUI document, relative to the Angular workspace; a document
+outside the workspace is staged in `.django-angular3/` first) and `--node-id <id>` (the
+element to compile) instead of explicit options, and ngdj reads the element's attributes
+and children from the document. Pass explicit options only for a manual run with no
+OpenUI element. The `--document` / `--node-id` pair and explicit options are not mixed:
+the document is the single source of the element's description.
+
 #### Context Files
 
 See [angular-conventions.md](../../skill_creation/shared/angular-conventions.md)
@@ -5732,6 +5780,16 @@ Remove a page and clean up routing and navigation references.
 - Removed page component
 - Removed route registration
 - Removed sidenav navigation item when applicable
+
+#### OpenUI document options
+
+When the work comes from an OpenUI element, `build_app` runs the ngdj command with
+`--document <path>` (the OpenUI document, relative to the Angular workspace; a document
+outside the workspace is staged in `.django-angular3/` first) and `--node-id <id>` (the
+element to compile) instead of explicit options, and ngdj reads the element's attributes
+and children from the document. Pass explicit options only for a manual run with no
+OpenUI element. The `--document` / `--node-id` pair and explicit options are not mixed:
+the document is the single source of the element's description.
 
 #### Context Files
 

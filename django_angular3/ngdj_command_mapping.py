@@ -10,6 +10,7 @@ exposes read-only accessors. It keeps no copy of the inventory.
 from __future__ import annotations
 
 import json
+import tarfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from importlib import metadata
@@ -18,6 +19,8 @@ from typing import Any, Final, cast
 
 import openui_spec
 from jsonschema import Draft202012Validator
+
+from .settings import is_package_path, package_path
 
 SUPPORTED_MAPPING_VERSION: Final = 1
 MAPPING_FILE_NAME: Final = "command-mapping.json"
@@ -53,7 +56,13 @@ class NodeCommand:
 
 
 def parse_package_spec(spec: str) -> tuple[str, str | None]:
-    """Split ``name``, ``name@version``, ``@scope/name`` or ``@scope/name@version``."""
+    """Split ``name``, ``name@version``, ``@scope/name`` or ``@scope/name@version``.
+
+    A local package path is returned whole and unpinned; its package name is read from
+    its ``package.json`` by ``load_command_mapping``.
+    """
+    if is_package_path(spec):
+        return spec, None
     at = spec.rfind("@")
     if at <= 0:
         return spec, None
@@ -114,6 +123,8 @@ def load_command_mapping(
     installed ``openui-spec``.
     """
     name, pinned = parse_package_spec(package_spec)
+    if is_package_path(package_spec):
+        name = _package_name_at(workspace / package_path(package_spec), package_spec)
     package_dir = workspace / "node_modules" / name
     schematics_dir = package_dir / "schematics"
     mapping_path = schematics_dir / MAPPING_FILE_NAME
@@ -158,6 +169,40 @@ def load_command_mapping(
             f"openui-spec is {expected}."
         )
     return CommandMapping(document)
+
+
+def _package_name_at(directory: Path, spec: str) -> str:
+    """The package name of a local package directory or archive (see the spec)."""
+    if directory.is_file():
+        return _archive_package_name(directory, spec)
+    package_json = directory / "package.json"
+    if not package_json.is_file():
+        raise CommandMappingError(
+            f"tool.ngAddPackage {spec} has no package.json at {directory}."
+        )
+    name = _load_json(package_json).get("name")
+    if not isinstance(name, str) or not name:
+        raise CommandMappingError(f"{package_json} has no package name.")
+    return name
+
+
+def _archive_package_name(archive: Path, spec: str) -> str:
+    """The name in the ``package.json`` of an ``npm pack`` archive (``package/``)."""
+    try:
+        with tarfile.open(archive) as bundle:
+            member = bundle.extractfile("package/package.json")
+            if member is None:
+                raise KeyError("package/package.json")
+            document = json.loads(member.read().decode("utf-8"))
+    except (OSError, KeyError, tarfile.TarError, ValueError) as exc:
+        raise CommandMappingError(
+            f"tool.ngAddPackage {spec}: cannot read package/package.json from "
+            f"{archive}: {exc}."
+        ) from exc
+    name = document.get("name") if isinstance(document, dict) else None
+    if not isinstance(name, str) or not name:
+        raise CommandMappingError(f"{archive} has no package name.")
+    return name
 
 
 def _installed_package_version(package_dir: Path) -> str:

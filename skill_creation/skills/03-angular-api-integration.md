@@ -149,6 +149,14 @@ Remove generated API client code directory; invoke Create mode to regenerate.
 - Removed output directory
 - Confirmation message
 
+### Authentication scheme option
+
+The `openapi-setup` step runs with `--auth-scheme <basic|bearer>`. `build_app` reads it
+from the OpenAPI contract: it is `basic` or `bearer` when `components.securitySchemes`
+declares exactly one HTTP security scheme of that kind, and is omitted (the schematic's
+own default applies) when the contract declares none or several. Pass it explicitly only
+for a manual run, and only with one of those two values.
+
 ### Context Files
 
 See [openapi-integration.md](../shared/openapi-integration.md) — read this on demand before generating the API client.

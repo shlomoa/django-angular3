@@ -10,6 +10,16 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- Verification gaps of the command-mapping planning
+  ([shlomoa/django-angular3#226](https://github.com/shlomoa/django-angular3/issues/226)):
+  `build_app --dry-run` tests over the scenario suite (`tests/test_scenarios_dry_run.py`),
+  `tool.ngAddPackage` validated by `validate-project` as a registry specification or a
+  local package directory or archive (a URL, a range or a non-exact version is rejected), `--auth-scheme`, `--document` and
+  `--node-id` described in the skill contract and the working copies, and
+  `TEST_SCENARIO_SPECIFICATIONS.md` §8 with the translator output the scenarios assert.
+
+### Added
+
 - Initial build with no OpenUI baseline
   ([shlomoa/django-angular3#209](https://github.com/shlomoa/django-angular3/issues/209)):
   `compare_openui_files` accepts `reference=None` and emits `create` Changes for the root

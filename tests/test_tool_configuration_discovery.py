@@ -134,6 +134,48 @@ class NgAddPackageIsMandatoryTests(unittest.TestCase):
 
         self.assertIn("tool.ngAddPackage must be a non-empty string.", errors)
 
+    def _errors(self, spec: str) -> list[str]:
+        document = json.loads(json.dumps(TEMPLATE))
+        document["tool"]["ngAddPackage"] = spec
+        return validate_tool_configuration(document)
+
+    def test_registry_specifications_are_accepted(self) -> None:
+        for spec in (
+            "angular-django2",
+            "angular-django2@0.7.0",
+            "@scope/angular-django2",
+            "@scope/angular-django2@1.2.3-beta.1",
+            "pkg@1.0.0+build.5",
+            "./angular-django2",
+            "../../../angular-django2/projects/angular-django2/dist",
+            "/opt/angular-django2/dist",
+            "file:../angular-django2/dist",
+            "file:/opt/angular-django2/dist",
+            "/tmp/scratch/angular-django2-0.8.0.tgz",
+            "../pack/angular-django2-0.8.0.tar.gz",
+            "file:../pack/angular-django2-0.8.0.tgz",
+        ):
+            with self.subTest(spec=spec):
+                self.assertEqual(self._errors(spec), [])
+
+    def test_urls_ranges_and_tags_are_rejected(self) -> None:
+        for spec in (
+            "https://example.com/angular-django2.tgz",
+            "file://host/angular-django2",
+            "file:",
+            "git+https://example.com/angular-django2.git",
+            "Angular Django2",
+            "@scope/",
+            "angular-django2@^0.7.0",
+            "angular-django2@latest",
+            "angular-django2@1.2",
+        ):
+            with self.subTest(spec=spec):
+                errors = self._errors(spec)
+
+                self.assertEqual(len(errors), 1)
+                self.assertTrue(errors[0].startswith("tool.ngAddPackage "), errors)
+
 
 if __name__ == "__main__":
     unittest.main()
