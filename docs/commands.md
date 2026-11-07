@@ -89,6 +89,17 @@ runs the steps level by level, halts at the first failure and writes
 output and the pinned `angular-django2` package and mapping versions. The final `last-check` gate builds the application
 (`ng_build`) until the terminal validation commands exist.
 
+A first build starts without a workspace, and the steps of OpenUI and OpenAPI changes are
+derived from the command mapping that the installed `angular-django2` package ships. So a
+real run first creates the workspace and installs the package (`ng new`, the package
+manager configuration and `ng add`, each skipped when it is already done), records those
+calls under `bootstrap` in the evidence, and only then derives and runs the steps. The
+workspace foundation step does not repeat what the bootstrap did, so a second run on an
+existing workspace does not fail on `ng new`. A local `tool.ngAddPackage` path is
+normalized before it is read, so a `..` below a workspace that does not exist yet works.
+`--dry-run` changes nothing, so on a workspace without the package it reports that the
+package is missing instead of installing it.
+
 Not implemented yet: running a schema export step and detecting changes
 of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
 needs the `angular-django2` package `tool.ngAddPackage` names (a registry specification, `name`, `name@version`,

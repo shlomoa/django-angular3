@@ -706,7 +706,9 @@ class RealRunTests(unittest.TestCase):
         self.assertFalse(evidence["dryRun"])
 
     def test_the_wrappers_call_ng_in_step_order_in_the_workspace(self) -> None:
-        self.project.run_build(self.project.change_set())
+        # The staged workspace already holds ngdj; run the full foundation wrapper.
+        with patch("django_angular3.angular.package_installed", return_value=False):
+            self.project.run_build(self.project.change_set())
 
         calls = self.project.calls()
         self.assertEqual(
@@ -808,6 +810,7 @@ class RealRunTests(unittest.TestCase):
 
     def test_a_failing_invocation_stops_the_remaining_ones_of_its_step(self) -> None:
         with (
+            patch("django_angular3.angular.package_installed", return_value=False),
             patch.dict(os.environ, {"FAKE_NG_FAIL": "config cli.packageManager"}),
             self.assertRaises(CommandError),
         ):
