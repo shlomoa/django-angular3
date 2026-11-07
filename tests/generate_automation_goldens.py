@@ -5,6 +5,7 @@ Produced by the code under test, reviewed in the PR, never edited by hand::
     python -m tests.generate_automation_goldens
 """
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -48,6 +49,23 @@ def main() -> None:
             (GOLDEN_DIR / f"{name}.jsonl").write_bytes(
                 (Path(directory) / EVIDENCE_FILE_NAME).read_bytes()
             )
+
+    from django_angular3.automation.tool_catalog import CATALOG
+
+    catalog = {
+        name: {
+            "inputs": [
+                {"name": i.name, "required": i.required, "kind": i.kind}
+                for i in spec.inputs
+            ],
+            "outputs": list(spec.outputs),
+            "implementation": spec.implementation,
+        }
+        for name, spec in sorted(CATALOG.items())
+    }
+    (GOLDEN_DIR / "tool-catalog.json").write_text(
+        json.dumps(catalog, indent=2) + "\n", encoding="utf-8", newline="\n"
+    )
 
 
 if __name__ == "__main__":

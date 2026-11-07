@@ -29,6 +29,7 @@ provider SDK.
 |---|---|
 | Shared immutable automation models and serialization | `django_angular3/automation/contracts.py` |
 | Durable evidence recording | `django_angular3/automation/evidence.py` |
+| Executable Tool catalog and Tool implementations | `django_angular3/automation/tool_catalog.py`, `django_angular3/automation/tools.py` |
 | Hook registry and direct Hook dispatch | `django_angular3/automation/hooks.py` |
 | Synchronous direct execution | `django_angular3/automation/execution.py` |
 | Runtime Skill resolution | `django_angular3/automation/skills.py` |

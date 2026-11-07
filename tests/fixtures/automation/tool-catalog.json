@@ -1,0 +1,668 @@
+{
+  "angular_api_client_generate": {
+    "inputs": [
+      {
+        "name": "schema",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "output_dir",
+      "generated_files",
+      "client_count",
+      "generator_version",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:angular_api_client_generate"
+  },
+  "angular_app_scaffold": {
+    "inputs": [
+      {
+        "name": "document",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "app_path",
+      "app_name",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:angular_app_scaffold"
+  },
+  "angular_workspace_scaffold": {
+    "inputs": [
+      {
+        "name": "document",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "workspace_path",
+      "package_manager",
+      "angular_version",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:angular_workspace_scaffold"
+  },
+  "ngdj_add_complex_component": {
+    "inputs": [
+      {
+        "name": "name",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "features",
+        "required": true,
+        "kind": "string_or_list"
+      },
+      {
+        "name": "mode",
+        "required": false,
+        "kind": "enum:create|modify"
+      },
+      {
+        "name": "confirm",
+        "required": false,
+        "kind": "boolean"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "document",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "component_path",
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_complex_component"
+  },
+  "ngdj_add_component": {
+    "inputs": [
+      {
+        "name": "name",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "document",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "component_path",
+      "component_class",
+      "selector",
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_component"
+  },
+  "ngdj_add_data_service": {
+    "inputs": [
+      {
+        "name": "resource",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "api_service",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "service_path",
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_data_service"
+  },
+  "ngdj_add_dialog": {
+    "inputs": [
+      {
+        "name": "document",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "name",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_dialog"
+  },
+  "ngdj_add_feature": {
+    "inputs": [
+      {
+        "name": "name",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "page_name",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "route_path",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "register_route",
+        "required": false,
+        "kind": "boolean"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "feature_path",
+      "page_component_path",
+      "feature_routes_path",
+      "app_routes_path",
+      "generated_files",
+      "commands"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_feature"
+  },
+  "ngdj_add_page": {
+    "inputs": [
+      {
+        "name": "name",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "route_path",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "access",
+        "required": false,
+        "kind": "enum:public|protected"
+      },
+      {
+        "name": "auth_guard",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "navigation_label",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "navigation_icon",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "document",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "page_path",
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_page"
+  },
+  "ngdj_add_reactive_form": {
+    "inputs": [
+      {
+        "name": "name",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "document",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "definition",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "primitives_path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "form_path",
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_reactive_form"
+  },
+  "ngdj_add_stepper": {
+    "inputs": [
+      {
+        "name": "document",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "name",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_stepper"
+  },
+  "ngdj_add_table": {
+    "inputs": [
+      {
+        "name": "document",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "name",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_table"
+  },
+  "ngdj_add_tabs": {
+    "inputs": [
+      {
+        "name": "document",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "node_id",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "name",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "generated_files",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_add_tabs"
+  },
+  "ngdj_run_schematic": {
+    "inputs": [
+      {
+        "name": "schematic",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "options",
+        "required": false,
+        "kind": "object"
+      },
+      {
+        "name": "project",
+        "required": false,
+        "kind": "string"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "schematic",
+      "generated_files",
+      "command",
+      "warnings"
+    ],
+    "implementation": "django_angular3.automation.tools:ngdj_run_schematic"
+  },
+  "oasdiff_changelog": {
+    "inputs": [
+      {
+        "name": "current_schema",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "previous_schema",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "output_path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "format",
+        "required": false,
+        "kind": "enum:markdown|html"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "changelog_path",
+      "format",
+      "schema_changed",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:oasdiff_changelog"
+  },
+  "oasdiff_diff": {
+    "inputs": [
+      {
+        "name": "current_schema",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "previous_schema",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "report_path",
+        "required": false,
+        "kind": "path"
+      },
+      {
+        "name": "format",
+        "required": false,
+        "kind": "enum:json|yaml|text"
+      }
+    ],
+    "outputs": [
+      "schema_changed",
+      "changes",
+      "affected_resources",
+      "report_path"
+    ],
+    "implementation": "django_angular3.automation.tools:oasdiff_diff"
+  },
+  "openapi_schema_export": {
+    "inputs": [
+      {
+        "name": "format",
+        "required": false,
+        "kind": "enum:json|yaml"
+      },
+      {
+        "name": "dry_run",
+        "required": false,
+        "kind": "boolean"
+      }
+    ],
+    "outputs": [
+      "destination",
+      "previous_path",
+      "format",
+      "bytes_written",
+      "schema_changed"
+    ],
+    "implementation": "django_angular3.automation.tools:openapi_schema_export"
+  },
+  "validate_openapi_schema": {
+    "inputs": [
+      {
+        "name": "schema",
+        "required": true,
+        "kind": "path"
+      },
+      {
+        "name": "format",
+        "required": false,
+        "kind": "enum:json|yaml|auto"
+      },
+      {
+        "name": "ruleset",
+        "required": false,
+        "kind": "path"
+      }
+    ],
+    "outputs": [
+      "valid",
+      "errors",
+      "warnings",
+      "openapi_version",
+      "resource_count"
+    ],
+    "implementation": "django_angular3.automation.tools:validate_openapi_schema"
+  }
+}

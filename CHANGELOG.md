@@ -10,6 +10,12 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- Deterministic Tool implementations (`django_angular3/automation/tool_catalog.py` and
+  `tools.py`): the 18 Tools of `TOOL_CONTRACTS.md` with validated structured inputs,
+  structured outputs and the failure categories `invalid_input`, `missing_dependency`,
+  `external_tool_failed` and `output_invalid`, run through `command_execution`; the
+  catalog is checked against the contract tables
+  ([shlomoa/django-angular3#162](https://github.com/shlomoa/django-angular3/issues/162)).
 - `artifacts.angularSiteSources` in the project configuration: `build_app` copies the
   site's own source files into `projects/<project>/src/app/` in a `site-sources` step
   before the terminal build, shown by `--dry-run` and recorded in the evidence
