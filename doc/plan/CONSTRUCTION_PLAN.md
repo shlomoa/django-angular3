@@ -112,8 +112,8 @@ GitHub owns issue scope and tracking.
 - [ ] Cover a valid document and propagation of an upstream `openui-spec` diagnostic. <!-- STEP7-32db7a941e4f -->
 - [ ] OpenUI artifact roles remain defined by the external artifact-role SSOT linked from `doc/ARCHITECTURE.md` §2.8.1. <!-- STEP7-00ed43aacb33 -->
 - [ ] Verify that `build_app` rejects an invalid OpenUI document before change derivation, selector resolution, or wrapper selection. <!-- STEP7-1d1137e2fc1f -->
-- [ ] Transform validated canonical OpenUI atomic changes into explicit ngdj construction inputs without treating ngdj's package-local site assembly definition as a canonical OpenUI document; pass only spec-defined selectors, component types, and attributes. <!-- STEP7-42249912b4b3 -->
-- [ ] Cover the transformation contract, unsupported changes, command ordering, dry-run non-modification, and composed generated-app output. <!-- STEP7-7a7c9fc8bc13 -->
+- [x] Transform validated canonical OpenUI atomic changes into explicit ngdj construction inputs without treating ngdj's package-local site assembly definition as a canonical OpenUI document; pass only spec-defined selectors, component types, and attributes. Satisfied by the command-mapping translation (PR #224), the step parameters `--document` and `--node-id` (PR #227) and the initial build with no baseline (PR #258). <!-- STEP7-42249912b4b3 -->
+- [ ] Cover the transformation contract, unsupported changes, command ordering, dry-run non-modification, and composed generated-app output. Left open: the translation contract, unsupported changes, ordering, dry-run non-modification and the twelve scenario dry runs are covered (`tests/test_scenarios_dry_run.py`), but no test composes the generated-app output. <!-- STEP7-7a7c9fc8bc13 -->
 
 ### Corrected current identities
 

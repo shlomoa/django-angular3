@@ -59,9 +59,14 @@ django-admin build_app \
 
 Arguments may be omitted to exercise the discovery and derivation rules in
 [SPECIFICATIONS.md] §2.2. A missing derived previous project configuration
-selects the first-run path. `build_app` does not derive the steps of every scenario yet, so the
-scenario suite specifies target verification rather than runnable current
-behavior.
+selects the first-run path, as does `--force start-from-scratch`.
+
+The "Expected executed command sequence" of each example in §7 is the **full
+target**: Tool steps plus the optional Skill sessions that finish the work. What
+`build_app --dry-run` derives today is the **translator output** of §8, which names
+the Tool steps and the Skill-layer foundation steps the translators emit, with
+explicit failures for what ngdj cannot do. The dry-run test asserts §8; §7 is the
+target the translator output converges on, not a second oracle.
 
 The matrix validation test verifies each fixture's selected inputs. It also
 verifies the current/previous fixture pairs required by schema-removal and
@@ -893,3 +898,33 @@ and 6 of this document.
 [SPECIFICATIONS.md]: SPECIFICATIONS.md
 [TEST_SCENARIO_CONTRACTS.md]: ../contracts/TEST_SCENARIO_CONTRACTS.md
 [Verification Plan]: ../plan/VERIFICATION_PLAN.md#scenario-coverage
+
+## 8. Dry-run oracles (translator output)
+
+`tests/test_scenarios_dry_run.py` derives the Changes of each scenario and asserts the
+ordered steps below. A step is `stage step mode`; stage numbers are those of
+`AppBuildStep.exec_order`. "Foundation" is the initial-build prefix
+`1 angular-workspace-foundation create`, `2 ngdj_run_schematic create` (the
+`openapi-setup` of the API lane), `2 angular_app_scaffold create` and
+`3 angular_api_client_generate create`; every sequence ends with
+`12 last-check validate`.
+
+| Scenario | Initial build (no previous configuration) | Incremental, against the previous state |
+|---|---|---|
+| 1 Simple CRM | Foundation, `4 ngdj_add_data_service create` per resource, `10 ngdj_add_page create` per page | not applicable |
+| 2 Add Resource | Foundation, one data service per resource (two) | OpenAPI `create` Changes only (needs `oasdiff`) |
+| 3 Schema Removal | Foundation, one data service | A removal is never dropped silently: steps or an explicit failure (needs `oasdiff`) |
+| 4 Workspace Configuration | Foundation, one data service | `1 angular-workspace-foundation update`, then `last-check` (static-configuration translator) |
+| 5 OpenUI-Source | Foundation, one data service | `last-check` only: the selector update needs no command and the documents are identical |
+| 6 OpenUI Change | Foundation, one data service, `10 ngdj_add_page create` | `2 angular_app_scaffold update`, then `last-check`, when the previous document is a childless `Application` (the whole `children` list is added, so the page is an update of the `Application`); a page create when the previous document already has a child |
+| 7 OpenAPI + OpenUI | Foundation, two data services, one page | OpenAPI creates and the OpenUI update (needs `oasdiff`) |
+| 8 Full Replacement | Foundation, one data service | Never dropped silently (needs `oasdiff`) |
+| 9 No Change | Foundation, one data service | No Change in any domain, so no step |
+| 10, 11, 12 | As 2, 6, 7 | As the matching axes above |
+| 13 Dangling binding | Explicit failure: the node type is not covered by the ngdj mapping (and the consistency gate fails the build before translation) | not applicable |
+
+Decisions recorded here: the specification lists the full target in §7 and the
+translator output in this section (the test asserts this one); scenario 6's reference
+result for a childless previous document is the `Application` update, because the
+comparator reports one entry for the whole `children` list and an `Application` update is
+supported by the mapping.

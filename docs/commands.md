@@ -91,8 +91,10 @@ output and the pinned `angular-django2` package and mapping versions. The final 
 
 Not implemented yet: a step for `ng_openapi_setup`, running a schema export step, and
 detecting changes of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
-needs the `angular-django2` package `tool.ngAddPackage` names (a registry name, not a path;
-no hard-coded version) installed in the Angular workspace, at a version whose command
+needs the `angular-django2` package `tool.ngAddPackage` names (a registry specification, not a path or URL:
+`name`, `name@version`, `@scope/name` or `@scope/name@version` with an exact version,
+checked by `validate-project`; no hard-coded version, and without one `build_app` skips
+the installed-version check) installed in the Angular workspace, at a version whose command
 mapping targets the installed OpenUI schema version, so it cannot derive them for a
 workspace that does not exist yet.
 

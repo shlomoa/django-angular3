@@ -46,7 +46,7 @@ GitHub owns issue scope and tracking.
 
 ### Open backlog
 
-- [ ] Verify that djng selects, orders, and composes upstream ngdj operations in a real generated Angular workspace without duplicating ngdj's schematic tests. <!-- STEP7-3c60ec5f30ec -->
+- [ ] Verify that djng selects, orders, and composes upstream ngdj operations in a real generated Angular workspace without duplicating ngdj's schematic tests. Left open: the run of the steps is tested against a stand-in `ng` executable only; the opt-in `tests/e2e/` flow does not yet run `build_app`. <!-- STEP7-3c60ec5f30ec -->
 
 ### Implementation sequence
 

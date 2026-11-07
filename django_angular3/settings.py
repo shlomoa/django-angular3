@@ -229,7 +229,40 @@ def validate_tool_configuration(document: Mapping[str, object]) -> list[str]:
         if key in executables:
             _require_string(executables, key, "tool.executables", errors)
     _require_string(tool, "ngAddPackage", "tool", errors)
+    spec = tool.get("ngAddPackage")
+    if isinstance(spec, str) and spec.strip():
+        problem = package_spec_error(spec)
+        if problem:
+            errors.append(f"tool.ngAddPackage {problem}")
     return errors
+
+
+_PACKAGE_NAME = re.compile(r"^(?:@[a-z0-9][a-z0-9._~-]*/)?[a-z0-9][a-z0-9._~-]*$")
+_PACKAGE_VERSION = re.compile(
+    r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$"
+)
+
+
+def package_spec_error(spec: str) -> str | None:
+    """Why ``spec`` is not a registry package specification, or ``None`` if it is.
+
+    ``tool.ngAddPackage`` is ``name``, ``name@version``, ``@scope/name`` or
+    ``@scope/name@version`` with an exact semantic version. A version is optional:
+    without one, ``build_app`` skips the installed-version check and ``ng_add``
+    installs the local ``angular-django2`` build, or else the latest release. A path
+    or URL is not accepted, because the command mapping is read from
+    ``node_modules/<name>`` and a path names no package.
+    """
+    at = spec.rfind("@")
+    name, version = (spec, None) if at <= 0 else (spec[:at], spec[at + 1 :])
+    if not _PACKAGE_NAME.fullmatch(name):
+        return (
+            f"must be a registry package specification (name, name@version, "
+            f"@scope/name or @scope/name@version), not {spec!r}."
+        )
+    if version is not None and not _PACKAGE_VERSION.fullmatch(version):
+        return f"has the version {version!r}; pin an exact version such as 1.2.3."
+    return None
 
 
 def _require_workspace_path(

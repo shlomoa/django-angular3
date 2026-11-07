@@ -416,6 +416,16 @@ Remove a reactive form component and clean up references (route configurations, 
 - Confirmation of deletion
 - List of references that require manual cleanup (routes, parent component usage)
 
+### OpenUI document options
+
+When the work comes from an OpenUI element, `build_app` runs the ngdj command with
+`--document <path>` (the OpenUI document, relative to the Angular workspace; a document
+outside the workspace is staged in `.django-angular3/` first) and `--node-id <id>` (the
+element to compile) instead of explicit options, and ngdj reads the element's attributes
+and children from the document. Pass explicit options only for a manual run with no
+OpenUI element. The `--document` / `--node-id` pair and explicit options are not mixed:
+the document is the single source of the element's description.
+
 ### Context Files
 
 See [angular-conventions.md](../shared/angular-conventions.md) — read this on demand before composing the form.
