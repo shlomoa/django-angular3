@@ -805,6 +805,11 @@
           { "name": "defaults", "flag": "--defaults", "type": "boolean", "default": true },
           { "name": "style", "flag": "--style", "type": "string", "default": "scss" },
           { "name": "prefix", "flag": "--prefix", "type": "string", "default": "app" },
+          {
+            "name": "authGuard",
+            "flag": "--auth-guard",
+            "type": "string"
+          },
           { "name": "document", "flag": "--document", "type": "string" },
           { "name": "nodeId", "flag": "--node-id", "type": "string", "requiresDocument": true }
         ],
@@ -830,7 +835,7 @@
           "document": [
             {
               "file": "projects/angular-django-validation/unit/schematics/schematics.openui-app.spec.ts",
-              "ids": ["TC-APP-06", "TC-APP-07", "TC-APP-13..17"]
+              "ids": ["TC-APP-06", "TC-APP-07", "TC-APP-13..17", "TC-APP-18..22"]
             }
           ],
           "rerun": [
@@ -850,7 +855,8 @@
           "default": "the first Application node"
         },
         "notes": [
-          "Route paths have two unsynchronized sources: page registers DashboardPage uses.route and material-app links to Route uses.path."
+          "Route paths have two unsynchronized sources: page registers DashboardPage uses.route and material-app links to Route uses.path.",
+          "A Route with uses.access protected gets the existing guard (--auth-guard, default authGuard) in canActivate of the generated route with the same path, and its NavItem is shown only to a visitor the guard lets in. The guard must be imported by app.routes.ts; the command never creates it and fails naming it when it is missing."
         ]
       },
       "workspace-setup": {
@@ -1102,7 +1108,8 @@
         "commands": [{ "command": "workspace-setup" }],
         "attributes": { "supported": ["uses.lang", "uses.dir", "uses.title"] },
         "notes": [
-          "uses.dir accepts ltr, rtl and auto. Also read by material-app as the toolbar title."
+          "uses.dir accepts ltr, rtl and auto. Also read by material-app as the toolbar title.",
+          "The node is the first non-root html node, or the document root when the root is an html node carrying uses.lang, uses.dir or uses.title; a root and a non-root html node that both describe index.html are rejected."
         ]
       },
       "link": {
@@ -1161,8 +1168,11 @@
         "compiledBy": ["Application"],
         "attributes": {
           "supported": ["uses.path", "uses.target", "uses.title", "uses.access", "uses.redirectTo"],
-          "unused": ["uses.title", "uses.access", "uses.redirectTo"]
-        }
+          "unused": ["uses.title", "uses.redirectTo"]
+        },
+        "notes": [
+          "uses.access accepts public (the default) and protected; any other value is rejected. protected needs the existing guard of material-app --auth-guard."
+        ]
       },
       "Navigation": {
         "scope": "application/navigation",
@@ -2389,7 +2399,7 @@
       "issue": "shlomoa/angular-django2#153"
     },
     {
-      "summary": "Attributes accepted but unused: Route uses.title, uses.access and uses.redirectTo, Routing uses.defaultRoute, Navigation uses.ariaLabel, NavGroup uses.expanded (and its label is not rendered), page uses.icon.",
+      "summary": "Attributes accepted but unused: Route uses.title and uses.redirectTo, Routing uses.defaultRoute, Navigation uses.ariaLabel, NavGroup uses.expanded (and its label is not rendered), page uses.icon.",
       "issue": "shlomoa/angular-django2#154"
     },
     {
