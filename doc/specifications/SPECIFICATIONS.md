@@ -94,6 +94,12 @@ workspace-relative module of the site's route guard. `build_app` records it in t
 parameters of the application scaffold step, and the `ng_gen_app` wrapper passes it to
 `material-app` as `--auth-guard-path`; without the key the option is not passed.
 
+The optional `angular.helpersPath` is the workspace-relative folder of the Django
+integration helpers. The `ng_openapi_setup` step of `build_app` writes the API client to
+`projects/<project>/src/app/api` and the helpers to `angular.helpersPath`, else
+`projects/<project>/src/app/api-integration`, so that `reactive-form` and `data-service`
+find the client in the application project.
+
 There is no separate previous-OpenUI argument or `.previous` OpenUI filename
 convention. A project-configuration selector change and a structural change in
 the selected OpenAPI or OpenUI content are compared and recorded separately.

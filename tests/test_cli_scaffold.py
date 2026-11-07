@@ -311,6 +311,13 @@ class ScaffoldTests(unittest.TestCase):
                 "src/app/auth/auth.guard",
             )
 
+            base["angular"] = {"helpersPath": "projects/p/src/app/django"}
+            config_path.write_text(json.dumps(base), encoding="utf-8")
+            self.assertEqual(
+                load_project_config(config_path).helpers_path,
+                "projects/p/src/app/django",
+            )
+
             base["angular"] = {"authGuardPath": 3}
             config_path.write_text(json.dumps(base), encoding="utf-8")
             with self.assertRaises(ConfigError):

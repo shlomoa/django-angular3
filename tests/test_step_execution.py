@@ -417,8 +417,6 @@ class StepResolutionTests(unittest.TestCase):
         self.assertEqual(service.parameters["resource"], "customers")
 
     def test_a_data_service_step_runs_with_resource_and_path(self) -> None:
-        from django_angular3.step_bridge import build_invocations
-
         shutil.copyfile(
             SHARED / "add-order.openapi.json", self.project.root / "api.openapi.json"
         )
@@ -436,6 +434,8 @@ class StepResolutionTests(unittest.TestCase):
                 )
             )
         )
+
+        from django_angular3.step_bridge import build_invocations
 
         service = next(s for s in steps if s.command == "ng_data_service")
         argv = build_invocations(
@@ -629,6 +629,51 @@ class DryRunTests(unittest.TestCase):
         )
         self.assertEqual(lane[2][2], [])
         self.assertTrue(all(s["reason"] for s in report["steps"]))
+
+    def _setup_parameters(self) -> dict:
+        report = json.loads(
+            self.project.run_build(
+                self._creates(SHARED / "add-order.openapi.json"), dry_run=True
+            )
+        )
+        step = next(s for s in report["steps"] if s["command"] == "ng_openapi_setup")
+        return dict(step["parameters"])
+
+    def test_the_setup_step_writes_inside_the_application_project(self) -> None:
+        parameters = self._setup_parameters()
+
+        self.assertEqual(parameters["output_path"], "projects/shop/src/app/api")
+        self.assertEqual(
+            parameters["helpers_path"], "projects/shop/src/app/api-integration"
+        )
+
+    def test_the_helpers_folder_follows_the_project_configuration(self) -> None:
+        path = self.project.config.project_config.config_path
+        document = json.loads(path.read_text(encoding="utf-8"))
+        document["angular"] = {"helpersPath": "projects/shop/src/app/django"}
+        path.write_text(json.dumps(document), encoding="utf-8")
+        self.project.project_config = Configuration(path).project_config
+
+        parameters = self._setup_parameters()
+
+        self.assertEqual(parameters["helpers_path"], "projects/shop/src/app/django")
+        self.assertEqual(parameters["output_path"], "projects/shop/src/app/api")
+
+    def test_the_setup_invocation_carries_both_paths(self) -> None:
+        change_set = self._creates(SHARED / "add-order.openapi.json")
+        report = json.loads(self.project.run_build(change_set, dry_run=True))
+        self.assertIn("ng_openapi_setup", [s["command"] for s in report["steps"]])
+        # The invocation builder receives the step parameters verbatim.
+        from django_angular3.angular import build_ng_openapi_setup_invocations
+
+        argv = build_ng_openapi_setup_invocations(
+            self.project.project_config,
+            self.project.settings,
+            output_path="projects/shop/src/app/api",
+            helpers_path="projects/shop/src/app/api-integration",
+        )[0].argv
+        self.assertIn("--output-path=projects/shop/src/app/api", argv)
+        self.assertIn("--helpers-path=projects/shop/src/app/api-integration", argv)
 
     def test_the_dry_run_of_the_poc_contract_binds_basic_and_the_v1_resource(
         self,

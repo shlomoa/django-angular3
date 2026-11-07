@@ -10,6 +10,12 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- The `ng_openapi_setup` step of `build_app` writes the API client and the Django helpers
+  inside the application project (`projects/<project>/src/app/api` and
+  `angular.helpersPath` or `projects/<project>/src/app/api-integration`), shown as
+  `output_path` and `helpers_path` by `--dry-run`; new optional `angular.helpersPath` in
+  the project configuration, also the default of `ng_openapi_setup --helpers-path`
+  ([shlomoa/django-angular3#270](https://github.com/shlomoa/django-angular3/issues/270)).
 - Provider-neutral direct-execution primitives (`django_angular3/automation/execution.py`):
   a synchronous `DirectExecutor` with an injected execution context, Tool invocation,
   normalized failures and the pre-tool (block), post-tool (halt) and session-stop (warn)

@@ -572,6 +572,7 @@ def build_ng_openapi_setup_invocations(
         output_path = default_api_client_output(config)
     else:
         _validate_relative_path(output_path, "API client output path")
+    helpers_path = helpers_path or config.helpers_path
     if helpers_path is not None:
         _validate_relative_path(helpers_path, "API helpers path")
     argv: list[str] = [
@@ -699,6 +700,28 @@ def _write_ng_openapi_gen_config(
         json.dumps(document, indent=2) + "\n", encoding="utf-8"
     )
     return generated_config_path
+
+
+def application_api_client_output(config: ProjectConfig) -> str:
+    """Where ``build_app`` has ``openapi-setup`` write the API client.
+
+    Always inside the application project, ``projects/<name>/src/app/api``: that
+    is where ``reactive-form`` and ``data-service`` look for it, and a first build
+    runs ``openapi-setup`` before the application project exists, so the
+    workspace's own ``src`` must not be chosen then.
+    """
+    return f"projects/{config.project_name}/src/app/api"
+
+
+def application_helpers_path(config: ProjectConfig) -> str:
+    """Where ``build_app`` has ``openapi-setup`` write the Django helpers.
+
+    ``angular.helpersPath`` of the project configuration, else
+    ``projects/<name>/src/app/api-integration`` (the layout of the end-to-end flow).
+    """
+    return (
+        config.helpers_path or f"projects/{config.project_name}/src/app/api-integration"
+    )
 
 
 def default_api_client_output(config: ProjectConfig) -> str:
