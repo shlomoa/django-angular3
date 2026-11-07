@@ -10,6 +10,11 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- Provider-neutral automation contracts (`django_angular3/automation/contracts.py`):
+  immutable, deterministically serialized failure, Tool result, Hook outcome and
+  adapter result models, a non-mutating adapter protocol, and the evidence redaction
+  policy of `AI_AUTOMATION_SPECIFICATIONS.md` §3.1
+  ([shlomoa/django-angular3#157](https://github.com/shlomoa/django-angular3/issues/157)).
 - Verification gaps of the command-mapping planning
   ([shlomoa/django-angular3#226](https://github.com/shlomoa/django-angular3/issues/226)):
   `build_app --dry-run` tests over the scenario suite (`tests/test_scenarios_dry_run.py`),
