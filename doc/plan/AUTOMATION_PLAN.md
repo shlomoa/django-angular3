@@ -215,6 +215,17 @@ the result/evidence contracts, direct execution, and credential-free
 verification described in `AI_AUTOMATION_SPECIFICATIONS.md`; it does not claim
 provider orchestration or complete `build_app` support.
 
+Status: the foundation of Phases 1–5 is implemented under
+`django_angular3/automation/` and tested without credentials, a provider SDK or a
+network: the immutable result, failure and adapter-result contracts and the evidence
+redaction policy (`contracts.py`), the append-only JSON Lines evidence recorder
+(`evidence.py`) and the synchronous direct-execution controller with the pre-tool,
+post-tool and session-stop consequences (`execution.py`). `build_app` does not use the
+controller yet. Still open: the executable Tool contracts (Phase 7), the lifecycle Hooks
+(Phase 8), moving `build_app` onto the controller with terminal validation and global
+acceptance (Phase 9), and everything provider-related (Phase 10). The known open tests
+and gaps are listed in the status block of `APP_BUILDER_REQUIREMENTS.md`.
+
 ## Dependency-ordered implementation phases
 
 The [ordered implementation plan](#ordered-implementation-plan) is the sole
@@ -243,8 +254,11 @@ they may be advertised.
 - [#157 — Phase 2: add provider-neutral automation contracts package](https://github.com/shlomoa/django-angular3/issues/157) <!-- STEP7-80d47d2be43c -->
 - [#158 — Phase 3: implement durable provider-independent evidence recording](https://github.com/shlomoa/django-angular3/issues/158) <!-- STEP7-85a4c3ee70ce -->
 - [#159 — Phase 4: add provider-neutral direct-execution primitives](https://github.com/shlomoa/django-angular3/issues/159) <!-- STEP7-636a87176d87 -->
+- [#160 — Phase 5: add credential-free provider-neutral automation tests](https://github.com/shlomoa/django-angular3/issues/160)
+- [#161 — Phase 6: verify and document the foundation boundary](https://github.com/shlomoa/django-angular3/issues/161)
 - [#162 — Phase 7: implement deterministic TOOL contracts](https://github.com/shlomoa/django-angular3/issues/162) <!-- STEP7-3777350855ee -->
 - [#163 — Phase 8: implement direct lifecycle HOOK contracts](https://github.com/shlomoa/django-angular3/issues/163) <!-- STEP7-0459532c0501 -->
+- [#164 — Phase 9: implement direct build_app planning and execution](https://github.com/shlomoa/django-angular3/issues/164)
 - [#165 — Phase 10: implement guided-session adapter orchestration after direct execution](https://github.com/shlomoa/django-angular3/issues/165) <!-- STEP7-70434ec3cb0b -->
 
 Issue bodies, status, timestamps, relationships, dependency lists, and
