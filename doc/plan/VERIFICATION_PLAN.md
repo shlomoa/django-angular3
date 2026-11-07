@@ -346,6 +346,24 @@ because the session's GitHub access does not include `oasdiff/oasdiff`
 the latest release instead. A source build reports `oasdiff version main`, which is what
 `tool-versions.json` records; `go version -m` on the binary gives the module version.
 
+#### Intermittent failure of stage 6b (2026-11-07)
+
+Stage 6b failed on three pull request runs and passed on a re-run of the same commit. The
+job log showed only the access log of the Django server, because the failure message
+carried the tail of stderr when there was any, and the Playwright list reporter writes to
+stdout. Since then `run_playwright` in `tests/e2e/run_e2e.py` reads the JSON report of the
+suite (`playwright-results.json`, `playwright-django-results.json`) and the failure names
+each failing test with the first lines of its assertion, followed by the tails of both
+streams.
+
+The cause is **not yet identified**: no failing run has been captured with the new output.
+The first suspects are the timing of the sign-in and write specs W1 to W5 against the
+Django-served build: W2 clicks the last-page button right after the created customer was
+accepted, while the list may still be reloading, and the specs share one database in
+which each test removes what it created. The next failing run will name the test; the
+cause and its fix are recorded here then, and the ten consecutive passing runs of the
+job on one commit are the check that closes it.
+
 Findings of the 2026-10-09 probe, as they stand now:
 
 | Finding | Status |

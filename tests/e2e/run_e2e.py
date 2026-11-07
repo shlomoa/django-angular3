@@ -122,6 +122,49 @@ ADDED_SCHEMA = {
 }
 
 _OUTPUT_TAIL = 4000
+
+
+def failure_output(stdout: str, stderr: str) -> str:
+    """The tail of both output streams of a failed command, labelled.
+
+    A command can write its useful part to stdout (a test reporter) and noise to stderr
+    (a server's access log), so neither stream may hide the other.
+    """
+    parts = []
+    for name, text in (("stdout", stdout), ("stderr", stderr)):
+        text = text.strip()
+        if text:
+            parts.append(f"--- {name} (tail) ---\n{text[-_OUTPUT_TAIL:]}")
+    return "\n".join(parts) if parts else "(no output)"
+
+
+def playwright_failures(results: Path) -> list[str]:
+    """``file > title: error`` for every failed test of a Playwright JSON report."""
+    try:
+        report = json.loads(results.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    failures: list[str] = []
+
+    def walk(suite: dict[str, Any], titles: list[str]) -> None:
+        here = titles + ([suite["title"]] if suite.get("title") else [])
+        for spec in suite.get("specs", []):
+            for test in spec.get("tests", []):
+                for result in test.get("results", []):
+                    if result.get("status") in {"failed", "timedOut", "interrupted"}:
+                        error = result.get("error") or {}
+                        message = str(error.get("message", result["status"]))
+                        first = " ".join(message.split())[:600]
+                        name = " > ".join([*here, spec.get("title", "")])
+                        failures.append(f"{name}: {first}")
+        for child in suite.get("suites", []):
+            walk(child, here)
+
+    for suite in report.get("suites", []):
+        walk(suite, [])
+    return failures
+
+
 _CI_MARKERS = (
     "CI",
     "CONTINUOUS_INTEGRATION",
@@ -303,13 +346,45 @@ class Flow:
             )
         )
         if check and completed.returncode != 0:
-            tail = (completed.stderr.strip() or completed.stdout.strip())[
-                -_OUTPUT_TAIL:
-            ]
             raise self.fail(
-                f"{label} failed (exit code {returncode}): {' '.join(argv)}\n{tail}"
+                f"{label} failed (exit code {returncode}): {' '.join(argv)}\n"
+                f"{failure_output(completed.stdout, completed.stderr)}"
             )
         return completed
+
+    def run_playwright(
+        self,
+        argv: list[str],
+        *,
+        label: str,
+        results: Path,
+        extra_env: dict[str, str],
+        timeout: int,
+    ) -> None:
+        """Run a Playwright suite; a failure names the failing tests and assertions.
+
+        The server started by the Playwright configuration writes its access log to
+        stderr, which used to be all that the failure message showed. The failing
+        test names and their error messages come from the JSON report, then the
+        output of both streams follows.
+        """
+        completed = self.run(
+            argv,
+            cwd=E2E_DIR,
+            label=label,
+            check=False,
+            extra_env=extra_env,
+            timeout=timeout,
+        )
+        if completed.returncode == 0:
+            return
+        failures = playwright_failures(results)
+        summary = "\n".join(failures) if failures else "(no failing test in the report)"
+        raise self.fail(
+            f"{label} failed (exit code {completed.returncode}): {' '.join(argv)}\n"
+            f"Failing tests:\n{summary}\n"
+            f"{failure_output(completed.stdout, completed.stderr)}"
+        )
 
     def manage(self, *arguments: str, label: str | None = None, **kwargs: Any):
         """Run a management command of the project, as a generated app does."""
@@ -857,10 +932,10 @@ class Flow:
             cwd=E2E_DIR,
             label="tsc (Playwright specs)",
         )
-        self.run(
+        self.run_playwright(
             ["npx", "--no-install", "playwright", "test"],
-            cwd=E2E_DIR,
             label="playwright test",
+            results=EVIDENCE_DIR / "playwright-results.json",
             extra_env=self._playwright_env(),
             timeout=1500,
         )
@@ -913,7 +988,7 @@ class Flow:
         if self.break_name == "django-dist":
             bundle.rename(bundle.with_name("browser.moved"))
 
-        self.run(
+        self.run_playwright(
             [
                 "npx",
                 "--no-install",
@@ -922,8 +997,8 @@ class Flow:
                 "--config",
                 "playwright.django.config.ts",
             ],
-            cwd=E2E_DIR,
             label="playwright test (Django serves the build)",
+            results=EVIDENCE_DIR / "playwright-django-results.json",
             extra_env={
                 **self._playwright_env(),
                 "E2E_SCREENSHOT_DIR": "screenshots-django",

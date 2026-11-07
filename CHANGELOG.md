@@ -10,6 +10,10 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- A failing end-to-end Playwright stage names the failing tests and their assertions
+  (from the JSON report) and shows the tails of both output streams, instead of only the
+  server's access log
+  ([shlomoa/django-angular3#268](https://github.com/shlomoa/django-angular3/issues/268)).
 - The `ng_openapi_setup` step of `build_app` writes the API client and the Django helpers
   inside the application project (`projects/<project>/src/app/api` and
   `angular.helpersPath` or `projects/<project>/src/app/api-integration`), shown as
