@@ -146,17 +146,22 @@ class NgAddPackageIsMandatoryTests(unittest.TestCase):
             "@scope/angular-django2",
             "@scope/angular-django2@1.2.3-beta.1",
             "pkg@1.0.0+build.5",
+            "./angular-django2",
+            "../../../angular-django2/projects/angular-django2/dist",
+            "/opt/angular-django2/dist",
+            "file:../angular-django2/dist",
+            "file:/opt/angular-django2/dist",
         ):
             with self.subTest(spec=spec):
                 self.assertEqual(self._errors(spec), [])
 
-    def test_paths_urls_and_ranges_are_rejected(self) -> None:
+    def test_urls_archives_ranges_and_tags_are_rejected(self) -> None:
         for spec in (
-            "./angular-django2",
-            "../angular-django2",
-            "/opt/angular-django2",
-            "file:../angular-django2",
             "https://example.com/angular-django2.tgz",
+            "file://host/angular-django2",
+            "file:",
+            "./angular-django2.tgz",
+            "git+https://example.com/angular-django2.git",
             "Angular Django2",
             "@scope/",
             "angular-django2@^0.7.0",

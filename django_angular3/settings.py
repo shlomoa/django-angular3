@@ -243,22 +243,47 @@ _PACKAGE_VERSION = re.compile(
 )
 
 
-def package_spec_error(spec: str) -> str | None:
-    """Why ``spec`` is not a registry package specification, or ``None`` if it is.
+def is_package_path(spec: str) -> bool:
+    """Whether ``tool.ngAddPackage`` names a local package directory.
 
-    ``tool.ngAddPackage`` is ``name``, ``name@version``, ``@scope/name`` or
-    ``@scope/name@version`` with an exact semantic version. A version is optional:
-    without one, ``build_app`` skips the installed-version check and ``ng_add``
-    installs the local ``angular-django2`` build, or else the latest release. A path
-    or URL is not accepted, because the command mapping is read from
-    ``node_modules/<name>`` and a path names no package.
+    A path starts with ``./``, ``../`` or ``/``, or with ``file:`` followed by a path.
+    A scoped name (``@scope/name``) is never a path.
     """
+    return spec.startswith(("./", "../", "/", "file:"))
+
+
+def package_path(spec: str) -> str:
+    """The directory of a path specification, without the ``file:`` prefix."""
+    return spec.removeprefix("file:")
+
+
+def package_spec_error(spec: str) -> str | None:
+    """Why ``spec`` is not a package specification, or ``None`` if it is.
+
+    ``tool.ngAddPackage`` is a registry specification (``name``, ``name@version``,
+    ``@scope/name`` or ``@scope/name@version`` with an exact semantic version) or a
+    local package directory (relative to the Angular workspace, where ``ng add`` runs,
+    or absolute; ``file:`` form allowed). A version is optional: without one,
+    ``build_app`` skips the installed-version check and ``ng_add`` installs the local
+    ``angular-django2`` build, or else the latest release. A URL, a version range, a
+    dist-tag and a tarball are not accepted. The command mapping is read from
+    ``node_modules/<name>``, where ``<name>`` is the name in the directory's
+    ``package.json`` for a path.
+    """
+    if is_package_path(spec):
+        path = package_path(spec)
+        if not path or path.startswith("//") or "://" in path:
+            return f"must not be a URL, not {spec!r}."
+        if path.endswith((".tgz", ".tar.gz", ".tar")):
+            return f"must be a package directory, not an archive: {spec!r}."
+        return None
     at = spec.rfind("@")
     name, version = (spec, None) if at <= 0 else (spec[:at], spec[at + 1 :])
     if not _PACKAGE_NAME.fullmatch(name):
         return (
-            f"must be a registry package specification (name, name@version, "
-            f"@scope/name or @scope/name@version), not {spec!r}."
+            "must be a registry package specification (name, name@version, "
+            "@scope/name or @scope/name@version) or a local package directory, "
+            f"not {spec!r}."
         )
     if version is not None and not _PACKAGE_VERSION.fullmatch(version):
         return f"has the version {version!r}; pin an exact version such as 1.2.3."

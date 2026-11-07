@@ -185,6 +185,48 @@ class LoadCommandMappingTests(CommandMappingTestCase):
 
         self.assertEqual(mapping.mapping_version, 1)
 
+    def _local_package(self, name: str = "angular-django2") -> Path:
+        """A package directory outside the workspace, as ``ng add <path>`` takes."""
+        source = self.workspace.parent / f"{self.workspace.name}-ngdj-source"
+        source.mkdir()
+        self.addCleanup(shutil.rmtree, source, True)
+        (source / "package.json").write_text(json.dumps({"name": name}), "utf-8")
+        return source
+
+    def test_a_local_package_path_is_resolved_to_the_installed_package_name(
+        self,
+    ) -> None:
+        source = self._local_package()
+        specs = (
+            f"../{source.name}",  # relative to the workspace, where ng add runs
+            str(source),
+            f"file:{source}",
+            f"file:../{source.name}",
+        )
+        for spec in specs:
+            with self.subTest(spec=spec):
+                self.assertEqual(self.load(spec).mapping_version, 1)
+
+    def test_a_local_package_path_is_not_split_at_an_at_sign(self) -> None:
+        self.assertEqual(parse_package_spec("../a@b/dist"), ("../a@b/dist", None))
+
+    def test_a_local_package_path_without_package_json_is_reported(self) -> None:
+        source = self._local_package()
+        (source / "package.json").unlink()
+
+        with self.assertRaisesRegex(CommandMappingError, r"has no package\.json"):
+            self.load(f"../{source.name}")
+
+    def test_a_local_package_installs_under_the_name_of_its_package_json(
+        self,
+    ) -> None:
+        source = self._local_package(name="@example/other")
+
+        with self.assertRaisesRegex(
+            CommandMappingError, r"node_modules/@example/other.*command-mapping"
+        ):
+            self.load(f"../{source.name}")
+
     def test_a_missing_package_names_the_path_and_the_package(self) -> None:
         shutil.rmtree(self.package_dir)
 

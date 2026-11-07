@@ -34,7 +34,8 @@ do not maintain it as production configuration.
   leaves the browser files in; and
 - tool executable names and the `ng add` package (`tool.ngAddPackage`, mandatory: a registry
   specification (`name`, `name@version`, `@scope/name`, `@scope/name@version`; an exact
-  version, never a path or URL), by default the unpinned registry name; the installed `openui-spec` schema version guards compatibility).
+  version) or a local package directory (relative to the Angular workspace, absolute, or
+  `file:<path>`; never a URL or an archive), by default the unpinned registry name; the installed `openui-spec` schema version guards compatibility).
 
 The file is **mandatory and has no fallback**: it must exist next to the project
 configuration (`settings.BASE_DIR` in a configured Django runtime, otherwise the current

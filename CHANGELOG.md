@@ -13,8 +13,8 @@ package versions. Releases before this file are described on the
 - Verification gaps of the command-mapping planning
   ([shlomoa/django-angular3#226](https://github.com/shlomoa/django-angular3/issues/226)):
   `build_app --dry-run` tests over the scenario suite (`tests/test_scenarios_dry_run.py`),
-  `tool.ngAddPackage` validated as a registry specification by `validate-project` (a path
-  or URL, a range or a non-exact version is rejected), `--auth-scheme`, `--document` and
+  `tool.ngAddPackage` validated by `validate-project` as a registry specification or a
+  local package directory (a URL, an archive, a range or a non-exact version is rejected), `--auth-scheme`, `--document` and
   `--node-id` described in the skill contract and the working copies, and
   `TEST_SCENARIO_SPECIFICATIONS.md` §8 with the translator output the scenarios assert.
 

@@ -19,6 +19,8 @@ from typing import Any, Final, cast
 import openui_spec
 from jsonschema import Draft202012Validator
 
+from .settings import is_package_path, package_path
+
 SUPPORTED_MAPPING_VERSION: Final = 1
 MAPPING_FILE_NAME: Final = "command-mapping.json"
 MAPPING_SCHEMA_FILE_NAME: Final = "command-mapping.schema.json"
@@ -53,7 +55,13 @@ class NodeCommand:
 
 
 def parse_package_spec(spec: str) -> tuple[str, str | None]:
-    """Split ``name``, ``name@version``, ``@scope/name`` or ``@scope/name@version``."""
+    """Split ``name``, ``name@version``, ``@scope/name`` or ``@scope/name@version``.
+
+    A local package path is returned whole and unpinned; its package name is read from
+    its ``package.json`` by ``load_command_mapping``.
+    """
+    if is_package_path(spec):
+        return spec, None
     at = spec.rfind("@")
     if at <= 0:
         return spec, None
@@ -114,6 +122,8 @@ def load_command_mapping(
     installed ``openui-spec``.
     """
     name, pinned = parse_package_spec(package_spec)
+    if is_package_path(package_spec):
+        name = _package_name_at(workspace / package_path(package_spec), package_spec)
     package_dir = workspace / "node_modules" / name
     schematics_dir = package_dir / "schematics"
     mapping_path = schematics_dir / MAPPING_FILE_NAME
@@ -158,6 +168,19 @@ def load_command_mapping(
             f"openui-spec is {expected}."
         )
     return CommandMapping(document)
+
+
+def _package_name_at(directory: Path, spec: str) -> str:
+    """The package name of a local package directory (relative paths: the workspace)."""
+    package_json = directory / "package.json"
+    if not package_json.is_file():
+        raise CommandMappingError(
+            f"tool.ngAddPackage {spec} has no package.json at {directory}."
+        )
+    name = _load_json(package_json).get("name")
+    if not isinstance(name, str) or not name:
+        raise CommandMappingError(f"{package_json} has no package name.")
+    return name
 
 
 def _installed_package_version(package_dir: Path) -> str:
