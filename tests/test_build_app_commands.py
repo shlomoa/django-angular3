@@ -11,6 +11,7 @@ time bound of the derivation.
 import io
 import json
 import os
+import shutil
 import sys
 import time
 import unittest
@@ -19,6 +20,15 @@ from unittest.mock import patch
 from django.core.management import load_command_class
 from django.core.management.base import OutputWrapper
 
+from django_angular3.automation.contracts import (
+    EXIT_HOOK_FAILURE,
+    EXIT_OK,
+    EXIT_TOOL_FAILURE,
+    HookFamily,
+)
+from django_angular3.automation.evidence import EVIDENCE_FILE_NAME as EVIDENCE_FILE
+from django_angular3.automation.evidence import read_events
+from django_angular3.automation.hooks import HookRegistration, default_registry
 from django_angular3.management.commands.build_app import ChangeDetector
 from tests.test_step_execution import EVIDENCE_FILE_NAME, _Project
 from tests.tool_config import use_tool_configuration_template
@@ -79,6 +89,11 @@ class DeterminismTests(CommandBoundaryTestCase):
         first = path.read_bytes()
         path.unlink()
         self.project.log.write_text("", encoding="utf-8")
+        # The same initial state: a second run on an existing workspace skips `ng new`.
+        workspace = self.project.workspace
+        for name in ("angular.json", "package.json"):
+            (workspace / name).unlink()
+        shutil.rmtree(workspace / "projects")
 
         self.project.run_build(self.project.change_set())
 
@@ -133,6 +148,108 @@ class ExitCodeTests(CommandBoundaryTestCase):
 
     def test_an_unknown_option_exits_non_zero(self) -> None:
         self.assertNotEqual(self.run_from_argv("--no-such-option"), 0)
+
+
+class ControllerTests(CommandBoundaryTestCase):
+    """build_app runs its steps on the direct-execution controller with the Hooks."""
+
+    def failing_post_hook(self):
+        registry = default_registry()
+        registry.register(
+            HookRegistration(
+                "always-failing",
+                HookFamily.POST_TOOL,
+                lambda context, observation: (_ for _ in ()).throw(
+                    RuntimeError("the check failed")
+                ),
+                frozenset({"angular_app_scaffold"}),
+            )
+        )
+        return patch(
+            "django_angular3.management.commands.build_app.default_registry",
+            return_value=registry,
+        )
+
+    def evidence(self) -> dict:
+        return json.loads(
+            (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
+        )
+
+    def test_a_missing_schema_blocks_the_first_generation_step(self) -> None:
+        self.project.project_config.openapi_schema.unlink()
+
+        code = self.run_from_argv()
+
+        self.assertEqual(code, EXIT_HOOK_FAILURE)
+        self.assertEqual(self.project.calls(), [])
+        evidence = self.evidence()
+        self.assertEqual(evidence["steps"][0]["status"], "blocked")
+        self.assertIn("does not exist", evidence["steps"][0]["error"])
+        self.assertEqual({s["status"] for s in evidence["steps"][1:]}, {"skipped"})
+        self.assertEqual(evidence["exitCode"], EXIT_HOOK_FAILURE)
+        blocked = [h for h in evidence["hooks"] if not h["ok"]]
+        self.assertEqual([h["hook"] for h in blocked], ["pre-construction"])
+
+    def test_a_failing_post_tool_hook_halts_after_its_step(self) -> None:
+        with self.failing_post_hook():
+            code = self.run_from_argv()
+
+        self.assertEqual(code, EXIT_HOOK_FAILURE)
+        evidence = self.evidence()
+        statuses = [s["status"] for s in evidence["steps"]]
+        self.assertEqual(statuses[:2], ["succeeded", "failed"])
+        self.assertEqual(set(statuses[2:]), {"skipped"})
+        self.assertIn("the check failed", evidence["steps"][1]["error"])
+        calls = self.project.calls()
+        self.assertNotIn("build", [c[0] for c in calls])
+
+    def test_a_tool_failure_keeps_the_tool_exit_code(self) -> None:
+        with patch.dict(os.environ, {"FAKE_NG_FAIL": "angular-django2:material-app"}):
+            code = self.run_from_argv()
+
+        self.assertEqual(code, EXIT_TOOL_FAILURE)
+
+    def test_a_run_records_the_ordered_automation_evidence(self) -> None:
+        self.run_from_argv()
+
+        events = read_events(self.project.root / "build" / EVIDENCE_FILE).events
+        kinds = [e["kind"] for e in events]
+        self.assertEqual(kinds[0], "run")
+        self.assertEqual(kinds[-1], "acceptance")
+        self.assertEqual(events[-1]["decision"], "accepted")
+        tools = [e["name"] for e in events if e["kind"] == "tool"]
+        self.assertEqual(
+            tools,
+            [
+                "angular_workspace_scaffold",
+                "angular_app_scaffold",
+                "ngdj_add_page",
+                "last-check",
+            ],
+        )
+        self.assertEqual([e["seq"] for e in events], list(range(1, len(events) + 1)))
+
+    def test_the_session_stop_hook_archives_the_run(self) -> None:
+        self.run_from_argv()
+
+        build = self.project.root / "build"
+        history = build / "history"
+        (stamp,) = [p for p in history.iterdir() if p.is_dir()]
+        self.assertEqual(
+            sorted(p.name for p in stamp.iterdir()),
+            ["hook-log.jsonl", "verification.log"],
+        )
+        self.assertFalse((build / "hook-log.jsonl").exists())
+        summary = json.loads((build / "session-log.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary[0]["exit_code"], EXIT_OK)
+        self.assertEqual(summary[0]["commands_failed"], 0)
+        self.assertTrue((build / EVIDENCE_FILE_NAME).is_file())
+
+    def test_a_dry_run_runs_no_hook_and_writes_nothing(self) -> None:
+        self.assertEqual(self.run_from_argv("--dry-run"), 0)
+
+        self.assertFalse((self.project.root / "build").exists())
+        self.assertEqual(self.project.calls(), [])
 
 
 class IsolationTests(CommandBoundaryTestCase):
