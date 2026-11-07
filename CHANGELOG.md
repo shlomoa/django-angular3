@@ -10,6 +10,10 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- The Django-served end-to-end stage no longer races: the customers host applies only the
+  response of the latest request, and the write spec waits for the list reload before it
+  changes the page
+  ([shlomoa/django-angular3#268](https://github.com/shlomoa/django-angular3/issues/268)).
 - `build_app` compiles the `html` and `link` nodes of the OpenUI document in a step of its
   own, after the application scaffold and before the pages and forms
   (`workspace-setup --document` through `ng_workspace_modify`, which with a document runs
