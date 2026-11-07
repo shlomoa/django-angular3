@@ -115,8 +115,8 @@ The flow runs these stages; a failure names its stage:
 | 6b django-serves-build | Django alone serves the built bundle (`django_angular3.spa`, one origin, no proxy, no CORS): P1–P4 again plus D1 hard refresh on `/customers` and `/products`, D2 in-app navigation without a document request, D3 the API stays JSON and a wrong URL is a 404, D4 the admin stays Django, D5 one origin and no CORS headers, D6 assets served and a stale hash is a 404, then W1 sign-in through Django's session login, W2 a signed-in write through the generated client that must send the CSRF token, W3 and W4 its negative controls (the same write without the token is refused with 403, in the browser and through the API), W5 sign-out |
 | B build_app phase 2 | A changed OpenUI document and schema: the dry run derives the steps, the run succeeds |
 
-Track B starts from the workspace the wrappers created; running `build_app` from
-nothing waits on django-angular3#209 and previous-configuration discovery.
+Track B starts from the workspace the wrappers created. `build_app` from nothing is covered by a
+dry run of the initial build; a real run is not part of the flow yet.
 
 What the flow does not test: authentication and authorization enforcement. The tutorial API
 is open to anonymous users, and DRF enforces CSRF only for a session-authenticated request,

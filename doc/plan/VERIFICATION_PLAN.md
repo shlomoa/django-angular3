@@ -268,8 +268,7 @@ suite gets its own runner:
 - The ports are fixed (Django 8000, Angular 4200), not allocated dynamically.
 - Visual targets and `DEMO.md` reproduction entries are not registered.
 - `build_app` from nothing (Track B phase 1) is covered by a dry run of the initial build (OpenUI and OpenAPI
-  baselines absent); a real run is not. The `ng_data_service` step of `build_app`
-  also waits on [#207](https://github.com/shlomoa/django-angular3/issues/207).
+  baselines absent); a real run is not.
 
 #### Findings of the first runs (2026-10-08)
 
