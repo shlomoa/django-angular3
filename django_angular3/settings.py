@@ -262,20 +262,19 @@ def package_spec_error(spec: str) -> str | None:
 
     ``tool.ngAddPackage`` is a registry specification (``name``, ``name@version``,
     ``@scope/name`` or ``@scope/name@version`` with an exact semantic version) or a
-    local package directory (relative to the Angular workspace, where ``ng add`` runs,
-    or absolute; ``file:`` form allowed). A version is optional: without one,
+    local package directory or packed archive (``.tgz``, ``.tar.gz``; relative to the
+    Angular workspace, where ``ng add`` runs, or absolute; ``file:`` form allowed).
+    A version is optional: without one,
     ``build_app`` skips the installed-version check and ``ng_add`` installs the local
-    ``angular-django2`` build, or else the latest release. A URL, a version range, a
-    dist-tag and a tarball are not accepted. The command mapping is read from
-    ``node_modules/<name>``, where ``<name>`` is the name in the directory's
-    ``package.json`` for a path.
+    ``angular-django2`` build, or else the latest release. A URL, a version range and a
+    dist-tag are not accepted. The command mapping is read from
+    ``node_modules/<name>``, where ``<name>`` is the name in the
+    ``package.json`` of the directory or archive for a path.
     """
     if is_package_path(spec):
         path = package_path(spec)
         if not path or path.startswith("//") or "://" in path:
             return f"must not be a URL, not {spec!r}."
-        if path.endswith((".tgz", ".tar.gz", ".tar")):
-            return f"must be a package directory, not an archive: {spec!r}."
         return None
     at = spec.rfind("@")
     name, version = (spec, None) if at <= 0 else (spec[:at], spec[at + 1 :])

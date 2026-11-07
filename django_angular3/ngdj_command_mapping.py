@@ -10,6 +10,7 @@ exposes read-only accessors. It keeps no copy of the inventory.
 from __future__ import annotations
 
 import json
+import tarfile
 from collections.abc import Mapping
 from dataclasses import dataclass
 from importlib import metadata
@@ -171,7 +172,9 @@ def load_command_mapping(
 
 
 def _package_name_at(directory: Path, spec: str) -> str:
-    """The package name of a local package directory (relative paths: the workspace)."""
+    """The package name of a local package directory or archive (see the spec)."""
+    if directory.is_file():
+        return _archive_package_name(directory, spec)
     package_json = directory / "package.json"
     if not package_json.is_file():
         raise CommandMappingError(
@@ -180,6 +183,25 @@ def _package_name_at(directory: Path, spec: str) -> str:
     name = _load_json(package_json).get("name")
     if not isinstance(name, str) or not name:
         raise CommandMappingError(f"{package_json} has no package name.")
+    return name
+
+
+def _archive_package_name(archive: Path, spec: str) -> str:
+    """The name in the ``package.json`` of an ``npm pack`` archive (``package/``)."""
+    try:
+        with tarfile.open(archive) as bundle:
+            member = bundle.extractfile("package/package.json")
+            if member is None:
+                raise KeyError("package/package.json")
+            document = json.loads(member.read().decode("utf-8"))
+    except (OSError, KeyError, tarfile.TarError, ValueError) as exc:
+        raise CommandMappingError(
+            f"tool.ngAddPackage {spec}: cannot read package/package.json from "
+            f"{archive}: {exc}."
+        ) from exc
+    name = document.get("name") if isinstance(document, dict) else None
+    if not isinstance(name, str) or not name:
+        raise CommandMappingError(f"{archive} has no package name.")
     return name
 
 

@@ -151,16 +151,18 @@ class NgAddPackageIsMandatoryTests(unittest.TestCase):
             "/opt/angular-django2/dist",
             "file:../angular-django2/dist",
             "file:/opt/angular-django2/dist",
+            "/tmp/scratch/angular-django2-0.8.0.tgz",
+            "../pack/angular-django2-0.8.0.tar.gz",
+            "file:../pack/angular-django2-0.8.0.tgz",
         ):
             with self.subTest(spec=spec):
                 self.assertEqual(self._errors(spec), [])
 
-    def test_urls_archives_ranges_and_tags_are_rejected(self) -> None:
+    def test_urls_ranges_and_tags_are_rejected(self) -> None:
         for spec in (
             "https://example.com/angular-django2.tgz",
             "file://host/angular-django2",
             "file:",
-            "./angular-django2.tgz",
             "git+https://example.com/angular-django2.git",
             "Angular Django2",
             "@scope/",

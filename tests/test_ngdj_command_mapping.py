@@ -6,6 +6,7 @@ import contextlib
 import json
 import re
 import shutil
+import tarfile
 import tempfile
 import types
 import unittest
@@ -206,6 +207,29 @@ class LoadCommandMappingTests(CommandMappingTestCase):
         for spec in specs:
             with self.subTest(spec=spec):
                 self.assertEqual(self.load(spec).mapping_version, 1)
+
+    def test_a_packed_archive_is_resolved_to_its_package_name(self) -> None:
+        archive = self.workspace.parent / f"{self.workspace.name}-ngdj.tgz"
+        self.addCleanup(archive.unlink, True)
+        manifest = self.workspace.parent / f"{self.workspace.name}-manifest.json"
+        self.addCleanup(manifest.unlink, True)
+        manifest.write_text(json.dumps({"name": "angular-django2"}), "utf-8")
+        with tarfile.open(archive, "w:gz") as bundle:
+            bundle.add(manifest, arcname="package/package.json")
+        for spec in (f"../{archive.name}", str(archive), f"file:{archive}"):
+            with self.subTest(spec=spec):
+                self.assertEqual(self.load(spec).mapping_version, 1)
+
+    def test_an_archive_without_a_manifest_is_reported(self) -> None:
+        archive = self.workspace.parent / f"{self.workspace.name}-empty.tgz"
+        self.addCleanup(archive.unlink, True)
+        with tarfile.open(archive, "w:gz"):
+            pass
+
+        with self.assertRaisesRegex(
+            CommandMappingError, r"cannot read package/package\.json"
+        ):
+            self.load(str(archive))
 
     def test_a_local_package_path_is_not_split_at_an_at_sign(self) -> None:
         self.assertEqual(parse_package_spec("../a@b/dist"), ("../a@b/dist", None))
