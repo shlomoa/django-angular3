@@ -10,10 +10,11 @@ package versions. Releases before this file are described on the
 
 ### Added
 
-- The workspace foundation step of `build_app` passes the OpenUI document to `ng_workspace`
-  (`workspace-setup --document`) when the folded OpenUI elements include an `html` or `link`
-  node, so `index.html` gets the document's `lang`, `dir` and title; `--dry-run` shows the
-  `document` parameter
+- `build_app` compiles the `html` and `link` nodes of the OpenUI document in a step of its
+  own, after the application scaffold and before the pages and forms
+  (`workspace-setup --document` through `ng_workspace_modify`, which with a document runs
+  only that schematic), so `index.html` gets the document's `lang`, `dir` and title;
+  `--dry-run` shows the `document` parameter
   ([shlomoa/django-angular3#278](https://github.com/shlomoa/django-angular3/issues/278)).
 - Deterministic Tool implementations (`django_angular3/automation/tool_catalog.py` and
   `tools.py`): the 18 Tools of `TOOL_CONTRACTS.md` with validated structured inputs,

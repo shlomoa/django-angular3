@@ -212,6 +212,14 @@ def wrapper_for(step: AppBuildStep) -> tuple[str | None, str]:
         raise StepBridgeError(
             f"{step.name_id} ({row.concern_key}) has no operator wrapper."
         )
+    if (
+        row.concern_key == "angular.workspace"
+        and step.name_id in row.tools
+        and step.node_id is not None
+    ):
+        # The OpenUI document root: ``workspace-setup --document`` on the existing
+        # workspace, after the application scaffold created ``index.html``.
+        return row.concern_key, "ng_workspace_modify"
     by_operation = _WRAPPER_BY_OPERATION.get(row.concern_key)
     if by_operation is not None:
         wrapper = by_operation.get(step.change_op)
@@ -401,7 +409,7 @@ def _step_parameters(
     if step.node_id is not None and wrapper != "ng_data_service":
         parameters["document"] = workspace_document_path(project_config)
         # ``workspace-setup`` reads the whole document: no ``--node-id``.
-        if wrapper != "ng_workspace":
+        if wrapper not in {"ng_workspace", "ng_workspace_modify"}:
             parameters["node_id"] = step.node_id
     return parameters, unresolved
 

@@ -898,10 +898,27 @@ def build_ng_workspace_bootstrap_invocations(
 
 
 def build_ng_workspace_modify_invocations(
-    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    document: str | None = None,
+    **_: Any,
 ) -> list[AngularInvocation]:
     """Reapply workspace defaults, collection registration, and
-    workspace scaffolding."""
+    workspace scaffolding.
+
+    With a ``document`` only the ``workspace-setup`` schematic runs, with
+    ``--document``: it compiles the document's ``html`` and ``link`` elements into the
+    ``index.html`` of an existing application project, and the workspace defaults and
+    the collection registration are already in place.
+    """
+    if document is not None:
+        return _relabel_invocations(
+            build_ng_workspace_schematic_invocations(
+                config, settings, document=document
+            ),
+            "ng_workspace_modify",
+        )
     invocations = _relabel_invocations(
         build_ng_config_invocations(config, settings), "ng_workspace_modify"
     )

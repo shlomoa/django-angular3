@@ -1090,8 +1090,9 @@ class InitialBuildTranslationTests(unittest.TestCase):
         self.assertEqual(
             [(s.exec_order, s.name_id, s.change_op, s.node_id) for s in steps],
             [
-                (1, "angular-workspace-foundation", "create", "root"),
+                (1, "angular-workspace-foundation", "create", None),
                 (2, "angular_app_scaffold", "create", "crmApp"),
+                (5, "angular_workspace_scaffold", "create", "root"),
                 (10, "ngdj_add_page", "create", "contact"),
                 (10, "ngdj_add_page", "create", "home"),
                 (12, "last-check", "validate", None),
@@ -1101,7 +1102,8 @@ class InitialBuildTranslationTests(unittest.TestCase):
     def test_the_kept_steps_list_the_subjects_they_absorbed(self) -> None:
         steps = self._steps(self.DOCUMENT, self._project_created())
 
-        self.assertEqual(steps[0].change_target, "openui:/, project.name")
+        self.assertEqual(steps[0].change_target, "project.name")
+        self.assertEqual(steps[2].change_target, "openui:/")
         self.assertEqual(
             steps[1].change_target, "openui:/children/crmApp, project.name"
         )
@@ -1123,8 +1125,16 @@ class InitialBuildTranslationTests(unittest.TestCase):
             ],
         )
 
-    def test_an_html_root_needs_the_foundation_step_that_runs_its_command(self) -> None:
-        with self.assertRaisesRegex(
-            CommandTranslationError, "workspace-setup for create without a project"
-        ):
-            self._steps(self.DOCUMENT)
+    def test_an_html_root_is_its_own_step_after_the_application_scaffold(self) -> None:
+        steps = self._steps(self.DOCUMENT)
+
+        names = [(s.exec_order, s.name_id) for s in steps]
+        self.assertEqual(
+            names[:3],
+            [
+                (2, "angular_app_scaffold"),
+                (5, "angular_workspace_scaffold"),
+                (10, "ngdj_add_page"),
+            ],
+        )
+        self.assertNotIn("angular-workspace-foundation", [s.name_id for s in steps])
