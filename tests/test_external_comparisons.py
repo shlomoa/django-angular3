@@ -17,6 +17,7 @@ from django_angular3.external_comparisons import (
     OpenUiElement,
     compare_openui_files,
     openui_change_elements,
+    openui_create_changes,
     run_oasdiff_diff,
     translate_openui_changelog,
 )
@@ -368,3 +369,101 @@ class OpenUiElementEvidenceTests(unittest.TestCase):
                 ],
             },
         )
+
+
+class OpenUiInitialBuildTests(unittest.TestCase):
+    """A missing OpenUI baseline gives the create set of the candidate document."""
+
+    DOCUMENT = {
+        "id": "page",
+        "type": "html",
+        "attrs": {"uses.lang": "en"},
+        "children": [
+            {
+                "id": "zeta",
+                "type": "DashboardPage",
+                "children": [{"id": "inner", "type": "Form"}],
+            },
+            {"id": "alpha", "type": "Application"},
+        ],
+    }
+
+    def test_the_root_and_each_top_level_child_are_created(self) -> None:
+        changes = openui_create_changes(self.DOCUMENT, source="app.openui.json")
+
+        self.assertEqual(
+            [(c.subject, c.path, c.operation) for c in changes],
+            [
+                ("openui:/", "", ChangeOperation.CREATE),
+                ("openui:/children/alpha", "/children/alpha", ChangeOperation.CREATE),
+                ("openui:/children/zeta", "/children/zeta", ChangeOperation.CREATE),
+            ],
+        )
+        root, alpha, zeta = changes
+        self.assertEqual(
+            root.after,
+            {"id": "page", "type": "html", "attrs": {"uses.lang": "en"}},
+        )
+        self.assertIsNone(root.before)
+        self.assertEqual(zeta.after["children"][0]["id"], "inner")
+
+    def test_the_changes_carry_the_enclosing_elements_like_compared_ones(self) -> None:
+        root, alpha, zeta = openui_create_changes(self.DOCUMENT, source="a.json")
+
+        self.assertEqual(
+            [(e.id, e.type, e.path) for e in openui_change_elements(root)],
+            [("page", "html", "")],
+        )
+        self.assertEqual(
+            [(e.id, e.type, e.path) for e in openui_change_elements(zeta)],
+            [("page", "html", ""), ("zeta", "DashboardPage", "/children/zeta")],
+        )
+
+    def test_the_child_paths_are_those_the_comparator_reports_for_an_add(self) -> None:
+        empty = {"id": "page", "type": "html", "attrs": {"uses.lang": "en"}}
+        added = upstream_compare_openui_spec(empty, self.DOCUMENT)["add"]
+
+        # The comparator reports the whole children list once; its per-element form
+        # is the same path grammar the create set uses for each top-level child.
+        self.assertEqual([entry["path"] for entry in added], ["/children"])
+        changes = openui_create_changes(self.DOCUMENT, source="a.json")
+        self.assertEqual(
+            [c.path for c in changes[1:]],
+            [
+                f"/children/{child['id']}"
+                for child in sorted(
+                    self.DOCUMENT["children"], key=lambda child: child["id"]
+                )
+            ],
+        )
+
+    def test_a_document_without_children_is_only_the_root(self) -> None:
+        changes = openui_create_changes(
+            {"id": "app", "type": "Application"}, source="s"
+        )
+
+        self.assertEqual([c.subject for c in changes], ["openui:/"])
+
+    def test_the_candidate_is_validated_before_the_changes_are_derived(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as directory:
+            path = Path(directory) / "app.openui.json"
+            path.write_text(json.dumps({"id": "x"}), encoding="utf-8")
+
+            with self.assertRaisesRegex(ExternalComparisonError, "Invalid OpenUI"):
+                compare_openui_files(None, path)
+
+    def test_a_file_without_a_baseline_gives_the_create_set(self) -> None:
+        candidate = ROOT / "django_angular3/examples/01_simple_crm/app.openui.json"
+
+        changes = compare_openui_files(None, candidate)
+
+        self.assertEqual(
+            [c.subject for c in changes],
+            [
+                "openui:/",
+                "openui:/children/crmApp",
+                "openui:/children/customersPage",
+                "openui:/children/productsPage",
+            ],
+        )
+        self.assertTrue(all(c.operation is ChangeOperation.CREATE for c in changes))

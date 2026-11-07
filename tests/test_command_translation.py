@@ -15,7 +15,10 @@ from django_angular3.command_translation import (
     translate_changes,
 )
 from django_angular3.config_changes import compare_static_config
-from django_angular3.external_comparisons import translate_openui_changelog
+from django_angular3.external_comparisons import (
+    openui_create_changes,
+    translate_openui_changelog,
+)
 from django_angular3.ngdj_command_mapping import CommandMapping
 from django_angular3.openapi_changes import translate_oasdiff_detail
 
@@ -1036,3 +1039,92 @@ class StaticConfigTranslationTests(unittest.TestCase):
         self.assertTrue(
             all(command.change_op in {"create", "validate"} for command in commands)
         )
+
+
+class InitialBuildTranslationTests(unittest.TestCase):
+    """The create set of a document without baseline gives each command once."""
+
+    mapping: CommandMapping
+
+    DOCUMENT = {
+        "id": "root",
+        "type": "html",
+        "children": [
+            {
+                "id": "crmApp",
+                "type": "Application",
+                "children": [
+                    {
+                        "id": "routing",
+                        "type": "Routing",
+                        "children": [{"id": "homeRoute", "type": "Route"}],
+                    }
+                ],
+            },
+            {"id": "home", "type": "DashboardPage"},
+            {"id": "contact", "type": "DashboardPage"},
+        ],
+    }
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.mapping = _fixture_mapping()
+
+    def _project_created(self) -> Change:
+        return Change(
+            ChangeDomain.PROJECT_CONFIG,
+            "project.name",
+            "/project/name",
+            ChangeOperation.CREATE,
+            None,
+            "crm",
+        )
+
+    def _steps(self, document: dict, *project: Change):
+        changes = (*project, *openui_create_changes(document, source="app.json"))
+        return translate_changes(changes, self.mapping)
+
+    def test_an_initial_build_runs_each_foundation_command_once(self) -> None:
+        steps = self._steps(self.DOCUMENT, self._project_created())
+
+        self.assertEqual(
+            [(s.exec_order, s.name_id, s.change_op, s.node_id) for s in steps],
+            [
+                (1, "angular-workspace-foundation", "create", None),
+                (2, "angular_app_scaffold", "create", "crmApp"),
+                (10, "ngdj_add_page", "create", "contact"),
+                (10, "ngdj_add_page", "create", "home"),
+                (12, "last-check", "validate", None),
+            ],
+        )
+
+    def test_the_kept_steps_list_the_subjects_they_absorbed(self) -> None:
+        steps = self._steps(self.DOCUMENT, self._project_created())
+
+        self.assertEqual(steps[0].change_target, "openui:/, project.name")
+        self.assertEqual(
+            steps[1].change_target, "openui:/children/crmApp, project.name"
+        )
+
+    def test_a_subtree_of_a_created_application_is_not_a_second_command(self) -> None:
+        document = {
+            "id": "crmApp",
+            "type": "Application",
+            "children": [{"id": "routing", "type": "Routing"}],
+        }
+
+        steps = self._steps(document)
+
+        self.assertEqual(
+            [(s.name_id, s.change_op, s.node_id) for s in steps],
+            [
+                ("angular_app_scaffold", "create", "crmApp"),
+                ("last-check", "validate", None),
+            ],
+        )
+
+    def test_an_html_root_needs_the_foundation_step_that_runs_its_command(self) -> None:
+        with self.assertRaisesRegex(
+            CommandTranslationError, "workspace-setup for create without a project"
+        ):
+            self._steps(self.DOCUMENT)

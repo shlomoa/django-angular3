@@ -169,19 +169,27 @@ class ChangeDetector:
     def __init__(
         self,
         current_config: Configuration,
-        previous_config: Configuration,
+        previous_config: Configuration | None,
     ):
+        """``previous_config`` is ``None`` for an initial build: every domain then
+        emits ``create`` Changes for the current state (FR-4)."""
         self._current_config: Configuration = current_config
-        self._previous_config: Configuration = previous_config
+        self._previous_config: Configuration | None = previous_config
 
     def _diff_openui_specifications(self) -> tuple[Change, ...]:
         current_openui = self._current_config.openui_config
-        previous_openui = self._previous_config.openui_config
-        if current_openui is None or previous_openui is None:
+        previous_openui = (
+            None
+            if self._previous_config is None
+            else self._previous_config.openui_config
+        )
+        if current_openui is None or (
+            self._previous_config is not None and previous_openui is None
+        ):
             raise CommandError("OpenUI configurations must be loaded before diffing.")
         try:
             return compare_openui_files(
-                previous_openui.openui_path,
+                None if previous_openui is None else previous_openui.openui_path,
                 current_openui.openui_path,
             )
         except (ExternalComparisonError, OSError) as exc:
@@ -189,12 +197,18 @@ class ChangeDetector:
 
     def _diff_openapi_schemas(self) -> tuple[Change, ...]:
         current_openapi = self._current_config.openapi_config
-        previous_openapi = self._previous_config.openapi_config
-        if current_openapi is None or previous_openapi is None:
+        previous_openapi = (
+            None
+            if self._previous_config is None
+            else self._previous_config.openapi_config
+        )
+        if current_openapi is None or (
+            self._previous_config is not None and previous_openapi is None
+        ):
             raise CommandError("OpenAPI configurations must be loaded before diffing.")
         try:
             return compare_openapi_files(
-                previous_openapi.openapi_path,
+                None if previous_openapi is None else previous_openapi.openapi_path,
                 current_openapi.openapi_path,
             )
         except (ExternalComparisonError, OpenApiComparisonError, OSError) as exc:
@@ -205,7 +219,9 @@ class ChangeDetector:
         logger.debug("Detecting changes between previous and current configuration")
         try:
             project_changes = compare_project_config(
-                self._previous_config.project_config,
+                None
+                if self._previous_config is None
+                else self._previous_config.project_config,
                 self._current_config.project_config,
             )
             openapi_changes = self._diff_openapi_schemas()
@@ -221,9 +237,15 @@ class ChangeDetector:
         )
 
         return ChangeSet(
-            baseline={
-                "projectConfig": str(self._previous_config.project_config.config_path)
-            },
+            baseline=(
+                {}
+                if self._previous_config is None
+                else {
+                    "projectConfig": str(
+                        self._previous_config.project_config.config_path
+                    )
+                }
+            ),
             candidate={
                 "projectConfig": str(self._current_config.project_config.config_path)
             },
@@ -242,6 +264,30 @@ class ChangeDetector:
                 ),
             },
         )
+
+
+def previous_configuration(
+    current_config: Configuration,
+    explicit_path: str | Path | None,
+    *,
+    force: bool = False,
+) -> Configuration | None:
+    """The baseline configuration, or ``None`` for an initial build.
+
+    ``--force start-from-scratch`` ignores any previous configuration. Otherwise the
+    previous configuration is ``--previous-config`` (which must exist), or the current
+    configuration path with ``.json`` replaced by ``.previous.json``; when that file
+    does not exist the build starts from scratch.
+    """
+    if force:
+        return None
+    if explicit_path:
+        return Configuration(explicit_path)
+    current_path = current_config.project_config.config_path
+    derived = current_path.with_name(
+        f"{current_path.stem}.previous{current_path.suffix}"
+    )
+    return Configuration(derived) if derived.is_file() else None
 
 
 def load_ngdj_mapping(
@@ -300,7 +346,6 @@ class ChangeExecution:
         project_config: ProjectConfig,
         output_path: str,
         dry_run: bool,
-        force: bool,
         mapping: CommandMapping | None = None,
         settings: DjangoAngularSettings | None = None,
     ) -> ExecutionEvidence:
@@ -314,16 +359,9 @@ class ChangeExecution:
         first failure, writes the evidence to ``<output_path>/build-evidence.json``
         (also after a failure) and raises ``CommandError`` for the failure.
 
-        ``force`` is not honored yet and is refused rather than ignored.
-
         Raises CommandError if resolving the steps or running them fails.
         """
         logger.debug("Executing change set")
-        if force:
-            raise CommandError(
-                "--force start-from-scratch is not implemented: change detection "
-                "cannot be overridden yet."
-            )
         try:
             settings = settings or load_angular_settings()
             steps = resolve_steps(
@@ -427,7 +465,11 @@ class Command(BaseCommand):
         logger.debug("build_app started with options: %s", options)
         try:
             current_config = Configuration(options["current_config"])
-            previous_config = Configuration(options["previous_config"])
+            previous_config = previous_configuration(
+                current_config,
+                options["previous_config"],
+                force=options["force"] == "start-from-scratch",
+            )
             detector = ChangeDetector(current_config, previous_config)
             change_set: ChangeSet = detector.detect_changes()
             consistency_errors = validate_consistency(current_config.project_config)
@@ -443,7 +485,6 @@ class Command(BaseCommand):
                 current_config.project_config,
                 options["output"],
                 options["dry_run"],
-                options["force"],
                 mapping=mapping,
             )
             if options["dry_run"]:

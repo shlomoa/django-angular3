@@ -70,16 +70,82 @@ def run_oasdiff_diff(reference: Path, candidate: Path) -> dict[str, object]:
     return dict(cast(Mapping[str, object], output))
 
 
-def compare_openui_files(reference: Path, candidate: Path) -> tuple[Change, ...]:
-    """Load, validate, and compare OpenUI JSON files through openui-spec."""
-    reference_document = _load_openui_document(reference)
+def compare_openui_files(reference: Path | None, candidate: Path) -> tuple[Change, ...]:
+    """Load, validate, and compare OpenUI JSON files through openui-spec.
+
+    Without a ``reference`` (an initial build) the candidate is validated first and
+    every element is a ``create`` (see ``openui_create_changes``).
+    """
     candidate_document = _load_openui_document(candidate)
+    if reference is None:
+        return openui_create_changes(candidate_document, source=str(candidate))
+    reference_document = _load_openui_document(reference)
     changelog = compare_openui_spec(reference_document, candidate_document)
     return translate_openui_changelog(
         changelog,
         source=str(candidate),
         reference=reference_document,
         candidate=candidate_document,
+    )
+
+
+def openui_create_changes(candidate: object, *, source: str) -> tuple[Change, ...]:
+    """Derive the ``create`` Changes of an OpenUI document that has no baseline.
+
+    The comparator has no entry for a whole document, so the Changes are made the way
+    it would make them for elements that only the new document has, at two levels
+    (``CHANGE_MODEL_CONTRACTS.md`` §2.2.2):
+
+    * the root element: path ``""`` (RFC 6901's pointer to the whole document),
+      subject ``openui:/``, whose ``after`` is the root element without its
+      ``children``;
+    * each top-level child: path ``/children/<id>`` as in an upstream ``add`` entry,
+      whose ``after`` is the whole child with its subtree. The children are in the
+      comparator's order (sorted by id), and no descendant has a Change of its own.
+
+    Every Change carries the element evidence of ``openui_change_elements``, so the
+    translation selects commands the same way as for a compared pair.
+    """
+    if not isinstance(candidate, Mapping):
+        raise ExternalComparisonError("OpenUI document must be an object.")
+    document = cast(Mapping[str, object], candidate)
+    root_value = {key: value for key, value in document.items() if key != "children"}
+    changes = [_openui_create_change("", "openui:/", root_value, source, candidate)]
+    children = document.get("children")
+    if isinstance(children, Sequence) and not isinstance(children, str):
+        by_id = {
+            cast(str, child["id"]): child
+            for child in children
+            if isinstance(child, Mapping) and isinstance(child.get("id"), str)
+        }
+        for child_id in sorted(by_id):
+            path = f"/children/{_escape_pointer_segment(child_id)}"
+            changes.append(
+                _openui_create_change(
+                    path, f"openui:{path}", by_id[child_id], source, candidate
+                )
+            )
+    return tuple(changes)
+
+
+def _openui_create_change(
+    path: str, subject: str, value: object, source: str, document: object
+) -> Change:
+    return Change(
+        domain=ChangeDomain.OPENUI,
+        subject=subject,
+        path=path,
+        operation=ChangeOperation.CREATE,
+        before=None,
+        after=value,
+        evidence=(
+            ChangeEvidence(
+                source,
+                location=path or None,
+                fragment={"category": "initial", "path": path, "new": value},
+            ),
+            *_element_evidence(source, document, path),
+        ),
     )
 
 
@@ -244,9 +310,9 @@ def _enclosing_elements(document: object, path: str) -> tuple[OpenUiElement, ...
     stops at the first segment that is not an element id: a member name such as
     ``attrs`` or ``type``, or a whole ``children`` list.
     """
-    if not isinstance(document, Mapping) or not path.startswith("/"):
+    if not isinstance(document, Mapping) or (path and not path.startswith("/")):
         raise ExternalComparisonError(f"Cannot resolve OpenUI path {path!r}.")
-    raw_segments = path.split("/")[1:]
+    raw_segments = path.split("/")[1:] if path else []
     node = cast(Mapping[str, object], document)
     elements = [_element(node, "")]
     pointer = ""
@@ -281,6 +347,10 @@ def _element(node: Mapping[str, object], pointer: str) -> OpenUiElement:
             f"OpenUI element at {pointer or '/'!r} has no string id and type."
         )
     return OpenUiElement(element_id, element_type, pointer)
+
+
+def _escape_pointer_segment(segment: str) -> str:
+    return segment.replace("~", "~0").replace("/", "~1")
 
 
 def _unescape_pointer_segment(segment: str) -> str:

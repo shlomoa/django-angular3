@@ -19,6 +19,7 @@ from django_angular3.changes import (
     ChangeOperation,
     ChangeSet,
 )
+from django_angular3.config import ConfigError
 from django_angular3.external_comparisons import ExternalComparisonError
 from django_angular3.management.commands.build_app import (
     ChangeDetector,
@@ -26,6 +27,7 @@ from django_angular3.management.commands.build_app import (
     Configuration,
     OpenUIConfiguration,
     load_ngdj_mapping,
+    previous_configuration,
 )
 from django_angular3.ngdj_command_mapping import CommandMapping
 from django_angular3.settings import load_angular_settings
@@ -437,7 +439,7 @@ class BuildAppStepTests(unittest.TestCase):
             "django_angular3.step_execution.command_execution.run_command"
         ) as run_command:
             evidence = ChangeExecution().execute(
-                change_set, self.current.project_config, "build", True, False
+                change_set, self.current.project_config, "build", True
             )
 
         run_command.assert_not_called()
@@ -493,6 +495,142 @@ class BuildAppStepTests(unittest.TestCase):
             r"node type Form",
         ):
             self.dry_run(_change_set(openui=openui))
+
+
+class InitialBuildTests(unittest.TestCase):
+    """No previous configuration, or --force start-from-scratch: an initial build."""
+
+    def setUp(self) -> None:
+        temporary_directory = tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR)
+        self.addCleanup(temporary_directory.cleanup)
+        self.root = Path(temporary_directory.name)
+        artifacts = Path(__file__).parent / "fixtures" / "artifacts"
+        shutil.copyfile(
+            artifacts / "openapi" / "example.openapi.json",
+            self.root / "api.json",
+        )
+        shutil.copyfile(
+            Path(__file__).parent.parent
+            / "django_angular3/examples/01_simple_crm/app.openui.json",
+            self.root / "app.openui.json",
+        )
+        self.current_path = self.root / "django-angular3-crm.json"
+        self.write_config(self.current_path)
+        self.current = Configuration(self.current_path)
+        settings = load_angular_settings({"ng_add_package": fixture_package_spec()})
+        patcher = patch(
+            "django_angular3.management.commands.build_app.load_angular_settings",
+            return_value=settings,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def write_config(self, path: Path, name: str = "crm") -> None:
+        path.write_text(
+            json.dumps(
+                {
+                    "project": {"name": name},
+                    "artifacts": {
+                        "openapiSchema": "api.json",
+                        "openuiSpecification": "app.openui.json",
+                        "angularWorkspace": "angular",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    def install_ngdj(self) -> None:
+        fixture = FIXTURE_MAPPING.parent
+        package = self.current.project_config.angular_workspace / (
+            "node_modules/angular-django2"
+        )
+        (package / "schematics").mkdir(parents=True)
+        shutil.copyfile(fixture / "package.json", package / "package.json")
+        for name in ("command-mapping.json", "command-mapping.schema.json"):
+            shutil.copyfile(fixture / name, package / "schematics" / name)
+
+    def test_a_missing_derived_previous_configuration_starts_from_scratch(self) -> None:
+        self.assertIsNone(previous_configuration(self.current, None))
+
+    def test_the_derived_previous_configuration_replaces_json_with_previous_json(
+        self,
+    ) -> None:
+        previous_path = self.root / "django-angular3-crm.previous.json"
+        self.write_config(previous_path, "before")
+
+        previous = previous_configuration(self.current, None)
+
+        assert previous is not None
+        self.assertEqual(previous.project_config.config_path, previous_path.resolve())
+
+    def test_an_explicit_previous_configuration_must_exist(self) -> None:
+        with self.assertRaises(ConfigError):
+            previous_configuration(self.current, str(self.root / "missing.json"))
+
+    def test_force_start_from_scratch_ignores_the_previous_configuration(self) -> None:
+        self.write_config(self.root / "django-angular3-crm.previous.json", "before")
+
+        self.assertIsNone(previous_configuration(self.current, None, force=True))
+
+    def test_the_detector_derives_create_changes_in_every_domain(self) -> None:
+        with patch(
+            "django_angular3.management.commands.build_app.compare_openapi_files",
+            return_value=(),
+        ) as openapi:
+            change_set = ChangeDetector(self.current, None).detect_changes()
+
+        openapi.assert_called_once_with(None, self.current.openapi_config.openapi_path)
+        self.assertEqual(change_set.baseline, {})
+        openui = change_set.domains[ChangeDomain.OPENUI].changes
+        self.assertEqual(
+            [change.operation for change in openui], [ChangeOperation.CREATE] * 4
+        )
+        project = change_set.domains[ChangeDomain.PROJECT_CONFIG].changes
+        self.assertTrue(project)
+        self.assertTrue(all(c.operation is ChangeOperation.CREATE for c in project))
+
+    def dry_run(self, **options: object) -> dict:
+        stdout = io.StringIO()
+        call_command(
+            "build_app",
+            current_config=str(self.current_path),
+            dry_run=True,
+            stdout=stdout,
+            **options,
+        )
+        return json.loads(stdout.getvalue())
+
+    def assert_initial_build(self, report: dict) -> None:
+        steps = [(s["stage"], s["step"], s["mode"]) for s in report["steps"]]
+        self.assertEqual(
+            [step for step in steps if step[0] in (1, 2, 10) and step[2] == "create"],
+            [
+                (1, "angular-workspace-foundation", "create"),
+                (2, "ngdj_run_schematic", "create"),
+                (2, "angular_app_scaffold", "create"),
+                (10, "ngdj_add_page", "create"),
+                (10, "ngdj_add_page", "create"),
+            ],
+        )
+        self.assertNotIn((2, "angular-app-composition", "create"), steps)
+        self.assertEqual(steps.count((2, "angular_app_scaffold", "create")), 1)
+        self.assertEqual(steps[-1], (12, "last-check", "validate"))
+
+    def test_a_dry_run_without_a_previous_configuration_plans_the_initial_build(
+        self,
+    ) -> None:
+        self.install_ngdj()
+
+        self.assert_initial_build(self.dry_run())
+
+    def test_a_dry_run_with_force_ignores_an_existing_previous_configuration(
+        self,
+    ) -> None:
+        self.install_ngdj()
+        self.write_config(self.root / "django-angular3-crm.previous.json")
+
+        self.assert_initial_build(self.dry_run(force="start-from-scratch"))
 
 
 if __name__ == "__main__":
