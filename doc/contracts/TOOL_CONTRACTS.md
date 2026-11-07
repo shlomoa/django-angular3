@@ -136,9 +136,7 @@ restored.
 schema-derived SKILL commands); HOOK (`post-tool` on `makemigrations`); CLI
 (`django-admin export_schema`).
 
-**Implementation reference**:
-`django_angular3/management/commands/export_schema.py`;
-`django_angular3.config.get_previous_schema_path()`.
+**Implementation reference**: `django_angular3/automation/tools.py:openapi_schema_export` (entry `CATALOG` in `automation/tool_catalog.py`). It mirrors the `export_schema` management command: `drf-spectacular` through `call_command("spectacular")`, the previous schema rotated to its `.previous` counterpart, and the rotation reversed on any failure.
 
 #### 2. `validate_openapi_schema` — contract validation
 
@@ -184,9 +182,7 @@ free-form text blob.
 `angular_app_scaffold`); agent (callable inside a guided agent session that needs to re-verify a
 hand-edited schema). Not a user-facing CLI command in the current release.
 
-**Implementation reference**: planned wrapper over an OpenAPI 3.1 validator
-(e.g. `spectral lint`) invoked from `django_angular3/validation.py`. Contract
-must be honoured regardless of the chosen backing validator.
+**Implementation reference**: `django_angular3/automation/tools.py:validate_openapi_schema`, a wrapper over `validation.validate_openapi_file` (`openapi-spec-validator`; the OpenAPI 3.1 validator the repository depends on, not `spectral`). Only the `default` ruleset exists; any other `ruleset` is `invalid_input`. Findings are reported as errors with code `openapi-invalid`; the validator emits no non-blocking findings, so `warnings` is empty.
 
 #### 3. `oasdiff_diff` — schema diff and change detection
 
@@ -227,9 +223,7 @@ zero; a non-zero exit indicates tool failure, not a special change category.
 `ChangeSet`); agent (read-only diagnostic use inside a guided agent session
 that needs to re-inspect a diff).
 
-**Implementation reference**: `django_angular3/tools.py:ensure_oasdiff()` for
-binary acquisition; planned `django_angular3.diff` wrapper that calls
-`oasdiff` with the contract above and post-processes its JSON output.
+**Implementation reference**: `django_angular3/automation/tools.py:oasdiff_diff`, using `django_angular3/tools.py:ensure_oasdiff()` for the binary and `oasdiff diff <previous> <current> --format json`. `changes` has one `{ section, detail }` entry per top-level section of the oasdiff result; `affected_resources` lists the first path segment of every added, deleted or modified path that is not `api`, a version (`v1`) or a path parameter. A relative `report_path` is relative to the directory of the project configuration.
 
 ### Angular generation wrapper tools
 
@@ -298,9 +292,7 @@ after `validate_openapi_schema` and before the `angular-api-integration` skill s
 the client during refinement). Not a HOOK target — generation is always
 explicit. CLI (`django-admin ng_openapi_gen`).
 
-**Implementation reference**:
-`django_angular3/management/commands/ng_openapi_gen.py`;
-`django_angular3/angular.py`.
+**Implementation reference**: `django_angular3/automation/tools.py:angular_api_client_generate`, over the `ng_openapi_gen` wrapper (`ng-openapi-gen` through `pnpm exec`). `schema`, when given, must be the configured `artifacts.openapiSchema`. A dry run reports only the command (`output_dir` and `generator_version` are `null`) because resolving the wrapper writes the derived generator configuration.
 
 #### 5. `angular_workspace_scaffold` — Angular workspace scaffold wrapper
 
@@ -339,9 +331,7 @@ command before the `angular-workspace-foundation` SKILL session, when the worksp
 yet exist); CLI (`django-admin ng_new`). Not invocable from a HOOK —
 workspace creation must be an explicit command.
 
-**Implementation reference**:
-`django_angular3/management/commands/ng_new.py`;
-`django_angular3/angular.py`.
+**Implementation reference**: `django_angular3/automation/tools.py:angular_workspace_scaffold`, over the `ng_workspace` wrapper, which skips `ng new` and `ng add` for what the workspace already has.
 
 #### 6. `angular_app_scaffold` — Angular application scaffold wrapper
 
@@ -387,9 +377,7 @@ generated application matches the Angular CLI `ng new` defaults.
 exist, or, with a `document`, when the application exists and its OpenUI `Application` element
 changed); CLI (`django-admin ng_gen_app`). Not invocable from a HOOK.
 
-**Implementation reference**:
-`django_angular3/management/commands/ng_gen_app.py`;
-`django_angular3/management/commands/ng_add.py`.
+**Implementation reference**: `django_angular3/automation/tools.py:angular_app_scaffold`, over the `ng_gen_app` wrapper.
 
 #### 7. `ngdj_add_feature` — Angular feature page and route scaffold
 
@@ -435,10 +423,7 @@ component or feature route definition.
 **Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: planned djng wrapper that composes the
-`angular-django2:component` schematic, writes the feature route definition,
-and performs a syntax-aware application-route registration. Its contract
-remains stable even if ngdj later provides a dedicated feature schematic.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_feature`: the `ng_component` wrapper creates the initial page under `<path>/<name>/<page_name>`, the Tool writes `<name>.routes.ts` and registers the feature in `src/app/app.routes.ts` by inserting a `loadChildren` entry before the closing bracket of its `routes` array (strings and comments are skipped when matching brackets). A dry run resolves the paths and commands only; `page_component_path` is `null` until generation.
 
 #### 8. `ngdj_add_component` — standalone component scaffold
 
@@ -477,11 +462,7 @@ but does not create the expected component source and template.
 **Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: the existing `ng_component` CLI wrapper in
-`django_angular3/angular.py` and
-`django_angular3/management/commands/ng_component.py` resolves
-`ng generate angular-django2:component <name> --path=<path> --project=<project>`.
-The structured Tool behavior and outputs in this contract remain planned.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_component`, over the `ng_component` wrapper. `component_class` and `selector` are read from the generated component source; a missing source, class or selector is `output_invalid`.
 
 #### 9. `ngdj_run_schematic` — controlled ngdj schematic runner
 
@@ -517,8 +498,7 @@ The tool MUST NOT accept arbitrary collection names or execute package downloads
 **Allowed invocation context**: `build_app` (as a TOOL command), agent
 (inside a guided Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: planned djng wrapper invoking the workspace-local
-`pnpm exec ng generate angular-django2:<schematic>` command.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_run_schematic`. The schematic must be a command of the ngdj command mapping of the installed package, never an arbitrary collection name; each option is checked against the mapping's parameter (type, enum) and translated to its flag.
 
 #### 10. `oasdiff_changelog` — human-readable schema-change report
 
@@ -555,9 +535,7 @@ changelog file is empty or cannot be parsed as the requested format.
 `oasdiff_diff`), agent (read-only contract-review assistance), CLI. Not a HOOK
 target.
 
-**Implementation reference**: planned wrapper around the installed `oasdiff`
-CLI changelog capability. It must use the existing `ensure_oasdiff()` binary
-resolution and archive output under the configured build directory.
+**Implementation reference**: `django_angular3/automation/tools.py:oasdiff_changelog`, using `ensure_oasdiff()`. A pair without differences writes the single line `No changes.`; an empty changelog for a changed pair is `output_invalid`. A relative `output_path` is relative to the directory of the project configuration.
 
 #### 11. `ngdj_add_page` — routed page scaffold
 
@@ -602,10 +580,7 @@ refused by the schematic and surfaces as `external_tool_failed`.
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: the `ng_page` wrapper in `django_angular3/angular.py`
-resolves `ng generate angular-django2:page` and forwards `document` and `node_id`.
-Option semantics are owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are
-planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_page`, over the `ng_page` wrapper in `django_angular3/angular.py` (`name` and `path` are the wrapper's `name` and `target_path`).
 
 #### 12. `ngdj_add_reactive_form` — typed reactive form scaffold
 
@@ -645,10 +620,7 @@ source root, a `node_id` without a `document`, and both or neither of `document`
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: the `ng_reactive_form` wrapper in
-`django_angular3/angular.py` resolves `ng generate angular-django2:reactive-form` and
-forwards `document` and `node_id`, or the deprecated `definition`. The structured outputs
-are planned (`doc/plan/COMMAND_MAPPING_PLAN.md`).
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_reactive_form`, over the `ng_reactive_form` wrapper (exactly one of `document` and `definition`).
 
 #### 13. `ngdj_add_complex_component` — complex component scaffold
 
@@ -689,10 +661,7 @@ component is missing (or still present after a delete).
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: the `ng_complex_component` wrapper in
-`django_angular3/angular.py` resolves `ng generate angular-django2:complex-component` and
-forwards `document` and `node_id`. The structured outputs are planned
-(`doc/plan/COMMAND_MAPPING_PLAN.md`).
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_complex_component`, over the `ng_complex_component` wrapper.
 
 #### 14. `ngdj_add_data_service` — typed data-service scaffold
 
@@ -729,9 +698,7 @@ succeeds but does not create the service.
 `angular_api_client_generate`), agent (inside a guided Skill session), CLI. Not a HOOK
 target.
 
-**Implementation reference**: the `ng_data_service` wrapper in
-`django_angular3/angular.py` resolves `ng generate angular-django2:data-service`. The
-structured outputs are planned.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_data_service`, over the `ng_data_service` wrapper.
 
 #### 15. `ngdj_add_tabs` — tabs component scaffold
 
@@ -770,11 +737,7 @@ schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
-from the ngdj command mapping and runs `ng generate angular-django2:tabs` through
-`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
-implemented yet.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_tabs`. No operator wrapper exists: the Tool runs the `tabs` command of the ngdj command mapping through `build_ngdj_schematic_invocations`. Without `node_id` the first element the command compiles, in document order, is used; `document` is workspace-relative.
 
 #### 16. `ngdj_add_dialog` — dialog component scaffold
 
@@ -813,11 +776,7 @@ schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
-from the ngdj command mapping and runs `ng generate angular-django2:dialog` through
-`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
-implemented yet.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_dialog`. No operator wrapper exists: the Tool runs the `dialog` command of the ngdj command mapping through `build_ngdj_schematic_invocations`. Without `node_id` the first element the command compiles, in document order, is used; `document` is workspace-relative.
 
 #### 17. `ngdj_add_stepper` — stepper component scaffold
 
@@ -856,11 +815,7 @@ schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
-from the ngdj command mapping and runs `ng generate angular-django2:stepper` through
-`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
-implemented yet.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_stepper`. No operator wrapper exists: the Tool runs the `stepper` command of the ngdj command mapping through `build_ngdj_schematic_invocations`. Without `node_id` the first element the command compiles, in document order, is used; `document` is workspace-relative.
 
 #### 18. `ngdj_add_table` — table component scaffold
 
@@ -899,11 +854,19 @@ schematic (`onExisting` `reject` in the ngdj command mapping) and surfaces as
 **Allowed invocation context**: `build_app` (as a TOOL command), agent (inside a guided
 Skill session), CLI. Not a HOOK target.
 
-**Implementation reference**: no operator wrapper exists. `build_app` resolves the step
-from the ngdj command mapping and runs `ng generate angular-django2:table` through
-`build_ngdj_schematic_invocations` in `django_angular3/angular.py`. Option semantics are
-owned upstream (`ARCHITECTURE.md` §3.4). The structured outputs are not
-implemented yet.
+**Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_table`. No operator wrapper exists: the Tool runs the `table` command of the ngdj command mapping through `build_ngdj_schematic_invocations`. Without `node_id` the first element the command compiles, in document order, is used; `document` is workspace-relative.
+
+### Executable form
+
+The catalog is executable in `django_angular3/automation/tool_catalog.py` (names,
+inputs, outputs, implementation references) and
+`django_angular3/automation/tools.py` (implementations). `tests/test_automation_tools.py`
+compares the catalog with the tables above, so a change to either side without the
+other fails. A Tool validates its inputs against the table first: a missing required
+key, an unknown key or a value of the wrong type is `invalid_input`. With `dry_run`,
+outputs that only generation can resolve are `null`. Processes start only through
+`command_execution`. The `demo-capture` capability has no contract in this catalog yet
+and is not implemented.
 
 ### Contract compliance
 

@@ -61,6 +61,9 @@ class ExecutionContext:
     recorder: EvidenceRecorder = field(default_factory=NoOpEvidenceRecorder)
     dry_run: bool = False
     acknowledged: bool = False
+    #: ``DjangoAngularSettings`` for Tools that run Angular tooling; ``None`` loads the
+    #: tool configuration on first use.
+    settings: Any = None
 
 
 @dataclass(frozen=True)
@@ -228,7 +231,7 @@ class DirectExecutor:
             output = call.function(self._context, call.inputs)
             result = ToolResult(call.tool, output if output is not None else {})
         except Exception as exc:  # noqa: BLE001 - normalized below, never raw
-            result = ToolResult(call.tool, {}, _normalize(exc))
+            result = ToolResult(call.tool, {}, normalize_failure(exc))
         recorded = self._record(
             KIND_TOOL,
             {
@@ -247,7 +250,7 @@ class DirectExecutor:
             hook.function(self._context, observation)
             outcome = HookOutcome(hook.name, hook.family)
         except Exception as exc:  # noqa: BLE001 - normalized below, never raw
-            failure = _normalize(exc, hook_name=hook.name)
+            failure = normalize_failure(exc, hook_name=hook.name)
             outcome = HookOutcome(hook.name, hook.family, failure)
         recorded = self._record(
             KIND_HOOK,
@@ -293,11 +296,13 @@ class DirectExecutor:
         except ContractError as exc:
             return exc.to_failure()
         except Exception as exc:  # noqa: BLE001
-            return _normalize(exc)
+            return normalize_failure(exc)
         return None
 
 
-def _normalize(exc: BaseException, hook_name: str | None = None) -> AutomationFailure:
+def normalize_failure(
+    exc: BaseException, hook_name: str | None = None
+) -> AutomationFailure:
     """A structured failure for an exception raised by a Tool, Hook or recorder."""
     if isinstance(exc, ContractError):
         return exc.to_failure()
