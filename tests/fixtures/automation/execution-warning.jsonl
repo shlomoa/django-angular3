@@ -1,0 +1,5 @@
+{"dry_run":false,"kind":"run","run_id":"run-1","seq":1,"timestamp":"2026-01-01T00:00:01Z","tools":2}
+{"failure":null,"kind":"tool","name":"first","ok":true,"output":{"done":1},"run_id":"run-1","seq":2,"timestamp":"2026-01-01T00:00:02Z"}
+{"failure":null,"kind":"tool","name":"second","ok":true,"output":{"done":2},"run_id":"run-1","seq":3,"timestamp":"2026-01-01T00:00:03Z"}
+{"consequence":"warn","failure":{"category":"hook_failed","details":{"exception":"RuntimeError","hook":"stop-bad"},"message":"hook says no"},"family":"session-stop","kind":"hook","name":"stop-bad","ok":false,"run_id":"run-1","seq":4,"timestamp":"2026-01-01T00:00:04Z","tool":null}
+{"decision":"accepted","failure":null,"kind":"acceptance","run_id":"run-1","seq":5,"timestamp":"2026-01-01T00:00:05Z","warnings":1}

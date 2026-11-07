@@ -145,6 +145,11 @@ and session-stop Hook boundaries. Those boundaries normalize expected failures
 and unexpected exceptions, record outcomes, and apply the consequences defined
 by the canonical contracts.
 
+The controller starts no process of its own: a Tool that runs a command does so
+through `command_execution.run_command`, the single owner of process execution that
+`step_execution.py` also uses. Until `build_app` is moved onto the controller, the
+two paths therefore share one mechanism and differ only in who orders the steps.
+
 The enforcement ownership and acceptance rules are defined by
 [AI_AUTOMATION_REQUIREMENTS.md] AIR-5 and
 [APP_BUILDER_REQUIREMENTS.md] FR-2, FR-7, FR-8, and FR-9.

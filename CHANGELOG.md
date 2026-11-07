@@ -10,6 +10,12 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- Provider-neutral direct-execution primitives (`django_angular3/automation/execution.py`):
+  a synchronous `DirectExecutor` with an injected execution context, Tool invocation,
+  normalized failures and the pre-tool (block), post-tool (halt) and session-stop (warn)
+  Hook boundaries, recording ordered evidence and using no provider, network or
+  credential; a dry run resolves the selection and writes nothing
+  ([shlomoa/django-angular3#159](https://github.com/shlomoa/django-angular3/issues/159)).
 - `angular.authGuardPath` in the project configuration and `--auth-guard-path` on
   `ng_gen_app`: the route guard module is passed to `material-app` so a first generation
   of protected routes imports it, and `build_app --dry-run` shows it in the application
