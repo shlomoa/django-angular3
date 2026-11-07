@@ -325,6 +325,36 @@ class AngularCliCommandTests(unittest.TestCase):
         self.assertIn("--zoneless=false", argv)
         self.assertIn("--defaults", argv)
 
+    def test_ng_gen_app_passes_the_auth_guard_path_only_when_given(self) -> None:
+        import dataclasses
+
+        from django_angular3.angular import build_ng_gen_app_invocations
+        from django_angular3.config import load_project_config
+
+        config = load_project_config(PROJECT_CONFIG_PATH)
+        settings = load_angular_settings()
+
+        plain = build_ng_gen_app_invocations(config, settings)[0].argv
+        self.assertFalse([a for a in plain if a.startswith("--auth-guard-path")])
+
+        configured = dataclasses.replace(config, auth_guard_path="src/app/auth/guard")
+        from_config = build_ng_gen_app_invocations(configured, settings)[0].argv
+        self.assertIn("--auth-guard-path=src/app/auth/guard", from_config)
+
+        explicit = build_ng_gen_app_invocations(
+            configured, settings, auth_guard_path="src/app/other"
+        )[0].argv
+        self.assertIn("--auth-guard-path=src/app/other", explicit)
+        self.assertNotIn("--auth-guard-path=src/app/auth/guard", explicit)
+
+    def test_ng_gen_app_dry_run_accepts_the_auth_guard_path_option(self) -> None:
+        exit_code, stdout, stderr = self.run_cli(
+            "ng_gen_app", "--auth-guard-path", "src/app/auth/guard", "--dry-run"
+        )
+
+        self.assertEqual(exit_code, 0, stderr)
+        self.assertIn("--auth-guard-path=src/app/auth/guard", stdout)
+
     def test_ng_complex_component_dry_run_resolves_ngdj_schematic(self) -> None:
         exit_code, stdout, stderr = self.run_cli(
             "ng_complex_component",

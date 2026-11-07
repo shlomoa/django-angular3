@@ -89,6 +89,11 @@ configuration plus the mandatory `angular.build.browserOutputPath` of
 `django-angular3.json`, a relative path inside the workspace. The tool configuration has no
 default for it, and every command that runs Angular tooling fails when it is missing.
 
+A project configuration may also carry the optional `angular.authGuardPath`, the
+workspace-relative module of the site's route guard. `build_app` records it in the
+parameters of the application scaffold step, and the `ng_gen_app` wrapper passes it to
+`material-app` as `--auth-guard-path`; without the key the option is not passed.
+
 There is no separate previous-OpenUI argument or `.previous` OpenUI filename
 convention. A project-configuration selector change and a structural change in
 the selected OpenAPI or OpenUI content are compared and recorded separately.

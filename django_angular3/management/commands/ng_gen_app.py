@@ -21,10 +21,20 @@ class Command(AngularBaseCommand):
                 "project.name from config."
             ),
         )
+        parser.add_argument(
+            "--auth-guard-path",
+            default=None,
+            help=(
+                "Workspace-relative module of the site's route guard, imported by "
+                "the generated routes. Defaults to angular.authGuardPath of the "
+                "project configuration."
+            ),
+        )
         add_openui_document_arguments(parser)
 
     def get_invocation_options(self, options: dict[str, object]) -> dict[str, object]:
         return {
             "app_name": options.get("app_name"),
+            "auth_guard_path": options.get("auth_guard_path"),
             **openui_document_options(options),
         }

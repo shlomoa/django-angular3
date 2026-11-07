@@ -244,6 +244,7 @@ def build_ng_gen_app_invocations(
     app_name: str | None = None,
     document: str | None = None,
     node_id: str | None = None,
+    auth_guard_path: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     target_app = app_name or config.project_name
@@ -262,6 +263,9 @@ def build_ng_gen_app_invocations(
         # rejects the flag next to --document.
         argv.insert(5, "--routing" if settings.routing else "--no-routing")
     argv.extend(_openui_document_argv(document, node_id, "Application"))
+    guard = auth_guard_path or config.auth_guard_path
+    if guard:
+        argv.append(f"--auth-guard-path={guard}")
     return [
         AngularInvocation(
             command_name="ng_gen_app",

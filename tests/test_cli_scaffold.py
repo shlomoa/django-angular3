@@ -285,8 +285,57 @@ class ScaffoldTests(unittest.TestCase):
                 ConfigError,
                 (
                     "Project configuration contains unsupported key\\(s\\): "
-                    "angular, openapi, openui"
+                    "openapi, openui"
                 ),
+            ):
+                load_project_config(config_path)
+
+    def test_auth_guard_path_is_read_and_must_be_a_string(self) -> None:
+        base = {
+            "project": {"name": "p"},
+            "artifacts": {
+                "openapiSchema": "a.json",
+                "openuiSpecification": "u.json",
+                "angularWorkspace": "ws",
+            },
+        }
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            config_path = Path(tmp) / TEST_PROJECT_CONFIG_FILENAME
+            config_path.write_text(json.dumps(base), encoding="utf-8")
+            self.assertIsNone(load_project_config(config_path).auth_guard_path)
+
+            base["angular"] = {"authGuardPath": "src/app/auth/auth.guard"}
+            config_path.write_text(json.dumps(base), encoding="utf-8")
+            self.assertEqual(
+                load_project_config(config_path).auth_guard_path,
+                "src/app/auth/auth.guard",
+            )
+
+            base["angular"] = {"authGuardPath": 3}
+            config_path.write_text(json.dumps(base), encoding="utf-8")
+            with self.assertRaises(ConfigError):
+                load_project_config(config_path)
+
+    def test_legacy_angular_output_is_still_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR) as tmp:
+            config_path = Path(tmp) / TEST_PROJECT_CONFIG_FILENAME
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "project": {"name": "legacy"},
+                        "artifacts": {
+                            "openapiSchema": "a.json",
+                            "openuiSpecification": "u.json",
+                            "angularWorkspace": "ws",
+                        },
+                        "angular": {"output": "build/angular"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ConfigError, "angular contains unsupported key\\(s\\): output"
             ):
                 load_project_config(config_path)
 
