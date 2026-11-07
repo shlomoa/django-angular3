@@ -1,0 +1,6 @@
+{"dry_run":false,"kind":"run","run_id":"run-1","seq":1,"timestamp":"2026-01-01T00:00:01Z","tools":2}
+{"consequence":null,"failure":null,"family":"pre-tool","kind":"hook","name":"pre-ok","ok":true,"run_id":"run-1","seq":2,"timestamp":"2026-01-01T00:00:02Z","tool":"first"}
+{"failure":null,"kind":"tool","name":"first","ok":true,"output":{"done":1},"run_id":"run-1","seq":3,"timestamp":"2026-01-01T00:00:03Z"}
+{"consequence":null,"failure":null,"family":"pre-tool","kind":"hook","name":"pre-ok","ok":true,"run_id":"run-1","seq":4,"timestamp":"2026-01-01T00:00:04Z","tool":"second"}
+{"failure":null,"kind":"tool","name":"second","ok":true,"output":{"done":2},"run_id":"run-1","seq":5,"timestamp":"2026-01-01T00:00:05Z"}
+{"decision":"accepted","failure":null,"kind":"acceptance","run_id":"run-1","seq":6,"timestamp":"2026-01-01T00:00:06Z","warnings":0}

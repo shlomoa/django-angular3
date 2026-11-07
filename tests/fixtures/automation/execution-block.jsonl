@@ -1,0 +1,3 @@
+{"dry_run":false,"kind":"run","run_id":"run-1","seq":1,"timestamp":"2026-01-01T00:00:01Z","tools":2}
+{"consequence":"block","failure":{"category":"hook_failed","details":{"exception":"RuntimeError","hook":"pre-bad"},"message":"hook says no"},"family":"pre-tool","kind":"hook","name":"pre-bad","ok":false,"run_id":"run-1","seq":2,"timestamp":"2026-01-01T00:00:02Z","tool":"first"}
+{"decision":"rejected","failure":{"category":"hook_failed","details":{"exception":"RuntimeError","hook":"pre-bad"},"message":"hook says no"},"kind":"acceptance","run_id":"run-1","seq":3,"timestamp":"2026-01-01T00:00:03Z","warnings":0}

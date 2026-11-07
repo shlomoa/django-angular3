@@ -12,7 +12,12 @@ from django_angular3.automation.evidence import (
     EVIDENCE_FILE_NAME,
     JsonLinesEvidenceRecorder,
 )
-from tests.automation_samples import SAMPLES, fake_run_events, fixed_clock
+from tests.automation_samples import (
+    SAMPLES,
+    execution_scenarios,
+    fake_run_events,
+    fixed_clock,
+)
 
 GOLDEN_DIR = Path(__file__).resolve().parent / "fixtures" / "automation"
 
@@ -30,6 +35,19 @@ def main() -> None:
         (GOLDEN_DIR / "evidence-stream.jsonl").write_bytes(
             (Path(directory) / EVIDENCE_FILE_NAME).read_bytes()
         )
+
+    from django_angular3.automation.execution import DirectExecutor, ExecutionContext
+
+    for name, (calls, hooks) in execution_scenarios().items():
+        with tempfile.TemporaryDirectory() as directory:
+            recorder = JsonLinesEvidenceRecorder(
+                Path(directory), "run-1", fixed_clock()
+            )
+            context = ExecutionContext(None, Path(directory), "run-1", recorder)
+            DirectExecutor(context, hooks).run(calls)
+            (GOLDEN_DIR / f"{name}.jsonl").write_bytes(
+                (Path(directory) / EVIDENCE_FILE_NAME).read_bytes()
+            )
 
 
 if __name__ == "__main__":
