@@ -318,55 +318,45 @@ def _merge_openui_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
 
 
 def _fold_foundation_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
-    """One command per foundation concern when an initial build asks twice.
+    """One application scaffold command when an initial build asks twice.
 
-    A first build creates the project (``project.name`` needs the workspace and the
-    application foundation) and the OpenUI document, whose root ``html`` and
-    ``Application`` elements are compiled by the same two commands (``workspace-setup``
-    inside ``ng_workspace``, and ``material-app``, ``ng_gen_app``). Running a
-    create-only command twice would fail, so each concern is one step:
+    A first build creates the project (``project.name`` needs the application
+    foundation) and the OpenUI document, whose ``Application`` element is compiled by
+    ``material-app`` (``ng_gen_app``), the command the foundation also runs. Running a
+    create-only command twice would fail, so it is one step: the ``Application`` step
+    carries the element and the document, and replaces the project's
+    ``angular-app-composition`` step. The kept step lists the subjects of both.
 
-    * the ``Application`` step carries the element and the document, so it replaces
-      the project's ``angular-app-composition`` step;
-    * the workspace foundation step already runs ``workspace-setup`` with the project
-      document, so it replaces the ``html`` root step; an ``html`` step without a
-      foundation step of the same operation has no wrapper and is refused.
-
-    The kept step lists the subjects of both.
+    The document root (``html``) is not folded into the workspace foundation:
+    ``workspace-setup --document`` patches the ``index.html`` of the application
+    project, which exists only after the application scaffold, so it is its own step
+    after that one.
     """
     result = list(steps)
-    for dropped_name, kept_name, keep_openui in (
-        ("angular-app-composition", _APP_SCAFFOLD, True),
-        (_WORKSPACE_SCAFFOLD, "angular-workspace-foundation", False),
-    ):
-        for dropped in [step for step in result if step.name_id == dropped_name]:
-            kept = next(
-                (
-                    step
-                    for step in result
-                    if step.name_id == kept_name and step.change_op == dropped.change_op
-                ),
-                None,
-            )
-            if kept is None:
-                if keep_openui:
-                    continue
-                raise CommandTranslationError(
-                    f"No djng Tool runs the ngdj command workspace-setup for "
-                    f"{dropped.change_op} without a project foundation step: "
-                    f"{dropped.change_target}."
-                )
-            subjects = ", ".join(sorted({kept.change_target, dropped.change_target}))
-            result[result.index(kept)] = replace(
-                kept,
-                change_target=subjects,
-                change_reason=(
-                    f"{kept.change_reason} Also required by "
-                    f"{dropped.change_domain.value if dropped.change_domain else ''}"
-                    f" {dropped.change_op}: {dropped.change_target}."
-                ),
-            )
-            result.remove(dropped)
+    for dropped in [
+        step for step in result if step.name_id == "angular-app-composition"
+    ]:
+        kept = next(
+            (
+                step
+                for step in result
+                if step.name_id == _APP_SCAFFOLD and step.change_op == dropped.change_op
+            ),
+            None,
+        )
+        if kept is None:
+            continue
+        subjects = ", ".join(sorted({kept.change_target, dropped.change_target}))
+        result[result.index(kept)] = replace(
+            kept,
+            change_target=subjects,
+            change_reason=(
+                f"{kept.change_reason} Also required by "
+                f"{dropped.change_domain.value if dropped.change_domain else ''}"
+                f" {dropped.change_op}: {dropped.change_target}."
+            ),
+        )
+        result.remove(dropped)
     return result
 
 
@@ -541,9 +531,10 @@ _APP_SCAFFOLD: Final = "angular_app_scaffold"
 # the command name of the upstream mapping. Which command compiles which OpenUI
 # node type, and which operations it supports, is read from that mapping.
 _OPENUI_TOOLS: Final[dict[str, _OpenUiTool]] = {
-    # The document root (``html``): the workspace foundation runs it, see
-    # ``_fold_foundation_steps``.
-    "workspace-setup": _OpenUiTool(_WORKSPACE_SCAFFOLD, 1),
+    # The document root (``html``, ``link``): ``workspace-setup --document`` patches the
+    # ``index.html`` of the application project, so it runs after the application
+    # scaffold, see ``_fold_foundation_steps``.
+    "workspace-setup": _OpenUiTool(_WORKSPACE_SCAFFOLD, 5),
     "material-app": _OpenUiTool(_APP_SCAFFOLD, 2),
     "component": _OpenUiTool("ngdj_add_component", 7),
     "complex-component": _OpenUiTool("ngdj_add_complex_component", 8),

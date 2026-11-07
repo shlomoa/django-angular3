@@ -212,6 +212,14 @@ def wrapper_for(step: AppBuildStep) -> tuple[str | None, str]:
         raise StepBridgeError(
             f"{step.name_id} ({row.concern_key}) has no operator wrapper."
         )
+    if (
+        row.concern_key == "angular.workspace"
+        and step.name_id in row.tools
+        and step.node_id is not None
+    ):
+        # The OpenUI document root: ``workspace-setup --document`` on the existing
+        # workspace, after the application scaffold created ``index.html``.
+        return row.concern_key, "ng_workspace_modify"
     by_operation = _WRAPPER_BY_OPERATION.get(row.concern_key)
     if by_operation is not None:
         wrapper = by_operation.get(step.change_op)
@@ -359,6 +367,10 @@ def _step_parameters(
         scheme = _auth_scheme_of(project_config)
         if scheme is not None:
             parameters["auth_scheme"] = scheme
+    elif wrapper == "ng_workspace_modify" and step.node_id is not None:
+        # ``workspace-setup --document`` resolves ``index.html`` in the source root of
+        # this project; without it the file is looked up at the workspace root.
+        parameters["project"] = project
     elif wrapper == "ng_gen_app":
         parameters["app_name"] = project
         if project_config.auth_guard_path:
@@ -400,7 +412,9 @@ def _step_parameters(
 
     if step.node_id is not None and wrapper != "ng_data_service":
         parameters["document"] = workspace_document_path(project_config)
-        parameters["node_id"] = step.node_id
+        # ``workspace-setup`` reads the whole document: no ``--node-id``.
+        if wrapper not in {"ng_workspace", "ng_workspace_modify"}:
+            parameters["node_id"] = step.node_id
     return parameters, unresolved
 
 

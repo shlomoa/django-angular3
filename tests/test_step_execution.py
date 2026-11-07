@@ -630,6 +630,92 @@ class DryRunTests(unittest.TestCase):
         self.assertEqual(lane[2][2], [])
         self.assertTrue(all(s["reason"] for s in report["steps"]))
 
+    HTML_DOCUMENT = {
+        "id": "root",
+        "type": "html",
+        "children": [
+            {"id": "shopApp", "type": "Application"},
+            {"id": "home", "type": "DashboardPage"},
+        ],
+    }
+
+    def _initial_build(self):
+        """The create set of an initial build over a document with an html root."""
+        self.project.document.write_text(
+            json.dumps(self.HTML_DOCUMENT), encoding="utf-8"
+        )
+        return _change_set(
+            project_config=(_project_name_created(),),
+            openui=compare_openui_files(None, self.project.document),
+        )
+
+    def test_the_document_root_is_its_own_step_after_the_application_scaffold(
+        self,
+    ) -> None:
+        report = json.loads(self.project.run_build(self._initial_build(), dry_run=True))
+
+        order = [(s["stage"], s["step"], s["command"]) for s in report["steps"]]
+        self.assertEqual(
+            order[:3],
+            [
+                (1, "angular-workspace-foundation", "ng_workspace"),
+                (2, "angular_app_scaffold", "ng_gen_app"),
+                (5, "angular_workspace_scaffold", "ng_workspace_modify"),
+            ],
+        )
+        foundation, setup = report["steps"][0], report["steps"][2]
+        self.assertEqual(foundation["parameters"], {})
+        self.assertEqual(
+            setup["parameters"],
+            {
+                "project": "shop",
+                "document": f"{STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
+            },
+        )
+
+    def test_there_is_no_workspace_setup_step_without_html_or_link_nodes(self) -> None:
+        change_set = _change_set(project_config=(_project_name_created(),))
+
+        report = json.loads(self.project.run_build(change_set, dry_run=True))
+
+        self.assertEqual(report["steps"][0]["parameters"], {})
+        self.assertNotIn(
+            "angular_workspace_scaffold", [s["step"] for s in report["steps"]]
+        )
+
+    def test_workspace_setup_runs_after_the_scaffold_with_the_document_only(
+        self,
+    ) -> None:
+        with patch("django_angular3.angular.package_installed", return_value=False):
+            self.project.run_build(self._initial_build())
+
+        calls = self.project.calls()
+        schematics = [c[1] for c in calls if c[:1] == ["generate"] and len(c) > 1]
+        # The foundation runs workspace-setup without a document, the scaffold
+        # creates the application, then workspace-setup compiles the document.
+        self.assertEqual(
+            schematics,
+            [
+                "angular-django2:workspace-setup",
+                "angular-django2:material-app",
+                "angular-django2:workspace-setup",
+                "angular-django2:page",
+            ],
+        )
+        with_document = [
+            c
+            for c in calls
+            if c[1:2] == ["angular-django2:workspace-setup"]
+            and any(a.startswith("--document=") for a in c)
+        ]
+        (setup,) = with_document
+        self.assertIn(f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json", setup)
+        self.assertIn("--project=shop", setup)
+        self.assertFalse([arg for arg in setup if arg.startswith("--node-id")])
+        # The modify wrapper with a document runs no `ng config` and no `ng add`.
+        later = calls[calls.index(setup) - 1 :]
+        self.assertEqual([c[0] for c in later if c[0] in {"config", "add", "new"}], [])
+
     def _setup_parameters(self) -> dict:
         report = json.loads(
             self.project.run_build(

@@ -104,6 +104,15 @@ path, and the evidence lists the copied files. `--dry-run` shows the step with i
 destination. A missing or empty directory fails before any step runs, and without the key
 there is no such step.
 
+When the OpenUI document of an initial build has an `html` or `link` node, `build_app` adds a
+step of its own for it, `angular_workspace_scaffold`, after the application scaffold and
+before the pages and forms: `workspace-setup --document` patches the `index.html` of the
+application project (page language, direction and title), which exists only after the
+scaffold created the application. The step runs through `ng_workspace_modify`, which with a
+`document` runs only the `workspace-setup` schematic (no `ng config`, no `ng add`), and
+`--dry-run` shows the `document` and `project` parameters (`--project` makes the schematic find the `index.html` in the application project's source root, not at the workspace root). The workspace foundation step stays as it was,
+without a document. Without such a node there is no such step.
+
 A first build starts without a workspace, and the steps of OpenUI and OpenAPI changes are
 derived from the command mapping that the installed `angular-django2` package ships. So a
 real run first creates the workspace and installs the package (`ng new`, the package
@@ -229,5 +238,5 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | `build_app` | Detects project-configuration, OpenAPI and OpenUI changes and, with `--dry-run`, prints the ordered build steps as JSON (stage, step, mode, target, element id, wrapper command, parameters, unresolved parameters and reason). Without `--dry-run` it runs them in order against the Angular workspace, halts at the first failure and writes `build-evidence.json` to `--output`; static-configuration changes are not detected yet. OpenUI and OpenAPI changes get their steps from the command mapping of the `angular-django2` package installed in the Angular workspace, so the package must be installed. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run`, `--output <dir>` and `--force start-from-scratch` (ignore any previous configuration and build from scratch). See {ref}`Changes build_app turns into steps <build-app-steps>`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs){.modal-link} for discovery behavior. |
 | `clean` | Remove temporary Python build and package artifacts, including `build`, `dist`, root `*.egg-info`, caches, and Python bytecode. Accepts `--dry-run`. |
 | `distclean` | Run `git clean -f -d` from the current project directory, removing all untracked files and directories while preserving ignored and tracked files. Accepts `--dry-run`, which passes `-n` to Git. |
-| `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |
+| `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. With `--document <path>` (a workspace-relative OpenUI document) it runs only the `workspace-setup` schematic with that document and the application project (`--project`). |
 | `ng_workspace_delete` | Delete the discovered Angular workspace entirely. |
