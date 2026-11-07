@@ -26,6 +26,9 @@ from typing import Any
 
 from .. import command_execution
 from .contracts import (
+    EXIT_HOOK_FAILURE,
+    EXIT_OK,
+    EXIT_TOOL_FAILURE,
     AutomationFailure,
     Consequence,
     ContractError,
@@ -98,6 +101,8 @@ class HookObservation:
     tool: str | None
     inputs: Mapping[str, Any]
     result: ToolResult | None = None
+    #: For session-stop: the decided counts and exit code of the run.
+    summary: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -119,6 +124,15 @@ class RunResult:
     steps: tuple[StepOutcome, ...]
     warnings: tuple[AutomationFailure, ...] = ()
     dry_run: bool = False
+
+    @property
+    def exit_code(self) -> int:
+        """0 when ok, the Hook-failure code for a Hook failure, else the Tool code."""
+        if self.failure is None:
+            return EXIT_OK
+        if self.failure.category is FailureCategory.HOOK_FAILED:
+            return EXIT_HOOK_FAILURE
+        return EXIT_TOOL_FAILURE
 
     @property
     def planned(self) -> tuple[str, ...]:
@@ -170,7 +184,7 @@ class DirectExecutor:
                 stopped = outcome.result.failure if outcome.result else None
         failure = stopped
 
-        warnings = self._session_stop()
+        warnings = self._session_stop(_session_summary(steps, failure))
         accepted = failure is None
         evidence_failure = self._record(
             KIND_ACCEPTANCE,
@@ -271,14 +285,15 @@ class DirectExecutor:
             return HookOutcome(hook.name, hook.family, recorded)
         return outcome
 
-    def _session_stop(self) -> list[AutomationFailure]:
+    def _session_stop(self, summary: Mapping[str, Any]) -> list[AutomationFailure]:
         """Run the session-stop Hooks; their failures are warnings only."""
         warnings: list[AutomationFailure] = []
         for hook in self._hooks:
             if hook.family is not HookFamily.SESSION_STOP:
                 continue
             outcome = self._run_hook(
-                hook, HookObservation(HookFamily.SESSION_STOP, None, {})
+                hook,
+                HookObservation(HookFamily.SESSION_STOP, None, {}, summary=summary),
             )
             if not outcome.ok and outcome.failure is not None:
                 warnings.append(outcome.failure)
@@ -298,6 +313,26 @@ class DirectExecutor:
         except Exception as exc:  # noqa: BLE001
             return normalize_failure(exc)
         return None
+
+
+def _session_summary(
+    steps: Sequence[StepOutcome], failure: AutomationFailure | None
+) -> dict[str, Any]:
+    """What the session-stop Hook records about the decided run."""
+    hook_failures = sum(1 for step in steps for hook in step.hooks if not hook.ok)
+    exit_code = EXIT_OK
+    if failure is not None:
+        exit_code = (
+            EXIT_HOOK_FAILURE
+            if failure.category is FailureCategory.HOOK_FAILED
+            else EXIT_TOOL_FAILURE
+        )
+    return {
+        "commands_completed": sum(1 for s in steps if s.status == "succeeded"),
+        "commands_failed": sum(1 for s in steps if s.status in {"failed", "blocked"}),
+        "hook_failures": hook_failures,
+        "exit_code": exit_code,
+    }
 
 
 def normalize_failure(

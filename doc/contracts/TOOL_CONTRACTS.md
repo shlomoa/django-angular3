@@ -136,7 +136,7 @@ restored.
 schema-derived SKILL commands); HOOK (`post-tool` on `makemigrations`); CLI
 (`django-admin export_schema`).
 
-**Implementation reference**: `django_angular3/automation/tools.py:openapi_schema_export` (entry `CATALOG` in `automation/tool_catalog.py`). It mirrors the `export_schema` management command: `drf-spectacular` through `call_command("spectacular")`, the previous schema rotated to its `.previous` counterpart, and the rotation reversed on any failure.
+**Implementation reference**: `django_angular3/automation/tools.py:openapi_schema_export` (entry `CATALOG` in `automation/tool_catalog.py`). After a successful export it records the fingerprint of the project's migration modules beside the schema (`<schema stem>.migrations.json`), which the `pre-construction` Hook compares; the record is not written for a dry run or a failed export. It mirrors the `export_schema` management command: `drf-spectacular` through `call_command("spectacular")`, the previous schema rotated to its `.previous` counterpart, and the rotation reversed on any failure.
 
 #### 2. `validate_openapi_schema` — contract validation
 

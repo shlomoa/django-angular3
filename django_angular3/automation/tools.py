@@ -33,6 +33,7 @@ from ..settings import AngularCommandError, DjangoAngularSettings, load_angular_
 from ..validation import validate_openapi_file
 from .contracts import ContractError, FailureCategory, ToolResult
 from .execution import ExecutionContext, ToolFunction, normalize_failure
+from .migrations import write_record
 from .tool_catalog import (
     CATALOG,
     ToolSpec,
@@ -289,6 +290,15 @@ def openapi_schema_export(
         raise ContractError(
             FailureCategory.EXTERNAL_TOOL_FAILED,
             f"openapi_schema_export: schema generation failed: {exc}",
+            {"tool": "openapi_schema_export"},
+        ) from exc
+    try:
+        write_record(destination, config.config_path.parent)
+    except OSError as exc:
+        restore()
+        raise ContractError(
+            FailureCategory.EXTERNAL_TOOL_FAILED,
+            f"openapi_schema_export: cannot record the migrations fingerprint: {exc}",
             {"tool": "openapi_schema_export"},
         ) from exc
     return {

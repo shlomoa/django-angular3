@@ -19,6 +19,10 @@ from django_angular3.automation.execution import (
     ExecutionContext,
     ToolCall,
 )
+from django_angular3.automation.migrations import (
+    migrations_fingerprint,
+    read_record,
+)
 from django_angular3.automation.tool_catalog import CATALOG, validate_inputs
 from django_angular3.automation.tools import (
     invoke_tool,
@@ -384,6 +388,10 @@ class ExportTests(ToolTestCase):
 
         self.assertTrue(result.ok, result.failure)
         self.assertEqual(self.destination.read_text(encoding="utf-8"), new)
+        # The fingerprint of the migrations is recorded beside the schema.
+        self.assertEqual(
+            read_record(self.destination), migrations_fingerprint(self.root)
+        )
         self.assertIn("old", self.previous.read_text(encoding="utf-8"))
         self.assertTrue(result.output["schema_changed"])
         self.assertEqual(result.output["bytes_written"], len(new))
@@ -406,6 +414,7 @@ class ExportTests(ToolTestCase):
         self.assertEqual(result.failure.category, FailureCategory.EXTERNAL_TOOL_FAILED)
         self.assertEqual(self.destination.read_bytes(), before)
         self.assertFalse(self.previous.exists())
+        self.assertIsNone(read_record(self.destination))
 
     def test_an_invalid_schema_is_output_invalid_and_restores(self) -> None:
         before = self.destination.read_bytes()

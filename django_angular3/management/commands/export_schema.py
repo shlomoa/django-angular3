@@ -22,6 +22,7 @@ import argparse
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
+from ...automation.migrations import write_record
 from ...config import ConfigError, get_previous_schema_path, load_project_config
 from ...settings import (
     AngularCommandError,
@@ -99,4 +100,7 @@ class Command(BaseCommand):
                 stdout=self.stdout,
                 stderr=self.stderr,
             )
+        # The migrations the schema was exported against (checked by the
+        # ``pre-construction`` Hook of ``build_app``).
+        write_record(destination, config.config_path.parent)
         self.stdout.write(self.style.SUCCESS(f"Schema exported to: {destination}"))
