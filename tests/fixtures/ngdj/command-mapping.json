@@ -1109,7 +1109,8 @@
         "attributes": { "supported": ["uses.lang", "uses.dir", "uses.title"] },
         "notes": [
           "uses.dir accepts ltr, rtl and auto. Also read by material-app as the toolbar title.",
-          "The node is the first non-root html node, or the document root when the root is an html node carrying uses.lang, uses.dir or uses.title; a root and a non-root html node that both describe index.html are rejected."
+          "The node is the first non-root html node, or the document root when the root is an html node carrying uses.lang, uses.dir or uses.title; a root and a non-root html node that both describe index.html are rejected.",
+          "uses.lang also selects the language (en, he) of the generated validation messages, the Home entry and the stepper buttons."
         ]
       },
       "link": {
