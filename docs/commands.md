@@ -47,8 +47,10 @@ not application configuration.
 ## Changes `build_app` turns into steps
 
 `build_app --dry-run` prints the ordered steps for the detected changes. It compares the
-current configuration with the previous one, which is not discovered yet: pass it with
-`--previous-config`, or the configuration is compared with itself and no step is found. The
+current configuration with the previous one: `--previous-config`, or the current
+configuration path with `.json` replaced by `.previous.json`. Without a previous
+configuration, or with `--force start-from-scratch`, the build is an initial one: every
+domain emits `create` changes for the current state (see "Initial build" below). The
 ngdj command mapping that ships in the installed `angular-django2` package decides what
 ngdj supports, so `djng` follows it instead of keeping its own list. The authoritative rules and tables
 are in `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Change-to-command mapping
@@ -84,8 +86,7 @@ option (a data service has no `resource` until the resource identity rule is dec
 document that lies outside the Angular workspace to `.django-angular3/` in the workspace,
 runs the steps level by level, halts at the first failure and writes
 `build-evidence.json` to `--output` (default `build/`) with each call's exit code and
-output and the pinned `angular-django2` package and mapping versions. `--force` is
-refused until it is implemented. The final `last-check` gate builds the application
+output and the pinned `angular-django2` package and mapping versions. The final `last-check` gate builds the application
 (`ng_build`) until the terminal validation commands exist.
 
 Not implemented yet: a step for `ng_openapi_setup`, running a schema export step, and
@@ -194,7 +195,7 @@ Invoked as `django-admin <command> [args]` or `python manage.py <command> [args]
 | Command | Description |
 |---|---|
 | `export_schema` | Export the OAS schema from DRF (via drf-spectacular) to the discovered project artifact. Rotates the previous schema alongside the current one (`api.json` → `api.previous.json`) to provide the baseline file; a previous project configuration selects it through its `artifacts.openapiSchema` for `build_app` change detection. Accepts `--format {json,yaml}` (default: `json`) and `--dry-run`. |
-| `build_app` | Detects project-configuration, OpenAPI and OpenUI changes and, with `--dry-run`, prints the ordered build steps as JSON (stage, step, mode, target, element id, wrapper command, parameters, unresolved parameters and reason). Without `--dry-run` it runs them in order against the Angular workspace, halts at the first failure and writes `build-evidence.json` to `--output`; static-configuration changes are not detected yet. OpenUI and OpenAPI changes get their steps from the command mapping of the `angular-django2` package installed in the Angular workspace, so the package must be installed. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run`, `--output <dir>` and `--force start-from-scratch` (not implemented; refused). See {ref}`Changes build_app turns into steps <build-app-steps>`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs){.modal-link} for discovery behavior. |
+| `build_app` | Detects project-configuration, OpenAPI and OpenUI changes and, with `--dry-run`, prints the ordered build steps as JSON (stage, step, mode, target, element id, wrapper command, parameters, unresolved parameters and reason). Without `--dry-run` it runs them in order against the Angular workspace, halts at the first failure and writes `build-evidence.json` to `--output`; static-configuration changes are not detected yet. OpenUI and OpenAPI changes get their steps from the command mapping of the `angular-django2` package installed in the Angular workspace, so the package must be installed. Accepts `--current-config <path>` and `--previous-config <path>` overrides, plus `--dry-run`, `--output <dir>` and `--force start-from-scratch` (ignore any previous configuration and build from scratch). See {ref}`Changes build_app turns into steps <build-app-steps>`. Each configuration independently resolves its OpenAPI and OpenUI artifact selectors; the previous configuration supplies the baseline documents. See `doc/requirements/APP_BUILDER_REQUIREMENTS.md` §Inputs [↗](https://github.com/shlomoa/django-angular3/blob/main/doc/requirements/APP_BUILDER_REQUIREMENTS.md#inputs){.modal-link} for discovery behavior. |
 | `clean` | Remove temporary Python build and package artifacts, including `build`, `dist`, root `*.egg-info`, caches, and Python bytecode. Accepts `--dry-run`. |
 | `distclean` | Run `git clean -f -d` from the current project directory, removing all untracked files and directories while preserving ignored and tracked files. Accepts `--dry-run`, which passes `-n` to Git. |
 | `ng_workspace_modify` | Reapply angular-django2 workspace bootstrap and djng defaults to the discovered workspace. |

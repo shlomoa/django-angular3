@@ -120,7 +120,7 @@ def translate_changes(
             [step for change in changes for step in _change_steps(change, mapping)]
         )
     )
-    steps = _merge_openapi_steps(steps)
+    steps = _fold_foundation_steps(_merge_openapi_steps(steps))
     setup = _api_setup_step(steps, mapping)
     if setup is not None:
         steps.append(setup)
@@ -296,6 +296,7 @@ def _merge_openui_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
     output. The merged step lists every subject, in sorted order. Steps of one
     command on different roots stay separate.
     """
+    steps = _absorb_covered_updates(steps)
     targets: dict[tuple[str, str, str | None], list[str]] = {}
     merged: list[AppBuildStep] = []
     for step in steps:
@@ -314,6 +315,88 @@ def _merge_openui_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
         else step
         for step in merged
     ]
+
+
+def _fold_foundation_steps(steps: list[AppBuildStep]) -> list[AppBuildStep]:
+    """One command per foundation concern when an initial build asks twice.
+
+    A first build creates the project (``project.name`` needs the workspace and the
+    application foundation) and the OpenUI document, whose root ``html`` and
+    ``Application`` elements are compiled by the same two commands (``workspace-setup``
+    inside ``ng_workspace``, and ``material-app``, ``ng_gen_app``). Running a
+    create-only command twice would fail, so each concern is one step:
+
+    * the ``Application`` step carries the element and the document, so it replaces
+      the project's ``angular-app-composition`` step;
+    * the workspace foundation step already runs ``workspace-setup`` with the project
+      document, so it replaces the ``html`` root step; an ``html`` step without a
+      foundation step of the same operation has no wrapper and is refused.
+
+    The kept step lists the subjects of both.
+    """
+    result = list(steps)
+    for dropped_name, kept_name, keep_openui in (
+        ("angular-app-composition", _APP_SCAFFOLD, True),
+        (_WORKSPACE_SCAFFOLD, "angular-workspace-foundation", False),
+    ):
+        for dropped in [step for step in result if step.name_id == dropped_name]:
+            kept = next(
+                (
+                    step
+                    for step in result
+                    if step.name_id == kept_name and step.change_op == dropped.change_op
+                ),
+                None,
+            )
+            if kept is None:
+                if keep_openui:
+                    continue
+                raise CommandTranslationError(
+                    f"No djng Tool runs the ngdj command workspace-setup for "
+                    f"{dropped.change_op} without a project foundation step: "
+                    f"{dropped.change_target}."
+                )
+            subjects = ", ".join(sorted({kept.change_target, dropped.change_target}))
+            result[result.index(kept)] = replace(
+                kept,
+                change_target=subjects,
+                change_reason=(
+                    f"{kept.change_reason} Also required by "
+                    f"{dropped.change_domain.value if dropped.change_domain else ''}"
+                    f" {dropped.change_op}: {dropped.change_target}."
+                ),
+            )
+            result.remove(dropped)
+    return result
+
+
+def _absorb_covered_updates(steps: list[AppBuildStep]) -> list[AppBuildStep]:
+    """Fold the updates of an element that the same change set creates into its create.
+
+    A command is create-only, so an element created in this change set and also
+    changed below it (the ``Application`` of an initial build, whose ``Route``
+    children are updates of it) is one create: the create compiles the whole
+    subtree from the document. The update steps leave, and their subjects join the
+    create step's, so nothing is dropped silently.
+    """
+    created = {
+        (step.name_id, step.node_id): step
+        for step in steps
+        if step.change_domain is ChangeDomain.OPENUI and step.change_op == "create"
+    }
+    kept: list[AppBuildStep] = []
+    for step in steps:
+        key = (step.name_id, step.node_id)
+        if (
+            step.change_domain is ChangeDomain.OPENUI
+            and step.change_op == "update"
+            and key in created
+        ):
+            # Same merge key as the create, so ``_merge_openui_steps`` lists it.
+            kept.append(replace(step, change_op="create"))
+        else:
+            kept.append(step)
+    return kept
 
 
 def _merged_openui_step(step: AppBuildStep, subjects: list[str]) -> AppBuildStep:
@@ -450,11 +533,18 @@ class _OpenUiTool:
     exec_order: int
 
 
+_WORKSPACE_SCAFFOLD: Final = "angular_workspace_scaffold"
+_APP_SCAFFOLD: Final = "angular_app_scaffold"
+
+
 # The ngdj commands djng has a Tool contract for (``TOOL_CONTRACTS.md``), keyed by
 # the command name of the upstream mapping. Which command compiles which OpenUI
 # node type, and which operations it supports, is read from that mapping.
 _OPENUI_TOOLS: Final[dict[str, _OpenUiTool]] = {
-    "material-app": _OpenUiTool("angular_app_scaffold", 2),
+    # The document root (``html``): the workspace foundation runs it, see
+    # ``_fold_foundation_steps``.
+    "workspace-setup": _OpenUiTool(_WORKSPACE_SCAFFOLD, 1),
+    "material-app": _OpenUiTool(_APP_SCAFFOLD, 2),
     "component": _OpenUiTool("ngdj_add_component", 7),
     "complex-component": _OpenUiTool("ngdj_add_complex_component", 8),
     "reactive-form": _OpenUiTool("ngdj_add_reactive_form", 9),

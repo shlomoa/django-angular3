@@ -28,7 +28,6 @@ from django_angular3.command_translation import (
 from django_angular3.external_comparisons import compare_openui_files
 from django_angular3.management.commands.build_app import (
     ChangeDetector,
-    ChangeExecution,
     Configuration,
 )
 from django_angular3.ngdj_command_mapping import CommandMapping
@@ -838,17 +837,6 @@ class RealRunTests(unittest.TestCase):
 
         self.assertEqual(self.project.calls(), [])
         self.assertEqual(_tree_digest(self.project.root), before)
-
-    def test_force_is_refused_rather_than_ignored(self) -> None:
-        with self.assertRaisesRegex(CommandError, "--force start-from-scratch"):
-            ChangeExecution().execute(
-                self.project.change_set(),
-                self.project.project_config,
-                str(self.project.root / "build"),
-                True,
-                True,
-                settings=self.project.settings,
-            )
 
 
 if __name__ == "__main__":

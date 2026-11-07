@@ -51,7 +51,7 @@ The names are owned elsewhere and are not redefined here:
 | `validate-openapi` (CLI) | contract.schema-validate | `validate_openapi_schema` † | none | Not fully implemented | The CLI exists, but the Tool wrapper and the `pre-construction` Hook are planned. |
 | `validate-openui`, `validate-project` | none | none | none | Existing | Outside the crosswalk. |
 | `ng_config`, `ng_material_setup`, `ng_build` | none | none | none | Existing | Outside the crosswalk. `ng_build` is the temporary `last-check` gate in `build_app`. |
-| `build_app` | orchestrator | all the OpenUI and API Tools | all, through the planned guided session | Not fully implemented | Static-configuration changes are not detected, `--force` is refused, and there is no schema-export step. It cannot derive OpenUI or OpenAPI steps for a workspace that does not exist yet. Guided Skill sessions are not implemented. |
+| `build_app` | orchestrator | all the OpenUI and API Tools | all, through the planned guided session | Not fully implemented | Static-configuration changes are not detected, and there is no schema-export step. It cannot derive OpenUI or OpenAPI steps for a workspace that does not exist yet. Guided Skill sessions are not implemented. |
 | `clean`, `distclean`, `install-tutorial` | none | none | none | Existing | Utility commands. |
 | none (tabs) | angular.tabs | `ngdj_add_tabs` | none | Missing | `build_app` runs `ng generate angular-django2:tabs` directly. |
 | none (dialog) | angular.dialog | `ngdj_add_dialog` | none | Missing | Same as tabs. |

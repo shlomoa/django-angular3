@@ -267,9 +267,8 @@ suite gets its own runner:
   `e2e/test-output/`.
 - The ports are fixed (Django 8000, Angular 4200), not allocated dynamically.
 - Visual targets and `DEMO.md` reproduction entries are not registered.
-- `build_app` from nothing (Track B phase 1) is not covered; it waits on
-  [#209](https://github.com/shlomoa/django-angular3/issues/209) and
-  previous-configuration discovery. The `ng_data_service` step of `build_app`
+- `build_app` from nothing (Track B phase 1) is covered by a dry run of the initial build (OpenUI and OpenAPI
+  baselines absent); a real run is not. The `ng_data_service` step of `build_app`
   also waits on [#207](https://github.com/shlomoa/django-angular3/issues/207).
 
 #### Findings of the first runs (2026-10-08)

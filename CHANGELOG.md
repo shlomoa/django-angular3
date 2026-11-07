@@ -8,6 +8,19 @@ package versions. Releases before this file are described on the
 
 ## [Unreleased]
 
+### Added
+
+- Initial build with no OpenUI baseline
+  ([shlomoa/django-angular3#209](https://github.com/shlomoa/django-angular3/issues/209)):
+  `compare_openui_files` accepts `reference=None` and emits `create` Changes for the root
+  element and each top-level child (`CHANGE_MODEL_CONTRACTS.md` §2.2.0), after validating
+  the candidate. `build_app` discovers the previous configuration (`--previous-config`, or
+  `.previous.json` next to the current one); without one, or with
+  `--force start-from-scratch` (now honored instead of refused), every domain is an
+  initial build. Translation runs each create-only command once: updates below a created
+  element join its create, and the `Application` and `html` root steps share the project
+  foundation steps.
+
 ### Changed
 
 - The `ng_data_service` step of `build_app` now gets its `path` as well as its `resource`

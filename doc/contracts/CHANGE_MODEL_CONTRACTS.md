@@ -91,6 +91,27 @@ A missing baseline initializes the relevant domain and emits `create` changes
 for the candidate state. For project artifact selectors, the selector change
 and the selected OpenAPI or OpenUI content change are separate facts.
 
+#### 2.2.0. Initial build: a missing OpenUI baseline
+
+Without a baseline (no previous configuration, or `--force start-from-scratch`) the
+OpenUI domain validates the candidate first and then emits `create` Changes at two
+levels, so each one is a command root of the ngdj mapping or sits directly under one:
+
+- the root element: `path` `""` (RFC 6901's pointer to the whole document; the
+  comparator has no path for a whole document), subject `openui:/`, `after` the root
+  element without its `children`;
+- each top-level child, sorted by id: `path` `/children/<id>` as an upstream `add`
+  entry names it, `after` the whole child with its subtree. Descendants have no Change
+  of their own, as for an upstream `add`.
+
+Translation then follows the same classification as for a compared pair. Two rules
+make an initial build run each create-only command once: an `update` of an element that
+the same change set creates (a `Route` below the created `Application`) is part of its
+create, and the foundation concerns that the project-configuration Changes and the
+OpenUI root elements both need are one step each: the `Application` step replaces
+`angular-app-composition` (it carries the element and the document), and the workspace
+foundation step runs the `html` root's `workspace-setup`.
+
 #### 2.2.1. Resource identity
 
 A **resource** is an OpenAPI tag. One key joins the three places that name it, so

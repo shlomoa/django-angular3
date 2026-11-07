@@ -23,10 +23,10 @@ python manage.py build_app [options]
 > parameters. OpenUI and OpenAPI changes get their steps from the
 > ngdj command mapping (§Change-to-command mapping). Without `--dry-run` the steps run
 > in order through their wrappers (§Step execution), halt at the first failure and
-> leave `build-evidence.json` in `--output`; `--force` is refused, not honored. The
+> leave `build-evidence.json` in `--output`; `--force start-from-scratch` ignores the previous configuration. The
 > `export_schema` wrapper has no invocation builder, so a schema export step is refused,
 > and a data service step cannot run until its `resource` is defined
-> ([shlomoa/django-angular3#207](https://github.com/shlomoa/django-angular3/issues/207)). Previous-configuration discovery, the
+> ([shlomoa/django-angular3#207](https://github.com/shlomoa/django-angular3/issues/207)). The
 > static-configuration change lane, the implementation of the deterministic TOOL
 > commands, hooks, and terminal validation are not implemented. This document
 > specifies the target behavior; it must not be read as a claim that those target
