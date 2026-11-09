@@ -113,6 +113,7 @@ The flow runs these stages; a failure names its stage:
 | 5 build | `ng_build` leaves a non-empty `dist/` |
 | 6 browser | Playwright specs P1 shell, P2 data alignment, P3 pagination, P4 failure path, against `runserver` and the Angular dev server (proxy to Django) |
 | 6b django-serves-build | Django alone serves the built bundle (`django_angular3.spa`, one origin, no proxy, no CORS): P1–P4 again plus D1 hard refresh on `/customers` and `/products`, D2 in-app navigation without a document request, D3 the API stays JSON and a wrong URL is a 404, D4 the admin stays Django, D5 one origin and no CORS headers, D6 assets served and a stale hash is a 404, then W1 sign-in through Django's session login, W2 a signed-in write through the generated client that must send the CSRF token, W3 and W4 its negative controls (the same write without the token is refused with 403, in the browser and through the API), W5 sign-out |
+| 6c demo-capture | The `demo-capture` Hook (`doc/contracts/HOOK_CONTRACTS.md`) captures the targets registered in `doc/contracts/DEMO.md` from Django serving the build: a full-page screenshot of each page, written to `build/e2e-evidence/demo` and uploaded with the evidence. A boot or capture failure fails the stage; a visual difference never does |
 | B build_app phase 2 | A changed OpenUI document and schema: the dry run derives the steps, the run succeeds |
 
 Track B starts from the workspace the wrappers created. `build_app` from nothing is covered by a
