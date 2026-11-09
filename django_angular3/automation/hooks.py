@@ -67,6 +67,25 @@ MAKEMIGRATIONS: Final = "makemigrations"
 PRE_CONSTRUCTION: Final = "pre-construction"
 MIGRATION_TRIGGERED: Final = "migration-triggered"
 POST_GENERATION: Final = "post-generation"
+DEMO_CAPTURE: Final = "demo-capture"
+DEMO_DIRECTORY: Final = "demo"
+#: Derived from "post-tool after post-generation for a Tool that produces a user-facing
+#: artifact" (``doc/plan/VERIFICATION_PLAN.md``): the application scaffold and the
+#: ngdj Tools that generate pages, components, forms and tables.
+DEMO_CAPTURE_TOOLS: Final = frozenset(
+    {
+        "angular_app_scaffold",
+        "ngdj_add_feature",
+        "ngdj_add_page",
+        "ngdj_add_component",
+        "ngdj_add_complex_component",
+        "ngdj_add_reactive_form",
+        "ngdj_add_tabs",
+        "ngdj_add_dialog",
+        "ngdj_add_stepper",
+        "ngdj_add_table",
+    }
+)
 SESSION_STOP: Final = "session-stop"
 
 Clock = Callable[[], str]
@@ -597,6 +616,145 @@ def _schema_version() -> str | None:
 
 
 # -- the default registry --------------------------------------------------------------
+
+
+# -- demo-capture ------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class DemoTarget:
+    """One row of the registry (``DEMO.md``): a page and its reproduction steps."""
+
+    name: str
+    url: str
+    server_command: str
+    fixture_setup: str
+    actions: str
+
+    def empty_fields(self) -> list[str]:
+        return [
+            label
+            for label, value in (
+                ("Target", self.name),
+                ("URL", self.url),
+                ("Server command", self.server_command),
+                ("Fixture setup", self.fixture_setup),
+                ("Actions", self.actions),
+            )
+            if not value.strip()
+        ]
+
+
+def demo_targets(demo_file: Path) -> list[DemoTarget]:
+    """The registered targets: the rows of the table in ``demo_file``."""
+    targets: list[DemoTarget] = []
+    for line in demo_file.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+        if len(cells) != 5 or set(cells[0]) <= {"-", ":", " "} or cells[0] == "Target":
+            continue
+        targets.append(DemoTarget(*cells))
+    return targets
+
+
+def demo_capture_hook(
+    demo_file: Path,
+    clock: Clock = utc_timestamp,
+    stderr: TextIO | None = None,
+) -> Callable[[ExecutionContext, HookObservation], None]:
+    """Capture every registered target and check its reproduction entry; never repairs.
+
+    The application must already run at each URL (the end-to-end flow boots it). One
+    entry per target goes to ``verification.log``; a failed capture or an incomplete
+    entry halts after all targets were tried. A visual difference is never a failure.
+    """
+
+    def run(context: ExecutionContext, observation: HookObservation) -> None:
+        tool = observation.tool or ""
+        try:
+            targets = demo_targets(demo_file)
+        except OSError as exc:
+            raise _fail(
+                DEMO_CAPTURE, context, stderr, f"{demo_file} cannot be read: {exc}"
+            ) from exc
+        log = context.output_dir / VERIFICATION_LOG
+        failed: list[str] = []
+        if not targets:
+            _append_line(
+                log,
+                {
+                    "hook": DEMO_CAPTURE,
+                    "tool": tool,
+                    "target": None,
+                    "pass": True,
+                    "details": "no registered target",
+                    "timestamp": clock(),
+                },
+            )
+        for target in targets:
+            passed, details, screenshot = True, "captured", None
+            if missing := target.empty_fields():
+                passed, details = (
+                    False,
+                    f"the DEMO.md entry has no {', '.join(missing)}",
+                )
+            else:
+                result = invoke_tool(
+                    "demo_capture",
+                    {
+                        "url": target.url,
+                        "output_dir": str(context.output_dir / DEMO_DIRECTORY),
+                    },
+                    context,
+                )
+                if result.failure is not None:
+                    passed, details = False, result.failure.message
+                else:
+                    screenshot = result.output["screenshot_path"]
+            if not passed:
+                failed.append(target.name)
+            _append_line(
+                log,
+                {
+                    "hook": DEMO_CAPTURE,
+                    "tool": tool,
+                    "target": target.name,
+                    "url": target.url,
+                    "pass": passed,
+                    "details": details,
+                    "screenshot_path": screenshot,
+                    "timestamp": clock(),
+                },
+            )
+        if failed:
+            raise _fail(
+                DEMO_CAPTURE,
+                context,
+                stderr,
+                f"the capture of {', '.join(failed)} failed; see {VERIFICATION_LOG}",
+                tool=tool,
+            )
+
+    return run
+
+
+def demo_capture_registration(
+    demo_file: Path,
+    tools: frozenset[str] = DEMO_CAPTURE_TOOLS,
+    clock: Clock = utc_timestamp,
+    stderr: TextIO | None = None,
+) -> HookRegistration:
+    """``demo-capture`` as a ``post-tool`` Hook scoped to ``tools``.
+
+    Register it after ``post-generation`` so that it runs only when that check passed.
+    """
+    return HookRegistration(
+        DEMO_CAPTURE,
+        HookFamily.POST_TOOL,
+        demo_capture_hook(demo_file, clock, stderr),
+        tools,
+    )
 
 
 def default_registry(

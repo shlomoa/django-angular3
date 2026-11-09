@@ -10,6 +10,14 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- The `demo-capture` capability: the Tool `demo_capture` (a full-page Playwright
+  screenshot of a running page; inputs `url` and `output_dir`), the `demo-capture` Hook
+  (`post-tool`; captures every target registered in `doc/contracts/DEMO.md`, checks that
+  each entry names the server command, fixture setup and actions, and halts on a failed
+  capture), and stage 6c of the end-to-end flow, which runs it against the Django-served
+  application and keeps the screenshots as CI artifacts
+  ([shlomoa/django-angular3#162](https://github.com/shlomoa/django-angular3/issues/162),
+  [shlomoa/django-angular3#163](https://github.com/shlomoa/django-angular3/issues/163)).
 - Tests that complete the validation lists of the Hook and Tool phases: the
   `post-generation` Hook with the real `tsc --noEmit` (skipped when `pnpm` or `tsc` is
   absent), golden snapshots of `hook-log.jsonl`, `verification.log` and

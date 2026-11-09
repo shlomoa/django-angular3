@@ -105,10 +105,10 @@ For each registered user-facing artifact type, verification must:
 
 ### Lifecycle enforcement
 
-The planned deterministic `demo-capture` Tool and Hook are tracked by issues
-#162 and #163. Before implementation, the normative Hook contract must be
-added to `doc/contracts/HOOK_CONTRACTS.md` using its canonical seven-field
-shape. This plan constrains that future contract as follows:
+The deterministic `demo-capture` Tool (`demo_capture`) and Hook have their contracts in
+`doc/contracts/TOOL_CONTRACTS.md` and `doc/contracts/HOOK_CONTRACTS.md`, built on the
+canonical seven-field shape; the registered targets and their reproduction steps are in
+`doc/contracts/DEMO.md`. This plan constrains the contract as follows:
 
 | Field | Planning constraint |
 |---|---|
@@ -120,9 +120,9 @@ shape. This plan constrains that future contract as follows:
 | Allowed wrapped tools | The catalogued generation Tools that produce user-facing artifacts, plus catalogued dev-server and headless-browser Tools defined by #162. |
 | Implementation reference | The implementation delivered through #162 and #163. |
 
-Until the Hook exists, repository CI provides the same deterministic boot,
-capture, artifact-upload, and reproduction-documentation gate. The Hook later
-absorbs that enforcement without changing its acceptance semantics.
+The Hook is not in the default registry yet; the end-to-end flow (stage 6c of
+`tests/e2e/run_e2e.py`) runs it against the Django-served application and CI uploads
+the screenshots.
 
 ### Explicit exclusions
 

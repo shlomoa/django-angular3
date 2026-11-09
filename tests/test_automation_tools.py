@@ -5,7 +5,9 @@ External binaries (``oasdiff``, ``ng``, ``pnpm``) are replaced by a stand-in for
 installed Angular CLI.
 """
 
+import dataclasses
 import json
+import os
 import re
 import sys
 import types
@@ -16,6 +18,7 @@ from unittest.mock import patch
 from django.test import override_settings
 
 from django_angular3 import command_execution
+from django_angular3 import tools as tools_module
 from django_angular3.automation import tools as automation_tools
 from django_angular3.automation.contracts import ContractError, FailureCategory
 from django_angular3.automation.execution import (
@@ -371,6 +374,125 @@ def _drf_urlconf() -> types.ModuleType:
     module = types.ModuleType("tests_drf_urlconf")
     module.urlpatterns = [path("api/v1/customers/", CustomersView.as_view())]
     return module
+
+
+class DemoCaptureTests(ToolTestCase):
+    def capture(self, handler=None, **inputs):
+        return self.invoke(
+            "demo_capture",
+            {"url": "http://127.0.0.1:8000/customers", "output_dir": str(self.out)}
+            | inputs,
+            handler,
+        )
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.out = self.root / "demo"
+
+    def writes_png(self, argv, cwd):
+        Path(argv[-1]).write_bytes(b"png")
+        return command_execution.CommandResult(0, "", "")
+
+    def test_it_captures_the_full_page_and_names_the_file_from_the_url(self) -> None:
+        result = self.capture(self.writes_png)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertEqual(
+            result.output["screenshot_path"],
+            str(self.out / "127.0.0.1-8000-customers.png"),
+        )
+        self.assertEqual(result.output["url"], "http://127.0.0.1:8000/customers")
+        argv = self.calls[0]
+        self.assertEqual(argv[1], "-e")
+        self.assertIn("fullPage: true", argv[2])
+        self.assertIn("E2E_CHROMIUM_PATH", argv[2])
+        self.assertEqual(argv[-2], "http://127.0.0.1:8000/customers")
+        self.assertTrue((self.out / "127.0.0.1-8000-customers.png").is_file())
+
+    def test_a_dry_run_starts_nothing_and_writes_nothing(self) -> None:
+        self.context = dataclasses.replace(self.context, dry_run=True)
+
+        result = self.capture()
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertEqual(self.calls, [])
+        self.assertFalse(self.out.exists())
+        self.assertIn("<capture script>", result.output["command"])
+
+    def test_a_url_that_is_not_http_is_invalid_input(self) -> None:
+        result = self.capture(url="file:///etc/passwd")
+
+        self.assertEqual(result.failure.category, FailureCategory.INVALID_INPUT)
+        self.assertEqual(self.calls, [])
+
+    def test_a_failing_browser_is_an_external_tool_failure(self) -> None:
+        result = self.capture(
+            lambda argv, cwd: command_execution.CommandResult(1, "", "unreachable")
+        )
+
+        self.assertEqual(result.failure.category, FailureCategory.EXTERNAL_TOOL_FAILED)
+
+    def test_a_command_that_writes_nothing_is_output_invalid(self) -> None:
+        result = self.capture(
+            lambda argv, cwd: command_execution.CommandResult(0, "", "")
+        )
+
+        self.assertEqual(result.failure.category, FailureCategory.OUTPUT_INVALID)
+
+
+def _real_oasdiff_available() -> bool:
+    try:
+        tools_module.ensure_oasdiff()
+    except OasdiffUnavailableError:
+        return False
+    return True
+
+
+@unittest.skipUnless(
+    os.environ.get("DJNG_REAL_OASDIFF") == "1",
+    "set DJNG_REAL_OASDIFF=1 (needs the oasdiff binary, on PATH or downloadable)",
+)
+class RealOasdiffTests(ToolTestCase):
+    """``oasdiff_diff`` and ``oasdiff_changelog`` with the real ``oasdiff`` binary."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        if not _real_oasdiff_available():
+            self.skipTest("the oasdiff binary is not available")
+        self.previous = self.write_schema("previous.json")
+        changed = json.loads(self.previous.read_text("utf-8"))
+        changed["paths"]["/api/v1/orders/"] = {
+            "get": {"responses": {"200": {"description": "ok"}}}
+        }
+        self.current = self.write_schema("current.json", changed)
+        self.pair = {
+            "current_schema": str(self.current),
+            "previous_schema": str(self.previous),
+        }
+
+    def test_a_changed_schema_is_reported_with_its_added_path(self) -> None:
+        result = invoke_tool("oasdiff_diff", self.pair, self.context)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertIs(result.output["schema_changed"], True)
+        self.assertIn("orders", result.output["affected_resources"])
+        self.assertTrue(Path(result.output["report_path"]).is_file())
+
+    def test_an_unchanged_schema_reports_no_change(self) -> None:
+        pair = {**self.pair, "current_schema": str(self.previous)}
+
+        result = invoke_tool("oasdiff_diff", pair, self.context)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertIs(result.output["schema_changed"], False)
+
+    def test_the_changelog_names_the_added_path(self) -> None:
+        result = invoke_tool("oasdiff_changelog", self.pair, self.context)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertIn(
+            "/api/v1/orders/", Path(result.output["changelog_path"]).read_text("utf-8")
+        )
 
 
 class RealExportTests(ToolTestCase):

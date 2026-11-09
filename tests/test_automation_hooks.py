@@ -37,6 +37,8 @@ from django_angular3.automation.hooks import (
     HookRegistry,
     command_identity,
     default_registry,
+    demo_capture_registration,
+    demo_targets,
     observation_from_provider,
     snapshot_migrations,
 )
@@ -498,6 +500,196 @@ class GoldenLogTests(unittest.TestCase):
             with self.subTest(name=name):
                 golden = (GOLDEN_DIR / name).read_bytes()
                 self.assertEqual(text.encode("utf-8"), golden)
+
+
+ROW = "| {name} | {url} | `serve` | `seed` | Open the URL. |\n"
+TABLE = (
+    "| Target | URL | Server command | Fixture setup | Actions |\n"
+    "|---|---|---|---|---|\n"
+)
+
+
+class DemoCaptureHookTests(HookTestCase):
+    def register(self, rows: str) -> None:
+        self.demo = self.root / "DEMO.md"
+        self.demo.write_text("# Demo\n\n" + TABLE + rows, encoding="utf-8")
+        self.registry.register(
+            demo_capture_registration(
+                self.demo,
+                frozenset({"angular_app_scaffold"}),
+                lambda: "20260101T000000Z",
+                self.stderr,
+            )
+        )
+
+    def run_scaffold(self, capture):
+        def scaffold(context, inputs):
+            name = self.project.project_config.project_name
+            (self.project.workspace / "projects" / name / "src").mkdir(
+                parents=True, exist_ok=True
+            )
+            return {"generated_files": []}
+
+        calls = []
+
+        def run(argv, cwd=None, check=True, **_):
+            calls.append(list(argv))
+            return capture(list(argv))
+
+        with patch(
+            "django_angular3.automation.tools.command_execution.run_command", run
+        ):
+            result = self.executor().run([ToolCall("angular_app_scaffold", scaffold)])
+        return result, calls
+
+    @staticmethod
+    def writes_png(argv):
+        Path(argv[-1]).write_bytes(b"png")
+        return command_execution.CommandResult(0, "", "")
+
+    def entries(self) -> list[dict]:
+        return [e for e in self.log(VERIFICATION_LOG) if e["hook"] == "demo-capture"]
+
+    def test_the_registry_is_the_rows_of_the_table(self) -> None:
+        self.register(
+            ROW.format(name="home", url="http://127.0.0.1:8000/")
+            + ROW.format(name="customers", url="http://127.0.0.1:8000/customers")
+        )
+
+        targets = demo_targets(self.demo)
+
+        self.assertEqual([t.name for t in targets], ["home", "customers"])
+        self.assertEqual(targets[0].server_command, "serve")
+        self.assertEqual(targets[0].empty_fields(), [])
+
+    def test_the_committed_registry_has_complete_rows(self) -> None:
+        targets = demo_targets(ROOT / "doc" / "contracts" / "DEMO.md")
+
+        self.assertTrue(targets)
+        for target in targets:
+            self.assertEqual(target.empty_fields(), [], target.name)
+
+    def test_every_target_is_captured_after_post_generation_and_logged(self) -> None:
+        self.register(
+            ROW.format(name="home", url="http://127.0.0.1:8000/")
+            + ROW.format(name="customers", url="http://127.0.0.1:8000/customers")
+        )
+
+        result, calls = self.run_scaffold(self.writes_png)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual([e["target"] for e in self.entries()], ["home", "customers"])
+        self.assertTrue(all(e["pass"] for e in self.entries()))
+        self.assertTrue(Path(self.entries()[0]["screenshot_path"]).is_file())
+        post = [e for e in self.log(VERIFICATION_LOG) if e["hook"] == "post-generation"]
+        self.assertEqual(len(post), 1)
+
+    def test_a_failed_capture_halts_after_all_targets_were_tried(self) -> None:
+        self.register(
+            ROW.format(name="home", url="http://127.0.0.1:8000/")
+            + ROW.format(name="customers", url="http://127.0.0.1:8000/customers")
+        )
+
+        result, calls = self.run_scaffold(
+            lambda argv: command_execution.CommandResult(1, "", "refused")
+        )
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.exit_code, EXIT_HOOK_FAILURE)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual([e["pass"] for e in self.entries()], [False, False])
+        self.assertEqual(self.log()[-1]["hook"], "demo-capture")
+
+    def test_an_incomplete_entry_fails_without_a_capture(self) -> None:
+        self.register("| home | http://127.0.0.1:8000/ | | `seed` | Open. |\n")
+
+        result, calls = self.run_scaffold(self.writes_png)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(calls, [])
+        self.assertIn("Server command", self.entries()[0]["details"])
+
+    def test_it_does_not_run_when_post_generation_fails(self) -> None:
+        self.register(ROW.format(name="home", url="http://127.0.0.1:8000/"))
+
+        def scaffold(context, inputs):
+            return {"generated_files": []}
+
+        result = self.executor().run([ToolCall("angular_app_scaffold", scaffold)])
+
+        self.assertFalse(result.ok)
+        self.assertEqual(self.entries(), [])
+
+    def test_no_registered_target_passes_and_says_so(self) -> None:
+        self.register("")
+
+        result, calls = self.run_scaffold(self.writes_png)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertEqual(calls, [])
+        self.assertEqual(self.entries()[0]["details"], "no registered target")
+
+    def test_it_is_not_in_the_default_registry(self) -> None:
+        names = {b.name for b in default_registry().bindings()}
+
+        self.assertNotIn("demo-capture", names)
+
+
+def _playwright_module_available() -> bool:
+    node = shutil.which("node")
+    if node is None:
+        return False
+    probe = subprocess.run(
+        [node, "-e", "require('playwright')"], capture_output=True, check=False
+    )
+    return probe.returncode == 0
+
+
+@unittest.skipUnless(
+    _playwright_module_available(), "node or the playwright module is absent"
+)
+class RealDemoCaptureTests(HookTestCase):
+    def test_a_served_page_is_captured_with_the_real_browser(self) -> None:
+        import http.server
+        import threading
+
+        site = self.root / "site"
+        site.mkdir()
+        (site / "index.html").write_text("<h1>Demo</h1>", encoding="utf-8")
+
+        class Quiet(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=str(site), **kwargs)
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Quiet)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        url = f"http://127.0.0.1:{server.server_address[1]}/"
+        demo = self.root / "DEMO.md"
+        demo.write_text(TABLE + ROW.format(name="home", url=url), encoding="utf-8")
+        self.registry.register(
+            demo_capture_registration(
+                demo, frozenset({"angular_app_scaffold"}), lambda: "t", self.stderr
+            )
+        )
+
+        def scaffold(context, inputs):
+            name = self.project.project_config.project_name
+            (self.project.workspace / "projects" / name / "src").mkdir(parents=True)
+            return {"generated_files": []}
+
+        result = self.executor().run([ToolCall("angular_app_scaffold", scaffold)])
+
+        self.assertTrue(result.ok, result.failure)
+        entry = [e for e in self.log(VERIFICATION_LOG) if e["hook"] == "demo-capture"][
+            0
+        ]
+        self.assertTrue(Path(entry["screenshot_path"]).stat().st_size > 0)
 
 
 class SessionStopTests(HookTestCase):
