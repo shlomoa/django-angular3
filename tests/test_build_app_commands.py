@@ -224,6 +224,7 @@ class ControllerTests(CommandBoundaryTestCase):
                 "angular_workspace_scaffold",
                 "angular_app_scaffold",
                 "ngdj_add_page",
+                "client-alignment",
                 "last-check",
             ],
         )

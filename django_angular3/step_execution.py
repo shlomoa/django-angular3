@@ -26,6 +26,7 @@ from .automation.execution import (
     ToolCall,
     ToolFunction,
 )
+from .client_alignment import CLIENT_ALIGNMENT_COMMAND, check_client_alignment
 from .command_translation import AppBuildStep
 from .config import ProjectConfig
 from .ngdj_command_mapping import CommandMapping
@@ -322,6 +323,8 @@ def _run_step(
     step = record.step
     if step.command == SITE_SOURCES_COMMAND:
         return _run_site_sources(record, project_config)
+    if step.command == CLIENT_ALIGNMENT_COMMAND:
+        return _run_client_alignment(record, project_config)
     try:
         if "document" in step.parameters:
             stage_document(project_config)
@@ -349,6 +352,24 @@ def _run_site_sources(record: StepRecord, project_config: ProjectConfig) -> bool
     record.invocations.append(
         InvocationRecord(argv, "", 0, stdout="\n".join(copied)[-_OUTPUT_TAIL:])
     )
+    record.status = STATUS_SUCCEEDED
+    return True
+
+
+def _run_client_alignment(record: StepRecord, project_config: ProjectConfig) -> bool:
+    """The alignment check: no subprocess, the summary is the recorded output."""
+    errors, summary = check_client_alignment(project_config)
+    argv = (CLIENT_ALIGNMENT_COMMAND, str(project_config.openapi_schema))
+    if errors:
+        message = (
+            "The generated client does not match the OpenAPI contract: "
+            + "; ".join(errors)
+        )
+        record.invocations.append(
+            InvocationRecord(argv, "", 1, stderr=message[-_OUTPUT_TAIL:])
+        )
+        return _fail(record, message)
+    record.invocations.append(InvocationRecord(argv, "", 0, stdout=summary))
     record.status = STATUS_SUCCEEDED
     return True
 

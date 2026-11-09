@@ -38,8 +38,11 @@ python manage.py build_app [options]
 > previous configuration. Not implemented: the steps still run through their wrappers
 > rather than the structured Tool implementations of the catalog, the schema export step
 > (the `export_schema` wrapper has no invocation builder), the `migration-triggered`
-> Hook (no step runs `makemigrations`), terminal validation beyond the `ng_build` of the
-> `last-check` gate, and global acceptance (FR-10). Update and delete changes, and
+> Hook (no step runs `makemigrations`), the runtime smoke and the type, lint and test
+> checks of the global acceptance (FR-10). Before the `last-check` gate (`ng_build`) a
+> `client-alignment` step checks that every schema of the exported OpenAPI contract is
+> declared in the generated models and every operation has a generated service method;
+> a project without `ng-openapi-gen.json` has no client to align. Update and delete changes, and
 > `move`, fail explicitly. This document specifies the target behavior; it must not be
 > read as a claim that those target behaviors are already available.
 

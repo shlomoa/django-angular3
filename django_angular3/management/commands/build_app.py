@@ -24,6 +24,7 @@ from django_angular3.automation.hooks import (
     utc_timestamp,
 )
 from django_angular3.changes import Change, ChangeDomain, ChangeDomainResult, ChangeSet
+from django_angular3.client_alignment import with_client_alignment_step
 from django_angular3.command_translation import (
     AppBuildStep,
     CommandTranslationError,
@@ -407,13 +408,15 @@ class ChangeExecution:
         logger.debug("Executing change set")
         try:
             settings = settings or load_angular_settings()
-            steps = with_site_sources_step(
-                resolve_steps(
-                    self._translate_change_set(change_set, mapping),
+            steps = with_client_alignment_step(
+                with_site_sources_step(
+                    resolve_steps(
+                        self._translate_change_set(change_set, mapping),
+                        project_config,
+                        mapping,
+                    ),
                     project_config,
-                    mapping,
-                ),
-                project_config,
+                )
             )
         except (
             StepBridgeError,

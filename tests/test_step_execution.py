@@ -542,6 +542,7 @@ class DryRunTests(unittest.TestCase):
                 (1, "angular-workspace-foundation", "ng_workspace"),
                 (2, "angular-app-composition", "ng_gen_app"),
                 (10, "ngdj_add_page", "ng_page"),
+                (11, "client-alignment", "check_client_alignment"),
                 (12, "last-check", "ng_build"),
             ],
         )
@@ -968,7 +969,7 @@ class RealRunTests(unittest.TestCase):
         )
         self.assertEqual(
             [s["status"] for s in evidence["steps"]],
-            ["succeeded", "failed", "skipped", "skipped"],
+            ["succeeded", "failed", "skipped", "skipped", "skipped"],
         )
         self.assertEqual(evidence["steps"][1]["invocations"][0]["returncode"], 3)
 
