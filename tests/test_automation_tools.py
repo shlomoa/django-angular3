@@ -7,9 +7,13 @@ installed Angular CLI.
 
 import json
 import re
+import sys
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+
+from django.test import override_settings
 
 from django_angular3 import command_execution
 from django_angular3.automation import tools as automation_tools
@@ -346,6 +350,56 @@ class SchemaToolTests(ToolTestCase):
         self.assertTrue(result.ok)
         self.assertFalse(out.exists())
         self.assertEqual(self.calls, [])
+
+
+def _drf_urlconf() -> types.ModuleType:
+    """A one-endpoint DRF URLconf, as a module the settings can name."""
+    from django.urls import path
+    from rest_framework import serializers
+    from rest_framework.generics import GenericAPIView
+    from rest_framework.response import Response
+
+    class CustomerSerializer(serializers.Serializer):
+        name = serializers.CharField()
+
+    class CustomersView(GenericAPIView):
+        serializer_class = CustomerSerializer
+
+        def get(self, request):
+            return Response([])
+
+    module = types.ModuleType("tests_drf_urlconf")
+    module.urlpatterns = [path("api/v1/customers/", CustomersView.as_view())]
+    return module
+
+
+class RealExportTests(ToolTestCase):
+    """The export and the validator with the real drf-spectacular and validator."""
+
+    def test_the_exported_schema_passes_the_real_validator(self) -> None:
+        sys.modules["tests_drf_urlconf"] = _drf_urlconf()
+        self.addCleanup(sys.modules.pop, "tests_drf_urlconf", None)
+        destination = self.project.project_config.openapi_schema
+        destination.unlink(missing_ok=True)
+
+        with override_settings(
+            INSTALLED_APPS=["rest_framework", "drf_spectacular"],
+            ROOT_URLCONF="tests_drf_urlconf",
+            REST_FRAMEWORK={
+                "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema"
+            },
+        ):
+            exported = invoke_tool("openapi_schema_export", {}, self.context)
+            validated = invoke_tool(
+                "validate_openapi_schema", {"schema": str(destination)}, self.context
+            )
+
+        self.assertTrue(exported.ok, exported.failure)
+        self.assertIn(
+            "/api/v1/customers/", json.loads(destination.read_text("utf-8"))["paths"]
+        )
+        self.assertTrue(validated.ok, validated.failure)
+        self.assertIs(validated.output["valid"], True, validated.output["errors"])
 
 
 class ExportTests(ToolTestCase):
