@@ -144,7 +144,11 @@ and one entry per step:
 | 2 | `angular_app_scaffold` | update | `ng_gen_app` (`material-app`) | `crmApp` (the new navigation item) |
 | 2 | `angular_app_scaffold` | update | `ng_gen_app` (`material-app`) | `crmApp` (the new route) |
 | 10 | `ngdj_add_page` | create | `ng_page` (`page`) | `ordersPage` |
+| 11 | `client-alignment` | validate | `check_client_alignment` | |
 | 12 | `last-check` | validate | `ng_build` | |
+
+The `client-alignment` step checks that the generated Angular client declares every schema and
+operation of the exported OpenAPI contract.
 
 The new route and navigation item change the `Application`, so the application is
 regenerated: only the text
