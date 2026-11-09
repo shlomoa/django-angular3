@@ -675,7 +675,7 @@ class DryRunTests(unittest.TestCase):
         self.assertIn("--output-path=projects/shop/src/app/api", argv)
         self.assertIn("--helpers-path=projects/shop/src/app/api-integration", argv)
 
-    def test_the_dry_run_of_the_poc_contract_binds_basic_and_the_v1_resource(
+    def test_the_dry_run_of_a_versioned_basic_contract_binds_basic_and_the_v1_resource(
         self,
     ) -> None:
         report = json.loads(
@@ -685,7 +685,7 @@ class DryRunTests(unittest.TestCase):
                     / "tests"
                     / "fixtures"
                     / "service-names"
-                    / "gardens.schema.yaml"
+                    / "contract.openapi.json"
                 ),
                 dry_run=True,
             )

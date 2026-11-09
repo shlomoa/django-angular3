@@ -1,12 +1,12 @@
 """Generate ``tests/fixtures/service-names``: the real ``ng-openapi-gen`` class names.
 
-The fixture holds the reviewed user-management contract of ``specialized-gardens``
-(``gardens.schema.yaml``, copied) and a document with one operation per tag shape
-(``tags.openapi.json``, built here), and for each the service classes the real
+The fixture holds a generic versioned contract with basic authentication
+(``contract.openapi.json``) and a document with one operation per tag shape
+(``tags.openapi.json``), both built here, and for each the service classes the real
 ``ng-openapi-gen`` generated (``*.services.json``). All are generated, never edited by
 hand::
 
-    python -m tests.generate_service_names [--schema PATH]
+    python -m tests.generate_service_names
 
 It needs ``node`` and ``npm`` and installs ``ng-openapi-gen`` into a temporary
 directory. ``tests/test_resource_identity.py`` checks the rule against the output.
@@ -17,7 +17,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -44,6 +43,41 @@ def tags_document() -> dict[str, Any]:
         "openapi": "3.0.3",
         "info": {"title": "Tags", "version": "1.0.0"},
         "paths": paths,
+    }
+
+
+def contract_document() -> dict[str, Any]:
+    """A versioned contract with basic authentication and one resource, ``v1``."""
+    ok = {"200": {"description": "ok"}}
+    tags = ["v1"]
+    secured = [{"basicAuth": []}]
+    return {
+        "openapi": "3.0.3",
+        "info": {"title": "Sample API", "version": "1.0.0"},
+        "paths": {
+            "/api/v1/auth/register/": {
+                "post": {"operationId": "auth_register", "tags": tags, "responses": ok}
+            },
+            "/api/v1/auth/me/": {
+                "get": {
+                    "operationId": "auth_me",
+                    "tags": tags,
+                    "responses": ok,
+                    "security": secured,
+                }
+            },
+            "/api/v1/items/": {
+                "get": {
+                    "operationId": "v1_items_list",
+                    "tags": tags,
+                    "responses": ok,
+                    "security": secured,
+                }
+            },
+        },
+        "components": {
+            "securitySchemes": {"basicAuth": {"type": "http", "scheme": "basic"}}
+        },
     }
 
 
@@ -78,18 +112,11 @@ def generated_classes(input_file: Path, work: Path) -> list[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--schema",
-        type=Path,
-        default=Path(__file__).resolve().parents[2]
-        / "specialized-gardens"
-        / "gen"
-        / "source"
-        / "schema.yaml",
-    )
-    args = parser.parse_args()
+    parser.parse_args()
     FIXTURES.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(args.schema, FIXTURES / "gardens.schema.yaml")
+    (FIXTURES / "contract.openapi.json").write_text(
+        json.dumps(contract_document(), indent=2) + "\n", encoding="utf-8"
+    )
     (FIXTURES / "tags.openapi.json").write_text(
         json.dumps(tags_document(), indent=2) + "\n", encoding="utf-8"
     )
@@ -99,7 +126,7 @@ def main() -> None:
         subprocess.run(
             ["npm", "install", GENERATOR], cwd=work, check=True, capture_output=True
         )
-        for name in ("gardens.schema.yaml", "tags.openapi.json"):
+        for name in ("contract.openapi.json", "tags.openapi.json"):
             classes = generated_classes(FIXTURES / name, work)
             target = FIXTURES / f"{name.split('.')[0]}.services.json"
             target.write_text(

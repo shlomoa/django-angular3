@@ -41,9 +41,9 @@ class GeneratedServiceNameTests(unittest.TestCase):
         self.assertEqual(expected, generated - {"MyTagXApiService"})
         self.assertEqual(resource_identity("path:/p5/", document).resource, "api")
 
-    def test_the_reviewed_contract_has_one_resource_named_v1(self) -> None:
-        document = load_document(FIXTURES / "gardens.schema.yaml")
-        generated = _generated("gardens.services.json")
+    def test_the_versioned_contract_has_one_resource_named_v1(self) -> None:
+        document = load_document(FIXTURES / "contract.openapi.json")
+        generated = _generated("contract.services.json")
 
         identities = {
             subject: resource_identity(subject, document)
