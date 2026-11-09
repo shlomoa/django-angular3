@@ -237,6 +237,48 @@ generation tool contract.
 
 **Implementation reference**: `django_angular3/automation/hooks.py:post_generation_hook`, registered by `default_registry()`. The `angular_api_client_generate` check runs `pnpm exec tsc --noEmit` in the workspace through `command_execution`; the scaffold checks assert `angular.json` and `package.json` (workspace) or `projects/<project>/src` (application). Entries go to `verification.log`.
 
+#### 5. `demo-capture` — visual capture and reproduction check
+
+**Name**: `demo-capture`
+
+**Purpose**: Prove that a user-facing construction output renders and remains locally
+reproducible.
+
+**Trigger event**: `post-tool`, after `post-generation` succeeds for a Tool that
+produces a user-facing artifact.
+
+**Deterministic action**:
+
+1. Read the registered targets, the rows of the table in
+   [DEMO.md](DEMO.md) (`doc/contracts/DEMO.md`).
+2. For each target, check that its row names the URL, the server command, the fixture
+   setup and the actions, then invoke the `demo_capture` Tool with the URL and
+   `build/demo/` as `output_dir`. The application already runs at the URL: the
+   end-to-end Django-served run (`tests/e2e/run_e2e.py`, stage 6c) boots it with the seeded
+   data.
+3. Append one entry `{ hook: "demo-capture", tool, target, url, pass: bool, details,
+   screenshot_path, timestamp }` per target to `build/verification.log`. The screenshots
+   are uploaded as CI artifacts.
+
+**Failure behavior**:
+
+- A target that cannot be captured, or whose entry is incomplete, is logged with
+  `pass: false`; after all targets were tried the hook writes
+  `{ hook, category, message, tool }` to stderr and `build/hook-log.jsonl` and fails with
+  the dedicated hook-failure exit code, which halts the `build_app` run (`post-tool`).
+- The hook MUST NOT compare pixels or invoke AI judgment; a visual difference is never a
+  failure.
+- The hook MUST NOT modify the generated artifacts.
+
+**Allowed wrapped tools**: the catalogued generation Tools that produce a user-facing
+artifact (`angular_app_scaffold`, `ngdj_*` page and component Tools) and the
+`demo_capture` Tool.
+
+**Implementation reference**: `django_angular3/automation/hooks.py:demo_capture_hook`,
+registered with `demo_capture_registration(demo_file, tools)`. It is not in
+`default_registry()`: the Tools that count as producing a user-facing artifact are not
+decided yet.
+
 ### Session lifecycle
 
 #### 4. `session-stop` — archiving and audit cleanup

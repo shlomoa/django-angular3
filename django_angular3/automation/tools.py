@@ -17,9 +17,11 @@ import importlib
 import json
 import re
 import shlex
+import shutil
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any, Final, cast
+from urllib.parse import urlsplit
 
 from .. import angular, command_execution, tools
 from ..config import ConfigError, ProjectConfig, get_previous_schema_path
@@ -522,6 +524,50 @@ def oasdiff_changelog(
         "schema_changed": changed,
         "command": command,
     }
+
+
+# -- Visual capture -------------------------------------------------------------------
+
+
+def screenshot_name(url: str) -> str:
+    """The file name of the capture of ``url``: host, port and path, made file-safe."""
+    parts = urlsplit(url)
+    raw = f"{parts.netloc}{parts.path}".strip("/")
+    return re.sub(r"[^A-Za-z0-9.]+", "-", raw).strip("-") + ".png"
+
+
+def _playwright_argv() -> list[str]:
+    found = shutil.which("playwright")
+    if found:
+        return [found]
+    npx = shutil.which("npx") or "npx"
+    return [npx, "--no-install", "playwright"]
+
+
+def demo_capture(
+    context: ExecutionContext, inputs: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    """Full-page screenshot of a running page with the Playwright command line."""
+    tool = "demo_capture"
+    url = str(inputs["url"])
+    if urlsplit(url).scheme not in {"http", "https"} or not urlsplit(url).netloc:
+        raise invalid(tool, f"url {url!r} is not an http(s) URL", field="url")
+    output_dir = Path(inputs["output_dir"])
+    target = output_dir / screenshot_name(url)
+    argv = [*_playwright_argv(), "screenshot", "--full-page", url, str(target)]
+    command = shlex.join(argv)
+    if _dry(context, inputs):
+        return {"screenshot_path": str(target), "url": url, "command": command}
+    output_dir.mkdir(parents=True, exist_ok=True)
+    target.unlink(missing_ok=True)
+    _run(tool, argv, output_dir)
+    if not target.is_file() or target.stat().st_size == 0:
+        raise ContractError(
+            FailureCategory.OUTPUT_INVALID,
+            f"{tool}: the capture of {url} produced no screenshot at {target}",
+            {"tool": tool, "url": url},
+        )
+    return {"screenshot_path": str(target), "url": url, "command": command}
 
 
 # -- Angular generation wrappers ----------------------------------------------------

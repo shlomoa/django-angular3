@@ -856,6 +856,44 @@ Skill session), CLI. Not a HOOK target.
 
 **Implementation reference**: `django_angular3/automation/tools.py:ngdj_add_table`. No operator wrapper exists: the Tool runs the `table` command of the ngdj command mapping through `build_ngdj_schematic_invocations`. Without `node_id` the first element the command compiles, in document order, is used; `document` is workspace-relative.
 
+#### 19. `demo_capture` — full-page screenshot of a running page
+
+**Name**: `demo_capture`
+
+**Purpose**: Capture one full-page screenshot of a page that is already running, with a
+headless browser and no AI judgment, as the visual evidence of a user-facing artifact
+(`doc/plan/VERIFICATION_PLAN.md`, "Visual and interactive verification"). The Tool
+does not boot the application: the end-to-end Django-served run boots it.
+
+**Inputs**:
+
+| Key | Required | Type | Default | Description |
+|---|---|---|---|---|
+| `url` | yes | string (http or https URL) | — | The page to capture. |
+| `output_dir` | yes | string (path) | — | Directory the screenshot is written to; created when missing. |
+
+**Outputs**:
+
+| Key | Type | Description |
+|---|---|---|
+| `screenshot_path` | string (path) | The PNG, named from the host, port and path of `url` inside `output_dir`. |
+| `url` | string | The captured URL. |
+| `command` | string | Exact Playwright command line invoked. |
+
+**Error behavior**: Non-zero exit / raised `ToolError` with `category` in
+`{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
+`invalid_input` includes a `url` that is not an http(s) URL. `external_tool_failed`
+covers a page that cannot be reached and a failing browser. `output_invalid` applies when
+the command succeeds but writes no screenshot. A screenshot is never compared with
+another: a visual difference is not an error.
+
+**Allowed invocation context**: HOOK (`demo-capture`), CLI, the end-to-end flow. Not a
+`build_app` step.
+
+**Implementation reference**: `django_angular3/automation/tools.py:demo_capture`. It runs
+`playwright screenshot --full-page <url> <file>` through `command_execution`; the
+`playwright` command is the one on `PATH`, else `npx --no-install playwright`.
+
 ### Executable form
 
 The catalog is executable in `django_angular3/automation/tool_catalog.py` (names,
@@ -865,8 +903,8 @@ compares the catalog with the tables above, so a change to either side without t
 other fails. A Tool validates its inputs against the table first: a missing required
 key, an unknown key or a value of the wrong type is `invalid_input`. With `dry_run`,
 outputs that only generation can resolve are `null`. Processes start only through
-`command_execution`. The `demo-capture` capability has no contract in this catalog yet
-and is not implemented.
+`command_execution`. The `demo-capture` capability is the Tool `demo_capture` (§19); its Hook keeps the name
+`demo-capture`.
 
 ### Contract compliance
 

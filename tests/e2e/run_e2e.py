@@ -57,6 +57,7 @@ import sys
 import tempfile
 import time
 import unittest
+import urllib.request
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from importlib import metadata
@@ -68,6 +69,12 @@ from django_angular3.angular import (
     angular_browser_output_dir,
     build_ngdj_schematic_invocations,
 )
+from django_angular3.automation.execution import (
+    DirectExecutor,
+    ExecutionContext,
+    ToolCall,
+)
+from django_angular3.automation.hooks import demo_capture_registration, demo_targets
 from django_angular3.config import load_project_config
 from django_angular3.settings import load_angular_settings
 from django_angular3.step_bridge import stage_document, workspace_document_path
@@ -173,6 +180,18 @@ _CI_MARKERS = (
     "GITHUB_ACTIONS",
 )
 _NODE_VERSION = re.compile(r"v?(\d+)\.(\d+)\.(\d+)")
+
+
+@contextlib.contextmanager
+def mock_environment(env: dict[str, str]) -> Iterator[None]:
+    """Run with ``env`` as the process environment (the Tool resolves ``playwright``)."""
+    saved = dict(os.environ)
+    os.environ.update(env)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(saved)
 
 
 class StageFailure(AssertionError):
@@ -1006,6 +1025,67 @@ class Flow:
             timeout=1500,
         )
 
+    # -- stage 6c ----------------------------------------------------------------------
+
+    def stage_6c_demo_capture(self) -> None:
+        """Capture the registered demo targets from Django serving the build.
+
+        The ``demo-capture`` Hook (``doc/contracts/HOOK_CONTRACTS.md``) runs after a
+        generation Tool; this stage runs it against the production-like topology, so the
+        application it captures is the one stage 6b tested. Django alone is started with
+        the seeded data and stopped again; the screenshots go to
+        ``build/e2e-evidence/demo`` as CI artifacts. A boot or capture failure fails the
+        stage; a visual difference never does.
+        """
+        demo_file = REPOSITORY / "doc" / "contracts" / "DEMO.md"
+        self.check(demo_targets(demo_file), f"{demo_file} registers no target.")
+        env = {
+            **self.env,
+            "DJANGO_SETTINGS_MODULE": SETTINGS_MODULE,
+            "PATH": os.pathsep.join(
+                [str(E2E_DIR / "node_modules" / ".bin"), self.env["PATH"]]
+            ),
+        }
+        server = subprocess.Popen(
+            [
+                sys.executable,
+                "manage.py",
+                "runserver",
+                DJANGO_URL.removeprefix("http://"),
+                "--noreload",
+            ],
+            cwd=self.project,
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        try:
+            self._wait_for(f"{DJANGO_URL}/api/v1/products/")
+            registration = demo_capture_registration(
+                demo_file, frozenset({"angular_app_scaffold"})
+            )
+            context = ExecutionContext(None, EVIDENCE_DIR, "e2e-demo-capture")
+            with mock_environment(env):
+                result = DirectExecutor(context, [registration.binding()]).run(
+                    [ToolCall("angular_app_scaffold", lambda c, i: {})]
+                )
+        finally:
+            server.terminate()
+            with contextlib.suppress(subprocess.TimeoutExpired):
+                server.wait(timeout=30)
+            if server.poll() is None:
+                server.kill()
+        self.check(result.ok, f"demo-capture failed: {result.failure}")
+
+    def _wait_for(self, url: str, seconds: int = 60) -> None:
+        deadline = time.monotonic() + seconds
+        while time.monotonic() < deadline:
+            with contextlib.suppress(OSError):
+                with urllib.request.urlopen(url, timeout=5):  # noqa: S310
+                    return
+            time.sleep(1)
+        raise self.fail(f"{url} did not answer within {seconds} seconds.")
+
     # -- track B, phase 2 --------------------------------------------------------------
 
     def stage_b_build_app(self) -> None:
@@ -1250,6 +1330,7 @@ class Flow:
             ("5 build", self.stage_5_build),
             ("6 browser", self.stage_6_browser),
             ("6b django-serves-build", self.stage_6b_django_serves_build),
+            ("6c demo-capture", self.stage_6c_demo_capture),
         ]
         if "B" in self.tracks:
             sequence.append(("B build_app phase 2", self.stage_b_build_app))
