@@ -9,7 +9,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import django
 from django.test import override_settings
@@ -287,57 +287,10 @@ class ExportSchemaCommandTests(unittest.TestCase):
                 destination.unlink()
 
     # ------------------------------------------------------------------
-    # build_app auto-discovery
+    # build_app source validation
     # ------------------------------------------------------------------
 
-    @unittest.skip("build_app command is a work in progress")
-    def test_build_app_auto_detects_previous_schema(self) -> None:
-        """build_app should auto-discover the .previous schema
-        written by export_schema."""
-        from django.core.management import call_command
-
-        config = load_project_config(self.config_path)
-        previous_path = get_previous_schema_path(config.openapi_schema)
-
-        # Write a minimal previous schema next to the current one.
-        minimal_schema = {
-            "openapi": "3.0.0",
-            "info": {"title": "prev", "version": "0.9.0"},
-            "paths": {
-                "/items/": {"get": {"responses": {"200": {"description": "ok"}}}}
-            },
-        }
-        previous_path.write_text(json.dumps(minimal_schema), encoding="utf-8")
-
-        try:
-            stdout = io.StringIO()
-            # Mock oasdiff so we don't need the binary installed in CI.
-            with (
-                patch(
-                    "django_angular3.management.commands.build_app.ensure_oasdiff",
-                    return_value="oasdiff",
-                ),
-                patch(
-                    "django_angular3.management.commands.build_app.subprocess.run"
-                ) as mock_run,
-            ):
-                # oasdiff diff returns empty (no changes).
-                mock_run.return_value = MagicMock(stdout="{}", stderr="", returncode=0)
-                call_command(
-                    "build_app",
-                    self.config_path,
-                    dry_run=True,
-                    stdout=stdout,
-                )
-
-            output = stdout.getvalue()
-            self.assertIn("Auto-detected previous schema", output)
-        finally:
-            if previous_path.exists():
-                previous_path.unlink()
-
-    @unittest.skip("build_app command is a work in progress")
-    def test_build_app_validates_project_sources_before_change_detection(self) -> None:
+    def test_build_app_fails_on_a_missing_openui_source_before_any_change(self) -> None:
         from django.core.management import call_command
         from django.core.management.base import CommandError
 
@@ -372,8 +325,8 @@ class ExportSchemaCommandTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with self.assertRaisesRegex(CommandError, "OpenUI source does not exist"):
-                call_command("build_app", str(config_path), dry_run=True)
+            with self.assertRaisesRegex(CommandError, "Document does not exist"):
+                call_command("build_app", current_config=str(config_path), dry_run=True)
 
 
 if __name__ == "__main__":

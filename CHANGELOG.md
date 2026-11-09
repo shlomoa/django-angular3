@@ -10,6 +10,68 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- A test that an OpenUI document binding OpenAPI operations keeps the two sources apart
+  through change derivation: each Change stays in its domain with the evidence of its
+  own file, and each step names the one domain that caused it
+  ([shlomoa/django-angular3#74](https://github.com/shlomoa/django-angular3/issues/74)),
+  and a test that the client, helpers, data services and pages of a build all resolve
+  below `projects/<app>/src/app`
+  ([shlomoa/django-angular3#66](https://github.com/shlomoa/django-angular3/issues/66)).
+- `build_app` runs the schema export step (stage `0`, selected by a change of
+  `drfSpectacular.settings.*`) in its own process through the `openapi_schema_export`
+  Tool instead of refusing it; a failed export halts the run
+  ([shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
+- `build_app` runs a `client-alignment` step before the `ng_build` gate: every schema of
+  the exported OpenAPI contract must be declared in the generated models and every
+  operation must have a generated service method (a schema `ng-openapi-gen` skips because no
+  operation reaches it is not expected unless `ignoreUnusedModels` is `false`), otherwise the run fails and names the
+  mismatch (part of the global acceptance of FR-10;
+  [shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
+- The `demo-capture` capability: the Tool `demo_capture` (a full-page Playwright
+  screenshot of a running page; inputs `url` and `output_dir`), the `demo-capture` Hook
+  (`post-tool`; captures every target registered in `doc/contracts/DEMO.md`, checks that
+  each entry names the server command, fixture setup and actions, and halts on a failed
+  capture), and stage 6c of the end-to-end flow, which runs it against the Django-served
+  application and keeps the screenshots as CI artifacts
+  ([shlomoa/django-angular3#162](https://github.com/shlomoa/django-angular3/issues/162),
+  [shlomoa/django-angular3#163](https://github.com/shlomoa/django-angular3/issues/163)).
+- Tests that complete the validation lists of the Hook and Tool phases: the
+  `post-generation` Hook with the real `tsc --noEmit` (skipped when `pnpm` or `tsc` is
+  absent), golden snapshots of `hook-log.jsonl`, `verification.log` and
+  `session-log.json`, and `openapi_schema_export` with `validate_openapi_schema` on a
+  real drf-spectacular schema
+  ([shlomoa/django-angular3#163](https://github.com/shlomoa/django-angular3/issues/163),
+  [shlomoa/django-angular3#162](https://github.com/shlomoa/django-angular3/issues/162)).
+  Two tests of `build_app` skipped as "work in progress" are replaced: the one that
+  expected a `.previous` schema to be discovered contradicted the discovery decision
+  (the baseline is `--previous-config` or `.previous.json`), and the one on a missing
+  OpenUI source runs again against the current message.
+- `build_app` runs its steps on the provider-neutral direct-execution controller with the
+  lifecycle Hooks and the evidence recorder: a missing, stale or invalid schema blocks a
+  generation step, a failing structural check halts the run, the session is archived, the
+  ordered events go to `automation-evidence.jsonl`, `build-evidence.json` gains the Hook
+  outcomes and the exit code, and a Hook failure exits with `3`
+  ([shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
+- Provider-neutral lifecycle Hooks (`django_angular3/automation/hooks.py`): the registry
+  keyed by canonical name and lifecycle family, the four catalogued Hooks
+  (`pre-construction`, `migration-triggered`, `post-generation`, `session-stop`) with their
+  artifacts (`hook-log.jsonl`, `verification.log`, `session-log.json`, `history/`), the
+  normalization of provider-shaped lifecycle events and of `makemigrations` commands by
+  tokens, idempotent duplicate observations, and the Hook-failure exit code `3`; the
+  pre-construction Hook judges a schema stale by a recorded migrations fingerprint (written
+  on export), not by file times, so a checkout or copy cannot block a freshly installed
+  schema; the post-generation Hook checks the client structure only (`tsc` is opt-in)
+  ([shlomoa/django-angular3#163](https://github.com/shlomoa/django-angular3/issues/163)).
+- The Django-served end-to-end stage no longer races: the customers host applies only the
+  response of the latest request, and the write spec waits for the list reload before it
+  changes the page
+  ([shlomoa/django-angular3#268](https://github.com/shlomoa/django-angular3/issues/268)).
+- `build_app` compiles the `html` and `link` nodes of the OpenUI document in a step of its
+  own, after the application scaffold and before the pages and forms
+  (`workspace-setup --document` through `ng_workspace_modify`, which with a document runs
+  only that schematic), so `index.html` gets the document's `lang`, `dir` and title;
+  `--dry-run` shows the `document` and `project` parameters
+  ([shlomoa/django-angular3#278](https://github.com/shlomoa/django-angular3/issues/278)).
 - Deterministic Tool implementations (`django_angular3/automation/tool_catalog.py` and
   `tools.py`): the 18 Tools of `TOOL_CONTRACTS.md` with validated structured inputs,
   structured outputs and the failure categories `invalid_input`, `missing_dependency`,

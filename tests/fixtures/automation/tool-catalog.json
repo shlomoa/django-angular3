@@ -67,6 +67,26 @@
     ],
     "implementation": "django_angular3.automation.tools:angular_workspace_scaffold"
   },
+  "demo_capture": {
+    "inputs": [
+      {
+        "name": "url",
+        "required": true,
+        "kind": "string"
+      },
+      {
+        "name": "output_dir",
+        "required": true,
+        "kind": "path"
+      }
+    ],
+    "outputs": [
+      "screenshot_path",
+      "url",
+      "command"
+    ],
+    "implementation": "django_angular3.automation.tools:demo_capture"
+  },
   "ngdj_add_complex_component": {
     "inputs": [
       {

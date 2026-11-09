@@ -19,6 +19,7 @@ import django
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
+from django_angular3.automation.contracts import ContractError, FailureCategory
 from django_angular3.changes import Change, ChangeDomain, ChangeOperation
 from django_angular3.command_translation import (
     _OPENUI_TOOLS,
@@ -82,8 +83,9 @@ _WIDGETS_DOCUMENT = {
     ],
 }
 
-# A stand-in for the Angular CLI: it logs every call, creates the directory of
-# ``ng new`` and fails when FAKE_NG_FAIL occurs in the call.
+# A stand-in for the Angular CLI: it logs every call, creates the workspace of
+# ``ng new`` (the directory, ``angular.json`` and ``package.json``), the application
+# project of ``material-app`` and fails when FAKE_NG_FAIL occurs in the call.
 FAKE_NG = """\
 import json
 import os
@@ -95,7 +97,12 @@ with open(os.environ["FAKE_NG_LOG"], "a", encoding="utf-8") as log:
     log.write(json.dumps({"argv": argv, "cwd": os.getcwd()}) + "\\n")
 if argv[:1] == ["new"]:
     directory = next(a for a in argv if a.startswith("--directory="))
-    (Path.cwd() / directory.split("=", 1)[1]).mkdir(exist_ok=True)
+    workspace = Path.cwd() / directory.split("=", 1)[1]
+    workspace.mkdir(exist_ok=True)
+    (workspace / "angular.json").write_text("{}", encoding="utf-8")
+    (workspace / "package.json").write_text("{}", encoding="utf-8")
+if argv[:2] == ["generate", "angular-django2:material-app"]:
+    (Path.cwd() / "projects" / argv[2] / "src").mkdir(parents=True, exist_ok=True)
 marker = os.environ.get("FAKE_NG_FAIL")
 if marker and marker in " ".join(argv):
     sys.stderr.write("simulated ng failure\\n")
@@ -459,7 +466,7 @@ class StepResolutionTests(unittest.TestCase):
         with self.assertRaisesRegex(StepBridgeError, "has no parameter nodeId"):
             self.resolve(self.project.change_set(), CommandMapping(document))
 
-    def test_a_wrapper_without_an_invocation_builder_is_refused(self) -> None:
+    def test_the_schema_export_step_runs_in_process_through_its_tool(self) -> None:
         change = Change(
             ChangeDomain.STATIC_CONFIG,
             "drfSpectacular.settings.TITLE",
@@ -470,8 +477,12 @@ class StepResolutionTests(unittest.TestCase):
         )
         steps = translate_changes((change,))
 
-        with self.assertRaisesRegex(StepBridgeError, "no invocation builder"):
-            resolve_steps(steps, self.project.project_config)
+        step = resolve_steps(steps, self.project.project_config)[0]
+
+        self.assertEqual(step.name_id, "openapi_schema_export")
+        self.assertEqual(step.command, "export_schema")
+        self.assertEqual(step.exec_order, 0)
+        self.assertEqual(step.unresolved, ())
 
     def test_a_widget_step_runs_the_ngdj_command_of_the_mapping_without_a_wrapper(
         self,
@@ -536,6 +547,7 @@ class DryRunTests(unittest.TestCase):
                 (1, "angular-workspace-foundation", "ng_workspace"),
                 (2, "angular-app-composition", "ng_gen_app"),
                 (10, "ngdj_add_page", "ng_page"),
+                (11, "client-alignment", "check_client_alignment"),
                 (12, "last-check", "ng_build"),
             ],
         )
@@ -629,6 +641,92 @@ class DryRunTests(unittest.TestCase):
         )
         self.assertEqual(lane[2][2], [])
         self.assertTrue(all(s["reason"] for s in report["steps"]))
+
+    HTML_DOCUMENT = {
+        "id": "root",
+        "type": "html",
+        "children": [
+            {"id": "shopApp", "type": "Application"},
+            {"id": "home", "type": "DashboardPage"},
+        ],
+    }
+
+    def _initial_build(self):
+        """The create set of an initial build over a document with an html root."""
+        self.project.document.write_text(
+            json.dumps(self.HTML_DOCUMENT), encoding="utf-8"
+        )
+        return _change_set(
+            project_config=(_project_name_created(),),
+            openui=compare_openui_files(None, self.project.document),
+        )
+
+    def test_the_document_root_is_its_own_step_after_the_application_scaffold(
+        self,
+    ) -> None:
+        report = json.loads(self.project.run_build(self._initial_build(), dry_run=True))
+
+        order = [(s["stage"], s["step"], s["command"]) for s in report["steps"]]
+        self.assertEqual(
+            order[:3],
+            [
+                (1, "angular-workspace-foundation", "ng_workspace"),
+                (2, "angular_app_scaffold", "ng_gen_app"),
+                (5, "angular_workspace_scaffold", "ng_workspace_modify"),
+            ],
+        )
+        foundation, setup = report["steps"][0], report["steps"][2]
+        self.assertEqual(foundation["parameters"], {})
+        self.assertEqual(
+            setup["parameters"],
+            {
+                "project": "shop",
+                "document": f"{STAGED_DOCUMENT_DIRECTORY}/app.openui.json",
+            },
+        )
+
+    def test_there_is_no_workspace_setup_step_without_html_or_link_nodes(self) -> None:
+        change_set = _change_set(project_config=(_project_name_created(),))
+
+        report = json.loads(self.project.run_build(change_set, dry_run=True))
+
+        self.assertEqual(report["steps"][0]["parameters"], {})
+        self.assertNotIn(
+            "angular_workspace_scaffold", [s["step"] for s in report["steps"]]
+        )
+
+    def test_workspace_setup_runs_after_the_scaffold_with_the_document_only(
+        self,
+    ) -> None:
+        with patch("django_angular3.angular.package_installed", return_value=False):
+            self.project.run_build(self._initial_build())
+
+        calls = self.project.calls()
+        schematics = [c[1] for c in calls if c[:1] == ["generate"] and len(c) > 1]
+        # The foundation runs workspace-setup without a document, the scaffold
+        # creates the application, then workspace-setup compiles the document.
+        self.assertEqual(
+            schematics,
+            [
+                "angular-django2:workspace-setup",
+                "angular-django2:material-app",
+                "angular-django2:workspace-setup",
+                "angular-django2:page",
+            ],
+        )
+        with_document = [
+            c
+            for c in calls
+            if c[1:2] == ["angular-django2:workspace-setup"]
+            and any(a.startswith("--document=") for a in c)
+        ]
+        (setup,) = with_document
+        self.assertIn(f"--document={STAGED_DOCUMENT_DIRECTORY}/app.openui.json", setup)
+        self.assertIn("--project=shop", setup)
+        self.assertFalse([arg for arg in setup if arg.startswith("--node-id")])
+        # The modify wrapper with a document runs no `ng config` and no `ng add`.
+        later = calls[calls.index(setup) - 1 :]
+        self.assertEqual([c[0] for c in later if c[0] in {"config", "add", "new"}], [])
 
     def _setup_parameters(self) -> dict:
         report = json.loads(
@@ -739,7 +837,7 @@ class DryRunTests(unittest.TestCase):
         service = next(s for s in report["steps"] if s["command"] == "ng_data_service")
         self.assertEqual(service["unresolved"], ["resource"])
 
-    def test_a_dry_run_still_refuses_what_has_no_wrapper(self) -> None:
+    def test_a_dry_run_lists_the_schema_export_step_and_exports_nothing(self) -> None:
         change = Change(
             ChangeDomain.STATIC_CONFIG,
             "drfSpectacular.settings.TITLE",
@@ -749,13 +847,74 @@ class DryRunTests(unittest.TestCase):
             "b",
         )
 
-        with self.assertRaisesRegex(CommandError, "Failed to resolve the steps"):
-            self.project.run_build(_change_set(static_config=(change,)), dry_run=True)
+        with patch("django_angular3.automation.tools.openapi_schema_export") as export:
+            report = json.loads(
+                self.project.run_build(
+                    _change_set(static_config=(change,)), dry_run=True
+                )
+            )
+
+        export.assert_not_called()
+        self.assertEqual(
+            [(s["stage"], s["step"], s["command"]) for s in report["steps"]][0],
+            (0, "openapi_schema_export", "export_schema"),
+        )
 
 
 class RealRunTests(unittest.TestCase):
     def setUp(self) -> None:
         self.project = _Project(self)
+
+    def test_a_real_run_exports_the_schema_through_the_tool_first(self) -> None:
+        change = Change(
+            ChangeDomain.STATIC_CONFIG,
+            "drfSpectacular.settings.TITLE",
+            "/drfSpectacular/settings/TITLE",
+            ChangeOperation.UPDATE,
+            "a",
+            "b",
+        )
+        with patch(
+            "django_angular3.automation.tools.openapi_schema_export",
+            return_value={"destination": "api.json", "schema_changed": True},
+        ) as export:
+            self.project.run_build(_change_set(static_config=(change,)))
+
+        export.assert_called_once()
+        evidence = json.loads(
+            (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
+        )
+        first = evidence["steps"][0]
+        self.assertEqual(first["step"], "openapi_schema_export")
+        self.assertEqual(first["status"], "succeeded")
+        self.assertIn("schema_changed", first["invocations"][0]["stdout"])
+
+    def test_a_failing_schema_export_halts_the_run_before_the_build(self) -> None:
+        change = Change(
+            ChangeDomain.STATIC_CONFIG,
+            "drfSpectacular.settings.TITLE",
+            "/drfSpectacular/settings/TITLE",
+            ChangeOperation.UPDATE,
+            "a",
+            "b",
+        )
+        failing = ContractError(
+            FailureCategory.EXTERNAL_TOOL_FAILED, "spectacular failed"
+        )
+        with (
+            patch(
+                "django_angular3.automation.tools.openapi_schema_export",
+                side_effect=failing,
+            ),
+            self.assertRaisesRegex(CommandError, "spectacular failed"),
+        ):
+            self.project.run_build(_change_set(static_config=(change,)))
+
+        evidence = json.loads(
+            (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
+        )
+        self.assertEqual(evidence["steps"][0]["status"], "failed")
+        self.assertNotIn("build", [c[0] for c in self.project.calls()])
 
     def dry_run_steps(self) -> list[tuple[str, str]]:
         report = json.loads(
@@ -876,7 +1035,7 @@ class RealRunTests(unittest.TestCase):
         )
         self.assertEqual(
             [s["status"] for s in evidence["steps"]],
-            ["succeeded", "failed", "skipped", "skipped"],
+            ["succeeded", "failed", "skipped", "skipped", "skipped"],
         )
         self.assertEqual(evidence["steps"][1]["invocations"][0]["returncode"], 3)
 

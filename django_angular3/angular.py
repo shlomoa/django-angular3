@@ -165,6 +165,7 @@ def build_ng_workspace_schematic_invocations(
     settings: DjangoAngularSettings,
     *,
     document: str | None = None,
+    project: str | None = None,
     **_: Any,
 ) -> list[AngularInvocation]:
     argv: list[str] = [
@@ -174,6 +175,10 @@ def build_ng_workspace_schematic_invocations(
         config.project_name,
         *_openui_document_argv(document, None, "Workspace"),
     ]
+    if project:
+        # The application project whose source root holds the files the document
+        # describes (``index.html``); without it they are looked up at ``/src``.
+        argv.append(f"--project={project}")
     return [
         AngularInvocation(
             command_name="ng_workspace",
@@ -898,10 +903,32 @@ def build_ng_workspace_bootstrap_invocations(
 
 
 def build_ng_workspace_modify_invocations(
-    config: ProjectConfig, settings: DjangoAngularSettings, **_: Any
+    config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    *,
+    document: str | None = None,
+    project: str | None = None,
+    **_: Any,
 ) -> list[AngularInvocation]:
     """Reapply workspace defaults, collection registration, and
-    workspace scaffolding."""
+    workspace scaffolding.
+
+    With a ``document`` only the ``workspace-setup`` schematic runs, with
+    ``--document`` and ``--project`` (default: the project name): it compiles the
+    document's ``html`` and ``link`` elements into the ``index.html`` of the existing
+    application project, and the workspace defaults and the collection registration
+    are already in place.
+    """
+    if document is not None:
+        return _relabel_invocations(
+            build_ng_workspace_schematic_invocations(
+                config,
+                settings,
+                document=document,
+                project=project or config.project_name,
+            ),
+            "ng_workspace_modify",
+        )
     invocations = _relabel_invocations(
         build_ng_config_invocations(config, settings), "ng_workspace_modify"
     )

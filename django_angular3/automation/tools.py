@@ -17,9 +17,11 @@ import importlib
 import json
 import re
 import shlex
+import shutil
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any, Final, cast
+from urllib.parse import urlsplit
 
 from .. import angular, command_execution, tools
 from ..config import ConfigError, ProjectConfig, get_previous_schema_path
@@ -33,6 +35,7 @@ from ..settings import AngularCommandError, DjangoAngularSettings, load_angular_
 from ..validation import validate_openapi_file
 from .contracts import ContractError, FailureCategory, ToolResult
 from .execution import ExecutionContext, ToolFunction, normalize_failure
+from .migrations import write_record
 from .tool_catalog import (
     CATALOG,
     ToolSpec,
@@ -291,6 +294,15 @@ def openapi_schema_export(
             f"openapi_schema_export: schema generation failed: {exc}",
             {"tool": "openapi_schema_export"},
         ) from exc
+    try:
+        write_record(destination, config.config_path.parent)
+    except OSError as exc:
+        restore()
+        raise ContractError(
+            FailureCategory.EXTERNAL_TOOL_FAILED,
+            f"openapi_schema_export: cannot record the migrations fingerprint: {exc}",
+            {"tool": "openapi_schema_export"},
+        ) from exc
     return {
         "destination": str(destination),
         "previous_path": str(previous) if old is not None else None,
@@ -512,6 +524,70 @@ def oasdiff_changelog(
         "schema_changed": changed,
         "command": command,
     }
+
+
+# -- Visual capture -------------------------------------------------------------------
+
+
+def screenshot_name(url: str) -> str:
+    """The file name of the capture of ``url``: host, port and path, made file-safe."""
+    parts = urlsplit(url)
+    raw = f"{parts.netloc}{parts.path}".strip("/")
+    return re.sub(r"[^A-Za-z0-9.]+", "-", raw).strip("-") + ".png"
+
+
+#: The capture script, run with ``node -e``: the Playwright API, not its command line,
+#: because only the API honours ``E2E_CHROMIUM_PATH`` (the browser the end-to-end flow
+#: already uses). ``playwright`` is resolved from the working directory or
+#: ``NODE_PATH``.
+_CAPTURE_SCRIPT: Final = """
+const load = () => { try { return require('playwright'); }
+  catch { return require('@playwright/test'); } };
+const { chromium } = load();
+(async () => {
+  const [url, file] = process.argv.slice(1);
+  const executablePath = process.env.E2E_CHROMIUM_PATH || undefined;
+  const browser = await chromium.launch({ executablePath });
+  try {
+    const page = await browser.newPage();
+    const response = await page.goto(url, { waitUntil: 'networkidle' });
+    if (!response || response.status() >= 400) {
+      const status = response ? response.status() : 'nothing';
+      throw new Error('GET ' + url + ' answered ' + status);
+    }
+    await page.screenshot({ path: file, fullPage: true });
+  } finally {
+    await browser.close();
+  }
+})().catch((error) => { console.error(String(error)); process.exit(1); });
+"""
+
+
+def demo_capture(
+    context: ExecutionContext, inputs: Mapping[str, Any]
+) -> Mapping[str, Any]:
+    """Full-page screenshot of a running page with the Playwright API."""
+    tool = "demo_capture"
+    url = str(inputs["url"])
+    if urlsplit(url).scheme not in {"http", "https"} or not urlsplit(url).netloc:
+        raise invalid(tool, f"url {url!r} is not an http(s) URL", field="url")
+    output_dir = Path(inputs["output_dir"])
+    target = output_dir / screenshot_name(url)
+    node = shutil.which("node") or "node"
+    argv = [node, "-e", _CAPTURE_SCRIPT, url, str(target)]
+    command = shlex.join([node, "-e", "<capture script>", url, str(target)])
+    if _dry(context, inputs):
+        return {"screenshot_path": str(target), "url": url, "command": command}
+    output_dir.mkdir(parents=True, exist_ok=True)
+    target.unlink(missing_ok=True)
+    _run(tool, argv, output_dir)
+    if not target.is_file() or target.stat().st_size == 0:
+        raise ContractError(
+            FailureCategory.OUTPUT_INVALID,
+            f"{tool}: the capture of {url} produced no screenshot at {target}",
+            {"tool": tool, "url": url},
+        )
+    return {"screenshot_path": str(target), "url": url, "command": command}
 
 
 # -- Angular generation wrappers ----------------------------------------------------

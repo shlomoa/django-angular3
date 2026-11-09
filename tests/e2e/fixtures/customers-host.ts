@@ -112,6 +112,10 @@ export class CustomersHostComponent {
 
   private readonly adapter = new CustomersListAdapter();
   private readonly data = inject(CustomersDataService);
+  // Only the response of the latest request may update the table: the responses of two
+  // loads in flight (the reload after a write and a page change) can arrive in either
+  // order, and the older one must not put the table back on its page.
+  private latestLoad = 0;
 
   constructor() {
     this.load(0);
@@ -141,14 +145,21 @@ export class CustomersHostComponent {
   }
 
   private load(pageIndex: number): void {
+    const load = ++this.latestLoad;
     this.adapter.list({ page: pageIndex + 1 }).subscribe({
       next: (response) => {
+        if (load !== this.latestLoad) {
+          return;
+        }
         this.rows.set(response.results);
         this.count.set(response.count);
         this.pageIndex.set(pageIndex);
         this.failed.set(false);
       },
       error: () => {
+        if (load !== this.latestLoad) {
+          return;
+        }
         this.rows.set([]);
         this.count.set(0);
         this.failed.set(true);

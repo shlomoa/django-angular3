@@ -105,10 +105,10 @@ For each registered user-facing artifact type, verification must:
 
 ### Lifecycle enforcement
 
-The planned deterministic `demo-capture` Tool and Hook are tracked by issues
-#162 and #163. Before implementation, the normative Hook contract must be
-added to `doc/contracts/HOOK_CONTRACTS.md` using its canonical seven-field
-shape. This plan constrains that future contract as follows:
+The deterministic `demo-capture` Tool (`demo_capture`) and Hook have their contracts in
+`doc/contracts/TOOL_CONTRACTS.md` and `doc/contracts/HOOK_CONTRACTS.md`, built on the
+canonical seven-field shape; the registered targets and their reproduction steps are in
+`doc/contracts/DEMO.md`. This plan constrains the contract as follows:
 
 | Field | Planning constraint |
 |---|---|
@@ -120,9 +120,9 @@ shape. This plan constrains that future contract as follows:
 | Allowed wrapped tools | The catalogued generation Tools that produce user-facing artifacts, plus catalogued dev-server and headless-browser Tools defined by #162. |
 | Implementation reference | The implementation delivered through #162 and #163. |
 
-Until the Hook exists, repository CI provides the same deterministic boot,
-capture, artifact-upload, and reproduction-documentation gate. The Hook later
-absorbs that enforcement without changing its acceptance semantics.
+The Hook is not in the default registry yet; the end-to-end flow (stage 6c of
+`tests/e2e/run_e2e.py`) runs it against the Django-served application and CI uploads
+the screenshots.
 
 ### Explicit exclusions
 
@@ -357,13 +357,17 @@ suite (`playwright-results.json`, `playwright-django-results.json`) and the fail
 each failing test with the first lines of its assertion, followed by the tails of both
 streams.
 
-The cause is **not yet identified**: no failing run has been captured with the new output.
-The first suspects are the timing of the sign-in and write specs W1 to W5 against the
-Django-served build: W2 clicks the last-page button right after the created customer was
-accepted, while the list may still be reloading, and the specs share one database in
-which each test removes what it created. The next failing run will name the test; the
-cause and its fix are recorded here then, and the ten consecutive passing runs of the
-job on one commit are the check that closes it.
+The cause is a race in the end-to-end glue, found from the first failing run the new output
+named (W2 in `django-writes.spec.ts`: the new customer's email cell was not visible within 15
+seconds, after `POST /api/v1/customers/` answered 201). `customers-host.ts` reloaded the list
+after the write and loaded another page when the paginator asked, and let whichever response
+arrived last set the table. W2 clicked "Last page" as soon as the creation response arrived,
+so the reload of page 1 and the request for the last page were in flight together; when the
+page-1 response came second it put the table back on the first page, and the new customer,
+the 26th of 26, is on the last page of 10. Two changes remove it: the host applies only the
+response of the latest request, and W2 waits for the reload of page 1 before it changes the
+page. The ten consecutive passing runs of the job on one commit remain the check that closes
+the issue.
 
 Findings of the 2026-10-09 probe, as they stand now:
 

@@ -22,22 +22,32 @@ python manage.py build_app [options]
 > tool configuration has no baseline artifact), checks the OpenUI bindings against the
 > OpenAPI contract, translates the ChangeSet with `translate_changes` and, with
 > `--dry-run`, prints the ordered steps with their wrapper commands and resolved
-> parameters. OpenUI and OpenAPI changes get their steps from the ngdj command mapping
-> (§Change-to-command mapping). Without `--dry-run` a first build creates the workspace
-> and installs ngdj before the steps are derived; the steps then run in order through
-> their wrappers (§Step execution), a configured directory of the site's own sources is
-> copied in before the terminal build, the run halts at the first failure and leaves
-> `build-evidence.json` in `--output`; `--force start-from-scratch` ignores the previous
-> configuration. The provider-neutral foundation exists as library code, not yet as the
-> controller of `build_app`: the immutable contracts, the evidence recorder and the
-> direct-execution primitives under `django_angular3/automation/`. `build_app` does not
-> use them yet, so its only evidence is `build-evidence.json`. Not implemented: the
-> deterministic TOOL commands as executable contracts, the lifecycle Hooks, the schema
-> export step (the `export_schema` wrapper has no invocation builder), terminal validation
-> beyond the `ng_build` of the `last-check` gate, and global acceptance. Update and
-> delete changes, and `move`, fail explicitly. This document specifies the target
-> behavior; it must not be read as a claim that those target behaviors are already
-> available.
+> parameters; a dry run runs no Hook, records no evidence and writes no file. OpenUI and
+> OpenAPI changes get their steps from the ngdj command mapping (§Change-to-command
+> mapping). Without `--dry-run` a first build creates the workspace and installs ngdj
+> before the steps are derived; the steps then run on the direct-execution controller
+> (`django_angular3/automation/`), in order through their wrappers (§Step execution), with
+> the lifecycle Hooks around them: `pre-construction` blocks a generation step when the
+> schema is missing, stale or invalid, `post-generation` checks the structure a
+> generation step left and halts on a failure, and `session-stop` archives the run's
+> artifacts. A configured directory of the site's own sources is copied in before the
+> terminal build. The run halts at the first failure; ordered, secret-free events go to
+> `automation-evidence.jsonl` and the steps, Hook outcomes and exit code to
+> `build-evidence.json` in `--output`. The exit code is `0` on success, `1` for a step
+> (Tool) failure and `3` for a Hook failure. `--force start-from-scratch` ignores the
+> previous configuration. Not implemented: the steps still run through their wrappers
+> rather than the structured Tool implementations of the catalog, except the schema export
+> step (`openapi_schema_export`, stage `0`), which calls its Tool in the `build_app`
+> process and fails the run when the export fails; the `migration-triggered`
+> Hook (no step runs `makemigrations`), the runtime smoke and the type, lint and test
+> checks of the global acceptance (FR-10). Before the `last-check` gate (`ng_build`) a
+> `client-alignment` step checks that every schema of the exported OpenAPI contract that
+> the generator emits (`ng-openapi-gen` skips a schema no operation reaches, unless
+> `ignoreUnusedModels` is `false`) is declared in the generated models and every
+> operation has a generated service method;
+> a project without `ng-openapi-gen.json` has no client to align. Update and delete changes, and
+> `move`, fail explicitly. This document specifies the target behavior; it must not be
+> read as a claim that those target behaviors are already available.
 
 ### Build algorithm
 
@@ -150,6 +160,10 @@ per-domain `type` field are not part of the builder contract.
 Unsupported input, unknown configuration keys, and unsupported `oasdiff` output
 shapes must fail explicitly. They must never be interpreted as no change.
 
+Current behavior: the contract is silent about changes of the OpenAPI `info` object, so a
+real `info.version` (or `info.title`) change between the two schemas fails `build_app`
+with `oasdiff detail contains unsupported key(s): info`.
+
 ---
 
 ## Change Command Translation and Execution
@@ -213,7 +227,9 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `openui` change inside an `embedded` node type | The Tool of its root node type, with the root's operation status | update |
 | `openui` change whose operation is `partial` or `unsupported` in the mapping, or whose command has no djng Tool | Unsupported; fails explicitly with the mapping's reason and gap issue, or "no wrapper" | — |
 
-A static setting selects the command that consumes it. `create` appears for an initial
+A static setting selects the command that consumes it, so the schema export (stage `0`)
+runs only when a `drfSpectacular.settings.*` setting is created or updated; without such
+a change a run has no export step. `create` appears for an initial
 build or a new setting, and has the same translation as `update`:
 
 | Static setting | Consumed by | Step | Stage |

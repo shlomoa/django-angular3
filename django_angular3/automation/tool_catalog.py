@@ -268,6 +268,12 @@ CATALOG: Final[Mapping[str, ToolSpec]] = {
             _WIDGET_OUTPUTS,
             f"{_IMPL}:ngdj_add_table",
         ),
+        ToolSpec(
+            "demo_capture",
+            (_in("url", required=True), _in("output_dir", PATH, required=True)),
+            ("screenshot_path", "url", "command"),
+            f"{_IMPL}:demo_capture",
+        ),
     )
 }
 

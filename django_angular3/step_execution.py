@@ -9,19 +9,36 @@ the mapping versions the steps were derived with, so a run can be reproduced.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 from . import command_execution
 from .angular import AngularInvocation, build_ng_workspace_bootstrap_invocations
+from .automation.contracts import ContractError, FailureCategory
+from .automation.evidence import EvidenceRecorder, NoOpEvidenceRecorder
+from .automation.execution import (
+    DirectExecutor,
+    ExecutionContext,
+    HookBinding,
+    StepOutcome,
+    ToolCall,
+    ToolFunction,
+)
+from .client_alignment import CLIENT_ALIGNMENT_COMMAND, check_client_alignment
 from .command_translation import AppBuildStep
 from .config import ProjectConfig
 from .ngdj_command_mapping import CommandMapping
 from .settings import AngularCommandError, DjangoAngularSettings
 from .site_sources import SITE_SOURCES_COMMAND, SiteSourcesError, copy_site_sources
-from .step_bridge import StepBridgeError, build_invocations, stage_document
+from .step_bridge import (
+    IN_PROCESS_WRAPPERS,
+    StepBridgeError,
+    build_invocations,
+    crosswalk_row,
+    stage_document,
+)
 
 EVIDENCE_FILE_NAME: Final = "build-evidence.json"
 _OUTPUT_TAIL: Final = 4000
@@ -30,6 +47,8 @@ STATUS_SUCCEEDED: Final = "succeeded"
 STATUS_FAILED: Final = "failed"
 STATUS_SKIPPED: Final = "skipped"
 STATUS_PENDING: Final = "pending"
+#: A pre-tool Hook failed: the step never ran.
+STATUS_BLOCKED: Final = "blocked"
 
 
 @dataclass(frozen=True)
@@ -74,6 +93,11 @@ class ExecutionEvidence:
     records: list[StepRecord]
     bootstrap: list[InvocationRecord] = field(default_factory=list)
     bootstrap_error: str | None = None
+    #: Hook outcomes by step, in execution order, and the session-stop warnings.
+    hooks: list[dict[str, object]] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    #: The exit code the run decided: 0, the Tool-failure code or the Hook-failure code.
+    exit_code: int = 0
 
     @property
     def steps(self) -> tuple[AppBuildStep, ...]:
@@ -81,7 +105,10 @@ class ExecutionEvidence:
 
     @property
     def failed(self) -> StepRecord | None:
-        return next((r for r in self.records if r.status == STATUS_FAILED), None)
+        return next(
+            (r for r in self.records if r.status in {STATUS_FAILED, STATUS_BLOCKED}),
+            None,
+        )
 
     def to_dict(self) -> dict[str, object]:
         result: dict[str, object] = {
@@ -99,6 +126,10 @@ class ExecutionEvidence:
                 "error": self.bootstrap_error,
             }
         result["steps"] = [step_to_dict(r.step, r) for r in self.records]
+        if self.hooks or self.warnings:
+            result["hooks"] = self.hooks
+            result["warnings"] = self.warnings
+            result["exitCode"] = self.exit_code
         return result
 
     def to_json(self) -> str:
@@ -193,33 +224,113 @@ def unresolved_steps(steps: tuple[AppBuildStep, ...]) -> list[str]:
     ]
 
 
+def tool_name_of(step: AppBuildStep) -> str:
+    """The canonical Tool name of a step: the crosswalk Tool of its concern.
+
+    The workspace and application foundation steps carry Skill names; their Tool is
+    the one of the same crosswalk row. Steps with no Tool (the gate, the copy of the
+    site sources) keep their own name.
+    """
+    row = crosswalk_row(step.name_id)
+    if row is not None and row.tools and step.name_id not in row.tools:
+        return row.tools[0]
+    return step.name_id
+
+
 def execute_steps(
     evidence: ExecutionEvidence,
     project_config: ProjectConfig,
     settings: DjangoAngularSettings,
+    *,
+    recorder: EvidenceRecorder | None = None,
+    hooks: Sequence[HookBinding] = (),
+    run_id: str = "run",
+    output_dir: Path | None = None,
 ) -> None:
-    """Run the steps of ``evidence`` level by level, halting at the first failure.
+    """Run the steps of ``evidence`` on the direct-execution controller.
 
-    Each record is updated in place. After a failure the remaining steps are marked
-    skipped and nothing else runs.
+    Steps run in their level order and the run halts at the first failure: a failing
+    pre-tool Hook blocks its step, a failing post-tool Hook halts after it, and the
+    remaining steps are marked skipped. Session-stop Hooks run last and only warn.
+    Each record is updated in place; ``evidence.exit_code`` holds the decided code.
     """
-    halted = False
-    for level in levels(evidence.records):
-        for record in level:
-            if halted:
-                record.status = STATUS_SKIPPED
-                continue
-            if not _run_step(record, project_config, settings):
-                halted = True
+    records = list(evidence.records)
+    calls = [
+        ToolCall(tool_name_of(r.step), _step_function(r, project_config, settings))
+        for r in records
+    ]
+    context = ExecutionContext(
+        project_config,
+        output_dir if output_dir is not None else Path.cwd(),
+        run_id,
+        recorder if recorder is not None else NoOpEvidenceRecorder(),
+        settings=settings,
+    )
+    result = DirectExecutor(context, hooks).run(calls)
+    for record, outcome in zip(records, result.steps, strict=True):
+        _apply_outcome(record, outcome, evidence)
+    evidence.warnings.extend(w.message for w in result.warnings)
+    evidence.exit_code = result.exit_code
+    if result.failure is not None and evidence.failed is None:
+        # A failure outside any step (the recorder, a session-stop is only a warning).
+        evidence.warnings.append(result.failure.message)
+
+
+def _step_function(
+    record: StepRecord, project_config: ProjectConfig, settings: DjangoAngularSettings
+) -> ToolFunction:
+    def run(context: ExecutionContext, inputs: Mapping[str, Any]) -> Mapping[str, Any]:
+        if not _run_step(record, project_config, settings, context):
+            raise ContractError(
+                FailureCategory.EXTERNAL_TOOL_FAILED,
+                record.error or f"step {record.step.name_id} failed",
+                {"step": record.step.name_id},
+            )
+        return {"invocations": len(record.invocations)}
+
+    return run
+
+
+def _apply_outcome(
+    record: StepRecord, outcome: StepOutcome, evidence: ExecutionEvidence
+) -> None:
+    for hook in outcome.hooks:
+        evidence.hooks.append(
+            {
+                "step": record.step.name_id,
+                "hook": hook.hook,
+                "family": hook.family.value,
+                "ok": hook.ok,
+                "message": None if hook.failure is None else hook.failure.message,
+            }
+        )
+    if outcome.status == "skipped":
+        record.status = STATUS_SKIPPED
+    elif outcome.status == "blocked":
+        record.status = STATUS_BLOCKED
+        failure = next((h.failure for h in outcome.hooks if h.failure), None)
+        record.error = None if failure is None else failure.message
+    elif outcome.status == "failed" and record.status == STATUS_SUCCEEDED:
+        # The step ran; a post-tool Hook halted the run after it.
+        record.status = STATUS_FAILED
+        failure = next((h.failure for h in outcome.hooks if h.failure), None)
+        record.error = None if failure is None else failure.message
 
 
 def _run_step(
-    record: StepRecord, project_config: ProjectConfig, settings: DjangoAngularSettings
+    record: StepRecord,
+    project_config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    context: ExecutionContext | None = None,
 ) -> bool:
     """Run one step; ``False`` when it failed."""
     step = record.step
+    if step.command in IN_PROCESS_WRAPPERS:
+        return _run_in_process_tool(record, context)
     if step.command == SITE_SOURCES_COMMAND:
         return _run_site_sources(record, project_config)
+    if step.command == CLIENT_ALIGNMENT_COMMAND:
+        return _run_client_alignment(record, project_config)
     try:
         if "document" in step.parameters:
             stage_document(project_config)
@@ -247,6 +358,44 @@ def _run_site_sources(record: StepRecord, project_config: ProjectConfig) -> bool
     record.invocations.append(
         InvocationRecord(argv, "", 0, stdout="\n".join(copied)[-_OUTPUT_TAIL:])
     )
+    record.status = STATUS_SUCCEEDED
+    return True
+
+
+def _run_in_process_tool(record: StepRecord, context: ExecutionContext | None) -> bool:
+    """A step whose wrapper is its Tool, called in this process (the schema export)."""
+    from .automation.tools import invoke_tool
+
+    step = record.step
+    assert context is not None
+    result = invoke_tool(tool_name_of(step), {}, context)
+    argv = (tool_name_of(step), str(context.project_config.openapi_schema))
+    if result.failure is not None:
+        record.invocations.append(
+            InvocationRecord(argv, "", 1, stderr=result.failure.message[-_OUTPUT_TAIL:])
+        )
+        return _fail(record, result.failure.message)
+    record.invocations.append(
+        InvocationRecord(argv, "", 0, stdout=json.dumps(result.output, default=str))
+    )
+    record.status = STATUS_SUCCEEDED
+    return True
+
+
+def _run_client_alignment(record: StepRecord, project_config: ProjectConfig) -> bool:
+    """The alignment check: no subprocess, the summary is the recorded output."""
+    errors, summary = check_client_alignment(project_config)
+    argv = (CLIENT_ALIGNMENT_COMMAND, str(project_config.openapi_schema))
+    if errors:
+        message = (
+            "The generated client does not match the OpenAPI contract: "
+            + "; ".join(errors)
+        )
+        record.invocations.append(
+            InvocationRecord(argv, "", 1, stderr=message[-_OUTPUT_TAIL:])
+        )
+        return _fail(record, message)
+    record.invocations.append(InvocationRecord(argv, "", 0, stdout=summary))
     record.status = STATUS_SUCCEEDED
     return True
 

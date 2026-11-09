@@ -105,8 +105,8 @@ lifecycle** fires when the agent session ends.
 **Name**: `pre-construction`
 
 **Purpose**: Guarantee that the OpenAPI schema artifact exists, is valid
-OAS 3.1, and is at least as fresh as the latest Django migration before any
-Angular generation tool is allowed to run.
+OAS 3.1, and was not exported against other Django migrations than the current
+ones before any Angular generation tool is allowed to run.
 
 **Trigger event**: `pre-tool` scoped to the Angular generation tools
 `angular_api_client_generate`, `angular_workspace_scaffold`, `angular_app_scaffold`
@@ -117,15 +117,19 @@ command.
 **Deterministic action**:
 
 1. Read `artifacts.openapiSchema` from the discovered project configuration.
-2. Assert the schema file exists and its modification timestamp is greater
-   than or equal to the newest migration file under the configured Django
-   apps' `migrations/` directories.
+2. Assert the schema file exists and, when the migrations fingerprint recorded
+   beside it by `openapi_schema_export` (`<schema stem>.migrations.json`) differs
+   from the fingerprint of the migration modules under the project (path and content
+   of every `migrations/*.py`), fail as stale. File times are not compared, because a
+   checkout or a copy orders them at random; a schema with no recorded fingerprint
+   (for example a committed schema that was never exported here) cannot be judged
+   and is not blocked.
 3. Invoke the `validate_openapi_schema` tool contract with the schema path.
 4. If `valid: true`, allow the wrapped tool to run (exit 0).
 
 **Failure behavior**:
 
-- If the schema file is missing, stale, or `validate_openapi_schema` returns
+- If the schema file is missing, stale (exported against other migrations), or `validate_openapi_schema` returns
   `valid: false`, write a structured error
   `{ hook: "pre-construction", category, message, schema_path, ... }` to
   stderr **and** to `build/hook-log.jsonl`, and block the wrapped tool.
@@ -138,9 +142,7 @@ command.
 **Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
 `angular_app_scaffold`, future generation tools.
 
-**Implementation reference**: planned handler `hooks/pre-construction.sh`.
-It wraps `validate_openapi_schema` via its tool contract and is registered by
-the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:pre_construction_hook`, registered by `default_registry()`; it wraps `validate_openapi_schema` through `invoke_tool`. Failures are written to stderr and to `hook-log.jsonl` below the selected build output (`build/` by default) with a `reason` of `missing`, `stale`, `invalid` or `tool_failed`; a pass appends `{ hook, pass: true, schema_path }`.
 
 ### Mid-run triggers
 
@@ -152,9 +154,12 @@ the applicable provider adapter.
 the OpenAPI schema artifact is re-exported so downstream construction always
 sees a contract that matches the current data model.
 
-**Trigger event**: `post-tool` scoped to any tool invocation that runs
-`python manage.py makemigrations` (e.g. a `bash` tool call detected by the
-`makemigrations` substring in its command).
+**Trigger event**: `post-tool` scoped to the external command with the canonical
+identity `makemigrations`, i.e. any tool invocation that runs
+`python manage.py makemigrations` or `django-admin makemigrations`. The identity is
+derived from the command's argument tokens, not from a substring of a shell string
+(`AI_AUTOMATION_SPECIFICATIONS.md` §4); a command that merely mentions
+`makemigrations` is not that command.
 
 **Deterministic action**:
 
@@ -181,9 +186,7 @@ sees a contract that matches the current data model.
 **Allowed wrapped tools**: any tool invocation that calls
 `manage.py makemigrations`. The hook MUST NOT fire for unrelated tool calls.
 
-**Implementation reference**: planned handler `hooks/migration-triggered.sh`.
-It wraps `openapi_schema_export` via its tool contract and is registered by
-the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:migration_triggered_hook`, registered by `default_registry()`; it wraps `openapi_schema_export` through `invoke_tool`. The hook runner captures the pre-call snapshot with `snapshot_migrations` and passes it as `migrations_before` in the observation inputs. The wrapped command has the canonical identity `makemigrations`, derived from the command's tokens (`command_identity`: `manage.py` or `django-admin` followed by `makemigrations`), never from a substring of a shell string.
 
 ### Post-generation enforcement
 
@@ -206,7 +209,11 @@ generation tool contract.
    array returned by `angular_api_client_generate`) from the run's artifact location.
 2. Run a lightweight structural check appropriate to the wrapped tool:
    - For `angular_api_client_generate`: `tsc --noEmit` in the generated app workspace
-     (`artifacts.angularWorkspace`).
+     (`artifacts.angularWorkspace`) when the hook runs on its own. Inside a `build_app`
+     run the check is structural (the generated client services exist below the
+     `ng-openapi-gen` output), because the application cannot compile before its pages,
+     forms and site sources are in place; compilation is checked once by terminal
+     validation (`ng_build`).
    - For `angular_workspace_scaffold` / `angular_app_scaffold`: assert the expected
      workspace/app directories and files exist on disk.
 3. Append a verification entry
@@ -228,8 +235,52 @@ generation tool contract.
 **Allowed wrapped tools**: `angular_api_client_generate`, `angular_workspace_scaffold`,
 `angular_app_scaffold`, future generation tools.
 
-**Implementation reference**: planned handler `hooks/post-generation.sh`,
-registered by the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:post_generation_hook`, registered by `default_registry()`. The `angular_api_client_generate` check runs `pnpm exec tsc --noEmit` in the workspace through `command_execution`; the scaffold checks assert `angular.json` and `package.json` (workspace) or `projects/<project>/src` (application). Entries go to `verification.log`.
+
+#### 5. `demo-capture` — visual capture and reproduction check
+
+**Name**: `demo-capture`
+
+**Purpose**: Prove that a user-facing construction output renders and remains locally
+reproducible.
+
+**Trigger event**: `post-tool`, after `post-generation` succeeds for a Tool that
+produces a user-facing artifact.
+
+**Deterministic action**:
+
+1. Read the registered targets, the rows of the table in
+   [DEMO.md](DEMO.md) (`doc/contracts/DEMO.md`).
+2. For each target, check that its row names the URL, the server command, the fixture
+   setup and the actions, then invoke the `demo_capture` Tool with the URL and
+   `build/demo/` as `output_dir`. The application already runs at the URL: the
+   end-to-end Django-served run (`tests/e2e/run_e2e.py`, stage 6c) boots it with the seeded
+   data.
+3. Append one entry `{ hook: "demo-capture", tool, target, url, pass: bool, details,
+   screenshot_path, timestamp }` per target to `build/verification.log`. The screenshots
+   are uploaded as CI artifacts.
+
+**Failure behavior**:
+
+- A target that cannot be captured, or whose entry is incomplete, is logged with
+  `pass: false`; after all targets were tried the hook writes
+  `{ hook, category, message, tool }` to stderr and `build/hook-log.jsonl` and fails with
+  the dedicated hook-failure exit code, which halts the `build_app` run (`post-tool`).
+- The hook MUST NOT compare pixels or invoke AI judgment; a visual difference is never a
+  failure.
+- The hook MUST NOT modify the generated artifacts.
+
+**Allowed wrapped tools**: `angular_app_scaffold`, `ngdj_add_feature`, `ngdj_add_page`,
+`ngdj_add_component`, `ngdj_add_complex_component`, `ngdj_add_reactive_form`,
+`ngdj_add_tabs`, `ngdj_add_dialog`, `ngdj_add_stepper` and `ngdj_add_table`, and the
+`demo_capture` Tool. This list is derived from the trigger sentence (`post-tool` after
+`post-generation` for a Tool that produces a user-facing artifact): the Tools that
+generate pages, components, forms and tables. The owner can correct it.
+
+**Implementation reference**: `django_angular3/automation/hooks.py:demo_capture_hook`,
+registered with `demo_capture_registration(demo_file)` (scope `DEMO_CAPTURE_TOOLS`). It
+is not in `default_registry()`: a `build_app` run does not serve the application, so
+the capture runs in the end-to-end flow.
 
 ### Session lifecycle
 
@@ -270,8 +321,15 @@ unconditionally.
 
 **Allowed wrapped tools**: not applicable — `session-stop` is not scoped to a tool.
 
-**Implementation reference**: planned handler `hooks/session-stop.sh`,
-registered by the applicable provider adapter.
+**Implementation reference**: `django_angular3/automation/hooks.py:session_stop_hook`, registered by `default_registry()`. The artifacts are archived below the selected build output (`history/<timestamp>/`), the timestamp persists in `session-timestamp.txt`, and the summary entries in `session-log.json` are keyed by timestamp.
+
+### Exit codes
+
+A direct `build_app` run exits `0` when it succeeds, `1` when a Tool fails and `3` when
+a Hook fails (`pre-tool` blocked, `post-tool` halted); a `session-stop` failure only warns
+and leaves the decided code unchanged. The code `3` is distinct from the Tool-failure
+code (and from `2`, which argument parsers use). The decided code is recorded as
+`exit_code` in the `session-stop` summary.
 
 ### Provider adapter hook mappings
 

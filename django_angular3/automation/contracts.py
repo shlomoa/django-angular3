@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum, StrEnum
 from types import MappingProxyType
-from typing import Any, Protocol
+from typing import Any, Final, Protocol
 
 REDACTED = "[REDACTED]"
 
@@ -64,6 +64,13 @@ FAMILY_CONSEQUENCE = MappingProxyType(
         HookFamily.SESSION_STOP: Consequence.WARN,
     }
 )
+
+
+#: Exit codes of a direct run (``HOOK_CONTRACTS.md``): a Hook failure has its own code,
+#: distinct from the Tool-failure code.
+EXIT_OK: Final = 0
+EXIT_TOOL_FAILURE: Final = 1
+EXIT_HOOK_FAILURE: Final = 3
 
 
 class AdapterStatus(StrEnum):

@@ -1,6 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { credentials, djangoUrl, PAGE_SIZE, screenshotPath, seedCustomers } from './support';
+import {
+  credentials,
+  djangoUrl,
+  isCustomersPage,
+  PAGE_SIZE,
+  screenshotPath,
+  seedCustomers,
+} from './support';
 
 /**
  * Sign-in and CSRF-protected writes against the built Angular application that Django
@@ -79,10 +86,18 @@ test.describe('sign-in and CSRF-protected writes against the Django-served build
     await signIn(page);
     const token = await csrfToken(page);
 
+    // The app reloads the list after the write. Wait for that reload before changing the
+    // page: the reload of page 1 and the "Last page" request would otherwise race, and a
+    // late page-1 response put the table back on the first page.
+    const reloaded = page.waitForResponse(
+      (reply) =>
+        reply.request().method() === 'GET' && isCustomersPage(reply.url(), 1) && reply.ok(),
+    );
     const [response] = await Promise.all([
       page.waitForResponse(isCustomerCreation),
       page.getByTestId('create-customer').click(),
     ]);
+    await reloaded;
 
     expect(response.request().headers()['x-csrftoken'], 'the token the app sent').toBe(token);
     expect(response.status()).toBe(201);

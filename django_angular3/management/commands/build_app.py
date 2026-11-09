@@ -7,6 +7,7 @@ Django Angular3 application.
 
 import argparse
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +17,14 @@ from bin.openui_spec import (  # type: ignore[import-untyped]
 )
 from django.core.management.base import BaseCommand, CommandError
 
+from django_angular3.automation.evidence import JsonLinesEvidenceRecorder
+from django_angular3.automation.hooks import (
+    HookRegistry,
+    default_registry,
+    utc_timestamp,
+)
 from django_angular3.changes import Change, ChangeDomain, ChangeDomainResult, ChangeSet
+from django_angular3.client_alignment import with_client_alignment_step
 from django_angular3.command_translation import (
     AppBuildStep,
     CommandTranslationError,
@@ -60,6 +68,11 @@ from django_angular3.validation import validate_consistency
 from ...config import ConfigError, load_project_config
 
 logger = logging.getLogger(__name__)
+
+
+def utc_iso() -> str:
+    """The ISO time of now, the clock injected into the evidence recorder."""
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 class OpenAPIConfiguration:
@@ -378,6 +391,7 @@ class ChangeExecution:
         mapping: CommandMapping | None = None,
         settings: DjangoAngularSettings | None = None,
         bootstrap: list[InvocationRecord] | None = None,
+        registry: HookRegistry | None = None,
     ) -> ExecutionEvidence:
         """
         Derive the steps of the changes and, unless ``dry_run``, run them.
@@ -394,13 +408,15 @@ class ChangeExecution:
         logger.debug("Executing change set")
         try:
             settings = settings or load_angular_settings()
-            steps = with_site_sources_step(
-                resolve_steps(
-                    self._translate_change_set(change_set, mapping),
+            steps = with_client_alignment_step(
+                with_site_sources_step(
+                    resolve_steps(
+                        self._translate_change_set(change_set, mapping),
+                        project_config,
+                        mapping,
+                    ),
                     project_config,
-                    mapping,
-                ),
-                project_config,
+                )
             )
         except (
             StepBridgeError,
@@ -424,14 +440,36 @@ class ChangeExecution:
                 + "; ".join(problems)
                 + "."
             )
-        execute_steps(evidence, project_config, settings)
-        evidence_path = write_evidence(evidence, Path(output_path))
+        output = Path(output_path)
+        run_id = utc_timestamp()
+        hooks = (registry if registry is not None else default_registry()).bindings()
+        try:
+            recorder = JsonLinesEvidenceRecorder(output, run_id, utc_iso)
+            execute_steps(
+                evidence,
+                project_config,
+                settings,
+                recorder=recorder,
+                hooks=hooks,
+                run_id=run_id,
+                output_dir=output,
+            )
+        finally:
+            evidence_path = write_evidence(evidence, output)
         failed = evidence.failed
         if failed is not None:
             raise CommandError(
                 f"Step {failed.step.name_id} ({failed.step.command}, "
-                f"{failed.step.change_target}) failed: {failed.error}\n"
-                f"The remaining steps were skipped. Evidence: {evidence_path}"
+                f"{failed.step.change_target}) {failed.status}: {failed.error}\n"
+                f"The remaining steps were skipped. Evidence: {evidence_path}",
+                returncode=evidence.exit_code or 1,
+            )
+        if evidence.exit_code:
+            raise CommandError(
+                f"The run failed outside its steps (exit code {evidence.exit_code}): "
+                + "; ".join(evidence.warnings)
+                + f". Evidence: {evidence_path}",
+                returncode=evidence.exit_code,
             )
         return evidence
 

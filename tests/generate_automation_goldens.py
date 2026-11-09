@@ -50,6 +50,12 @@ def main() -> None:
                 (Path(directory) / EVIDENCE_FILE_NAME).read_bytes()
             )
 
+    from tests.test_automation_hooks import hook_log_goldens, setUpModule
+
+    setUpModule()
+    for name, text in hook_log_goldens().items():
+        (GOLDEN_DIR / name).write_text(text, encoding="utf-8", newline="\n")
+
     from django_angular3.automation.tool_catalog import CATALOG
 
     catalog = {
