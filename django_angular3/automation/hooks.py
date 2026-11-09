@@ -69,6 +69,23 @@ MIGRATION_TRIGGERED: Final = "migration-triggered"
 POST_GENERATION: Final = "post-generation"
 DEMO_CAPTURE: Final = "demo-capture"
 DEMO_DIRECTORY: Final = "demo"
+#: Derived from "post-tool after post-generation for a Tool that produces a user-facing
+#: artifact" (``doc/plan/VERIFICATION_PLAN.md``): the application scaffold and the
+#: ngdj Tools that generate pages, components, forms and tables.
+DEMO_CAPTURE_TOOLS: Final = frozenset(
+    {
+        "angular_app_scaffold",
+        "ngdj_add_feature",
+        "ngdj_add_page",
+        "ngdj_add_component",
+        "ngdj_add_complex_component",
+        "ngdj_add_reactive_form",
+        "ngdj_add_tabs",
+        "ngdj_add_dialog",
+        "ngdj_add_stepper",
+        "ngdj_add_table",
+    }
+)
 SESSION_STOP: Final = "session-stop"
 
 Clock = Callable[[], str]
@@ -724,7 +741,7 @@ def demo_capture_hook(
 
 def demo_capture_registration(
     demo_file: Path,
-    tools: frozenset[str],
+    tools: frozenset[str] = DEMO_CAPTURE_TOOLS,
     clock: Clock = utc_timestamp,
     stderr: TextIO | None = None,
 ) -> HookRegistration:

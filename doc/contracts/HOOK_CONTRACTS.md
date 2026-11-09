@@ -270,14 +270,17 @@ produces a user-facing artifact.
   failure.
 - The hook MUST NOT modify the generated artifacts.
 
-**Allowed wrapped tools**: the catalogued generation Tools that produce a user-facing
-artifact (`angular_app_scaffold`, `ngdj_*` page and component Tools) and the
-`demo_capture` Tool.
+**Allowed wrapped tools**: `angular_app_scaffold`, `ngdj_add_feature`, `ngdj_add_page`,
+`ngdj_add_component`, `ngdj_add_complex_component`, `ngdj_add_reactive_form`,
+`ngdj_add_tabs`, `ngdj_add_dialog`, `ngdj_add_stepper` and `ngdj_add_table`, and the
+`demo_capture` Tool. This list is derived from the trigger sentence (`post-tool` after
+`post-generation` for a Tool that produces a user-facing artifact): the Tools that
+generate pages, components, forms and tables. The owner can correct it.
 
 **Implementation reference**: `django_angular3/automation/hooks.py:demo_capture_hook`,
-registered with `demo_capture_registration(demo_file, tools)`. It is not in
-`default_registry()`: the Tools that count as producing a user-facing artifact are not
-decided yet.
+registered with `demo_capture_registration(demo_file)` (scope `DEMO_CAPTURE_TOOLS`). It
+is not in `default_registry()`: a `build_app` run does not serve the application, so
+the capture runs in the end-to-end flow.
 
 ### Session lifecycle
 
