@@ -137,7 +137,9 @@ normalized before it is read, so a `..` below a workspace that does not exist ye
 `--dry-run` changes nothing, so on a workspace without the package it reports that the
 package is missing instead of installing it.
 
-Not implemented yet: running a schema export step and detecting changes
+A change of `drfSpectacular.settings.*` adds a stage `0` step that exports the schema
+in the `build_app` process through the `openapi_schema_export` Tool (a failed export
+halts the run). Not implemented yet: detecting changes
 of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
 needs the `angular-django2` package `tool.ngAddPackage` names (a registry specification, `name`, `name@version`,
 `@scope/name` or `@scope/name@version` with an exact version, or a local package

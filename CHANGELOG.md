@@ -10,6 +10,10 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `build_app` runs the schema export step (stage `0`, selected by a change of
+  `drfSpectacular.settings.*`) in its own process through the `openapi_schema_export`
+  Tool instead of refusing it; a failed export halts the run
+  ([shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
 - `build_app` runs a `client-alignment` step before the `ng_build` gate: every schema of
   the exported OpenAPI contract must be declared in the generated models and every
   operation must have a generated service method, otherwise the run fails and names the

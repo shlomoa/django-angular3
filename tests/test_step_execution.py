@@ -19,6 +19,7 @@ import django
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
+from django_angular3.automation.contracts import ContractError, FailureCategory
 from django_angular3.changes import Change, ChangeDomain, ChangeOperation
 from django_angular3.command_translation import (
     _OPENUI_TOOLS,
@@ -465,7 +466,7 @@ class StepResolutionTests(unittest.TestCase):
         with self.assertRaisesRegex(StepBridgeError, "has no parameter nodeId"):
             self.resolve(self.project.change_set(), CommandMapping(document))
 
-    def test_a_wrapper_without_an_invocation_builder_is_refused(self) -> None:
+    def test_the_schema_export_step_runs_in_process_through_its_tool(self) -> None:
         change = Change(
             ChangeDomain.STATIC_CONFIG,
             "drfSpectacular.settings.TITLE",
@@ -476,8 +477,12 @@ class StepResolutionTests(unittest.TestCase):
         )
         steps = translate_changes((change,))
 
-        with self.assertRaisesRegex(StepBridgeError, "no invocation builder"):
-            resolve_steps(steps, self.project.project_config)
+        step = resolve_steps(steps, self.project.project_config)[0]
+
+        self.assertEqual(step.name_id, "openapi_schema_export")
+        self.assertEqual(step.command, "export_schema")
+        self.assertEqual(step.exec_order, 0)
+        self.assertEqual(step.unresolved, ())
 
     def test_a_widget_step_runs_the_ngdj_command_of_the_mapping_without_a_wrapper(
         self,
@@ -832,7 +837,7 @@ class DryRunTests(unittest.TestCase):
         service = next(s for s in report["steps"] if s["command"] == "ng_data_service")
         self.assertEqual(service["unresolved"], ["resource"])
 
-    def test_a_dry_run_still_refuses_what_has_no_wrapper(self) -> None:
+    def test_a_dry_run_lists_the_schema_export_step_and_exports_nothing(self) -> None:
         change = Change(
             ChangeDomain.STATIC_CONFIG,
             "drfSpectacular.settings.TITLE",
@@ -842,13 +847,74 @@ class DryRunTests(unittest.TestCase):
             "b",
         )
 
-        with self.assertRaisesRegex(CommandError, "Failed to resolve the steps"):
-            self.project.run_build(_change_set(static_config=(change,)), dry_run=True)
+        with patch("django_angular3.automation.tools.openapi_schema_export") as export:
+            report = json.loads(
+                self.project.run_build(
+                    _change_set(static_config=(change,)), dry_run=True
+                )
+            )
+
+        export.assert_not_called()
+        self.assertEqual(
+            [(s["stage"], s["step"], s["command"]) for s in report["steps"]][0],
+            (0, "openapi_schema_export", "export_schema"),
+        )
 
 
 class RealRunTests(unittest.TestCase):
     def setUp(self) -> None:
         self.project = _Project(self)
+
+    def test_a_real_run_exports_the_schema_through_the_tool_first(self) -> None:
+        change = Change(
+            ChangeDomain.STATIC_CONFIG,
+            "drfSpectacular.settings.TITLE",
+            "/drfSpectacular/settings/TITLE",
+            ChangeOperation.UPDATE,
+            "a",
+            "b",
+        )
+        with patch(
+            "django_angular3.automation.tools.openapi_schema_export",
+            return_value={"destination": "api.json", "schema_changed": True},
+        ) as export:
+            self.project.run_build(_change_set(static_config=(change,)))
+
+        export.assert_called_once()
+        evidence = json.loads(
+            (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
+        )
+        first = evidence["steps"][0]
+        self.assertEqual(first["step"], "openapi_schema_export")
+        self.assertEqual(first["status"], "succeeded")
+        self.assertIn("schema_changed", first["invocations"][0]["stdout"])
+
+    def test_a_failing_schema_export_halts_the_run_before_the_build(self) -> None:
+        change = Change(
+            ChangeDomain.STATIC_CONFIG,
+            "drfSpectacular.settings.TITLE",
+            "/drfSpectacular/settings/TITLE",
+            ChangeOperation.UPDATE,
+            "a",
+            "b",
+        )
+        failing = ContractError(
+            FailureCategory.EXTERNAL_TOOL_FAILED, "spectacular failed"
+        )
+        with (
+            patch(
+                "django_angular3.automation.tools.openapi_schema_export",
+                side_effect=failing,
+            ),
+            self.assertRaisesRegex(CommandError, "spectacular failed"),
+        ):
+            self.project.run_build(_change_set(static_config=(change,)))
+
+        evidence = json.loads(
+            (self.project.root / "build" / EVIDENCE_FILE_NAME).read_text("utf-8")
+        )
+        self.assertEqual(evidence["steps"][0]["status"], "failed")
+        self.assertNotIn("build", [c[0] for c in self.project.calls()])
 
     def dry_run_steps(self) -> list[tuple[str, str]]:
         report = json.loads(

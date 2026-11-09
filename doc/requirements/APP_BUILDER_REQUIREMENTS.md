@@ -36,8 +36,9 @@ python manage.py build_app [options]
 > `build-evidence.json` in `--output`. The exit code is `0` on success, `1` for a step
 > (Tool) failure and `3` for a Hook failure. `--force start-from-scratch` ignores the
 > previous configuration. Not implemented: the steps still run through their wrappers
-> rather than the structured Tool implementations of the catalog, the schema export step
-> (the `export_schema` wrapper has no invocation builder), the `migration-triggered`
+> rather than the structured Tool implementations of the catalog, except the schema export
+> step (`openapi_schema_export`, stage `0`), which calls its Tool in the `build_app`
+> process and fails the run when the export fails; the `migration-triggered`
 > Hook (no step runs `makemigrations`), the runtime smoke and the type, lint and test
 > checks of the global acceptance (FR-10). Before the `last-check` gate (`ng_build`) a
 > `client-alignment` step checks that every schema of the exported OpenAPI contract is

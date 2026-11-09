@@ -33,6 +33,7 @@ from .ngdj_command_mapping import CommandMapping
 from .settings import AngularCommandError, DjangoAngularSettings
 from .site_sources import SITE_SOURCES_COMMAND, SiteSourcesError, copy_site_sources
 from .step_bridge import (
+    IN_PROCESS_WRAPPERS,
     StepBridgeError,
     build_invocations,
     crosswalk_row,
@@ -279,7 +280,7 @@ def _step_function(
     record: StepRecord, project_config: ProjectConfig, settings: DjangoAngularSettings
 ) -> ToolFunction:
     def run(context: ExecutionContext, inputs: Mapping[str, Any]) -> Mapping[str, Any]:
-        if not _run_step(record, project_config, settings):
+        if not _run_step(record, project_config, settings, context):
             raise ContractError(
                 FailureCategory.EXTERNAL_TOOL_FAILED,
                 record.error or f"step {record.step.name_id} failed",
@@ -317,10 +318,15 @@ def _apply_outcome(
 
 
 def _run_step(
-    record: StepRecord, project_config: ProjectConfig, settings: DjangoAngularSettings
+    record: StepRecord,
+    project_config: ProjectConfig,
+    settings: DjangoAngularSettings,
+    context: ExecutionContext | None = None,
 ) -> bool:
     """Run one step; ``False`` when it failed."""
     step = record.step
+    if step.command in IN_PROCESS_WRAPPERS:
+        return _run_in_process_tool(record, context)
     if step.command == SITE_SOURCES_COMMAND:
         return _run_site_sources(record, project_config)
     if step.command == CLIENT_ALIGNMENT_COMMAND:
@@ -351,6 +357,26 @@ def _run_site_sources(record: StepRecord, project_config: ProjectConfig) -> bool
         return _fail(record, str(exc))
     record.invocations.append(
         InvocationRecord(argv, "", 0, stdout="\n".join(copied)[-_OUTPUT_TAIL:])
+    )
+    record.status = STATUS_SUCCEEDED
+    return True
+
+
+def _run_in_process_tool(record: StepRecord, context: ExecutionContext | None) -> bool:
+    """A step whose wrapper is its Tool, called in this process (the schema export)."""
+    from .automation.tools import invoke_tool
+
+    step = record.step
+    assert context is not None
+    result = invoke_tool(tool_name_of(step), {}, context)
+    argv = (tool_name_of(step), str(context.project_config.openapi_schema))
+    if result.failure is not None:
+        record.invocations.append(
+            InvocationRecord(argv, "", 1, stderr=result.failure.message[-_OUTPUT_TAIL:])
+        )
+        return _fail(record, result.failure.message)
+    record.invocations.append(
+        InvocationRecord(argv, "", 0, stdout=json.dumps(result.output, default=str))
     )
     record.status = STATUS_SUCCEEDED
     return True
