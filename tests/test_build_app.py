@@ -581,7 +581,12 @@ class BuildAppStepTests(unittest.TestCase):
         run_command.assert_not_called()
         self.assertEqual(
             [step.name_id for step in evidence.steps],
-            ["angular-workspace-foundation", "angular-app-composition", "last-check"],
+            [
+                "angular-workspace-foundation",
+                "angular-app-composition",
+                "client-alignment",
+                "last-check",
+            ],
         )
 
     def test_the_dry_run_command_prints_the_ordered_steps(self) -> None:
@@ -595,6 +600,7 @@ class BuildAppStepTests(unittest.TestCase):
             [
                 (1, "angular-workspace-foundation", "create"),
                 (2, "angular-app-composition", "create"),
+                (11, "client-alignment", "validate"),
                 (12, "last-check", "validate"),
             ],
         )

@@ -224,8 +224,8 @@ post-tool and session-stop consequences (`execution.py`), the 18 Tool implementa
 (`tool_catalog.py`, `tools.py`) and the lifecycle Hooks with their registry (`hooks.py`).
 `build_app` runs its steps on the controller with the Hooks and the evidence recorder.
 Still open: the steps calling the structured Tool implementations instead of the
-wrappers, the schema export step, terminal validation and global acceptance beyond the
-`ng_build` gate (Phase 9), and everything provider-related (Phase 10). The known gaps are
+wrappers (the schema export step already calls its Tool), and the runtime smoke and type, lint and test checks of the global
+acceptance beyond the `client-alignment` step and the `ng_build` gate (Phase 9), and everything provider-related (Phase 10). The known gaps are
 listed in the status block of `APP_BUILDER_REQUIREMENTS.md`.
 
 ## Dependency-ordered implementation phases

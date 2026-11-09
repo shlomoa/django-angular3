@@ -86,8 +86,9 @@ option (a data service has no `resource` until the resource identity rule is dec
 document that lies outside the Angular workspace to `.django-angular3/` in the workspace,
 runs the steps level by level, halts at the first failure and writes
 `build-evidence.json` to `--output` (default `build/`) with each call's exit code and
-output and the pinned `angular-django2` package and mapping versions. The final `last-check` gate builds the application
-(`ng_build`) until the terminal validation commands exist.
+output and the pinned `angular-django2` package and mapping versions. A `client-alignment` step then checks that the
+generated Angular client declares every schema and operation of the exported OpenAPI
+contract, and the final `last-check` gate builds the application (`ng_build`).
 
 In `build_app`, the `ng_openapi_setup` step always writes inside the application
 project: the client to `projects/<project>/src/app/api` (where `reactive-form` and
@@ -136,7 +137,9 @@ normalized before it is read, so a `..` below a workspace that does not exist ye
 `--dry-run` changes nothing, so on a workspace without the package it reports that the
 package is missing instead of installing it.
 
-Not implemented yet: running a schema export step and detecting changes
+Only a change of `drfSpectacular.settings.*` adds a stage `0` step that exports the schema
+in the `build_app` process through the `openapi_schema_export` Tool (a failed export
+halts the run). Not implemented yet: detecting changes
 of `django-angular3.json`. Deriving the steps of OpenUI and OpenAPI changes
 needs the `angular-django2` package `tool.ngAddPackage` names (a registry specification, `name`, `name@version`,
 `@scope/name` or `@scope/name@version` with an exact version, or a local package

@@ -324,11 +324,20 @@ def _merge_data_services(steps: tuple[AppBuildStep, ...]) -> tuple[AppBuildStep,
     return tuple(result)
 
 
+#: Wrappers that run in-process through their Tool, with no subprocess invocation:
+#: the schema export calls ``spectacular`` inside the Django process of ``build_app``.
+IN_PROCESS_WRAPPERS: Final = frozenset({"export_schema"})
+
+
 def _resolve_step(
     step: AppBuildStep, project_config: ProjectConfig, mapping: CommandMapping | None
 ) -> AppBuildStep:
     concern_key, wrapper = wrapper_for(step)
-    if _schematic_of(wrapper) is None and wrapper not in _COMMAND_BUILDERS:
+    if (
+        _schematic_of(wrapper) is None
+        and wrapper not in _COMMAND_BUILDERS
+        and wrapper not in IN_PROCESS_WRAPPERS
+    ):
         raise StepBridgeError(
             f"{wrapper} ({step.name_id}) is an operator wrapper with no invocation "
             f"builder yet: {step.change_target}."

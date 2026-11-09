@@ -10,6 +10,16 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- `build_app` runs the schema export step (stage `0`, selected by a change of
+  `drfSpectacular.settings.*`) in its own process through the `openapi_schema_export`
+  Tool instead of refusing it; a failed export halts the run
+  ([shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
+- `build_app` runs a `client-alignment` step before the `ng_build` gate: every schema of
+  the exported OpenAPI contract must be declared in the generated models and every
+  operation must have a generated service method (a schema `ng-openapi-gen` skips because no
+  operation reaches it is not expected unless `ignoreUnusedModels` is `false`), otherwise the run fails and names the
+  mismatch (part of the global acceptance of FR-10;
+  [shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
 - The `demo-capture` capability: the Tool `demo_capture` (a full-page Playwright
   screenshot of a running page; inputs `url` and `output_dir`), the `demo-capture` Hook
   (`post-tool`; captures every target registered in `doc/contracts/DEMO.md`, checks that

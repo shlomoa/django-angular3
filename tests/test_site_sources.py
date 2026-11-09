@@ -84,13 +84,13 @@ class DryRunTests(SiteSourcesTestCase):
         steps = self.steps()
 
         names = [s["step"] for s in steps]
-        self.assertEqual(names[-2:], ["site-sources", "last-check"])
-        step = steps[-2]
+        self.assertEqual(names[-3:], ["site-sources", "client-alignment", "last-check"])
+        step = steps[-3]
         self.assertEqual(step["command"], SITE_SOURCES_COMMAND)
         self.assertEqual(step["parameters"]["source"], str(self.sources.resolve()))
         self.assertEqual(step["parameters"]["destination"], str(self.destination))
         self.assertTrue(
-            steps[-3]["stage"] < step["stage"] < steps[-1]["stage"],
+            steps[-4]["stage"] < step["stage"] < steps[-1]["stage"],
             "the copy runs after the generating steps and before the gate",
         )
 
@@ -160,7 +160,8 @@ class CopyTests(SiteSourcesTestCase):
         self.assertEqual(copy["status"], "succeeded")
         self.assertIn("auth/auth.guard.ts", copy["invocations"][0]["stdout"])
         self.assertEqual(
-            [s["step"] for s in steps][-2:], ["site-sources", "last-check"]
+            [s["step"] for s in steps][-3:],
+            ["site-sources", "client-alignment", "last-check"],
         )
         self.assertEqual(self.project.calls()[-1][0], "build")
 
