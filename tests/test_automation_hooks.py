@@ -636,7 +636,19 @@ class DemoCaptureHookTests(HookTestCase):
         self.assertNotIn("demo-capture", names)
 
 
-@unittest.skipUnless(shutil.which("playwright"), "the Playwright command is absent")
+def _playwright_module_available() -> bool:
+    node = shutil.which("node")
+    if node is None:
+        return False
+    probe = subprocess.run(
+        [node, "-e", "require('playwright')"], capture_output=True, check=False
+    )
+    return probe.returncode == 0
+
+
+@unittest.skipUnless(
+    _playwright_module_available(), "node or the playwright module is absent"
+)
 class RealDemoCaptureTests(HookTestCase):
     def test_a_served_page_is_captured_with_the_real_browser(self) -> None:
         import http.server

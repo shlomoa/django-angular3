@@ -878,7 +878,7 @@ does not boot the application: the end-to-end Django-served run boots it.
 |---|---|---|
 | `screenshot_path` | string (path) | The PNG, named from the host, port and path of `url` inside `output_dir`. |
 | `url` | string | The captured URL. |
-| `command` | string | Exact Playwright command line invoked. |
+| `command` | string | The `node` command that ran the capture script (the script is shown as `<capture script>`). |
 
 **Error behavior**: Non-zero exit / raised `ToolError` with `category` in
 `{ invalid_input, missing_dependency, external_tool_failed, output_invalid }`.
@@ -890,9 +890,12 @@ another: a visual difference is not an error.
 **Allowed invocation context**: HOOK (`demo-capture`), CLI, the end-to-end flow. Not a
 `build_app` step.
 
-**Implementation reference**: `django_angular3/automation/tools.py:demo_capture`. It runs
-`playwright screenshot --full-page <url> <file>` through `command_execution`; the
-`playwright` command is the one on `PATH`, else `npx --no-install playwright`.
+**Implementation reference**: `django_angular3/automation/tools.py:demo_capture`. It runs a
+short script with `node -e` through `command_execution` that opens the page with the
+Playwright API (`playwright`, else `@playwright/test`, resolved from the working
+directory or `NODE_PATH`), requires a status below 400 and writes the full-page PNG. The
+browser is Playwright's own, or the executable named by `E2E_CHROMIUM_PATH` when that
+variable is set, as in the end-to-end flow.
 
 ### Executable form
 

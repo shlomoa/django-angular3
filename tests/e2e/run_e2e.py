@@ -75,6 +75,7 @@ from django_angular3.automation.execution import (
     ToolCall,
 )
 from django_angular3.automation.hooks import demo_capture_registration, demo_targets
+from django_angular3.automation.tools import screenshot_name
 from django_angular3.config import load_project_config
 from django_angular3.settings import load_angular_settings
 from django_angular3.step_bridge import stage_document, workspace_document_path
@@ -1042,9 +1043,8 @@ class Flow:
         env = {
             **self.env,
             "DJANGO_SETTINGS_MODULE": SETTINGS_MODULE,
-            "PATH": os.pathsep.join(
-                [str(E2E_DIR / "node_modules" / ".bin"), self.env["PATH"]]
-            ),
+            # The capture script requires the Playwright module the specs use.
+            "NODE_PATH": str(E2E_DIR / "node_modules"),
         }
         server = subprocess.Popen(
             [
@@ -1076,6 +1076,12 @@ class Flow:
             if server.poll() is None:
                 server.kill()
         self.check(result.ok, f"demo-capture failed: {result.failure}")
+        for target in demo_targets(demo_file):
+            screenshot = EVIDENCE_DIR / "demo" / screenshot_name(target.url)
+            self.check(
+                screenshot.is_file() and screenshot.stat().st_size > 0,
+                f"demo-capture left no screenshot of {target.name} at {screenshot}.",
+            )
 
     def _wait_for(self, url: str, seconds: int = 60) -> None:
         deadline = time.monotonic() + seconds

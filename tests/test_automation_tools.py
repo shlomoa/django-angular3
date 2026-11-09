@@ -403,7 +403,9 @@ class DemoCaptureTests(ToolTestCase):
         )
         self.assertEqual(result.output["url"], "http://127.0.0.1:8000/customers")
         argv = self.calls[0]
-        self.assertEqual(argv[-4:-2], ["screenshot", "--full-page"])
+        self.assertEqual(argv[1], "-e")
+        self.assertIn("fullPage: true", argv[2])
+        self.assertIn("E2E_CHROMIUM_PATH", argv[2])
         self.assertEqual(argv[-2], "http://127.0.0.1:8000/customers")
         self.assertTrue((self.out / "127.0.0.1-8000-customers.png").is_file())
 
@@ -415,7 +417,7 @@ class DemoCaptureTests(ToolTestCase):
         self.assertTrue(result.ok, result.failure)
         self.assertEqual(self.calls, [])
         self.assertFalse(self.out.exists())
-        self.assertIn("screenshot --full-page", result.output["command"])
+        self.assertIn("<capture script>", result.output["command"])
 
     def test_a_url_that_is_not_http_is_invalid_input(self) -> None:
         result = self.capture(url="file:///etc/passwd")

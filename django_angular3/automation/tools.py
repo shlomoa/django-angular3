@@ -536,26 +536,46 @@ def screenshot_name(url: str) -> str:
     return re.sub(r"[^A-Za-z0-9.]+", "-", raw).strip("-") + ".png"
 
 
-def _playwright_argv() -> list[str]:
-    found = shutil.which("playwright")
-    if found:
-        return [found]
-    npx = shutil.which("npx") or "npx"
-    return [npx, "--no-install", "playwright"]
+#: The capture script, run with ``node -e``: the Playwright API, not its command line,
+#: because only the API honours ``E2E_CHROMIUM_PATH`` (the browser the end-to-end flow
+#: already uses). ``playwright`` is resolved from the working directory or
+#: ``NODE_PATH``.
+_CAPTURE_SCRIPT: Final = """
+const load = () => { try { return require('playwright'); }
+  catch { return require('@playwright/test'); } };
+const { chromium } = load();
+(async () => {
+  const [url, file] = process.argv.slice(1);
+  const executablePath = process.env.E2E_CHROMIUM_PATH || undefined;
+  const browser = await chromium.launch({ executablePath });
+  try {
+    const page = await browser.newPage();
+    const response = await page.goto(url, { waitUntil: 'networkidle' });
+    if (!response || response.status() >= 400) {
+      const status = response ? response.status() : 'nothing';
+      throw new Error('GET ' + url + ' answered ' + status);
+    }
+    await page.screenshot({ path: file, fullPage: true });
+  } finally {
+    await browser.close();
+  }
+})().catch((error) => { console.error(String(error)); process.exit(1); });
+"""
 
 
 def demo_capture(
     context: ExecutionContext, inputs: Mapping[str, Any]
 ) -> Mapping[str, Any]:
-    """Full-page screenshot of a running page with the Playwright command line."""
+    """Full-page screenshot of a running page with the Playwright API."""
     tool = "demo_capture"
     url = str(inputs["url"])
     if urlsplit(url).scheme not in {"http", "https"} or not urlsplit(url).netloc:
         raise invalid(tool, f"url {url!r} is not an http(s) URL", field="url")
     output_dir = Path(inputs["output_dir"])
     target = output_dir / screenshot_name(url)
-    argv = [*_playwright_argv(), "screenshot", "--full-page", url, str(target)]
-    command = shlex.join(argv)
+    node = shutil.which("node") or "node"
+    argv = [node, "-e", _CAPTURE_SCRIPT, url, str(target)]
+    command = shlex.join([node, "-e", "<capture script>", url, str(target)])
     if _dry(context, inputs):
         return {"screenshot_path": str(target), "url": url, "command": command}
     output_dir.mkdir(parents=True, exist_ok=True)
