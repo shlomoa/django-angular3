@@ -8,7 +8,7 @@ locally. The table below is the registry: a page is a target when it has a row h
 Every row must fill all five columns; the Hook fails on an empty cell. The URL is the
 page the Tool captures; the application must already be running there (the end-to-end
 flow, `tests/e2e/run_e2e.py` stage 6c, boots it). Screenshots are written to
-`build/demo/` and uploaded as CI artifacts; they are never compared pixel by pixel.
+`demo/` below the output directory of the run (`build/e2e-evidence/demo/` in the end-to-end flow) and uploaded as CI artifacts; they are never compared pixel by pixel.
 
 | Target | URL | Server command | Fixture setup | Actions |
 |---|---|---|---|---|

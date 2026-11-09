@@ -154,6 +154,10 @@ per-domain `type` field are not part of the builder contract.
 Unsupported input, unknown configuration keys, and unsupported `oasdiff` output
 shapes must fail explicitly. They must never be interpreted as no change.
 
+Current behavior: the contract is silent about changes of the OpenAPI `info` object, so a
+real `info.version` (or `info.title`) change between the two schemas fails `build_app`
+with `oasdiff detail contains unsupported key(s): info`.
+
 ---
 
 ## Change Command Translation and Execution
