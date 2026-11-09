@@ -7,6 +7,7 @@ installed Angular CLI.
 
 import dataclasses
 import json
+import os
 import re
 import sys
 import types
@@ -17,6 +18,7 @@ from unittest.mock import patch
 from django.test import override_settings
 
 from django_angular3 import command_execution
+from django_angular3 import tools as tools_module
 from django_angular3.automation import tools as automation_tools
 from django_angular3.automation.contracts import ContractError, FailureCategory
 from django_angular3.automation.execution import (
@@ -434,6 +436,61 @@ class DemoCaptureTests(ToolTestCase):
         )
 
         self.assertEqual(result.failure.category, FailureCategory.OUTPUT_INVALID)
+
+
+def _real_oasdiff_available() -> bool:
+    try:
+        tools_module.ensure_oasdiff()
+    except OasdiffUnavailableError:
+        return False
+    return True
+
+
+@unittest.skipUnless(
+    os.environ.get("DJNG_REAL_OASDIFF") == "1",
+    "set DJNG_REAL_OASDIFF=1 (needs the oasdiff binary, on PATH or downloadable)",
+)
+class RealOasdiffTests(ToolTestCase):
+    """``oasdiff_diff`` and ``oasdiff_changelog`` with the real ``oasdiff`` binary."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        if not _real_oasdiff_available():
+            self.skipTest("the oasdiff binary is not available")
+        self.previous = self.write_schema("previous.json")
+        changed = json.loads(self.previous.read_text("utf-8"))
+        changed["paths"]["/api/v1/orders/"] = {
+            "get": {"responses": {"200": {"description": "ok"}}}
+        }
+        self.current = self.write_schema("current.json", changed)
+        self.pair = {
+            "current_schema": str(self.current),
+            "previous_schema": str(self.previous),
+        }
+
+    def test_a_changed_schema_is_reported_with_its_added_path(self) -> None:
+        result = invoke_tool("oasdiff_diff", self.pair, self.context)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertIs(result.output["schema_changed"], True)
+        self.assertIn("orders", result.output["affected_resources"])
+        self.assertTrue(Path(result.output["report_path"]).is_file())
+
+    def test_an_unchanged_schema_reports_no_change(self) -> None:
+        pair = {**self.pair, "current_schema": str(self.previous)}
+
+        result = invoke_tool("oasdiff_diff", pair, self.context)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertIs(result.output["schema_changed"], False)
+
+    def test_the_changelog_names_the_added_path(self) -> None:
+        result = invoke_tool("oasdiff_changelog", self.pair, self.context)
+
+        self.assertTrue(result.ok, result.failure)
+        self.assertIn(
+            "/api/v1/orders/", Path(result.output["changelog_path"]).read_text("utf-8")
+        )
 
 
 class RealExportTests(ToolTestCase):
