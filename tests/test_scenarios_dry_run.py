@@ -26,6 +26,7 @@ from django_angular3.command_translation import (
     translate_changes,
 )
 from django_angular3.config_changes import compare_static_config
+from django_angular3.consistency import reference_index
 from django_angular3.management.commands.build_app import (
     ChangeDetector,
     Configuration,
@@ -126,6 +127,80 @@ class ScenarioDryRunTests(unittest.TestCase):
                 _, steps = self._translate(_current_config(scenario), None)
 
                 self.assertEqual(_step_keys(steps), expected)
+
+    def test_a_concern_backed_by_both_sources_keeps_each_source_identity(self) -> None:
+        # The OpenUI bindings name OpenAPI operations: one concern is both
+        # API-contract-backed and UI-description-derived. The derivation must keep the
+        # two sources apart: each Change stays in its domain with the evidence of its
+        # own file, and each step names the one domain that caused it.
+        directory = tempfile.TemporaryDirectory(dir=WORKSPACE_TEMP_DIR)
+        self.addCleanup(directory.cleanup)
+        openapi = SHARED / "bindings.openapi.json"
+        document = json.loads((SHARED / "invoice.openui.json").read_text("utf-8"))
+        document["children"][0]["attrs"] = {
+            "uses.data": "src/app/api/services#UsersApiService"
+        }
+        openui = Path(directory.name) / "bound.openui.json"
+        openui.write_text(json.dumps(document), encoding="utf-8")
+        config = Path(directory.name) / "django-angular3-bound.json"
+        config.write_text(
+            json.dumps(
+                {
+                    "project": {"name": "bound"},
+                    "artifacts": {
+                        "openapiSchema": str(openapi),
+                        "openuiSpecification": str(openui),
+                        "angularWorkspace": str(Path(directory.name) / "angular"),
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        index = reference_index(
+            json.loads(openui.read_text("utf-8")),
+            json.loads(openapi.read_text("utf-8")),
+        )
+        self.assertTrue(index.operations, "the OpenUI document binds API operations")
+
+        change_set, steps = self._translate(config, None)
+
+        api = change_set.domains[ChangeDomain.OPENAPI].changes
+        ui = change_set.domains[ChangeDomain.OPENUI].changes
+        self.assertTrue(api and ui)
+        self.assertFalse({c.subject for c in api} & {c.subject for c in ui})
+        for change in api:
+            self.assertEqual(change.domain, ChangeDomain.OPENAPI)
+            self.assertFalse(change.subject.startswith("openui:"))
+            self.assertEqual(
+                {e.source for e in change.evidence}, {str(openapi)}, change.subject
+            )
+        for change in ui:
+            self.assertEqual(change.domain, ChangeDomain.OPENUI)
+            self.assertTrue(change.subject.startswith("openui:"))
+            self.assertEqual(
+                {e.source for e in change.evidence}, {str(openui)}, change.subject
+            )
+        by_domain = {
+            ChangeDomain.OPENAPI: {c.subject for c in api},
+            ChangeDomain.OPENUI: {c.subject for c in ui},
+        }
+        for step in steps:
+            if step.change_domain in by_domain:
+                targets = {t.strip() for t in step.change_target.split(",")}
+                self.assertTrue(
+                    targets
+                    <= by_domain[step.change_domain]
+                    | {"artifacts.angularWorkspace", "project.name"},
+                    (step.name_id, step.change_target),
+                )
+        self.assertIn(
+            ChangeDomain.OPENAPI,
+            {s.change_domain for s in steps if s.name_id == "ngdj_add_data_service"},
+        )
+        self.assertTrue(
+            {s.change_domain for s in steps if s.name_id == "ngdj_add_page"}
+            <= {ChangeDomain.OPENUI}
+        )
 
     def test_the_initial_build_of_an_uncompilable_document_fails_explicitly(
         self,
