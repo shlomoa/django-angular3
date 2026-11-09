@@ -32,6 +32,7 @@ from django_angular3.management.commands.build_app import (
     Configuration,
 )
 from django_angular3.ngdj_command_mapping import CommandMapping
+from django_angular3.step_bridge import resolve_steps
 from tests.test_command_translation import FIXTURE_MAPPING
 from tests.tool_config import use_tool_configuration_template
 from tests.workspace_temp import WORKSPACE_TEMP_DIR
@@ -201,6 +202,40 @@ class ScenarioDryRunTests(unittest.TestCase):
             {s.change_domain for s in steps if s.name_id == "ngdj_add_page"}
             <= {ChangeDomain.OPENUI}
         )
+
+    def test_every_generated_location_resolves_inside_the_application_project(
+        self,
+    ) -> None:
+        # The client, its helpers, the data services and the pages of one build all
+        # land below projects/<app>/src/app, whatever convention their schematic
+        # uses for the path (the page path is relative to the project root).
+        for scenario in ("02-add-order", "07-combined-change", "12-all-change-domains"):
+            with self.subTest(scenario=scenario):
+                config = _current_config(scenario)
+                project_config = Configuration(config).project_config
+                _, steps = self._translate(config, None)
+                root = Path("projects") / project_config.project_name
+                inside = root / "src" / "app"
+
+                found = []
+                for step in resolve_steps(steps, project_config, self.mapping):
+                    for key in ("output_path", "helpers_path", "path", "target_path"):
+                        value = step.parameters.get(key)
+                        if value is None:
+                            continue
+                        location = Path(str(value))
+                        if step.command == "ng_page":
+                            location = root / location
+                        found.append((step.name_id, key, location))
+                        self.assertTrue(
+                            location.is_relative_to(inside),
+                            f"{step.name_id} {key}={value} is outside {inside}",
+                        )
+                if scenario != "12-all-change-domains":
+                    self.assertTrue(
+                        {name for name, _, _ in found}
+                        >= {"ngdj_run_schematic", "ngdj_add_data_service"}
+                    )
 
     def test_the_initial_build_of_an_uncompilable_document_fails_explicitly(
         self,

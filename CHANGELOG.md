@@ -13,7 +13,10 @@ package versions. Releases before this file are described on the
 - A test that an OpenUI document binding OpenAPI operations keeps the two sources apart
   through change derivation: each Change stays in its domain with the evidence of its
   own file, and each step names the one domain that caused it
-  ([shlomoa/django-angular3#74](https://github.com/shlomoa/django-angular3/issues/74)).
+  ([shlomoa/django-angular3#74](https://github.com/shlomoa/django-angular3/issues/74)),
+  and a test that the client, helpers, data services and pages of a build all resolve
+  below `projects/<app>/src/app`
+  ([shlomoa/django-angular3#66](https://github.com/shlomoa/django-angular3/issues/66)).
 - `build_app` runs the schema export step (stage `0`, selected by a change of
   `drfSpectacular.settings.*`) in its own process through the `openapi_schema_export`
   Tool instead of refusing it; a failed export halts the run
