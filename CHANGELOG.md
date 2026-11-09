@@ -10,6 +10,17 @@ package versions. Releases before this file are described on the
 
 ### Added
 
+- Tests that complete the validation lists of the Hook and Tool phases: the
+  `post-generation` Hook with the real `tsc --noEmit` (skipped when `pnpm` or `tsc` is
+  absent), golden snapshots of `hook-log.jsonl`, `verification.log` and
+  `session-log.json`, and `openapi_schema_export` with `validate_openapi_schema` on a
+  real drf-spectacular schema
+  ([shlomoa/django-angular3#163](https://github.com/shlomoa/django-angular3/issues/163),
+  [shlomoa/django-angular3#162](https://github.com/shlomoa/django-angular3/issues/162)).
+  Two tests of `build_app` skipped as "work in progress" are replaced: the one that
+  expected a `.previous` schema to be discovered contradicted the discovery decision
+  (the baseline is `--previous-config` or `.previous.json`), and the one on a missing
+  OpenUI source runs again against the current message.
 - `build_app` runs its steps on the provider-neutral direct-execution controller with the
   lifecycle Hooks and the evidence recorder: a missing, stale or invalid schema blocks a
   generation step, a failing structural check halts the run, the session is archived, the

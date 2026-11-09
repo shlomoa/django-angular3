@@ -3,6 +3,7 @@
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import unittest
@@ -44,6 +45,7 @@ from django_angular3.automation.migrations import (
     read_record,
     write_record,
 )
+from tests.generate_automation_goldens import GOLDEN_DIR
 from tests.test_step_execution import _Project
 from tests.tool_config import use_tool_configuration_template
 
@@ -53,6 +55,50 @@ SCHEMA = {
     "info": {"title": "t", "version": "1"},
     "paths": {"/api/v1/x/": {"get": {"responses": {"200": {"description": "ok"}}}}},
 }
+
+
+def hook_log_goldens() -> dict[str, str]:
+    """The three Hook artifacts of one scripted session, paths made relative.
+
+    The generator writes them to ``tests/fixtures/automation`` and the test below
+    compares them byte for byte; the temporary root is replaced by ``<root>``.
+    """
+    case = HookTestCase("setUp")
+    case.setUp()
+    try:
+        scaffold = ToolCall(
+            "angular_app_scaffold", lambda c, i: {"generated_files": []}
+        )
+        case.schema.unlink()
+        case.executor().run([scaffold])
+        case.schema.write_text(json.dumps(SCHEMA), encoding="utf-8")
+        case.executor().run([scaffold])
+
+        def create(context, inputs):
+            name = case.project.project_config.project_name
+            (case.project.workspace / "projects" / name / "src").mkdir(parents=True)
+            return {"generated_files": []}
+
+        case.executor().run([ToolCall("angular_app_scaffold", create)])
+        logs = {
+            "hooks-hook-log.jsonl": (case.build / HOOK_LOG).read_text("utf-8"),
+            "hooks-verification.log": (case.build / VERIFICATION_LOG).read_text(
+                "utf-8"
+            ),
+        }
+        case.executor(session_stop=True).run(
+            [ToolCall("oasdiff_diff", lambda c, i: {})]
+        )
+        logs["hooks-session-log.json"] = (case.build / SESSION_LOG).read_text("utf-8")
+        root = str(case.root)
+        return {
+            name: text.replace(root, "<root>").replace(
+                root.replace("\\", "/"), "<root>"
+            )
+            for name, text in logs.items()
+        }
+    finally:
+        case.doCleanups()
 
 
 def setUpModule() -> None:
@@ -396,6 +442,62 @@ class ClientStructureTests(HookTestCase):
         self.assertIn(
             "no generated client service", self.log(VERIFICATION_LOG)[0]["details"]
         )
+
+
+@unittest.skipUnless(
+    shutil.which("pnpm") and shutil.which("tsc"),
+    "pnpm and the TypeScript compiler are not installed",
+)
+class RealTscTests(HookTestCase):
+    """The tsc client check with the real compiler in a small workspace."""
+
+    def generate(self, source: str):
+        workspace = self.project.workspace
+        output = "src/api"
+
+        def tool(context, inputs):
+            (workspace / "package.json").write_text('{"name": "w"}', encoding="utf-8")
+            (workspace / "tsconfig.json").write_text(
+                json.dumps({"compilerOptions": {"strict": True}, "include": ["src"]}),
+                encoding="utf-8",
+            )
+            (workspace / "ng-openapi-gen.json").write_text(
+                json.dumps({"output": output}), encoding="utf-8"
+            )
+            services = workspace / output / "services"
+            services.mkdir(parents=True, exist_ok=True)
+            (services / "customers.service.ts").write_text(source, encoding="utf-8")
+            return {}
+
+        self.registry = default_registry(
+            lambda: "20260101T000000Z", self.stderr, client_check="tsc"
+        )
+        return self.executor().run([ToolCall("angular_api_client_generate", tool)])
+
+    def test_a_client_that_compiles_passes(self) -> None:
+        result = self.generate("export const total: number = 1;\n")
+
+        self.assertTrue(result.ok, result.failure)
+        (entry,) = self.log(VERIFICATION_LOG)
+        self.assertIs(entry["pass"], True)
+        self.assertEqual(entry["details"], "tsc --noEmit passed")
+
+    def test_a_client_that_does_not_compile_halts(self) -> None:
+        result = self.generate("export const total: number = 'one';\n")
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.exit_code, EXIT_HOOK_FAILURE)
+        (entry,) = self.log(VERIFICATION_LOG)
+        self.assertIs(entry["pass"], False)
+        self.assertIn("exited with", entry["details"])
+
+
+class GoldenLogTests(unittest.TestCase):
+    def test_the_hook_artifacts_match_their_generated_goldens(self) -> None:
+        for name, text in hook_log_goldens().items():
+            with self.subTest(name=name):
+                golden = (GOLDEN_DIR / name).read_bytes()
+                self.assertEqual(text.encode("utf-8"), golden)
 
 
 class SessionStopTests(HookTestCase):

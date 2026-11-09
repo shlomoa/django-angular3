@@ -1,0 +1,2 @@
+{"details":"missing: <root>/angular/projects/shop/src","generated_files":[],"hook":"post-generation","pass":false,"timestamp":"20260101T000000Z","tool":"angular_app_scaffold"}
+{"details":"expected workspace files are present","generated_files":[],"hook":"post-generation","pass":true,"timestamp":"20260101T000000Z","tool":"angular_app_scaffold"}

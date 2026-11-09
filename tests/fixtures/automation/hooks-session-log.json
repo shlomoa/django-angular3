@@ -1,0 +1,11 @@
+[
+  {
+    "commands_completed": 1,
+    "commands_failed": 0,
+    "exit_code": 0,
+    "hook": "session-stop",
+    "hook_failures": 0,
+    "schema_version": "0.1.0",
+    "timestamp": "20260101T000000Z"
+  }
+]

@@ -1,0 +1,4 @@
+{"category":"hook_failed","hook":"pre-construction","message":"the schema <root>/api.openapi.json does not exist","reason":"missing","schema_path":"<root>/api.openapi.json"}
+{"hook":"pre-construction","pass":true,"schema_path":"<root>/api.openapi.json"}
+{"category":"hook_failed","hook":"post-generation","message":"the structural check of angular_app_scaffold failed: missing: <root>/angular/projects/shop/src","tool":"angular_app_scaffold"}
+{"hook":"pre-construction","pass":true,"schema_path":"<root>/api.openapi.json"}
