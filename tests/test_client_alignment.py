@@ -24,11 +24,29 @@ SCHEMA = {
         "/api/v1/customers/": {
             "get": {
                 "operationId": "customers_list",
-                "responses": {"200": {"description": "ok"}},
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": "#/components/schemas/Customer"}
+                            }
+                        },
+                    }
+                },
             }
         }
     },
-    "components": {"schemas": {"Customer": {"type": "object"}}},
+    "components": {
+        "schemas": {
+            "Customer": {
+                "type": "object",
+                "properties": {"home": {"$ref": "#/components/schemas/Address"}},
+            },
+            "Address": {"type": "object"},
+            "Health": {"type": "object"},
+        }
+    },
 }
 
 
@@ -44,9 +62,12 @@ class AlignmentTests(unittest.TestCase):
         self.workspace = self.config.angular_workspace
         self.output = self.workspace / "src" / "api"
 
-    def generate(self, model: str, service: str) -> None:
+    def generate(self, model: str, service: str, ignore_unused: bool = True) -> None:
+        settings = {"output": "src/api"}
+        if not ignore_unused:
+            settings["ignoreUnusedModels"] = False
         (self.workspace / "ng-openapi-gen.json").write_text(
-            json.dumps({"output": "src/api"}), encoding="utf-8"
+            json.dumps(settings), encoding="utf-8"
         )
         (self.output / "models").mkdir(parents=True, exist_ok=True)
         (self.output / "services").mkdir(parents=True, exist_ok=True)
@@ -57,18 +78,51 @@ class AlignmentTests(unittest.TestCase):
 
     def test_a_client_that_declares_every_schema_and_operation_is_aligned(self) -> None:
         self.generate(
-            "export interface Customer { name: string }\n",
+            "export interface Customer { name: string }\n"
+            "export interface Address { street: string }\n",
             "export class CustomersApiService { customersList$Response() {} }\n",
         )
 
         errors, summary = check_client_alignment(self.config)
 
         self.assertEqual(errors, [])
-        self.assertEqual(summary, "1 schema(s) and 1 operation(s) checked")
+        self.assertEqual(summary, "2 schema(s) and 1 operation(s) checked")
+
+    def test_a_schema_no_operation_reaches_is_not_expected_by_default(self) -> None:
+        # ng-openapi-gen skips it (ignoreUnusedModels defaults to true): Health.
+        self.generate(
+            "export interface Customer {}\nexport interface Address {}\n",
+            "export class CustomersApiService { customersList() {} }\n",
+        )
+
+        errors, _ = check_client_alignment(self.config)
+
+        self.assertEqual(errors, [])
+
+    def test_ignore_unused_models_false_expects_every_schema(self) -> None:
+        self.generate(
+            "export interface Customer {}\nexport interface Address {}\n",
+            "export class CustomersApiService { customersList() {} }\n",
+            ignore_unused=False,
+        )
+
+        errors, _ = check_client_alignment(self.config)
+
+        self.assertEqual(errors, ["schema Health has no generated model"])
+
+    def test_a_schema_reached_only_through_another_schema_is_expected(self) -> None:
+        self.generate(
+            "export interface Customer {}\n",
+            "export class CustomersApiService { customersList() {} }\n",
+        )
+
+        errors, _ = check_client_alignment(self.config)
+
+        self.assertEqual(errors, ["schema Address has no generated model"])
 
     def test_a_schema_without_a_model_is_reported(self) -> None:
         self.generate(
-            "export interface Product { name: string }\n",
+            "export interface Product {}\nexport interface Address {}\n",
             "export class CustomersApiService { customersList() {} }\n",
         )
 
@@ -78,7 +132,7 @@ class AlignmentTests(unittest.TestCase):
 
     def test_an_operation_without_a_service_method_is_reported(self) -> None:
         self.generate(
-            "export interface Customer { name: string }\n",
+            "export interface Customer {}\nexport interface Address {}\n",
             "export class CustomersApiService { customersRetrieve() {} }\n",
         )
 
@@ -100,7 +154,7 @@ class AlignmentTests(unittest.TestCase):
     def test_interface_drift_fails_the_step_and_names_the_mismatch(self) -> None:
         # The contract gained an operation after the client was generated.
         self.generate(
-            "export interface Customer { name: string }\n",
+            "export interface Customer {}\nexport interface Address {}\n",
             "export class CustomersApiService { customersList() {} }\n",
         )
         drifted = json.loads(json.dumps(SCHEMA))
@@ -123,7 +177,7 @@ class AlignmentTests(unittest.TestCase):
 
     def test_an_aligned_client_passes_the_step(self) -> None:
         self.generate(
-            "export interface Customer { name: string }\n",
+            "export interface Customer {}\nexport interface Address {}\n",
             "export class CustomersApiService { customersList() {} }\n",
         )
         (step,) = with_client_alignment_step((_gate_step(),))[:1]

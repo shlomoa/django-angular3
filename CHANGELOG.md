@@ -16,7 +16,8 @@ package versions. Releases before this file are described on the
   ([shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
 - `build_app` runs a `client-alignment` step before the `ng_build` gate: every schema of
   the exported OpenAPI contract must be declared in the generated models and every
-  operation must have a generated service method, otherwise the run fails and names the
+  operation must have a generated service method (a schema `ng-openapi-gen` skips because no
+  operation reaches it is not expected unless `ignoreUnusedModels` is `false`), otherwise the run fails and names the
   mismatch (part of the global acceptance of FR-10;
   [shlomoa/django-angular3#164](https://github.com/shlomoa/django-angular3/issues/164)).
 - The `demo-capture` capability: the Tool `demo_capture` (a full-page Playwright

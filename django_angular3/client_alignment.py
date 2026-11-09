@@ -3,8 +3,11 @@
 FR-10 of ``doc/requirements/APP_BUILDER_REQUIREMENTS.md`` makes the alignment of the
 generated client with the exported OpenAPI contract part of the global acceptance of a
 build. This check is deterministic and needs no process: every schema of
-``components.schemas`` must be declared in the generated models, and every operation
-(``operationId``) must have a method in the generated services. Both are read from the
+``components.schemas`` that the generator emits must be declared in the generated
+models, and every operation (``operationId``) must have a method in the generated
+services. ``ng-openapi-gen`` skips a schema that no operation reaches through a
+``$ref`` unless its configuration sets ``ignoreUnusedModels`` to ``false``; the check
+expects exactly what the generator emits. Both are read from the
 files ``ng-openapi-gen`` wrote below the ``output`` of ``ng-openapi-gen.json``. Without
 that file the project has no generated client and there is nothing to align.
 ``build_app`` runs it as a step before the ``last-check`` gate, so that the gate stays
@@ -64,16 +67,20 @@ def check_client_alignment(project_config: ProjectConfig) -> tuple[list[str], st
     if not generator.is_file():
         return [], "no ng-openapi-gen.json: no generated client to align"
     try:
+        generator_config = json.loads(generator.read_text(encoding="utf-8"))
         output = project_config.angular_workspace / str(
-            json.loads(generator.read_text(encoding="utf-8")).get("output", "")
+            generator_config.get("output", "")
         )
         document = load_document(project_config.openapi_schema)
     except (OSError, ValueError, DocumentError) as exc:
         return [f"cannot read the client or the contract: {exc}"], "unreadable"
     schemas = _schemas(document)
+    if generator_config.get("ignoreUnusedModels", True) is not False:
+        reached = _reached_schemas(document)
+        schemas = [name for name in schemas if name in reached]
     operations = _operations(document)
     declared = _declared(output / "models")
-    methods = _identifiers(output / "services")
+    methods = _identifiers(output)
     errors = [
         f"schema {name} has no generated model"
         for name in schemas
@@ -92,6 +99,33 @@ def _schemas(document: Any) -> list[str]:
     components = document.get("components") if isinstance(document, dict) else None
     schemas = components.get("schemas") if isinstance(components, dict) else None
     return sorted(schemas) if isinstance(schemas, dict) else []
+
+
+_REFERENCE = re.compile(r"^#/components/([^/]+)/(.+)$")
+
+
+def _reached_schemas(document: Any) -> set[str]:
+    """Schemas an operation reaches through ``$ref``, transitively."""
+    components = document.get("components") if isinstance(document, dict) else None
+    components = components if isinstance(components, dict) else {}
+    pending: list[Any] = [document.get("paths") if isinstance(document, dict) else None]
+    seen: set[tuple[str, str]] = set()
+    while pending:
+        node = pending.pop()
+        if isinstance(node, dict):
+            reference = node.get("$ref")
+            if isinstance(reference, str) and (m := _REFERENCE.match(reference)):
+                name = m.group(2).split("/")[0].replace("~1", "/").replace("~0", "~")
+                key = (m.group(1), name)
+                if key not in seen:
+                    seen.add(key)
+                    section = components.get(key[0])
+                    if isinstance(section, dict):
+                        pending.append(section.get(name))
+            pending.extend(node.values())
+        elif isinstance(node, list):
+            pending.extend(node)
+    return {name for kind, name in seen if kind == "schemas"}
 
 
 def _operations(document: Any) -> list[str]:
@@ -114,9 +148,13 @@ def _declared(models: Path) -> set[str]:
     return names
 
 
-def _identifiers(services: Path) -> set[str]:
+def _identifiers(output: Path) -> set[str]:
+    """Identifiers of the generated services and operation functions (not models)."""
     found: set[str] = set()
-    for path in sorted(services.rglob("*.ts")) if services.is_dir() else []:
+    models = output / "models"
+    for path in sorted(output.rglob("*.ts")) if output.is_dir() else []:
+        if models in path.parents:
+            continue
         text = path.read_text(encoding="utf-8")
         found.update(_normalize(word) for word in _IDENTIFIER.findall(text))
     return found

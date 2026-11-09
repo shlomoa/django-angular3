@@ -41,8 +41,10 @@ python manage.py build_app [options]
 > process and fails the run when the export fails; the `migration-triggered`
 > Hook (no step runs `makemigrations`), the runtime smoke and the type, lint and test
 > checks of the global acceptance (FR-10). Before the `last-check` gate (`ng_build`) a
-> `client-alignment` step checks that every schema of the exported OpenAPI contract is
-> declared in the generated models and every operation has a generated service method;
+> `client-alignment` step checks that every schema of the exported OpenAPI contract that
+> the generator emits (`ng-openapi-gen` skips a schema no operation reaches, unless
+> `ignoreUnusedModels` is `false`) is declared in the generated models and every
+> operation has a generated service method;
 > a project without `ng-openapi-gen.json` has no client to align. Update and delete changes, and
 > `move`, fail explicitly. This document specifies the target behavior; it must not be
 > read as a claim that those target behaviors are already available.
@@ -225,7 +227,9 @@ not introduce custom behavioral selectors or a duplicate parser.
 | `openui` change inside an `embedded` node type | The Tool of its root node type, with the root's operation status | update |
 | `openui` change whose operation is `partial` or `unsupported` in the mapping, or whose command has no djng Tool | Unsupported; fails explicitly with the mapping's reason and gap issue, or "no wrapper" | — |
 
-A static setting selects the command that consumes it. `create` appears for an initial
+A static setting selects the command that consumes it, so the schema export (stage `0`)
+runs only when a `drfSpectacular.settings.*` setting is created or updated; without such
+a change a run has no export step. `create` appears for an initial
 build or a new setting, and has the same translation as `update`:
 
 | Static setting | Consumed by | Step | Stage |
